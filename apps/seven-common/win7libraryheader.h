@@ -26,6 +26,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <functional>
+#include <KLocalizedString>
 
 namespace Win7Library
 {
@@ -50,15 +51,15 @@ inline QList<Library> libraries()
     const struct {
         QStandardPaths::StandardLocation loc;
         const char *name;
-    } known[] = {{QStandardPaths::DocumentsLocation, "Документи"},
-                 {QStandardPaths::MusicLocation, "Музика"},
-                 {QStandardPaths::PicturesLocation, "Зображення"},
-                 {QStandardPaths::MoviesLocation, "Відео"}};
+    } known[] = {{QStandardPaths::DocumentsLocation, "Documents"},
+                 {QStandardPaths::MusicLocation, "Music"},
+                 {QStandardPaths::PicturesLocation, "Pictures"},
+                 {QStandardPaths::MoviesLocation, "Videos"}};
     const QString home = clean(QDir::homePath());
     for (const auto &k : known) {
         const QString dir = clean(QStandardPaths::writableLocation(k.loc));
         if (!dir.isEmpty() && dir != home) {
-            out << Library{QString::fromUtf8(k.name), dir};
+            out << Library{i18nd("sevenplasma", k.name), dir};
         }
     }
     return out;
@@ -83,24 +84,22 @@ inline Library libraryOf(const QUrl &url)
 inline void showLocations(QWidget *parent, const Library &lib)
 {
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Розташування бібліотеки \"%1\"").arg(lib.name));
+    d.setWindowTitle(i18nd("sevenplasma", "%1 Library Locations").arg(lib.name));
     auto *v = new QVBoxLayout(&d);
-    auto *head = new QLabel(QStringLiteral("<span style=\"font-size:12pt; color:#1e3287;\">Змінення способу збирання вмісту бібліотеки \"%1\"</span><br>"
-                                           "Після додавання папки до бібліотеки її файли відображатимуться в бібліотеці, але й надалі "
-                                           "зберігатимуться в початковому розташуванні.")
+    auto *head = new QLabel(i18nd("sevenplasma", "<span style=\"font-size:12pt; color:#1e3287;\">Change how this library gathers its contents: \"%1\"</span><br>When you include a folder in a library, the files will appear in the library, but will continue to be stored in their original locations.")
                                 .arg(lib.name));
     head->setWordWrap(true);
     v->addWidget(head);
-    v->addWidget(new QLabel(QStringLiteral("Розташування бібліотеки")));
+    v->addWidget(new QLabel(i18nd("sevenplasma", "Library locations")));
     auto *list = new QListWidget;
     auto *it = new QListWidgetItem(QIcon::fromTheme(QStringLiteral("folder")),
-                                   QFileInfo(lib.root).fileName() + QStringLiteral("\n") + lib.root + QStringLiteral("   (Розташування для збереження)"), list);
+                                   QFileInfo(lib.root).fileName() + QStringLiteral("\n") + lib.root + i18nd("sevenplasma", "   (Save location)"), list);
     Q_UNUSED(it)
     list->setIconSize(QSize(32, 32));
     v->addWidget(list, 1);
     auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-    bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+    bb->button(QDialogButtonBox::Cancel)->setText(i18nd("sevenplasma", "Cancel"));
     QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
     QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
     v->addWidget(bb);
@@ -139,7 +138,7 @@ public:
 protected:
     static QStringList arrangeNames()
     {
-        return {QStringLiteral("Папка"), QStringLiteral("Дата змінення"), QStringLiteral("Тип"), QStringLiteral("Ім'я")};
+        return {i18nd("sevenplasma", "Folder"), i18nd("sevenplasma", "Date modified"), i18nd("sevenplasma", "Type"), i18nd("sevenplasma", "Name")};
     }
     QFont titleFont() const
     {
@@ -150,7 +149,7 @@ protected:
     QRect linkRect() const
     {
         const QFontMetrics fm(font());
-        const int x = 19 + fm.horizontalAdvance(QStringLiteral("Включає: "));
+        const int x = 19 + fm.horizontalAdvance(i18nd("sevenplasma", "Includes: "));
         return QRect(x, 31, fm.horizontalAdvance(locationsText()), fm.height());
     }
     QRect arrangeRect() const
@@ -161,7 +160,7 @@ protected:
     }
     QString locationsText() const
     {
-        return QStringLiteral("1 розташування");
+        return i18nd("sevenplasma", "1 location");
     }
     void paintEvent(QPaintEvent *) override
     {
@@ -169,12 +168,12 @@ protected:
         p.fillRect(rect(), QColor(0xfa, 0xfb, 0xfc));
         p.setFont(titleFont());
         p.setPen(QColor(0x00, 0x6e, 0x12));
-        p.drawText(QRect(19, 7, width() - 300, 24), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Бібліотека \"%1\"").arg(m_lib.name));
+        p.drawText(QRect(19, 7, width() - 300, 24), Qt::AlignLeft | Qt::AlignVCenter, i18nd("sevenplasma", "%1 Library").arg(m_lib.name));
         p.setFont(font());
         const QFontMetrics fm(font());
         if (m_sub.isEmpty()) {
             p.setPen(QColor(0x5a, 0x67, 0x79));
-            p.drawText(QPoint(19, 31 + fm.ascent()), QStringLiteral("Включає: "));
+            p.drawText(QPoint(19, 31 + fm.ascent()), i18nd("sevenplasma", "Includes: "));
             QFont u = font();
             u.setUnderline(m_hot == 1);
             p.setFont(u);
@@ -188,7 +187,7 @@ protected:
         // Arrange by: Folder ▾
         const QRect ar = arrangeRect();
         p.setPen(QColor(0x5a, 0x67, 0x79));
-        const QString label = QStringLiteral("Упорядкувати за:");
+        const QString label = i18nd("sevenplasma", "Arrange by:");
         p.drawText(QPoint(ar.x() - 14 - fm.horizontalAdvance(label), ar.y() + fm.ascent()), label);
         QFont u = font();
         u.setUnderline(m_hot == 2);

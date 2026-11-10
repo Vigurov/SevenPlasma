@@ -29,7 +29,7 @@ PlasmoidItem {
             if (!d.connected) {
                 continue;
             }
-            lines.push(d.battery ? d.name + ": заряд " + d.battery.percentage + " %" : d.name + ": підключено");
+            lines.push(d.battery ? d.name + i18nd("sevenplasma", ": charge ") + d.battery.percentage + " %" : d.name + i18nd("sevenplasma", ": connected"));
         }
         deviceLines = lines;
     }
@@ -58,19 +58,19 @@ PlasmoidItem {
         function onDeviceChanged() { root.refresh(); }
     }
 
-    Plasmoid.title: "Пристрої Bluetooth"
+    Plasmoid.title: i18nd("sevenplasma", "Bluetooth Devices")
     Plasmoid.icon: "seven-tray-bluetooth"
     // Windows shows the icon while there is an adapter; "Remove Icon" moves it among the hidden ones
     Plasmoid.status: !hasAdapter ? PlasmaCore.Types.HiddenStatus
                      : (Plasmoid.configuration.iconRemoved ? PlasmaCore.Types.PassiveStatus : PlasmaCore.Types.ActiveStatus)
 
-    toolTipMainText: "Пристрої Bluetooth"
+    toolTipMainText: i18nd("sevenplasma", "Bluetooth Devices")
     toolTipSubText: {
         if (!hasAdapter) {
-            return "Адаптер Bluetooth не знайдено";
+            return i18nd("sevenplasma", "No Bluetooth adapter found");
         }
         if (!adapterOn) {
-            return "Адаптер Bluetooth вимкнуто";
+            return i18nd("sevenplasma", "The Bluetooth adapter is off");
         }
         return deviceLines.join("\n");
     }
@@ -103,12 +103,12 @@ PlasmoidItem {
         }
 
         PlasmaExtras.MenuItem {
-            text: "Додати пристрій"
+            text: i18nd("sevenplasma", "Add a Device")
             enabled: root.adapterOn
             onClicked: root.run("seven-control --add-device")
         }
         PlasmaExtras.MenuItem {
-            text: "Дозволити підключення пристрою"
+            text: i18nd("sevenplasma", "Allow a Device to Connect")
             enabled: root.adapterOn
             // what Windows' option does: the computer becomes visible to other devices for a while
             onClicked: {
@@ -117,38 +117,38 @@ PlasmoidItem {
             }
         }
         PlasmaExtras.MenuItem {
-            text: "Показати пристрої Bluetooth"
+            text: i18nd("sevenplasma", "Show Bluetooth Devices")
             onClicked: root.run("seven-control --devices")
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: "Надіслати файл"
+            text: i18nd("sevenplasma", "Send a File")
             enabled: root.adapterOn
             onClicked: root.run("bluedevil-sendfile")
         }
         PlasmaExtras.MenuItem {
-            text: "Отримати файл"
+            text: i18nd("sevenplasma", "Receive a File")
             enabled: root.adapterOn
             onClicked: root.run("kcmshell6 kcm_bluetooth")
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: "Приєднатися до особистої мережі"
+            text: i18nd("sevenplasma", "Join a Personal Area Network")
             enabled: false
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: "Відкрити параметри"
+            text: i18nd("sevenplasma", "Open Settings")
             onClicked: root.run("kcmshell6 kcm_bluetooth")
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: root.manager.bluetoothBlocked ? "Увімкнути адаптер" : "Вимкнути адаптер"
+            text: root.manager.bluetoothBlocked ? i18nd("sevenplasma", "Turn Adapter On") : i18nd("sevenplasma", "Turn Adapter Off")
             onClicked: root.manager.bluetoothBlocked = !root.manager.bluetoothBlocked
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: Plasmoid.configuration.iconRemoved ? "Показати значок" : "Видалити значок"
+            text: Plasmoid.configuration.iconRemoved ? i18nd("sevenplasma", "Show Icon") : i18nd("sevenplasma", "Remove Icon")
             onClicked: Plasmoid.configuration.iconRemoved = !Plasmoid.configuration.iconRemoved
         }
     }

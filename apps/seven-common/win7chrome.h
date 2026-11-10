@@ -5,6 +5,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+// translations: in KDE parts (the KIO file dialogs define WIN7_KDE_I18N) the "sevenplasma" gettext domain,
+// in our programs their Qt translation files (seven-common/i18n/common_<lang>.ts)
+#ifdef WIN7_KDE_I18N
+#include <KLocalizedString>
+#define WIN7_TR(s) i18nd("sevenplasma", s)
+#else
+#include "win7i18n.h"
+#define WIN7_TR(s) tr7(s)
+#endif
 
 #include <AeroQt/insetwindow.h>
 #include <AeroQt/navbuttons.h>
@@ -74,7 +83,7 @@ QString keyValue(const QString &text, const QString &key, QChar sep)
 
 QString gb(double value)
 {
-    return QLocale(QLocale::Ukrainian).toString(value, 'f', value >= 10 ? 1 : 2) + QStringLiteral(" ГБ");
+    return QLocale().toString(value, 'f', value >= 10 ? 1 : 2) + WIN7_TR(" GB");
 }
 
 /* ---------------- Windows 7 address bar pieces (same look as in the Explorer) ---------------- */
@@ -587,7 +596,7 @@ private:
         const bool empty = m_edit->text().isEmpty();
         const bool active = m_edit->hasFocus() || !empty;
         m_action->setIcon(active ? m_clear : m_search);
-        m_action->setToolTip(active ? QStringLiteral("Очистити") : QString());
+        m_action->setToolTip(active ? WIN7_TR("Clear") : QString());
         // the hint is only shown while the box is empty and not focused
         m_edit->setPlaceholderText(m_edit->hasFocus() ? QString() : m_hint);
         QFont f = m_edit->font();
@@ -677,13 +686,13 @@ inline Win7Header makeWin7Header(QWidget *parent, const QList<Crumbs::Crumb> &cr
         history->setIcon(QIcon(smallDownArrow()));
         history->setIconSize(QSize(7, 4));
     }
-    history->setToolTip(QStringLiteral("Попередні розташування"));
+    history->setToolTip(WIN7_TR("Previous Locations"));
     h.history = history;
     al->addWidget(history);
     auto *refresh = new Win7BandButton(address, true);
     refresh->setIcon(QIcon::fromTheme(QStringLiteral("seven-address-refresh"), QIcon::fromTheme(QStringLiteral("view-refresh"))));
     refresh->setIconSize(QSize(16, 16));
-    refresh->setToolTip(QStringLiteral("Оновити"));
+    refresh->setToolTip(WIN7_TR("Refresh"));
     history->partner = refresh;
     refresh->partner = history;
     h.refresh = refresh;

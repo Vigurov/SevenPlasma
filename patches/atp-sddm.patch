@@ -1,7 +1,7 @@
 diff --git a/plasma/sddm/sddm-theme-mod/Main.qml b/plasma/sddm/sddm-theme-mod/Main.qml
 old mode 100755
 new mode 100644
-index 59fe192..975c98f
+index 59fe192..12f2a43
 --- a/plasma/sddm/sddm-theme-mod/Main.qml
 +++ b/plasma/sddm/sddm-theme-mod/Main.qml
 @@ -23,6 +23,35 @@ Item
@@ -68,7 +68,7 @@ index 59fe192..975c98f
                  session.addItem(menuitem);
                  menuitem = session.createMenuItem();
 -                menuitem.text = i18nd("aerothemeplasma-sddm-theme", "On-Screen Keyboard")
-+                menuitem.text = "Екранна клавіатура"
++                menuitem.text = i18nd("sevenplasma", "On-Screen Keyboard")
                  menuitem.checkable = false;
                  menuitem.icon.source = Qt.resolvedUrl("Assets/keyboard.png");
                  menuitem.triggered.connect(() => {
@@ -86,7 +86,7 @@ index 59fe192..975c98f
                          }
  
 -                        placeholderText: i18nd("aerothemeplasma-sddm-theme", "Password")
-+                        placeholderText: "Пароль"
++                        placeholderText: i18nd("sevenplasma", "Password")
                          selectByMouse: true
                          echoMode : TextInput.Password
                          inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
@@ -95,7 +95,7 @@ index 59fe192..975c98f
                              id: notificationsLabel
                              font.pointSize: 9
 -                            text: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Caps Lock is on");
-+                            text: "Увімкнено клавішу Caps Lock.";
++                            text: i18nd("sevenplasma", "Caps Lock is on.");
                              width: implicitWidth
                              renderType: Text.NativeRendering
                              color: "white"
@@ -113,7 +113,7 @@ index 59fe192..975c98f
                  contentItem: Text
                  {
 -                    text: i18nd("aerothemeplasma-sddm-theme", "Switch User")
-+                    text: "Змінити користувача"
++                    text: i18nd("sevenplasma", "Switch User")
                      color: "white"
  
                      //font.family: mainfont.name
@@ -122,7 +122,7 @@ index 59fe192..975c98f
                  anchors.horizontalCenterOffset: 14
  
 -                text: i18nd("aerothemeplasma-sddm-theme", "The user name or password is incorrect.")
-+                text: "Неправильне ім'я користувача або пароль."
++                text: i18ndc("sevenplasma", "uac", "The user name or password is incorrect.")
                  renderType: Text.NativeRendering
                  Layout.alignment: Qt.AlignHCenter
                  font.pointSize: 9
@@ -149,7 +149,7 @@ index 59fe192..975c98f
              QQC2.ToolTip.visible: hovered
              QQC2.ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
 -            QQC2.ToolTip.text: i18nd("aerothemeplasma-sddm-theme", "Shut down")
-+            QQC2.ToolTip.text: "Завершити роботу"
++            QQC2.ToolTip.text: i18ndc("sevenplasma", "logon", "Shut down")
          }
  
          QQC2.Button
@@ -158,7 +158,7 @@ index 59fe192..975c98f
                  Component.onCompleted: {
                      var menuitem = powerMenu.createMenuItem();
 -                    menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Restart");
-+                    menuitem.text = "Перезавантажити";
++                    menuitem.text = i18ndc("sevenplasma", "logon", "Restart");
                      menuitem.triggered.connect(() => { sddm.reboot() });
                      powerMenu.addAction(menuitem);
                      powerMenu.addItem(powerMenu.createMenuSeparator());
@@ -166,27 +166,27 @@ index 59fe192..975c98f
                      if(sddm.canSuspend) {
                          menuitem = powerMenu.createMenuItem();
 -                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Sleep");
-+                        menuitem.text = "Сон";
++                        menuitem.text = i18nd("sevenplasma", "Sleep");
                          menuitem.triggered.connect(() => { sddm.suspend() });
                          powerMenu.addAction(menuitem);
                      }
                      if(sddm.canHibernate) {
                          menuitem = powerMenu.createMenuItem();
 -                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Hibernate");
-+                        menuitem.text = "Режим глибокого сну";
++                        menuitem.text = i18nd("sevenplasma", "Hibernate");
                          menuitem.triggered.connect(() => { sddm.hibernate() });
                          powerMenu.addAction(menuitem);
                      }
                      if(sddm.canHybridSleep) {
                          menuitem = powerMenu.createMenuItem();
 -                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Hybrid Sleep");
-+                        menuitem.text = "Гібридний сплячий режим";
++                        menuitem.text = i18nd("sevenplasma", "Hybrid sleep");
                          menuitem.triggered.connect(() => { sddm.hybridSleep() });
                          powerMenu.addAction(menuitem);
                      }
                      menuitem = powerMenu.createMenuItem();
 -                    menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Shut down");
-+                    menuitem.text = "Завершити роботу";
++                    menuitem.text = i18ndc("sevenplasma", "logon", "Shut down");
                      menuitem.triggered.connect(() => { sddm.powerOff() });
                      powerMenu.addAction(menuitem);
                  }
@@ -216,7 +216,7 @@ index 59fe192..975c98f
 +            Image { source: "file:///usr/share/plasma/look-and-feel/authui7/contents/images/100/spin" + welcomeRow.spinnum + ".png" }
 +            Text
 +            {
-+                text: "Ласкаво просимо"
++                text: i18nd("sevenplasma", "Welcome")
 +                color: "#FFFFFF"
 +                font.pointSize: 18
 +                renderType: Text.NativeRendering

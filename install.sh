@@ -295,6 +295,16 @@ if [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
 fi
 printf '[portal]\nDBusName=org.freedesktop.impl.portal.desktop.win7\nInterfaces=org.freedesktop.impl.portal.AppChooser\nUseIn=KDE\n' \
     | run sudo install -D -m 644 /dev/stdin /usr/share/xdg-desktop-portal/portals/seven.portal
+# translations of the shell, Explorer and the file dialogs (gettext domain "sevenplasma"; the Start menu reads it
+# through its own plasmoid domain too)
+for po in "$REPO"/apps/seven-common/i18n/sevenplasma/*.po; do
+    lang=$(basename "$po" .po)
+    [ "$lang" = manual ] && continue
+    run msgfmt -o "$WORK/sevenplasma-$lang.mo" "$po"
+    for dom in sevenplasma plasma_applet_io.gitgud.wackyideas.SevenStart; do
+        run sudo install -D -m 644 "$WORK/sevenplasma-$lang.mo" "/usr/share/locale/$lang/LC_MESSAGES/$dom.mo"
+    done
+done
 # the account picture: like a new Windows 7 account, a random one of the standard pictures (when there is none)
 PICS=("$L"/share/seven-control/account-pictures/usertile*.png)
 AS=/var/lib/AccountsService/users/$USER

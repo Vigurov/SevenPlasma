@@ -18,7 +18,7 @@ kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
 echo "$(T "Системні частини (потрібен пароль):" "System parts (the password is needed):")"
 sudo rm -f /usr/local/libexec/seven-* /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf \
     /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf /etc/systemd/system.conf.d/seven-stop-timeout.conf \
-    /etc/sddm.conf.d/zz-sevenplasma.conf /usr/share/xdg-desktop-portal/portals/seven.portal
+    /etc/sddm.conf.d/zz-sevenplasma.conf /usr/share/xdg-desktop-portal/portals/seven.portal /usr/share/locale/*/LC_MESSAGES/sevenplasma.mo /usr/share/locale/*/LC_MESSAGES/plasma_applet_io.gitgud.wackyideas.SevenStart.mo
 sudo systemctl unmask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
 if [ -d /usr/share/plymouth/themes/sevenplasma ]; then
     sudo rm -rf /usr/share/plymouth/themes/sevenplasma

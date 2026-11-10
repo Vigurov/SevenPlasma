@@ -12,7 +12,7 @@ index 03f6cf7..2849693 100644
  SU_CMD=sudo
  if [[ -z "$(command -v $SU_CMD)" ]]; then
 diff --git a/plasma/look-and-feel/authui7/contents/splash/Splash.qml b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
-index 0d84d07..fe8576f 100644
+index 0d84d07..6a9cc62 100644
 --- a/plasma/look-and-feel/authui7/contents/splash/Splash.qml
 +++ b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
 @@ -23,6 +23,7 @@ import QtQuick.Controls
@@ -38,7 +38,7 @@ index 0d84d07..fe8576f 100644
          anchors.centerIn: parent
          anchors.verticalCenterOffset: -36
 -        statusText: i18nd("okular", "Welcome")
-+        statusText: "Ласкаво просимо"
++        statusText: (Qt.uiLanguage.indexOf("uk") === 0 ? "Ласкаво просимо" : "Welcome")
          speen: true
      }
  
@@ -1233,7 +1233,7 @@ index 5810c8d..cb69358 100644
  
              var xy = getXY();
 diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
-index b5d2c66..b41a7b9 100644
+index b5d2c66..b361eb1 100644
 --- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
 +++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
 @@ -9,6 +9,10 @@
@@ -1452,7 +1452,7 @@ index b5d2c66..b41a7b9 100644
      m_actionCollection.addAction(QStringLiteral("paste"), paste);
 +
 +    // Windows 7 "Paste shortcut": links to the copied files in this folder
-+    QAction *pasteLink = new QAction(QStringLiteral("Вставити ярлик"), this);
++    QAction *pasteLink = new QAction(i18nd("sevenplasma", "Paste shortcut"), this);
 +    connect(pasteLink, &QAction::triggered, this, [this]() {
 +        const QList<QUrl> urls = KUrlMimeData::urlsFromMimeData(QApplication::clipboard()->mimeData());
 +        if (!urls.isEmpty()) {
@@ -1469,7 +1469,7 @@ index b5d2c66..b41a7b9 100644
              newMenuAction->setEnabled(itemProperties.supportsWriting());
              newMenuAction->setVisible(!isTrash);
 -            newMenuAction->setText(i18n("New"));
-+            newMenuAction->setText(QStringLiteral("Створити")); // Windows 7 (uk)
++            newMenuAction->setText(i18nd("sevenplasma", "New")); // Windows 7 (uk)
              newMenuAction->setIcon(QIcon());
          }
      }
@@ -1502,25 +1502,25 @@ index b5d2c66..b41a7b9 100644
 +        if (items.size() == 1 && items.first().url().fileName() == QLatin1String("seven-computer.desktop")) {
 +            const KFileItem computer = items.first();
 +            const QString control = QDir::homePath() + QStringLiteral("/.local/bin/seven-control");
-+            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [] {
++            QAction *open = menu->addAction(i18nd("sevenplasma", "Open"), this, [] {
 +                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("computer:/")});
 +            });
 +            QFont bold = open->font();
 +            bold.setBold(true);
 +            open->setFont(bold);
-+            menu->addAction(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Керування"), this, [control] {
++            menu->addAction(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), i18nd("sevenplasma", "Manage"), this, [control] {
 +                QProcess::startDetached(control, {QStringLiteral("--compmgmt")});
 +            });
 +            menu->addSeparator();
-+            QAction *map = menu->addAction(QStringLiteral("Підключити мережевий диск..."), this, [] {
++            QAction *map = menu->addAction(i18nd("sevenplasma", "Map network drive..."), this, [] {
 +                QProcess::startDetached(QStringLiteral("knetattach"), {});
 +            });
 +            map->setEnabled(!QStandardPaths::findExecutable(QStringLiteral("knetattach")).isEmpty());
-+            menu->addAction(QStringLiteral("Відключити мережевий диск..."), this, [] {
++            menu->addAction(i18nd("sevenplasma", "Disconnect network drive..."), this, [] {
 +                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("remote:/")});
 +            });
              menu->addSeparator();
-+            menu->addAction(QStringLiteral("Створити ярлик"), this, [computer] {
++            menu->addAction(i18nd("sevenplasma", "Create shortcut"), this, [computer] {
 +                // "Computer - Shortcut" next to it on the desktop
 +                const QString dir = computer.url().adjusted(QUrl::RemoveFilename).toLocalFile();
 +                QString target = dir + QStringLiteral("seven-computer-shortcut.desktop");
@@ -1529,14 +1529,14 @@ index b5d2c66..b41a7b9 100644
 +                }
 +                if (QFile::copy(computer.localPath(), target)) {
 +                    KConfig link(target, KConfig::SimpleConfig);
-+                    link.group(QStringLiteral("Desktop Entry")).writeEntry("Name", QStringLiteral("Комп'ютер — ярлик"));
++                    link.group(QStringLiteral("Desktop Entry")).writeEntry("Name", i18nd("sevenplasma", "Computer - Shortcut"));
 +                    QFile::setPermissions(target, QFile::permissions(target) | QFileDevice::ExeUser);
 +                }
 +            });
-+            menu->addAction(QStringLiteral("Видалити"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
-+            menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Delete"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Rename"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
 +            menu->addSeparator();
-+            menu->addAction(QStringLiteral("Властивості"), this, [] {
++            menu->addAction(i18nd("sevenplasma", "Properties"), this, [] {
 +                const QString system = QDir::homePath() + QStringLiteral("/.local/bin/seven-system");
 +                QProcess::startDetached(QFileInfo::exists(system) ? system : QStringLiteral("kinfocenter"), {});
 +            });
@@ -1582,30 +1582,30 @@ index b5d2c66..b41a7b9 100644
 -            menu->addAction(deleteAction);
 +        const bool trashLink = single && first.isDesktopFile() && KDesktopFile(first.localPath()).readUrl() == QLatin1String("trash:/");
 +        if (trashLink) {
-+            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [] {
++            QAction *open = menu->addAction(i18nd("sevenplasma", "Open"), this, [] {
 +                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("trash:/")});
 +            });
 +            menu->setDefaultAction(open);
-+            QAction *empty = menu->addAction(QIcon::fromTheme(QStringLiteral("seven-desk-trash-empty")), QStringLiteral("Очистити кошик"), this, [] {
++            QAction *empty = menu->addAction(QIcon::fromTheme(QStringLiteral("seven-desk-trash-empty")), i18nd("sevenplasma", "Empty Recycle Bin"), this, [] {
 +                KIO::emptyTrash();
 +            });
 +            empty->setEnabled(!QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/Trash/files"))
 +                                   .entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden)
 +                                   .isEmpty());
 +            menu->addSeparator();
-+            menu->addAction(QStringLiteral("Створити ярлик"), this, [] {
++            menu->addAction(i18nd("sevenplasma", "Create shortcut"), this, [] {
 +                const QString dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + QLatin1Char('/');
-+                KConfig link(dir + QStringLiteral("Кошик — ярлик.desktop"), KConfig::SimpleConfig);
++                KConfig link(dir + i18nd("sevenplasma", "Recycle Bin - Shortcut.desktop"), KConfig::SimpleConfig);
 +                KConfigGroup g(&link, QStringLiteral("Desktop Entry"));
 +                g.writeEntry("Type", "Link");
 +                g.writeEntry("URL", "trash:/");
 +                g.writeEntry("Icon", "seven-desk-trash-full");
 +                g.writeEntry("EmptyIcon", "seven-desk-trash-empty");
-+                g.writeEntry("Name", QStringLiteral("Кошик — ярлик"));
++                g.writeEntry("Name", i18nd("sevenplasma", "Recycle Bin - Shortcut"));
 +            });
-+            menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Rename"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
 +            menu->addSeparator();
-+            menu->addAction(QStringLiteral("Властивості"), this, [] {
++            menu->addAction(i18nd("sevenplasma", "Properties"), this, [] {
 +                KPropertiesDialog::showDialog(QUrl(QStringLiteral("trash:/")));
 +            });
          } else {
@@ -1618,7 +1618,7 @@ index b5d2c66..b41a7b9 100644
 -                menu->installEventFilter(removeAction);
 -                QCoreApplication::instance()->installEventFilter(removeAction);
 +            // Open (bold), Open with
-+            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [urls]() {
++            QAction *open = menu->addAction(i18nd("sevenplasma", "Open"), this, [urls]() {
 +                for (const QUrl &u : urls) {
 +                    auto *job = new KIO::OpenUrlJob(u);
 +                    job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
@@ -1647,7 +1647,7 @@ index b5d2c66..b41a7b9 100644
 +                    }
 +                }
 +                if (!found.isEmpty()) {
-+                    auto *with = menu->addMenu(QStringLiteral("Відкрити за допомогою"));
++                    auto *with = menu->addMenu(i18nd("sevenplasma", "Open with"));
 +                    for (QAction *a : std::as_const(found)) {
 +                        if (!a->isSeparator()) {
 +                            a->setParent(menu);
@@ -1662,9 +1662,9 @@ index b5d2c66..b41a7b9 100644
 +            // Windows 7: Share with > , Restore previous versions, Include in library > (folders only)
 +            const QString target = single ? first.localPath() : QString();
 +            if (!target.isEmpty()) {
-+                auto *share = menu->addMenu(QStringLiteral("Спільний доступ"));
++                auto *share = menu->addMenu(i18nd("sevenplasma", "Share with"));
 +                share->addAction(QIcon::fromTheme(QStringLiteral("seven-share-nobody"), QIcon::fromTheme(QStringLiteral("object-locked"))),
-+                                 QStringLiteral("Ніхто"), this, [target]() {
++                                 i18nd("sevenplasma", "Nobody"), this, [target]() {
 +                                     // stop sharing: remove the Samba user shares of this folder
 +                                     auto *list = new QProcess;
 +                                     QObject::connect(list, &QProcess::finished, list, [list, target]() {
@@ -1681,30 +1681,30 @@ index b5d2c66..b41a7b9 100644
 +                                     list->start(QStringLiteral("net"), {QStringLiteral("usershare"), QStringLiteral("info")});
 +                                 })->setEnabled(first.isDir());
 +                share->addAction(QIcon::fromTheme(QStringLiteral("seven-share-people"), QIcon::fromTheme(QStringLiteral("system-users"))),
-+                                 QStringLiteral("Певні люди..."), this, [target]() {
++                                 i18nd("sevenplasma", "Specific people..."), this, [target]() {
 +                                     // the sharing page of the properties (installs Samba if needed)
 +                                     auto *dialog = new KPropertiesDialog(QUrl::fromLocalFile(target));
 +                                     dialog->setAttribute(Qt::WA_DeleteOnClose);
 +                                     dialog->show();
 +                                 });
 +                // there are no previous versions here: Windows 7 opens the properties at that page
-+                menu->addAction(QStringLiteral("Відновити попередні версії"), this, &FolderModel::openPropertiesDialog);
++                menu->addAction(i18nd("sevenplasma", "Restore previous versions"), this, &FolderModel::openPropertiesDialog);
 +                if (first.isDir()) {
-+                    auto *include = menu->addMenu(QStringLiteral("Додати до бібліотеки"));
++                    auto *include = menu->addMenu(i18nd("sevenplasma", "Include in library"));
 +                    const struct {
 +                        QStandardPaths::StandardLocation location;
 +                        const char *name;
 +                        const char *icon;
 +                    } libraries[] = {
-+                        {QStandardPaths::DocumentsLocation, "Документи", "library-txt"},
-+                        {QStandardPaths::MusicLocation, "Музика", "library-music"},
-+                        {QStandardPaths::PicturesLocation, "Зображення", "library-images"},
-+                        {QStandardPaths::MoviesLocation, "Відео", "library-video"},
++                        {QStandardPaths::DocumentsLocation, "Documents", "library-txt"},
++                        {QStandardPaths::MusicLocation, "Music", "library-music"},
++                        {QStandardPaths::PicturesLocation, "Pictures", "library-images"},
++                        {QStandardPaths::MoviesLocation, "Videos", "library-video"},
 +                    };
 +                    for (const auto &library : libraries) {
 +                        const QString dir = QStandardPaths::writableLocation(library.location);
 +                        // a library is a folder with links to the included folders (as in Explorer)
-+                        QAction *a = include->addAction(QIcon::fromTheme(QString::fromLatin1(library.icon)), QString::fromUtf8(library.name), this, [target, dir]() {
++                        QAction *a = include->addAction(QIcon::fromTheme(QString::fromLatin1(library.icon)), i18nd("sevenplasma", library.name), this, [target, dir]() {
 +                            const QString base = dir + QLatin1Char('/') + QFileInfo(target).fileName();
 +                            QString link = base;
 +                            for (int n = 2; QFileInfo(link).exists() || QFileInfo(link).isSymLink(); ++n) {
@@ -1733,9 +1733,9 @@ index b5d2c66..b41a7b9 100644
  
 -        m_fileItemActions->addActionsTo(menu);
 +            // Send to
-+            auto *send = menu->addMenu(QStringLiteral("Надіслати"));
++            auto *send = menu->addMenu(i18nd("sevenplasma", "Send to"));
 +            const bool local = !first.localPath().isEmpty();
-+            send->addAction(QIcon::fromTheme(QStringLiteral("application-zip")), QStringLiteral("Стиснена ZIP-папка"), this, [urls]() {
++            send->addAction(QIcon::fromTheme(QStringLiteral("application-zip")), i18nd("sevenplasma", "Compressed (zipped) folder"), this, [urls]() {
 +                const QFileInfo fi(urls.first().toLocalFile());
 +                QString zip = fi.absolutePath() + QLatin1Char('/') + fi.completeBaseName() + QStringLiteral(".zip");
 +                for (int n = 2; QFileInfo::exists(zip); ++n) {
@@ -1750,13 +1750,13 @@ index b5d2c66..b41a7b9 100644
 +                QObject::connect(z, &QProcess::finished, z, &QObject::deleteLater);
 +                z->start(QStringLiteral("zip"), args);
 +            })->setEnabled(local && !QStandardPaths::findExecutable(QStringLiteral("zip")).isEmpty());
-+            send->addAction(QIcon::fromTheme(QStringLiteral("user-desktop")), QStringLiteral("Робочий стіл (створити ярлик)"), this, [urls]() {
++            send->addAction(QIcon::fromTheme(QStringLiteral("user-desktop")), i18nd("sevenplasma", "Desktop (create shortcut)"), this, [urls]() {
 +                const QString dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
 +                for (const QUrl &u : urls) {
 +                    const QString name = QFileInfo(u.toLocalFile()).fileName();
-+                    QString link = dir + QLatin1Char('/') + name + QStringLiteral(" — ярлик");
++                    QString link = dir + QLatin1Char('/') + name + i18nd("sevenplasma", " - Shortcut");
 +                    for (int n = 2; QFileInfo::exists(link); ++n) {
-+                        link = dir + QLatin1Char('/') + name + QStringLiteral(" — ярлик (%1)").arg(n);
++                        link = dir + QLatin1Char('/') + name + i18nd("sevenplasma", " - Shortcut (%1)").arg(n);
 +                    }
 +                    QFile::link(u.toLocalFile(), link);
 +                }
@@ -1767,7 +1767,7 @@ index b5d2c66..b41a7b9 100644
 +                send->addSeparator();
 +                for (const QString &d : drives) {
 +                    const QString target = media.absoluteFilePath(d);
-+                    send->addAction(QIcon::fromTheme(QStringLiteral("drive-removable-media-usb")), QStringLiteral("Знімний диск (%1)").arg(d), this, [urls, target]() {
++                    send->addAction(QIcon::fromTheme(QStringLiteral("drive-removable-media-usb")), i18nd("sevenplasma", "Removable Disk (%1)").arg(d), this, [urls, target]() {
 +                        KIO::copy(urls, QUrl::fromLocalFile(target));
 +                    });
 +                }
@@ -1780,13 +1780,13 @@ index b5d2c66..b41a7b9 100644
 -            m_copyToMenu->setUrls(urls);
 -            m_copyToMenu->setReadOnly(!itemProperties.supportsMoving());
 -            m_copyToMenu->addActionsTo(menu);
-+            menu->addAction(QStringLiteral("Вирізати"), m_actionCollection.action(QStringLiteral("cut")), &QAction::trigger);
-+            menu->addAction(QStringLiteral("Копіювати"), m_actionCollection.action(QStringLiteral("copy")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Cut"), m_actionCollection.action(QStringLiteral("cut")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Copy"), m_actionCollection.action(QStringLiteral("copy")), &QAction::trigger);
 +            if (single && first.isDir()) {
 +                // Windows 7 shows "Paste" only while there is something to paste
 +                QAction *pasteTo = m_actionCollection.action(QStringLiteral("pasteto"));
 +                if (pasteTo->isEnabled()) {
-+                    menu->addAction(QStringLiteral("Вставити"), pasteTo, &QAction::trigger);
++                    menu->addAction(i18nd("sevenplasma", "Paste"), pasteTo, &QAction::trigger);
 +                }
 +            }
              menu->addSeparator();
@@ -1794,19 +1794,19 @@ index b5d2c66..b41a7b9 100644
  
 -        // Properties
 -        if (KPropertiesDialog::canDisplay(items)) {
-+            menu->addAction(QStringLiteral("Створити ярлик"), this, [urls]() {
++            menu->addAction(i18nd("sevenplasma", "Create shortcut"), this, [urls]() {
 +                for (const QUrl &u : urls) {
 +                    const QFileInfo fi(u.toLocalFile());
-+                    QString link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + QStringLiteral(" — ярлик");
++                    QString link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + i18nd("sevenplasma", " - Shortcut");
 +                    for (int n = 2; QFileInfo::exists(link); ++n) {
-+                        link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + QStringLiteral(" — ярлик (%1)").arg(n);
++                        link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + i18nd("sevenplasma", " - Shortcut (%1)").arg(n);
 +                    }
 +                    QFile::link(fi.absoluteFilePath(), link);
 +                }
 +            })->setEnabled(local);
-+            menu->addAction(QStringLiteral("Видалити"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
++            menu->addAction(i18nd("sevenplasma", "Delete"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
 +            if (single) {
-+                menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++                menu->addAction(i18nd("sevenplasma", "Rename"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
 +            }
              menu->addSeparator();
 -            QAction *act = new QAction(QIcon::fromTheme(QStringLiteral("document-properties")), i18n("&Properties"), menu);
@@ -1814,7 +1814,7 @@ index b5d2c66..b41a7b9 100644
 -            QObject::connect(act, &QAction::triggered, this, &FolderModel::openPropertiesDialog);
 -            menu->addAction(act);
 +            if (KPropertiesDialog::canDisplay(items)) {
-+                QObject::connect(menu->addAction(QStringLiteral("Властивості")), &QAction::triggered, this, &FolderModel::openPropertiesDialog);
++                QObject::connect(menu->addAction(i18nd("sevenplasma", "Properties")), &QAction::triggered, this, &FolderModel::openPropertiesDialog);
 +            }
          }
      }
@@ -2029,7 +2029,7 @@ index b911082..476c1dc 100644
      QStyleOptionRubberBand opt;
      opt.state = QStyle::State_None;
 diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
-index 0b3b9a0..8ebc956 100644
+index 0b3b9a0..783a87d 100644
 --- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
 +++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
 @@ -98,12 +98,104 @@ ViewPropertiesMenu::ViewPropertiesMenu(QObject *parent)
@@ -2042,9 +2042,9 @@ index 0b3b9a0..8ebc956 100644
 +    m_win7Size = new QActionGroup(this);
 +    m_win7Size->setExclusionPolicy(QActionGroup::ExclusionPolicy::ExclusiveOptional);
 +    // Plasma icon size index: 1 = 32 px, 2 = 48 px, 4 = 96 px (like Windows' small / medium / large)
-+    const QList<QPair<QString, int>> sizes{{QStringLiteral("Великі піктограми"), 4},
-+                                           {QStringLiteral("Середні піктограми"), 2},
-+                                           {QStringLiteral("Дрібні піктограми"), 1}};
++    const QList<QPair<QString, int>> sizes{{i18nd("sevenplasma", "Large icons"), 4},
++                                           {i18nd("sevenplasma", "Medium icons"), 2},
++                                           {i18nd("sevenplasma", "Small icons"), 1}};
 +    for (const auto &[text, value] : sizes) {
 +        QAction *a = m_win7ViewMenu->addAction(text);
 +        a->setCheckable(true);
@@ -2057,18 +2057,18 @@ index 0b3b9a0..8ebc956 100644
 +        Q_EMIT iconSizeChanged();
 +    });
 +    m_win7ViewMenu->addSeparator();
-+    m_win7AutoArrange = m_win7ViewMenu->addAction(QStringLiteral("Упорядковувати піктограми автоматично"));
++    m_win7AutoArrange = m_win7ViewMenu->addAction(i18nd("sevenplasma", "Auto arrange icons"));
 +    m_win7AutoArrange->setCheckable(true);
 +    connect(m_win7AutoArrange, &QAction::triggered, this, [this](bool on) {
 +        setSortMode(on ? int(KDirModel::Name) : -1);
 +        Q_EMIT sortModeChanged();
 +    });
-+    QAction *grid = m_win7ViewMenu->addAction(QStringLiteral("Вирівняти піктограми за сіткою"));
++    QAction *grid = m_win7ViewMenu->addAction(i18nd("sevenplasma", "Align icons to grid"));
 +    grid->setCheckable(true);
 +    grid->setChecked(true);
 +    grid->setEnabled(false); // Plasma always keeps desktop icons on a grid
 +    m_win7ViewMenu->addSeparator();
-+    m_win7ShowIcons = m_win7ViewMenu->addAction(QStringLiteral("Відображати піктограми робочого стола"));
++    m_win7ShowIcons = m_win7ViewMenu->addAction(i18nd("sevenplasma", "Show desktop icons"));
 +    m_win7ShowIcons->setCheckable(true);
 +    m_win7ShowIcons->setChecked(true);
 +    connect(m_win7ShowIcons, &QAction::triggered, this, &ViewPropertiesMenu::showIconsChanged);
@@ -2076,10 +2076,10 @@ index 0b3b9a0..8ebc956 100644
 +
 +    // ---- Windows 7 "Sort by" menu: sorts once, no check marks ----
 +    m_win7SortMenu = new QMenu();
-+    const QList<QPair<QString, int>> sorts{{QStringLiteral("Ім'я"), int(KDirModel::Name)},
-+                                           {QStringLiteral("Розмір"), int(KDirModel::Size)},
-+                                           {QStringLiteral("Тип елемента"), int(KDirModel::Type)},
-+                                           {QStringLiteral("Дата змінення"), int(KDirModel::ModifiedTime)}};
++    const QList<QPair<QString, int>> sorts{{i18nd("sevenplasma", "Name"), int(KDirModel::Name)},
++                                           {i18nd("sevenplasma", "Size"), int(KDirModel::Size)},
++                                           {i18nd("sevenplasma", "Item type"), int(KDirModel::Type)},
++                                           {i18nd("sevenplasma", "Date modified"), int(KDirModel::ModifiedTime)}};
 +    for (const auto &[text, value] : sorts) {
 +        QAction *a = m_win7SortMenu->addAction(text);
 +        connect(a, &QAction::triggered, this, [this, value]() {
@@ -2206,7 +2206,7 @@ index e229b8d..8a780dd 100644
                  iconName = "notification-disabled";
              } else if (compactRoot.unreadCount > 0) {
 diff --git a/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml b/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
-index 4a9c605..2c9bd28 100644
+index 4a9c605..fb32a90 100644
 --- a/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
 +++ b/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
 @@ -43,9 +43,10 @@ PlasmaExtras.Representation {
@@ -2296,8 +2296,8 @@ index 4a9c605..2c9bd28 100644
 +                            font.pointSize: acFlyout.flyoutFont.pointSize
 +                            font.bold: true
 +                            color: "#0066cc"
-+                            text: acFlyout.messages.length === 0 ? "Наразі проблем не виявлено"
-+                                  : "Вирішення проблем ПК: " + acFlyout.plural(acFlyout.messages.length, "повідомлення", "повідомлення", "повідомлень")
++                            text: acFlyout.messages.length === 0 ? i18nd("sevenplasma", "No current issues detected")
++                                  : i18nd("sevenplasma", "Solve PC issues: ") + acFlyout.plural(acFlyout.messages.length, i18nd("sevenplasma", "message"), i18nd("sevenplasma", "message"), i18ndc("sevenplasma", "many", "messages"))
 +                        }
 +                        Text {
 +                            Layout.fillWidth: true
@@ -2305,8 +2305,8 @@ index 4a9c605..2c9bd28 100644
 +                            visible: acFlyout.important > 0
 +                            font: acFlyout.flyoutFont
 +                            color: "#0066cc"
-+                            text: acFlyout.plural(acFlyout.important, "важливе повідомлення", "важливі повідомлення", "важливих повідомлень")
-+                                  + "   " + "Усього: " + acFlyout.messages.length
++                            text: acFlyout.plural(acFlyout.important, i18nd("sevenplasma", "important message"), i18nd("sevenplasma", "important messages"), i18ndc("sevenplasma", "many", "important messages"))
++                                  + "   " + i18nd("sevenplasma", "Total: ") + acFlyout.messages.length
 +                        }
 +                    }
 +                }
@@ -2326,7 +2326,7 @@ index 4a9c605..2c9bd28 100644
 +                    wrapMode: Text.WordWrap
 +                    font: acFlyout.flyoutFont
 +                    color: "#000000"
-+                    text: "За допомогою Центру підтримки можна переглядати останні повідомлення про стан комп'ютера й знаходити рішення проблем."
++                    text: i18nd("sevenplasma", "Use Action Center to review the latest messages about your computer and find solutions to problems.")
 +                }
 +
 +                // the messages: one blue line each, a light blue box under the mouse
@@ -2398,7 +2398,7 @@ index 4a9c605..2c9bd28 100644
                  asynchronous: true
  
 diff --git a/plasma/plasmoids/src/notifications_src/notifications/main.qml b/plasma/plasmoids/src/notifications_src/notifications/main.qml
-index c73fe41..e216c71 100644
+index c73fe41..4b75b34 100644
 --- a/plasma/plasmoids/src/notifications_src/notifications/main.qml
 +++ b/plasma/plasmoids/src/notifications_src/notifications/main.qml
 @@ -18,6 +18,7 @@ import org.kde.kcmutils as KCMUtils
@@ -2466,7 +2466,7 @@ index c73fe41..e216c71 100644
  
      Plasmoid.status: effectiveStatus
  
-+    toolTipMainText: i18n("Центр підтримки")
++    toolTipMainText: i18nd("sevenplasma", "Action Center")
      toolTipSubText: {
          var lines = [];
  
@@ -2475,9 +2475,9 @@ index c73fe41..e216c71 100644
 +            const n = acImportant;
 +            if (n > 0) {
 +                const m10 = n % 10, m100 = n % 100;
-+                lines.push(n + (m10 === 1 && m100 !== 11 ? " важливе повідомлення" : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? " важливі повідомлення" : " важливих повідомлень")));
++                lines.push(n + (m10 === 1 && m100 !== 11 ? i18nd("sevenplasma", " important message") : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? i18nd("sevenplasma", " important messages") : i18ndc("sevenplasma", "many", " important messages"))));
 +            }
-+            lines.push("Усього повідомлень: " + acMessages.length);
++            lines.push(i18nd("sevenplasma", "Total messages: ") + acMessages.length);
 +        }
 +
          if (jobAggregator.count > 0) {
@@ -2488,7 +2488,7 @@ index c73fe41..e216c71 100644
      }
  
 -    Plasmoid.title: i18n("Open Action Center")
-+    Plasmoid.title: i18n("Відкрити Центр підтримки")
++    Plasmoid.title: i18nd("sevenplasma", "Open Action Center")
      // Even though the actual icon is drawn with custom code in CompactRepresentation,
      // set the icon property here anyway because it's useful in other contexts
      Plasmoid.icon: {
@@ -2509,7 +2509,7 @@ index c73fe41..e216c71 100644
  
      fullRepresentation: FullRepresentation {
 diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
-index a424fc4..529c14e 100644
+index a424fc4..5d7057c 100644
 --- a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
 +++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
 @@ -35,9 +35,26 @@ Item {
@@ -2545,7 +2545,7 @@ index a424fc4..529c14e 100644
              // If this is coming from the noninteractive authenticators
              if(kind != 0) return;
 -            showMessage(i18nd("kscreenlocker_greet", "The user name or password is incorrect."), "dialog-error");
-+            showMessage("Неправильне ім’я користувача або пароль.", "dialog-error");
++            showMessage(i18nd("sevenplasma", "The user name or password is incorrect."), "dialog-error");
          }
          function onBusyChanged() {
              /*if(!authenticator.busy && !statusPage.visible) {
@@ -2593,7 +2593,7 @@ index a424fc4..529c14e 100644
                          Layout.alignment: Qt.AlignHCenter
                          color: "white"
 -                        text: i18nd("kscreenlocker_greet", "Locked")
-+                        text: "Заблоковано"
++                        text: i18nd("sevenplasma", "Locked")
                      }
  
                      Item { implicitHeight: Kirigami.Units.smallSpacing - 1 }
@@ -2609,7 +2609,7 @@ index a424fc4..529c14e 100644
                              topPadding: 4
                              bottomPadding: 4
 -                            placeholderText: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Password")
-+                            placeholderText: "Пароль"
++                            placeholderText: i18nd("sevenplasma", "Password")
                              echoMode: TextInput.Password
                              inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                              background: BorderImage {
@@ -2624,7 +2624,7 @@ index a424fc4..529c14e 100644
                              Layout.fillWidth: true
  
 -                            text: i18nd("kscreenlocker_greet", "Caps Lock is on");
-+                            text: "Увімкнено клавішу Caps Lock.";
++                            text: i18nd("sevenplasma", "Caps Lock is on.");
                              icon.source: "dialog-warning"
                          }
  
@@ -2632,7 +2632,7 @@ index a424fc4..529c14e 100644
                              Layout.fillWidth: true
  
 -                            text: i18nd("kscreenlocker_greet", "(or place your fingerprint on the reader)")
-+                            text: "(або прикладіть палець до сканера)"
++                            text: i18nd("sevenplasma", "(or touch the fingerprint reader)")
                              icon.source: "dialog-information"
  
                              visible: authenticator.authenticatorTypes & ScreenLocker.Authenticator.Fingerprint
@@ -2641,7 +2641,7 @@ index a424fc4..529c14e 100644
                              Layout.fillWidth: true
  
 -                            text: i18nd("kscreenlocker_greet", "(or use your smartcard)")
-+                            text: "(або скористайтеся смарт-карткою)"
++                            text: i18nd("sevenplasma", "(or use your smart card)")
                              icon.source: "dialog-information"
  
                              visible: authenticator.authenticatorTypes & ScreenLocker.Authenticator.Smartcard
@@ -2655,7 +2655,7 @@ index a424fc4..529c14e 100644
  
                          focusPolicy: Qt.TabFocus
 -                        text: i18nd("kscreenlocker_greet", "Switch User")
-+                        text: "Змінити користувача"
++                        text: i18nd("sevenplasma", "Switch User")
                          label.font.pointSize: 11
  
                          onClicked: root.switchUserClicked()
@@ -2664,7 +2664,7 @@ index a424fc4..529c14e 100644
                      anchors.verticalCenterOffset: -36
  
 -                    statusText: i18nd("okular", "Welcome")
-+                    statusText: "Ласкаво просимо"
++                    statusText: i18nd("sevenplasma", "Welcome")
                      speen: welcomePage.visible
                  }
              }
@@ -2809,7 +2809,7 @@ index 94c1ef9..727a313 100644
  }
 diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml
 new file mode 100644
-index 0000000..8fdc599
+index 0000000..4752672
 --- /dev/null
 +++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml
 @@ -0,0 +1,138 @@
@@ -2837,12 +2837,12 @@ index 0000000..8fdc599
 +    onVisibleChanged: if (visible) { checks = [false, false, false, keyboardOn, false, false]; dirty = false; }
 +
 +    readonly property var labels: [
-+        "Читати текст на екрані вголос (Екранний диктор)",
-+        "Збільшувати елементи на екрані (Екранна лупа)",
-+        "Збільшити контрастність кольорів (Висока контрастність)",
-+        "Вводити текст без клавіатури (Екранна клавіатура)",
-+        "Натискати сполучення клавіш по одній (Залипання клавіш)",
-+        "Ігнорувати повторні натискання (Фільтрація введення)"
++        i18nd("sevenplasma", "Read the text on the screen aloud (Narrator)"),
++        i18nd("sevenplasma", "Make items on the screen larger (Magnifier)"),
++        i18nd("sevenplasma", "Make colors easier to see (High Contrast)"),
++        i18nd("sevenplasma", "Type without the keyboard (On-Screen Keyboard)"),
++        i18nd("sevenplasma", "Press keyboard shortcuts one key at a time (Sticky Keys)"),
++        i18nd("sevenplasma", "Ignore repeated keystrokes (Filter Keys)")
 +    ]
 +
 +    BorderImage {
@@ -2852,7 +2852,7 @@ index 0000000..8fdc599
 +    }
 +    Text {
 +        x: 29; y: 8
-+        text: "Спеціальні можливості"
++        text: i18nd("sevenplasma", "Ease of Access")
 +        font.family: "Segoe UI"; font.pixelSize: 12
 +        color: "#1e395b"
 +    }
@@ -2874,13 +2874,13 @@ index 0000000..8fdc599
 +
 +    Text {
 +        x: 30; y: 40
-+        text: "Полегшення роботи з комп’ютером"
++        text: i18nd("sevenplasma", "Make your computer easier to use")
 +        font.family: "Segoe UI"; font.pixelSize: 15
 +        color: "#003399"
 +    }
 +    Text {
 +        x: 30; y: 64
-+        text: "Натисніть клавішу ПРОБІЛ, щоб вибрати виділений параметр."
++        text: i18nd("sevenplasma", "Press the SPACEBAR to select the highlighted option.")
 +        font.family: "Segoe UI"; font.pixelSize: 11
 +        color: "#7f1e1e"
 +    }
@@ -2948,12 +2948,12 @@ index 0000000..8fdc599
 +    }
 +
 +    DlgButton { x: 250; y: 365; label: "OK"; isDefault: true; onClicked: { dlg.apply(dlg.checks[3]); dlg.closed(); } }
-+    DlgButton { x: 331; y: 365; label: "Скасувати"; onClicked: dlg.closed() }
-+    DlgButton { x: 412; y: 365; label: "Застосувати"; enabledButton: dlg.dirty; onClicked: { dlg.apply(dlg.checks[3]); dlg.dirty = false; } }
++    DlgButton { x: 331; y: 365; label: i18nd("sevenplasma", "Cancel"); onClicked: dlg.closed() }
++    DlgButton { x: 412; y: 365; label: i18nd("sevenplasma", "Apply"); enabledButton: dlg.dirty; onClicked: { dlg.apply(dlg.checks[3]); dlg.dirty = false; } }
 +}
 diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml
 new file mode 100644
-index 0000000..f0c20a4
+index 0000000..58456ea
 --- /dev/null
 +++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml
 @@ -0,0 +1,214 @@
@@ -3082,7 +3082,7 @@ index 0000000..f0c20a4
 +    }
 +    Text {
 +        x: 29; y: 8
-+        text: "Екранна клавіатура"
++        text: i18nd("sevenplasma", "On-Screen Keyboard")
 +        font.family: "Segoe UI"; font.pixelSize: 12
 +        color: "#1e395b"
 +        renderType: Text.NativeRendering

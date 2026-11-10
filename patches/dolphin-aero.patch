@@ -1194,7 +1194,7 @@ index 796c723..1ee5983 100644
  
      QAction *propertiesAction = m_mainWindow->actionCollection()->action(QStringLiteral("properties"));
 diff --git a/src/dolphinmainwindow.cpp b/src/dolphinmainwindow.cpp
-index e4d580f..284078e 100644
+index e4d580f..1955f4b 100644
 --- a/src/dolphinmainwindow.cpp
 +++ b/src/dolphinmainwindow.cpp
 @@ -7,6 +7,12 @@
@@ -2048,17 +2048,17 @@ index e4d580f..284078e 100644
 +        QStandardPaths::StandardLocation location;
 +        const char *name;
 +    } known[] = {
-+        {QStandardPaths::DesktopLocation, "Робочий стіл"},
-+        {QStandardPaths::DownloadLocation, "Завантаження"},
-+        {QStandardPaths::DocumentsLocation, "Документи"},
-+        {QStandardPaths::MusicLocation, "Музика"},
-+        {QStandardPaths::PicturesLocation, "Зображення"},
-+        {QStandardPaths::MoviesLocation, "Відео"},
++        {QStandardPaths::DesktopLocation, "Desktop"},
++        {QStandardPaths::DownloadLocation, "Downloads"},
++        {QStandardPaths::DocumentsLocation, "Documents"},
++        {QStandardPaths::MusicLocation, "Music"},
++        {QStandardPaths::PicturesLocation, "Pictures"},
++        {QStandardPaths::MoviesLocation, "Videos"},
 +    };
 +    for (const auto &k : known) {
 +        const QString dir = QStandardPaths::writableLocation(k.location);
 +        if (!dir.isEmpty() && QDir::cleanPath(dir) == path && path != home) {
-+            return QString::fromUtf8(k.name);
++            return i18nd("sevenplasma", k.name);
 +        }
 +    }
 +    return {};
@@ -3795,7 +3795,7 @@ index 81ade47..1462df3 100644
   * Attaches URLs to an existing Dolphin instance if possible.
   * If @p preferredService is a valid dbus service, it will be tried first.
 diff --git a/src/kitemviews/kfileitemlistwidget.cpp b/src/kitemviews/kfileitemlistwidget.cpp
-index ccb1819..339401e 100644
+index ccb1819..b4c2df6 100644
 --- a/src/kitemviews/kfileitemlistwidget.cpp
 +++ b/src/kitemviews/kfileitemlistwidget.cpp
 @@ -58,8 +58,15 @@ QString KFileItemListWidgetInformant::roleText(const QByteArray &role, const QHa
@@ -3821,7 +3821,7 @@ index ccb1819..339401e 100644
          }
 +    } else if (role == "type" && values.value("isDir").toBool() && forUsageAs == KStandardItemListWidgetInformant::ForUsageAs::DisplayedText) {
 +        // Windows 7 calls every folder "File folder"
-+        text = QStringLiteral("Папка з файлами");
++        text = i18nd("sevenplasma", "File folder");
      } else {
          text = KStandardItemListWidgetInformant::roleText(role, values, forUsageAs);
      }
@@ -4653,7 +4653,7 @@ index c5e5358..11dc6fb 100644
      } else if (url.isLocalFile()) {
 diff --git a/src/panels/places/win7navigationpane.cpp b/src/panels/places/win7navigationpane.cpp
 new file mode 100644
-index 0000000..8b14a5c
+index 0000000..48fb834
 --- /dev/null
 +++ b/src/panels/places/win7navigationpane.cpp
 @@ -0,0 +1,751 @@
@@ -4727,9 +4727,9 @@ index 0000000..8b14a5c
 +// same order as Windows 7: Desktop, Downloads, Recent Places
 +QList<Favorite> defaultFavorites()
 +{
-+    return {{QStringLiteral("Робочий стіл"), QStringLiteral("desktop"), localUrl(QStandardPaths::DesktopLocation)},
-+            {QStringLiteral("Завантаження"), QStringLiteral("folder-downloads"), localUrl(QStandardPaths::DownloadLocation)},
-+            {QStringLiteral("Недавні місця"), QStringLiteral("folder-recent"), QUrl(QStringLiteral("recentlyused:/locations/"))}};
++    return {{i18nd("sevenplasma", "Desktop"), QStringLiteral("desktop"), localUrl(QStandardPaths::DesktopLocation)},
++            {i18nd("sevenplasma", "Downloads"), QStringLiteral("folder-downloads"), localUrl(QStandardPaths::DownloadLocation)},
++            {i18nd("sevenplasma", "Recent Places"), QStringLiteral("folder-recent"), QUrl(QStringLiteral("recentlyused:/locations/"))}};
 +}
 +
 +QList<Favorite> loadFavorites()
@@ -5122,7 +5122,7 @@ index 0000000..8b14a5c
 +    if (!udi.isEmpty()) {
 +        for (const Solid::Device &od : Win7ComputerPage::emptyOpticalDrives(m_places)) {
 +            if (od.udi() == udi) {
-+                Q_EMIT errorMessage(QStringLiteral("Вставте диск у пристрій \"%1\".").arg(Win7ComputerPage::driveNames(m_places).value(udi)));
++                Q_EMIT errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".").arg(Win7ComputerPage::driveNames(m_places).value(udi)));
 +                return;
 +            }
 +        }
@@ -5196,30 +5196,30 @@ index 0000000..8b14a5c
 +    QMenu menu(this);
 +    const bool expandable = m_model->hasChildren(index) || index.data(LazyRole).toBool();
 +    auto addToggle = [&]() {
-+        QAction *a = menu.addAction(isExpanded(index) ? QStringLiteral("Згорнути") : QStringLiteral("Розгорнути"), this, [this, index]() {
++        QAction *a = menu.addAction(isExpanded(index) ? i18nd("sevenplasma", "Collapse") : i18nd("sevenplasma", "Expand"), this, [this, index]() {
 +            setExpanded(index, !isExpanded(index));
 +        });
 +        menu.setDefaultAction(a);
 +    };
 +    auto addOpen = [&]() {
-+        QAction *a = menu.addAction(QStringLiteral("Відкрити"), this, [this, url]() {
++        QAction *a = menu.addAction(i18nd("sevenplasma", "Open"), this, [this, url]() {
 +            Q_EMIT placeActivated(url);
 +        });
 +        menu.setDefaultAction(a);
 +    };
 +    auto addNewWindow = [&]() {
-+        menu.addAction(QStringLiteral("Відкрити в новому вікні"), this, [this, url]() {
++        menu.addAction(i18nd("sevenplasma", "Open in new window"), this, [this, url]() {
 +            Q_EMIT newWindowRequested(url);
 +        });
 +    };
 +
 +    if (item == m_favorites) {
 +        addToggle();
-+        menu.addAction(QStringLiteral("Сортувати за іменем"), this, [this]() {
++        menu.addAction(i18nd("sevenplasma", "Sort by name"), this, [this]() {
 +            m_favorites->sortChildren(0);
 +            saveFavorites();
 +        });
-+        menu.addAction(QStringLiteral("Відновити посилання обраного"), this, [this]() {
++        menu.addAction(i18nd("sevenplasma", "Restore favorites links"), this, [this]() {
 +            KConfigGroup g(KSharedConfig::openConfig(QStringLiteral("dolphinrc")), QStringLiteral("Win7Favorites"));
 +            g.deleteEntry("Items");
 +            g.sync();
@@ -5228,7 +5228,7 @@ index 0000000..8b14a5c
 +        menu.addSeparator();
 +        addNewWindow();
 +        menu.addSeparator();
-+        QAction *add = menu.addAction(QStringLiteral("Додати поточне розташування до обраного"), this, [this]() {
++        QAction *add = menu.addAction(i18nd("sevenplasma", "Add current location to Favorites"), this, [this]() {
 +            const QUrl u = m_url;
 +            QString name = u.fileName();
 +            if (name.isEmpty()) {
@@ -5248,13 +5248,13 @@ index 0000000..8b14a5c
 +        addOpen();
 +        addNewWindow();
 +        menu.addSeparator();
-+        menu.addAction(QStringLiteral("Видалити"), this, [this, item]() {
++        menu.addAction(i18nd("sevenplasma", "Delete"), this, [this, item]() {
 +            m_favorites->removeRow(item->row());
 +            saveFavorites();
 +        });
-+        menu.addAction(QStringLiteral("Перейменувати"), this, [this, item]() {
++        menu.addAction(i18nd("sevenplasma", "Rename"), this, [this, item]() {
 +            bool ok = false;
-+            const QString name = QInputDialog::getText(this, QStringLiteral("Перейменувати"), QStringLiteral("Нове ім'я:"), QLineEdit::Normal, item->text(), &ok).trimmed();
++            const QString name = QInputDialog::getText(this, i18nd("sevenplasma", "Rename"), i18nd("sevenplasma", "New name:"), QLineEdit::Normal, item->text(), &ok).trimmed();
 +            if (ok && !name.isEmpty()) {
 +                item->setText(name);
 +                saveFavorites();
@@ -5269,7 +5269,7 @@ index 0000000..8b14a5c
 +        addNewWindow();
 +        if (url.isLocalFile()) {
 +            menu.addSeparator();
-+            menu.addAction(QStringLiteral("Копіювати"), this, [url]() {
++            menu.addAction(i18nd("sevenplasma", "Copy"), this, [url]() {
 +                auto *mime = new QMimeData;
 +                mime->setUrls({url});
 +                QApplication::clipboard()->setMimeData(mime);
@@ -5277,7 +5277,7 @@ index 0000000..8b14a5c
 +        }
 +        if (url.isLocalFile() || url.scheme() == QLatin1String("trash")) {
 +            menu.addSeparator();
-+            menu.addAction(QStringLiteral("Властивості"), this, [this, url]() {
++            menu.addAction(i18nd("sevenplasma", "Properties"), this, [this, url]() {
 +                KPropertiesDialog::showDialog(url, this);
 +            });
 +        }
@@ -5485,7 +5485,7 @@ index 0000000..64a5374
 +#endif // WIN7NAVIGATIONPANE_H
 diff --git a/src/win7computerpage.cpp b/src/win7computerpage.cpp
 new file mode 100644
-index 0000000..f4ccd65
+index 0000000..aaf4bc8
 --- /dev/null
 +++ b/src/win7computerpage.cpp
 @@ -0,0 +1,1014 @@
@@ -5554,16 +5554,16 @@ index 0000000..f4ccd65
 +    const auto *od = driveDevice.as<Solid::OpticalDrive>();
 +    const auto m = od ? od->supportedMedia() : Solid::OpticalDrive::MediumTypes();
 +    if (m & (Solid::OpticalDrive::Bdre | Solid::OpticalDrive::Bdr)) {
-+        return QStringLiteral("Дисковод BD-RE (%1)").arg(letter);
++        return i18nd("sevenplasma", "BD-RE Drive (%1)").arg(letter);
 +    }
 +    if (m & Solid::OpticalDrive::Bd) {
-+        return QStringLiteral("Дисковод BD-ROM (%1)").arg(letter);
++        return i18nd("sevenplasma", "BD-ROM Drive (%1)").arg(letter);
 +    }
 +    if (m & (Solid::OpticalDrive::Dvdrw | Solid::OpticalDrive::Dvdplusrw | Solid::OpticalDrive::Dvdr | Solid::OpticalDrive::Dvdplusr)) {
-+        return QStringLiteral("Дисковод DVD RW (%1)").arg(letter);
++        return i18nd("sevenplasma", "DVD RW Drive (%1)").arg(letter);
 +    }
 +    if (m & Solid::OpticalDrive::Dvd) {
-+        return QStringLiteral("DVD-дисковод (%1)").arg(letter);
++        return i18nd("sevenplasma", "DVD Drive (%1)").arg(letter);
 +    }
 +    return i18nc("@item Windows 7 drive name, %1 is a drive letter like E:", "CD Drive (%1)", letter);
 +}
@@ -5832,7 +5832,7 @@ index 0000000..f4ccd65
 +            return;
 +        }
 +        if (d.emptyOptical) {
-+            Q_EMIT m_page->errorMessage(QStringLiteral("Вставте диск у пристрій \"%1\".").arg(d.name));
++            Q_EMIT m_page->errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".").arg(d.name));
 +            return;
 +        }
 +        if (d.isProtected) {

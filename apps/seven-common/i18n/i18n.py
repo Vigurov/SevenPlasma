@@ -64,7 +64,12 @@ def text(src, parts):
 
 
 def files(app):
+    if os.path.isfile(app):                      # a list of files (KDE parts spread over several trees)
+        return [l.strip() for l in open(app) if l.strip()]
     return sorted(glob.glob(os.path.join(app, '*.h')) + glob.glob(os.path.join(app, '*.cpp')))
+
+
+KDE = os.environ.get('I18N_KDE_DOMAIN')         # set: KDE code / QML -> i18nd(domain, ...), uk.po instead of uk.ts
 
 
 def extract(app, out):
@@ -79,12 +84,12 @@ def extract(app, out):
             if CYR.search(t):
                 line = src.count('\n', 0, s) + 1
                 d = found.setdefault(t, {'uk': t, 'en': old.get(t, {}).get('en', ''), 'where': []})
-                d['where'].append('%s:%d' % (os.path.basename(f), line))
+                d['where'].append('%s:%d' % (f if os.path.isfile(app) else os.path.basename(f), line))
     json.dump(list(found.values()), open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
     print(len(found), 'strings,', sum(1 for d in found.values() if not d['en']), 'without English')
 
 
-WRAP = re.compile(r'(QStringLiteral|QString::fromUtf8|QObject::tr|tr|QLatin1String|QString)\s*\(\s*$')
+WRAP = re.compile(r'(QStringLiteral|QString::fromUtf8|QObject::tr|tr|QLatin1String|QString|i18n|qsTr)\s*\(\s*$')
 
 
 def apply(app, strings):
@@ -120,6 +125,16 @@ def apply(app, strings):
             m = WRAP.search(before)
             close = re.match(r'\s*\)', src[e:])
             lit = '"%s"' % re.sub(r'(?<!\\)"', r'\\"', en)   # a " of the English text must be escaped
+            qml = f.endswith('.qml') or (f.endswith('.js') and '.pragma library' not in src)   # i18nd() exists there
+            if KDE and (m or qml):   # in QML a bare literal can become a call too
+                call = ('i18ndc("%s", "%s", %s)' % (KDE, note, lit)) if note else ('i18nd("%s", %s)' % (KDE, lit))
+                if m and close:
+                    out.append(before[:m.start()] + call)
+                    pos = e + close.end()
+                else:
+                    out.append(before + call)
+                    pos = e
+                continue
             if m and close:
                 call = 'tr7(%s%s)' % (lit, ', "%s"' % note if note else '')
                 out.append(before[:m.start()] + call)
@@ -132,12 +147,19 @@ def apply(app, strings):
                     pairs.setdefault((en, ''), t)
         out.append(src[pos:])
         new = ''.join(out)
-        if new != src:
+        if new != src and KDE:
+            if f.endswith(('.cpp', '.h')) and 'KLocalizedString' not in new:
+                new = re.sub(r'((?:#include [<"][^\n]*\n)+)', r'\1#include <KLocalizedString>\n', new, count=1)
+            open(f, 'w', encoding='utf-8').write(new)
+        elif new != src:
             if 'win7i18n.h' not in new and not f.endswith('win7i18n.h'):
                 new = re.sub(r'(#pragma once\n)', r'\1#include "win7i18n.h"\n', new, count=1) \
                     if '#pragma once' in new else '#include "win7i18n.h"\n' + new
             open(f, 'w', encoding='utf-8').write(new)
-    write_ts(os.path.join(app, 'i18n', 'uk.ts'), pairs)
+    if KDE:
+        write_po(os.environ['I18N_PO'], pairs)
+    else:
+        write_ts(os.path.join(app, 'i18n', 'uk.ts'), pairs)
     print(len(pairs), 'messages in i18n/uk.ts')
     if bare:   # literals in tables: the code that shows them must call tr7()
         print('plain literals (check their use):', ' '.join(bare))
@@ -174,6 +196,35 @@ def write_ts(path, pairs):
         lines.append('    </message>')
     lines += ['</context>', '</TS>', '']
     open(path, 'w', encoding='utf-8').write('\n'.join(lines))
+
+
+def po_quote(t):
+    return '"' + t.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n').replace('\t', '\\t') + '"'
+
+
+def write_po(path, pairs):
+    """gettext catalog of the KDE domain (merged with what earlier runs wrote)"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    old = {}
+    if os.path.exists(path):
+        cur = {}
+        for line in open(path, encoding='utf-8').read().split('\n') + ['']:
+            m = re.match(r'(msgctxt|msgid|msgstr) (".*")$', line)
+            if m:
+                cur[m.group(1)] = eval(m.group(2))
+            elif not line.strip() and 'msgid' in cur:
+                if cur['msgid']:
+                    old[(cur['msgid'], cur.get('msgctxt', ''))] = cur.get('msgstr', '')
+                cur = {}
+    for (en, note), uk in pairs.items():
+        old[(unescape(en), note)] = unescape(uk)
+    out = ['msgid ""', 'msgstr ""', '"Content-Type: text/plain; charset=UTF-8\\n"', '"Language: uk\\n"',
+           '"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\\n"', '']
+    for (en, note), uk in sorted(old.items()):
+        if note:
+            out.append('msgctxt ' + po_quote(note))
+        out += ['msgid ' + po_quote(en), 'msgstr ' + po_quote(uk), '']
+    open(path, 'w', encoding='utf-8').write('\n'.join(out))
 
 
 def check(app, strings=None):

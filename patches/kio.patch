@@ -1,5 +1,5 @@
 diff --git a/src/core/copyjob.cpp b/src/core/copyjob.cpp
-index e32f257..5a6e2f7 100644
+index e32f257..6aaf321 100644
 --- a/src/core/copyjob.cpp
 +++ b/src/core/copyjob.cpp
 @@ -44,6 +44,7 @@
@@ -44,7 +44,7 @@ index e32f257..5a6e2f7 100644
 +        base = name.left(dot);
 +        ext = name.mid(dot);
 +    }
-+    const QString copy = QStringLiteral(" - копія");
++    const QString copy = i18nd("sevenplasma", " - Copy");
 +    QString candidate = base + copy + ext;
 +    for (int n = 2; QFileInfo::exists(dir + QLatin1Char('/') + candidate) || QFileInfo(dir + QLatin1Char('/') + candidate).isSymLink(); ++n) {
 +        candidate = base + copy + QStringLiteral(" (%1)").arg(n) + ext;
@@ -355,13 +355,14 @@ index 8dd0dd3..1b51cff 100644
      }
  
 diff --git a/src/filewidgets/kdiroperatordetailview.cpp b/src/filewidgets/kdiroperatordetailview.cpp
-index a927bc9..b6d24c2 100644
+index a927bc9..77daf05 100644
 --- a/src/filewidgets/kdiroperatordetailview.cpp
 +++ b/src/filewidgets/kdiroperatordetailview.cpp
-@@ -5,6 +5,11 @@
+@@ -5,6 +5,12 @@
  */
  
  #include "kdiroperatordetailview_p.h"
++#include <KLocalizedString>
 +
 +#include <KDirLister>
 +#include <QPainter>
@@ -370,7 +371,7 @@ index a927bc9..b6d24c2 100644
  #include "kfileitemselectionemblem.h"
  
  #include <kdirlister.h>
-@@ -159,3 +164,25 @@ void KDirOperatorDetailView::currentChanged(const QModelIndex &current, const QM
+@@ -159,3 +165,25 @@ void KDirOperatorDetailView::currentChanged(const QModelIndex &current, const QM
  }
  
  #include "moc_kdiroperatordetailview_p.cpp"
@@ -394,7 +395,7 @@ index a927bc9..b6d24c2 100644
 +    QPainter p(viewport());
 +    p.setPen(QColor(0x6d, 0x6d, 0x6d));
 +    p.drawText(textRect, Qt::AlignHCenter | Qt::AlignTop,
-+               filtered ? QStringLiteral("Немає елементів, що відповідають пошуку.") : QStringLiteral("Ця папка порожня."));
++               filtered ? i18nd("sevenplasma", "No items match your search.") : i18nd("sevenplasma", "This folder is empty."));
 +}
 diff --git a/src/filewidgets/kdiroperatordetailview_p.h b/src/filewidgets/kdiroperatordetailview_p.h
 index d26ec19..61a38c9 100644
@@ -607,15 +608,16 @@ index c7cbed3..4a152c6 100644
          KFileFilter allFilter(i18n("All Files"), {}, {QStringLiteral("application/octet-stream")});
  
 diff --git a/src/filewidgets/kfilewidget.cpp b/src/filewidgets/kfilewidget.cpp
-index 4f2dcf9..1c4bdcd 100644
+index 4f2dcf9..c847266 100644
 --- a/src/filewidgets/kfilewidget.cpp
 +++ b/src/filewidgets/kfilewidget.cpp
-@@ -13,6 +13,35 @@
+@@ -13,6 +13,36 @@
  */
  
  #include "kfilewidget.h"
 +#include "../../../seven-common/win7libraryheader.h"
 +
++#define WIN7_KDE_I18N // win7chrome.h: KDE translations (domain "sevenplasma")
 +#include "kfilewin7chrome.h"
 +#include "kfilewin7navpane.h"
 +#include "kfilewin7viewmenu.h"
@@ -646,7 +648,7 @@ index 4f2dcf9..1c4bdcd 100644
  
  #include "../utils_p.h"
  #include "kfilebookmarkhandler_p.h"
-@@ -69,8 +98,10 @@
+@@ -69,8 +99,10 @@
  #include <QPushButton>
  #include <QScreen>
  #include <QSplitter>
@@ -657,7 +659,7 @@ index 4f2dcf9..1c4bdcd 100644
  #include <QToolBar>
  
  #include <algorithm>
-@@ -221,6 +252,7 @@ public:
+@@ -221,6 +253,7 @@ public:
      QLabel *m_locationLabel = nullptr;
      QWidget *m_opsWidget = nullptr;
      QVBoxLayout *m_opsWidgetLayout = nullptr;
@@ -665,7 +667,7 @@ index 4f2dcf9..1c4bdcd 100644
  
      QLabel *m_filterLabel = nullptr;
      KUrlNavigator *m_urlNavigator = nullptr;
-@@ -229,6 +261,14 @@ public:
+@@ -229,6 +262,14 @@ public:
      QPushButton *m_cancelButton = nullptr;
      QDockWidget *m_placesDock = nullptr;
      KFilePlacesView *m_placesView = nullptr;
@@ -680,7 +682,7 @@ index 4f2dcf9..1c4bdcd 100644
      QSplitter *m_placesViewSplitter = nullptr;
      // caches the places view width. This value will be updated when the splitter
      // is moved. This allows us to properly set a value when the dialog itself
-@@ -425,6 +465,53 @@ KFileWidget::KFileWidget(const QUrl &_startDir, QWidget *parent)
+@@ -425,6 +466,53 @@ KFileWidget::KFileWidget(const QUrl &_startDir, QWidget *parent)
  
      d->initGUI(); // activate GM
  
@@ -734,7 +736,7 @@ index 4f2dcf9..1c4bdcd 100644
      // read our configuration
      KSharedConfig::Ptr config = KSharedConfig::openConfig();
      config->reparseConfiguration(); // grab newly added dirs by other processes (#403524)
-@@ -526,7 +613,7 @@ void KFileWidget::setFilters(const QList<KFileFilter> &filters, const KFileFilte
+@@ -526,7 +614,7 @@ void KFileWidget::setFilters(const QList<KFileFilter> &filters, const KFileFilte
      d->m_filterWidget->setFilters(filters, activeFilter);
      d->m_ops->updateDir();
      d->m_hasDefaultFilter = false;
@@ -743,7 +745,7 @@ index 4f2dcf9..1c4bdcd 100644
      d->updateFilterText();
  
      d->updateAutoSelectExtension();
-@@ -542,7 +629,7 @@ void KFileWidget::clearFilter()
+@@ -542,7 +630,7 @@ void KFileWidget::clearFilter()
      d->m_filterWidget->setFilters({}, KFileFilter());
      d->m_ops->clearFilter();
      d->m_hasDefaultFilter = false;
@@ -752,7 +754,7 @@ index 4f2dcf9..1c4bdcd 100644
  
      d->updateAutoSelectExtension();
  }
-@@ -1115,6 +1202,9 @@ void KFileWidgetPrivate::initDirOpWidgets()
+@@ -1115,6 +1203,9 @@ void KFileWidgetPrivate::initDirOpWidgets()
      bottomSparator->setFrameStyle(QFrame::HLine);
  
      q->connect(m_ops, &KDirOperator::urlEntered, q, [this](const QUrl &url) {
@@ -762,7 +764,7 @@ index 4f2dcf9..1c4bdcd 100644
          urlEntered(url);
      });
      q->connect(m_ops, &KDirOperator::fileHighlighted, q, [this](const KFileItem &item) {
-@@ -1134,8 +1224,110 @@ void KFileWidgetPrivate::initDirOpWidgets()
+@@ -1134,8 +1225,110 @@ void KFileWidgetPrivate::initDirOpWidgets()
          q->setSelectedUrls(urls);
      });
  
@@ -846,7 +848,7 @@ index 4f2dcf9..1c4bdcd 100644
 +                            } else {
 +                                // Windows 7 gives sizes in whole kilobytes, rounded up ("1 КБ" for 3 bytes)
 +                                const qulonglong kb = (item.size() + 1023) / 1024;
-+                                o->text = QLocale().toString(kb) + QStringLiteral(" КБ");
++                                o->text = QLocale().toString(kb) + i18nd("sevenplasma", " KB");
 +                            }
 +                        }
 +                    }
@@ -865,15 +867,15 @@ index 4f2dcf9..1c4bdcd 100644
 +                // wide enough for "Папка з файлами" (Windows 7 never cuts the type text)
 +                const QFontMetrics fm(lf);
 +                h->setSectionResizeMode(KDirModel::Type, QHeaderView::Interactive);
-+                h->resizeSection(KDirModel::Type, qMax(h->sectionSize(KDirModel::Type), fm.horizontalAdvance(QStringLiteral("Папка з файлами")) + 24));
++                h->resizeSection(KDirModel::Type, qMax(h->sectionSize(KDirModel::Type), fm.horizontalAdvance(i18nd("sevenplasma", "File folder")) + 24));
 +                h->setSectionResizeMode(KDirModel::Size, QHeaderView::Interactive);
-+                h->resizeSection(KDirModel::Size, qMax(h->sectionSize(KDirModel::Size), fm.horizontalAdvance(QStringLiteral("999,9 КіБ")) + 24));
++                h->resizeSection(KDirModel::Size, qMax(h->sectionSize(KDirModel::Size), fm.horizontalAdvance(i18nd("sevenplasma", "999.9 KiB")) + 24));
 +            });
 +        }
      });
  
      m_ops->dirLister()->setAutoErrorHandlingEnabled(false);
-@@ -1148,12 +1340,554 @@ void KFileWidgetPrivate::initDirOpWidgets()
+@@ -1148,12 +1341,554 @@ void KFileWidgetPrivate::initDirOpWidgets()
  
      initToolbar();
  
@@ -1432,7 +1434,7 @@ index 4f2dcf9..1c4bdcd 100644
  }
  
  void KFileWidgetPrivate::initZoomWidget()
-@@ -1328,7 +2062,7 @@ void KFileWidgetPrivate::initLocationWidget()
+@@ -1328,7 +2063,7 @@ void KFileWidgetPrivate::initLocationWidget()
      m_locationEdit->lineEdit()->setClearButtonEnabled(false);
  
      QAction *clearAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-clear")), {}, m_locationEdit->lineEdit());
@@ -1441,7 +1443,7 @@ index 4f2dcf9..1c4bdcd 100644
      clearAction->setVisible(false);
      q->connect(clearAction, &QAction::triggered, m_locationEdit->lineEdit(), &QLineEdit::clear);
      q->connect(m_locationEdit->lineEdit(), &QLineEdit::textEdited, q, [this, clearAction]() {
-@@ -1339,7 +2073,7 @@ void KFileWidgetPrivate::initLocationWidget()
+@@ -1339,7 +2074,7 @@ void KFileWidgetPrivate::initLocationWidget()
      });
  
      QAction *undoAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-undo")), i18nc("@info:tooltip", "Undo filename change"), m_locationEdit->lineEdit());
@@ -1450,7 +1452,7 @@ index 4f2dcf9..1c4bdcd 100644
      undoAction->setVisible(false);
      q->connect(undoAction, &QAction::triggered, m_locationEdit->lineEdit(), &QLineEdit::undo);
      q->connect(m_locationEdit->lineEdit(), &QLineEdit::textEdited, q, [this, undoAction]() {
-@@ -1506,7 +2240,18 @@ void KFileWidgetPrivate::initPlacesPanel()
+@@ -1506,7 +2241,18 @@ void KFileWidgetPrivate::initPlacesPanel()
      // TODO: KDE5 ### REMOVE THIS when KDirOperator's initial URL (in the c'tor) is gone.
      m_placesView->setUrl(m_url);
  
@@ -1470,7 +1472,7 @@ index 4f2dcf9..1c4bdcd 100644
      m_placesViewSplitter->insertWidget(0, m_placesDock);
  
      // initialize the size of the splitter
-@@ -1516,6 +2261,10 @@ void KFileWidgetPrivate::initPlacesPanel()
+@@ -1516,6 +2262,10 @@ void KFileWidgetPrivate::initPlacesPanel()
      setPlacesViewSplitterSizes();
  
      QObject::connect(m_placesDock, &QDockWidget::visibilityChanged, q, [this](bool visible) {
@@ -1481,7 +1483,7 @@ index 4f2dcf9..1c4bdcd 100644
          togglePlacesPanel(visible, m_placesDock);
      });
  }
-@@ -1537,9 +2286,18 @@ void KFileWidgetPrivate::initGUI()
+@@ -1537,9 +2287,18 @@ void KFileWidgetPrivate::initGUI()
      m_boxLayout = new QVBoxLayout(q);
      m_boxLayout->setContentsMargins(0, 0, 0, 0); // no additional margin to the already existing
  
@@ -1500,7 +1502,7 @@ index 4f2dcf9..1c4bdcd 100644
      m_boxLayout->addWidget(m_placesViewSplitter);
  
      QObject::connect(m_placesViewSplitter, &QSplitter::splitterMoved, q, [this](int pos, int index) {
-@@ -1556,24 +2314,231 @@ void KFileWidgetPrivate::initGUI()
+@@ -1556,24 +2315,231 @@ void KFileWidgetPrivate::initGUI()
  
      m_lafBox->addRow(m_quickFilter);
      m_lafBox->addRow(m_locationLabel, m_locationEdit);
@@ -1740,7 +1742,7 @@ index 4f2dcf9..1c4bdcd 100644
  
      auto updateTabOrder = [this]() {
          // First the url navigator and its internal tab order
-@@ -1710,6 +2675,9 @@ void KFileWidgetPrivate::urlEntered(const QUrl &url)
+@@ -1710,6 +2676,9 @@ void KFileWidgetPrivate::urlEntered(const QUrl &url)
  
      if (m_placesView) {
          m_placesView->setUrl(url);
@@ -1750,7 +1752,7 @@ index 4f2dcf9..1c4bdcd 100644
      }
  
      m_messageWidget->hide();
-@@ -2024,6 +2992,59 @@ void KFileWidget::showEvent(QShowEvent *event)
+@@ -2024,6 +2993,59 @@ void KFileWidget::showEvent(QShowEvent *event)
      }
      d->m_ops->clearHistory();
  
@@ -1810,7 +1812,7 @@ index 4f2dcf9..1c4bdcd 100644
      QWidget::showEvent(event);
  }
  
-@@ -2192,7 +3213,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
+@@ -2192,7 +3214,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
  
      d->m_operationMode = mode;
      d->m_keepLocation = (mode == Saving);
@@ -1819,7 +1821,7 @@ index 4f2dcf9..1c4bdcd 100644
      if (mode == Opening) {
          // don't use KStandardGuiItem::open() here which has trailing ellipsis!
          d->m_okButton->setText(i18n("&Open"));
-@@ -2214,6 +3235,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
+@@ -2214,6 +3236,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
          d->m_ops->setIsSaving(mode == Saving);
      }
      d->updateFilterText();
@@ -1827,7 +1829,7 @@ index 4f2dcf9..1c4bdcd 100644
  }
  
  KFileWidget::OperationMode KFileWidget::operationMode() const
-@@ -2507,7 +3529,7 @@ void KFileWidgetPrivate::updateAutoSelectExtension()
+@@ -2507,7 +3530,7 @@ void KFileWidgetPrivate::updateAutoSelectExtension()
                                                       whatsThisExtension)
                                                + QLatin1String("</qt>"));
  
@@ -1836,7 +1838,7 @@ index 4f2dcf9..1c4bdcd 100644
  
          // update the current filename's extension
          updateLocationEditExtension(lastExtension);
-@@ -2945,7 +3967,7 @@ void KFileWidgetPrivate::setNonExtSelection()
+@@ -2945,7 +3968,7 @@ void KFileWidgetPrivate::setNonExtSelection()
  // filter has been set; otherwise, the text is "Filter:"
  void KFileWidgetPrivate::updateFilterText()
  {
@@ -1846,7 +1848,7 @@ index 4f2dcf9..1c4bdcd 100644
  
      if (m_operationMode == KFileWidget::Saving && !m_filterWidget->currentFilter().mimePatterns().isEmpty()) {
 diff --git a/src/filewidgets/knewfilemenu.cpp b/src/filewidgets/knewfilemenu.cpp
-index 97ffd25..ed23df9 100644
+index 97ffd25..1b10bc9 100644
 --- a/src/filewidgets/knewfilemenu.cpp
 +++ b/src/filewidgets/knewfilemenu.cpp
 @@ -644,6 +644,35 @@ void KNewFileMenuPrivate::executeRealFileOrDir(const KNewFileMenuSingleton::Entr
@@ -1860,12 +1862,12 @@ index 97ffd25..ed23df9 100644
 +        const QString ext = dotIndex > 0 ? fileName.mid(dotIndex) : QString();
 +        QString base = text.left(text.size() - ext.size());
 +        if (db.mimeTypeForFile(entry.templatePath).inherits(QStringLiteral("text/plain")) && ext == QLatin1String(".txt")) {
-+            base = QStringLiteral("Новий текстовий документ");
-+        } else if (!base.startsWith(QStringLiteral("Нов"))) {
++            base = i18nd("sevenplasma", "New Text Document");
++        } else if (!base.startsWith(i18ndc("sevenplasma", "name prefix", "New"))) {
 +            if (!base.isEmpty() && !(base.size() > 1 && base.at(1).isUpper())) {
 +                base[0] = base.at(0).toLower(); // "Документ…" -> "Новий документ…", but "HTML-файл" stays
 +            }
-+            base = QStringLiteral("Новий ") + base;
++            base = i18nd("sevenplasma", "New ") + base;
 +        }
 +        QString name = base + ext;
 +        for (int n = 2; QFile::exists(directory.toLocalFile() + QLatin1Char('/') + name); ++n) {
@@ -1891,7 +1893,7 @@ index 97ffd25..ed23df9 100644
  
 -    QString name = !d->m_text.isEmpty() ? d->m_text : i18nc("Default name for a new folder", "New Folder");
 +    // Windows 7: "New folder" makes "Нова папка" (or "Нова папка (2)") right away, the view then renames it in place
-+    QString name = !d->m_text.isEmpty() ? d->m_text : QStringLiteral("Нова папка");
++    QString name = !d->m_text.isEmpty() ? d->m_text : i18nd("sevenplasma", "New folder");
  
      auto nameJob = new KIO::NameFinderJob(d->m_baseUrl, name, this);
      connect(nameJob, &KJob::result, this, [nameJob, name, this]() mutable {
@@ -1915,7 +1917,7 @@ index 97ffd25..ed23df9 100644
      nameJob->start();
      Q_EMIT directoryCreationStarted(d->m_baseUrl);
 diff --git a/src/filewidgets/kurlnavigator.cpp b/src/filewidgets/kurlnavigator.cpp
-index 5125965..a02182d 100644
+index 5125965..bde1c7a 100644
 --- a/src/filewidgets/kurlnavigator.cpp
 +++ b/src/filewidgets/kurlnavigator.cpp
 @@ -16,6 +16,7 @@
@@ -1949,7 +1951,7 @@ index 5125965..a02182d 100644
 +        const QUrl root = Win7KnownFolders::rootUrl(currentUrl);
 +        if (root.isValid()) {
 +            // "Бібліотеки ▸ Документи ▸ ..." for the library folders, like Explorer of Windows 7
-+            text = Win7KnownFolders::inLibrary(currentUrl) ? QStringLiteral("Бібліотеки") : Win7KnownFolders::displayName(root.toLocalFile());
++            text = Win7KnownFolders::inLibrary(currentUrl) ? i18nd("sevenplasma", "Libraries") : Win7KnownFolders::displayName(root.toLocalFile());
 +        }
 +    }
 +    if (text.isEmpty() && (m_placesSelector != nullptr) && !m_showFullPath) {
@@ -2106,7 +2108,7 @@ index 2d18330..dae92e7 100644
      if (!askHandler) {
          auto *delegate = uiDelegate();
 diff --git a/src/widgets/dropjob.cpp b/src/widgets/dropjob.cpp
-index 941c7cc..7ff8670 100644
+index 941c7cc..c0b3a1a 100644
 --- a/src/widgets/dropjob.cpp
 +++ b/src/widgets/dropjob.cpp
 @@ -42,6 +42,7 @@
@@ -2123,7 +2125,7 @@ index 941c7cc..7ff8670 100644
  {
 -    m_cancelAction = new QAction(i18n("C&ancel") + QLatin1Char('\t') + QKeySequence(Qt::Key_Escape).toString(QKeySequence::NativeText), this);
 -    m_cancelAction->setIcon(QIcon::fromTheme(QStringLiteral("process-stop")));
-+    m_cancelAction = new QAction(QStringLiteral("Скасувати"), this);
++    m_cancelAction = new QAction(i18nd("sevenplasma", "Cancel"), this);
  
      m_lastSeparator = new QAction(this);
      m_lastSeparator->setSeparator(true);
@@ -2145,7 +2147,7 @@ index 941c7cc..7ff8670 100644
 -    QAction *popupCopyAction = new QAction(copyActionName + QLatin1Char('\t') + seq, popup);
 -    popupCopyAction->setIcon(copyActionIcon);
 +    // Windows 7's drop menu: Copy Here (the default, in bold), Move Here, Create shortcuts here
-+    QAction *popupCopyAction = new QAction(m_allSourcesAreHttpUrls ? QStringLiteral("Завантажити сюди") : QStringLiteral("Копіювати сюди"), popup);
++    QAction *popupCopyAction = new QAction(m_allSourcesAreHttpUrls ? i18nd("sevenplasma", "Download here") : i18nd("sevenplasma", "Copy here"), popup);
      popupCopyAction->setData(QVariant::fromValue(Qt::CopyAction));
 -    seq = QKeySequence(Qt::ControlModifier | Qt::ShiftModifier).toString(QKeySequence::NativeText);
 -    seq.chop(separatorLength);
@@ -2154,9 +2156,9 @@ index 941c7cc..7ff8670 100644
 +    QFont bold = popupCopyAction->font();
 +    bold.setBold(true);
 +    popupCopyAction->setFont(bold);
-+    QAction *popupMoveAction = new QAction(QStringLiteral("Перемістити сюди"), popup);
++    QAction *popupMoveAction = new QAction(i18nd("sevenplasma", "Move here"), popup);
 +    popupMoveAction->setData(QVariant::fromValue(Qt::MoveAction));
-+    QAction *popupLinkAction = new QAction(QStringLiteral("Створити ярлики тут"), popup);
++    QAction *popupLinkAction = new QAction(i18nd("sevenplasma", "Create shortcuts here"), popup);
      popupLinkAction->setData(QVariant::fromValue(Qt::LinkAction));
  
 -    if (m_possibleActions & Qt::MoveAction) {
@@ -2332,7 +2334,7 @@ index 69459f7..be668db 100644
      /*!
       * Called when the user presses 'Ok'.
 diff --git a/src/widgets/paste.cpp b/src/widgets/paste.cpp
-index 4edfbb7..6043565 100644
+index 4edfbb7..70b85f6 100644
 --- a/src/widgets/paste.cpp
 +++ b/src/widgets/paste.cpp
 @@ -6,6 +6,10 @@
@@ -2366,7 +2368,7 @@ index 4edfbb7..6043565 100644
 +        local = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + dir.path();
 +    }
 +    for (int n = 1; n < 100000; ++n) {
-+        const QString name = QStringLiteral("Знімок екрана (%1).png").arg(n);
++        const QString name = i18nd("sevenplasma", "Screenshot (%1).png").arg(n);
 +        if (local.isEmpty() || !QFileInfo::exists(QDir(local).filePath(name))) {
 +            QUrl u = dir;
 +            u.setPath(QDir(dir.path().isEmpty() ? QStringLiteral("/") : dir.path()).filePath(name));
@@ -2790,15 +2792,16 @@ index 0000000..d213992
 +msgstr "Ім'я"
 diff --git a/src/filewidgets/kfilewin7chrome.cpp b/src/filewidgets/kfilewin7chrome.cpp
 new file mode 100644
-index 0000000..b6f473f
+index 0000000..374cafd
 --- /dev/null
 +++ b/src/filewidgets/kfilewin7chrome.cpp
-@@ -0,0 +1,774 @@
+@@ -0,0 +1,775 @@
 +/*
 + * Windows 7 look for the KDE file dialog.
 + *
 + * SPDX-License-Identifier: LGPL-2.0-or-later
 + */
++#define WIN7_KDE_I18N // win7chrome.h: KDE translations (domain "sevenplasma")
 +#include "kfilewin7chrome.h"
 +
 +#include <KIO/Global>
@@ -4646,10 +4649,10 @@ index 0000000..e175760
 +#endif // KFILEWIN7VIEWMENU_H
 diff --git a/src/filewidgets/win7knownfolders_p.h b/src/filewidgets/win7knownfolders_p.h
 new file mode 100644
-index 0000000..1bc2cfe
+index 0000000..a3daa7e
 --- /dev/null
 +++ b/src/filewidgets/win7knownfolders_p.h
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,98 @@
 +/*
 +    Windows 7 look: how Explorer names the folders of the user profile in the address bar.
 +    The path starts at the Desktop (no "▸" before it) or at the user's folder, and the known
@@ -4660,6 +4663,7 @@ index 0000000..1bc2cfe
 +#define WIN7KNOWNFOLDERS_P_H
 +
 +#include <KUser>
++#include <KLocalizedString>
 +
 +#include <QDir>
 +#include <QStandardPaths>
@@ -4693,18 +4697,18 @@ index 0000000..1bc2cfe
 +        QStandardPaths::StandardLocation location;
 +        const char *name;
 +    } known[] = {
-+        {QStandardPaths::DesktopLocation, "Робочий стіл"},
-+        {QStandardPaths::DownloadLocation, "Завантаження"},
++        {QStandardPaths::DesktopLocation, "Desktop"},
++        {QStandardPaths::DownloadLocation, "Downloads"},
 +        // the user folders that are libraries in Windows 7 show the library name in the address bar
-+        {QStandardPaths::DocumentsLocation, "Документи"},
-+        {QStandardPaths::MusicLocation, "Музика"},
-+        {QStandardPaths::PicturesLocation, "Зображення"},
-+        {QStandardPaths::MoviesLocation, "Відео"},
++        {QStandardPaths::DocumentsLocation, "Documents"},
++        {QStandardPaths::MusicLocation, "Music"},
++        {QStandardPaths::PicturesLocation, "Pictures"},
++        {QStandardPaths::MoviesLocation, "Videos"},
 +    };
 +    for (const auto &k : known) {
 +        const QString dir = QStandardPaths::writableLocation(k.location);
 +        if (!dir.isEmpty() && cleanPath(dir) == path && path != cleanPath(QDir::homePath())) {
-+            return QString::fromUtf8(k.name);
++            return i18nd("sevenplasma", k.name);
 +        }
 +    }
 +    return {};

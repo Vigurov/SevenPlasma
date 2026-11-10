@@ -327,7 +327,7 @@ Item
 
                 session.addItem(menuitem);
                 menuitem = session.createMenuItem();
-                menuitem.text = "Екранна клавіатура"
+                menuitem.text = i18nd("sevenplasma", "On-Screen Keyboard")
                 menuitem.checkable = false;
                 menuitem.icon.source = Qt.resolvedUrl("Assets/keyboard.png");
                 menuitem.triggered.connect(() => {
@@ -697,7 +697,7 @@ Item
                             }
                         }
 
-                        placeholderText: "Пароль"
+                        placeholderText: i18nd("sevenplasma", "Password")
                         selectByMouse: true
                         echoMode : TextInput.Password
                         inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
@@ -760,7 +760,7 @@ Item
                         QQC2.Label {
                             id: notificationsLabel
                             font.pointSize: 9
-                            text: "Увімкнено клавішу Caps Lock.";
+                            text: i18nd("sevenplasma", "Caps Lock is on.");
                             width: implicitWidth
                             renderType: Text.NativeRendering
                             color: "white"
@@ -849,7 +849,7 @@ Item
 
                 contentItem: Text
                 {
-                    text: "Змінити користувача"
+                    text: i18nd("sevenplasma", "Switch User")
                     color: "white"
 
                     //font.family: mainfont.name
@@ -926,7 +926,7 @@ Item
                 anchors.verticalCenterOffset: 126
                 anchors.horizontalCenterOffset: 14
 
-                text: "Неправильне ім'я користувача або пароль."
+                text: i18ndc("sevenplasma", "uac", "The user name or password is incorrect.")
                 renderType: Text.NativeRendering
                 Layout.alignment: Qt.AlignHCenter
                 font.pointSize: 9
@@ -1241,7 +1241,7 @@ Item
 
             QQC2.ToolTip.visible: hovered
             QQC2.ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
-            QQC2.ToolTip.text: "Завершити роботу"
+            QQC2.ToolTip.text: i18ndc("sevenplasma", "logon", "Shut down")
         }
 
         QQC2.Button
@@ -1298,31 +1298,31 @@ Item
 
                 Component.onCompleted: {
                     var menuitem = powerMenu.createMenuItem();
-                    menuitem.text = "Перезавантажити";
+                    menuitem.text = i18ndc("sevenplasma", "logon", "Restart");
                     menuitem.triggered.connect(() => { sddm.reboot() });
                     powerMenu.addAction(menuitem);
                     powerMenu.addItem(powerMenu.createMenuSeparator());
 
                     if(sddm.canSuspend) {
                         menuitem = powerMenu.createMenuItem();
-                        menuitem.text = "Сон";
+                        menuitem.text = i18nd("sevenplasma", "Sleep");
                         menuitem.triggered.connect(() => { sddm.suspend() });
                         powerMenu.addAction(menuitem);
                     }
                     if(sddm.canHibernate) {
                         menuitem = powerMenu.createMenuItem();
-                        menuitem.text = "Режим глибокого сну";
+                        menuitem.text = i18nd("sevenplasma", "Hibernate");
                         menuitem.triggered.connect(() => { sddm.hibernate() });
                         powerMenu.addAction(menuitem);
                     }
                     if(sddm.canHybridSleep) {
                         menuitem = powerMenu.createMenuItem();
-                        menuitem.text = "Гібридний сплячий режим";
+                        menuitem.text = i18nd("sevenplasma", "Hybrid sleep");
                         menuitem.triggered.connect(() => { sddm.hybridSleep() });
                         powerMenu.addAction(menuitem);
                     }
                     menuitem = powerMenu.createMenuItem();
-                    menuitem.text = "Завершити роботу";
+                    menuitem.text = i18ndc("sevenplasma", "logon", "Shut down");
                     menuitem.triggered.connect(() => { sddm.powerOff() });
                     powerMenu.addAction(menuitem);
                 }
@@ -1452,7 +1452,7 @@ Item
             Image { source: "file:///usr/share/plasma/look-and-feel/authui7/contents/images/100/spin" + welcomeRow.spinnum + ".png" }
             Text
             {
-                text: "Ласкаво просимо"
+                text: i18nd("sevenplasma", "Welcome")
                 color: "#FFFFFF"
                 font.pointSize: 18
                 renderType: Text.NativeRendering

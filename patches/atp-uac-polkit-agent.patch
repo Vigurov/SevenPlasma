@@ -134,7 +134,7 @@ index 9abf0eb..8b83124 100644
  
      KAboutData aboutData("polkit-kde-authentication-agent-1", QString(), UAC_POLKIT_VERSION);
 diff --git a/qml/QuickAuthDialog.qml b/qml/QuickAuthDialog.qml
-index 35b23f9..c1cc778 100644
+index 35b23f9..19f75ab 100644
 --- a/qml/QuickAuthDialog.qml
 +++ b/qml/QuickAuthDialog.qml
 @@ -6,6 +6,7 @@
@@ -150,7 +150,7 @@ index 35b23f9..c1cc778 100644
  Kirigami.AbstractApplicationWindow {
      id: root
 -    title: i18n("User Account Control") //i18n("Authentication Required")
-+    title: "Контроль облікових записів користувачів"
++    title: i18nd("sevenplasma", "User Account Control")
  
      maximumHeight: intendedWindowHeight
      minimumHeight: intendedWindowHeight
@@ -266,8 +266,8 @@ index 35b23f9..c1cc778 100644
 +                font.family: Kirigami.Theme.defaultFont.family
 +                font.pointSize: 12
 +                color: root.unknownPublisher ? "#000000" : "#ffffff"
-+                text: root.unknownPublisher ? "Дозволити наступній програмі від невідомого видавця вносити зміни на цьому комп'ютері?"
-+                                            : "Дозволити цій програмі вносити зміни на цьому комп'ютері?"
++                text: root.unknownPublisher ? i18nd("sevenplasma", "Do you want to allow the following program from an unknown publisher to make changes to this computer?")
++                                            : i18nd("sevenplasma", "Do you want to allow the following program to make changes to this computer?")
              }
          }
  
@@ -294,22 +294,22 @@ index 35b23f9..c1cc778 100644
  
 -            RowLayout {
 -                id: content
-+            QQC2.Label { text: "Назва програми:" }
++            QQC2.Label { text: i18nd("sevenplasma", "Program name:") }
 +            QQC2.Label {
 +                Layout.fillWidth: true
 +                elide: Text.ElideRight
 +                text: root.unknownPublisher ? (root.programName !== "" ? root.programName : root.descriptionString) : root.descriptionString
 +            }
-+            QQC2.Label { text: root.unknownPublisher ? "Видавець:" : "Перевірений видавець:" }
++            QQC2.Label { text: root.unknownPublisher ? i18nd("sevenplasma", "Publisher:") : i18nd("sevenplasma", "Verified publisher:") }
 +            QQC2.Label {
 +                Layout.fillWidth: true
 +                elide: Text.ElideRight
-+                text: root.unknownPublisher || root.descriptionVendorName === "" ? "Невідомо" : root.descriptionVendorName
++                text: root.unknownPublisher || root.descriptionVendorName === "" ? i18nd("sevenplasma", "Unknown") : root.descriptionVendorName
 +            }
-+            QQC2.Label { text: "Походження файлу:" }
++            QQC2.Label { text: i18nd("sevenplasma", "File origin:") }
 +            QQC2.Label {
 +                Layout.fillWidth: true
-+                text: "Жорсткий диск цього комп'ютера"
++                text: i18nd("sevenplasma", "Hard drive on this computer")
 +            }
 +        }
  
@@ -339,7 +339,7 @@ index 35b23f9..c1cc778 100644
 +            anchors.leftMargin: 26
 +            anchors.rightMargin: 20
 +            wrapMode: Text.WordWrap
-+            text: "Щоб продовжити, введіть пароль адміністратора й натисніть кнопку «Так»."
++            text: i18nd("sevenplasma", "To continue, type an administrator password, and then click Yes.")
 +        }
  
 -                    source: descriptionIcon == "" ? "application-default-icon" : descriptionIcon
@@ -423,7 +423,7 @@ index 35b23f9..c1cc778 100644
 -                            text: descriptionString
 +                    Kirigami.LinkButton {
 +                        id: switchButton
-+                        text: "Інший користувач..."
++                        text: i18nd("sevenplasma", "Other user...")
 +                        visible: identitiesCombo.count > 1
 +                        onClicked: {
 +                            identitiesCombo.popup.parent = switchButton;
@@ -450,7 +450,7 @@ index 35b23f9..c1cc778 100644
 +                    id: passwordField
 +                    width: 220
 +                    echoMode: TextInput.Password
-+                    placeholderText: "Пароль"
++                    placeholderText: i18nd("sevenplasma", "Password")
 +                    onAccepted: root.accept()
                  }
 -
@@ -485,7 +485,7 @@ index 35b23f9..c1cc778 100644
 +            Text {
 +                anchors.verticalCenter: parent.verticalCenter
 +                font: Kirigami.Theme.defaultFont
-+                text: "Неправильне ім'я користувача або пароль."
++                text: i18ndc("sevenplasma", "uac", "The user name or password is incorrect.")
 +            }
 +        }
  
@@ -501,7 +501,7 @@ index 35b23f9..c1cc778 100644
 +            rowSpacing: 5
 +
 +            Item { Layout.columnSpan: 2; height: 6 }
-+            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Шлях до програми:" }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: i18nd("sevenplasma", "Program location:") }
 +            QQC2.Label {
                  Layout.fillWidth: true
 -
@@ -588,14 +588,14 @@ index 35b23f9..c1cc778 100644
 +                text: root.commandLine !== "" ? root.commandLine : root.programPath
 +                visible: text !== ""
 +            }
-+            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Дія:" }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: i18nd("sevenplasma", "Action:") }
 +            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: root.descriptionString }
-+            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Ід. дії:" }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: i18nd("sevenplasma", "Action ID:") }
 +            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: root.descriptionActionId }
 +            Item { width: 1; height: 1 }
 +            Kirigami.UrlButton {
 +                url: root.descriptionVendorUrl
-+                text: "Відомості про видавця"
++                text: i18nd("sevenplasma", "Show information about the publisher's certificate")
 +                visible: root.descriptionVendorUrl !== ""
              }
 +            Item { Layout.columnSpan: 2; height: 4 }
@@ -634,7 +634,7 @@ index 35b23f9..c1cc778 100644
 +                anchors.verticalCenter: parent.verticalCenter
 +                font: Kirigami.Theme.defaultFont
 +                color: "#000000"
-+                text: root.detailsShown ? "Приховати подробиці" : "Показати подробиці"
++                text: root.detailsShown ? i18nd("sevenplasma", "Hide details") : i18nd("sevenplasma", "Show details")
 +            }
 +        }
 +
@@ -649,7 +649,7 @@ index 35b23f9..c1cc778 100644
 +                Accessible.defaultButton: true
                  contentItem: Text {
 -                    text: i18n("OK")
-+                    text: "Так"
++                    text: i18nd("sevenplasma", "Yes")
                      font: parent.font
                      verticalAlignment: Text.AlignVCenter
                      horizontalAlignment: Text.AlignHCenter
@@ -658,7 +658,7 @@ index 35b23f9..c1cc778 100644
                  onClicked: root.reject()
                  contentItem: Text {
 -                    text: i18n("Cancel")
-+                    text: "Ні"
++                    text: i18nd("sevenplasma", "No")
                      font: parent.font
                      verticalAlignment: Text.AlignVCenter
                      horizontalAlignment: Text.AlignHCenter

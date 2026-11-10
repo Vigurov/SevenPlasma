@@ -1,0 +1,28 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Fully charged (%1%)"
+msgstr "Повністю заряджено (%1%)"
+
+msgid "%1% available"
+msgstr "Доступно %1%"
+
+msgid "%1% available (plugged in, not charging)"
+msgstr "Доступно %1% (підключено, не заряджається)"
+
+msgid "%1% available (plugged in, charging)"
+msgstr "Доступно %1% (підключено, заряджається)"
+
+msgid "%1 (%2%) remaining"
+msgstr "Залишилося %1 (%2%)"
+
+msgid "%1% remaining"
+msgstr "Залишилося %1%"
+
+msgid "Could not turn on the plan \"%1\""
+msgstr "Не вдалося ввімкнути план «%1»"
+
+msgid "Welcome"
+msgstr "Ласкаво просимо"
+

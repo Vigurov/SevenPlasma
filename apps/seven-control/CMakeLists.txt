@@ -27,4 +27,6 @@ install(TARGETS seven-control RUNTIME DESTINATION bin)
 # translations: the code is English, i18n/<lang>.ts are built into the program as :/i18n/<lang>.qm
 # Device Manager is built in too (Computer Management): its translations as devmgr_<lang>
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../seven-devmgr/i18n/uk.ts ${CMAKE_CURRENT_BINARY_DIR}/devmgr_uk.ts COPYONLY)
-qt_add_translations(seven-control TS_FILES i18n/uk.ts ${CMAKE_CURRENT_BINARY_DIR}/devmgr_uk.ts RESOURCE_PREFIX /i18n LUPDATE_TARGET seven-control_lupdate_unused)
+# the shared headers (win7chrome.h) bring their own translations as common_<lang>
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../seven-common/i18n/common_uk.ts ${CMAKE_CURRENT_BINARY_DIR}/common_uk.ts COPYONLY)
+qt_add_translations(seven-control TS_FILES ${CMAKE_CURRENT_BINARY_DIR}/common_uk.ts i18n/uk.ts ${CMAKE_CURRENT_BINARY_DIR}/devmgr_uk.ts RESOURCE_PREFIX /i18n LUPDATE_TARGET seven-control_lupdate_unused)

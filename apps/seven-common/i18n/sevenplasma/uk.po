@@ -1,0 +1,1216 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: uk\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "    All Programs"
+msgstr "    Усі програми"
+
+msgid "   (Save location)"
+msgstr "   (Розташування для збереження)"
+
+msgid " - Copy"
+msgstr " - копія"
+
+msgid " - Shortcut"
+msgstr " — ярлик"
+
+msgid " - Shortcut (%1)"
+msgstr " — ярлик (%1)"
+
+msgid " KB"
+msgstr " КБ"
+
+msgid " Search programs and files"
+msgstr " Знайти програми та файли"
+
+msgid " important message"
+msgstr " важливе повідомлення"
+
+msgid " important messages"
+msgstr " важливі повідомлення"
+
+msgctxt "many"
+msgid " important messages"
+msgstr " важливих повідомлень"
+
+msgid "%1 Library"
+msgstr "Бібліотека \"%1\""
+
+msgid "%1 Library Locations"
+msgstr "Розташування бібліотеки \"%1\""
+
+msgid "&Extract"
+msgstr "&Видобути"
+
+msgid "(Empty)"
+msgstr "(Пусто)"
+
+msgid "(or touch the fingerprint reader)"
+msgstr "(або прикладіть палець до сканера)"
+
+msgid "(or use your smart card)"
+msgstr "(або скористайтеся смарт-карткою)"
+
+msgid "1 location"
+msgstr "1 розташування"
+
+msgid "999.9 KiB"
+msgstr "999,9 КіБ"
+
+msgid ": charge "
+msgstr ": заряд "
+
+msgid ": connected"
+msgstr ": підключено"
+
+msgid ""
+"<span style=\"font-size:12pt; color:#1e3287;\">Change how this library "
+"gathers its contents: \"%1\"</span><br>When you include a folder in a "
+"library, the files will appear in the library, but will continue to be "
+"stored in their original locations."
+msgstr ""
+"<span style=\"font-size:12pt; color:#1e3287;\">Змінення способу збирання "
+"вмісту бібліотеки \"%1\"</span><br>Після додавання папки до бібліотеки її "
+"файли відображатимуться в бібліотеці, але й надалі зберігатимуться в "
+"початковому розташуванні."
+
+msgid "Action Center"
+msgstr "Центр підтримки"
+
+msgid "Action ID:"
+msgstr "Ід. дії:"
+
+msgid "Action:"
+msgstr "Дія:"
+
+msgid "Add a Device"
+msgstr "Додати пристрій"
+
+msgid "Add current location to Favorites"
+msgstr "Додати поточне розташування до обраного"
+
+msgid "Address"
+msgstr "Адреса"
+
+msgid "Adjust date/time"
+msgstr "Настроювання дати й часу"
+
+msgid "Airplane mode is on"
+msgstr "Увімкнено режим «У літаку»"
+
+msgid "Albanian (Albania)"
+msgstr "Албанська (Албанія)"
+
+msgid "Align icons to grid"
+msgstr "Вирівняти піктограми за сіткою"
+
+msgid "Allow a Device to Connect"
+msgstr "Дозволити підключення пристрою"
+
+msgid "Amharic (Ethiopia)"
+msgstr "Амхарська (Ефіопія)"
+
+msgid "Apply"
+msgstr "Застосувати"
+
+msgid "Arabic (Egypt)"
+msgstr "Арабська (Єгипет)"
+
+msgid "Arabic (Iraq)"
+msgstr "Арабська (Ірак)"
+
+msgid "Arabic (U.A.E.)"
+msgstr "Арабська (Об’єднані Арабські Емірати)"
+
+msgid "Armenian (Armenia)"
+msgstr "Вірменська (Вірменія)"
+
+msgid "Arrange by:"
+msgstr "Упорядкувати за:"
+
+msgid "Auto arrange icons"
+msgstr "Упорядковувати піктограми автоматично"
+
+msgid "Azeri (Azerbaijan)"
+msgstr "Азербайджанська (Азербайджан)"
+
+msgid "B&rowse..."
+msgstr "О&гляд..."
+
+msgid "BD-RE Drive (%1)"
+msgstr "Дисковод BD-RE (%1)"
+
+msgid "BD-ROM Drive (%1)"
+msgstr "Дисковод BD-ROM (%1)"
+
+msgid "Back"
+msgstr "Назад"
+
+msgid "Balanced"
+msgstr "Збалансований"
+
+msgid "Bambara (Mali)"
+msgstr "Бамбара (Малі)"
+
+msgid "Belarusian (Belarus)"
+msgstr "Білоруська (Білорусь)"
+
+msgid "Bengali (Bangladesh)"
+msgstr "Бенгальська (Бангладеш)"
+
+msgid "Berber (Central Atlas) (Algeria)"
+msgstr "Берберська (Центральний Атлас) (Алжир)"
+
+msgid "Bluetooth Devices"
+msgstr "Пристрої Bluetooth"
+
+msgid "Bosnian (Bosnia and Herzegovina)"
+msgstr "Боснійська (Боснія і Герцеговина)"
+
+msgid "Bulgarian (Bulgaria)"
+msgstr "Болгарська (Болгарія)"
+
+msgid "Burmese (Myanmar)"
+msgstr "Бірманська (М’янма)"
+
+msgid "Cancel"
+msgstr "Скасувати"
+
+msgid "Caps Lock is on."
+msgstr "Увімкнено клавішу Caps Lock."
+
+msgid "Cascade windows"
+msgstr "Вікна каскадом"
+
+msgid "Change date and time settings..."
+msgstr "Змінення параметрів дати й часу..."
+
+msgid "Charging"
+msgstr "Заряджається"
+
+msgid "Chinese (PRC)"
+msgstr "Китайська (Китай)"
+
+msgid ""
+"Close all open programs, shut down Windows, and then turn off your computer."
+msgstr ""
+"Закриття всіх відкритих програм, завершення роботи Windows і вимкнення "
+"комп'ютера."
+
+msgid ""
+"Close all open programs, shut down Windows, and then turn on Windows again."
+msgstr ""
+"Закриття всіх відкритих програм, завершення роботи Windows і "
+"перезавантаження комп'ютера."
+
+msgid "Close your programs and log off."
+msgstr "Закриття програм і вихід із системи."
+
+msgid "Collapse"
+msgstr "Згорнути"
+
+msgid "Compressed (zipped) folder"
+msgstr "Стиснена ZIP-папка"
+
+msgid "Computer"
+msgstr "Комп'ютер"
+
+msgid "Computer - Shortcut"
+msgstr "Комп'ютер — ярлик"
+
+msgid "Connect"
+msgstr "Підключити"
+
+msgid "Connected"
+msgstr "Підключено"
+
+msgid "Connections are available"
+msgstr "Є доступні підключення"
+
+msgid "Consider replacing your battery."
+msgstr "Можливо, батарею слід замінити."
+
+msgid "Control Panel"
+msgstr "Панель керування"
+
+msgid "Copy"
+msgstr "Копіювати"
+
+msgid "Copy here"
+msgstr "Копіювати сюди"
+
+msgid "Create shortcut"
+msgstr "Створити ярлик"
+
+msgid "Create shortcuts here"
+msgstr "Створити ярлики тут"
+
+msgid "Croatian (Croatia)"
+msgstr "Хорватська (Хорватія)"
+
+msgid "Currently connected to:"
+msgstr "Поточні підключення:"
+
+msgid "Customize notification icons"
+msgstr "Настроювання значків сповіщень"
+
+msgid "Customize..."
+msgstr "Налаштувати..."
+
+msgid "Cut"
+msgstr "Вирізати"
+
+msgid "Czech (Czech Republic)"
+msgstr "Чеська (Чехія)"
+
+msgid "DVD Drive (%1)"
+msgstr "DVD-дисковод (%1)"
+
+msgid "DVD RW Drive (%1)"
+msgstr "Дисковод DVD RW (%1)"
+
+msgid "Danish (Denmark)"
+msgstr "Данська (Данія)"
+
+msgid "Dari (Afghanistan)"
+msgstr "Дарі (Афганістан)"
+
+msgid "Date modified"
+msgstr "Дата змінення"
+
+msgid "Default Programs"
+msgstr "Програми за замовчуванням"
+
+msgid "Delete"
+msgstr "Видалити"
+
+msgid "Desktop"
+msgstr "Робочий стіл"
+
+msgid "Desktop (create shortcut)"
+msgstr "Робочий стіл (створити ярлик)"
+
+msgid "Devices and Printers"
+msgstr "Пристрої та принтери"
+
+msgid "Dial-up and VPN"
+msgstr "Модемне підключення й VPN"
+
+msgid "Discharging"
+msgstr "Розряджається"
+
+msgid "Disconnect"
+msgstr "Відключити"
+
+msgid "Disconnect network drive..."
+msgstr "Відключити мережевий диск..."
+
+msgid "Divehi (Maldives)"
+msgstr "Дівегі (Мальдіви)"
+
+msgid ""
+"Do you want to allow the following program from an unknown publisher to make "
+"changes to this computer?"
+msgstr ""
+"Дозволити наступній програмі від невідомого видавця вносити зміни на цьому "
+"комп'ютері?"
+
+msgid ""
+"Do you want to allow the following program to make changes to this computer?"
+msgstr "Дозволити цій програмі вносити зміни на цьому комп'ютері?"
+
+msgid "Documents"
+msgstr "Документи"
+
+msgid "Download here"
+msgstr "Завантажити сюди"
+
+msgid "Downloads"
+msgstr "Завантаження"
+
+msgid "Dutch (Netherlands)"
+msgstr "Голландська (Нідерланди)"
+
+msgid "Dzongkha (Bhutan)"
+msgstr "Дзонг-ке (Бутан)"
+
+msgid "Ease of Access"
+msgstr "Спеціальні можливості"
+
+msgid "Empty Recycle Bin"
+msgstr "Очистити кошик"
+
+msgid "English (Australia)"
+msgstr "Англійська (Австралія)"
+
+msgid "English (Cameroon)"
+msgstr "Англійська (Камерун)"
+
+msgid "English (Ghana)"
+msgstr "Англійська (Гана)"
+
+msgid "English (Ireland)"
+msgstr "Англійська (Ірландія)"
+
+msgid "English (New Zealand)"
+msgstr "Англійська (Нова Зеландія)"
+
+msgid "English (Nigeria)"
+msgstr "Англійська (Нігерія)"
+
+msgid "English (Philippines)"
+msgstr "Англійська (Філіппіни)"
+
+msgid "English (South Africa)"
+msgstr "Англійська (Південна Африка)"
+
+msgid "English (United Kingdom)"
+msgstr "Англійська (Великобританія)"
+
+msgid "English (United States)"
+msgstr "Англійська (США)"
+
+msgid "Esperanto"
+msgstr "Есперанто"
+
+msgid "Estonian (Estonia)"
+msgstr "Естонська (Естонія)"
+
+msgid "Expand"
+msgstr "Розгорнути"
+
+msgid "Extract All..."
+msgstr "Видобути все..."
+
+msgid "Extract Compressed (Zipped) Folders"
+msgstr "Видобування стиснених ZIP-папок"
+
+msgid "Faroese (Faroe Islands)"
+msgstr "Фарерська (Фарерські острови)"
+
+msgid "File folder"
+msgstr "Папка з файлами"
+
+msgid "File origin:"
+msgstr "Походження файлу:"
+
+msgid "Files will be extracted to this &folder:"
+msgstr "Файли буде видобуто до цієї &папки:"
+
+msgid "Finnish (Finland)"
+msgstr "Фінська (Фінляндія)"
+
+msgid "Folder"
+msgstr "Папка"
+
+msgid "Fox (Taiwan)"
+msgstr "Fox (Тайвань)"
+
+msgid "Fr"
+msgstr "пт"
+
+msgid "French (Canada)"
+msgstr "Французька (Канада)"
+
+msgid "French (Congo, DRC)"
+msgstr "Французька (Конго, демократична республіка)"
+
+msgid "French (France)"
+msgstr "Французька (Франція)"
+
+msgid "French (Togo)"
+msgstr "Французька (Того)"
+
+msgid "Fully charged (100%)"
+msgstr "Повністю заряджено (100%)"
+
+msgid "Gadgets"
+msgstr "Гаджети"
+
+msgid "Games"
+msgstr "Ігри"
+
+msgid "Georgian (Georgia)"
+msgstr "Грузинська (Грузія)"
+
+msgid "German (Austria)"
+msgstr "Німецька (Австрія)"
+
+msgid "German (Belgium)"
+msgstr "Німецька (Бельгія)"
+
+msgid "German (Germany)"
+msgstr "Німецька (Німеччина)"
+
+msgid "German (Switzerland)"
+msgstr "Німецька (Швейцарія)"
+
+msgid "Graphics Properties..."
+msgstr "Графічні характеристики..."
+
+msgid "Greek (Greece)"
+msgstr "Новогрецька (з 1453) (Греція)"
+
+msgid "Hard drive on this computer"
+msgstr "Жорсткий диск цього комп'ютера"
+
+msgid "Hebrew (Israel)"
+msgstr "Іврит (Ізраїль)"
+
+msgid "Help and Support"
+msgstr "Довідка та підтримка"
+
+msgid "Hibernate"
+msgstr "Режим глибокого сну"
+
+msgid "Hide details"
+msgstr "Приховати подробиці"
+
+msgid "High performance"
+msgstr "Висока продуктивність"
+
+msgid "Hindi (India)"
+msgstr "Хінді (Індія)"
+
+msgid "Hungarian (Hungary)"
+msgstr "Угорська (Угорщина)"
+
+msgid "Hybrid sleep"
+msgstr "Гібридний сплячий режим"
+
+msgid "Icelandic (Iceland)"
+msgstr "Ісландська (Ісландія)"
+
+msgid "Ignore repeated keystrokes (Filter Keys)"
+msgstr "Ігнорувати повторні натискання (Фільтрація введення)"
+
+msgid "Include in library"
+msgstr "Додати до бібліотеки"
+
+msgid "Includes: "
+msgstr "Включає: "
+
+msgid "Indonesian (Indonesia)"
+msgstr "Індонезійська (Індонезія)"
+
+msgid "Indonesian (Malaysia)"
+msgstr "Індонезійська (Малайзія)"
+
+msgid "Internet access"
+msgstr "Доступ до Інтернету"
+
+msgid "Italian (Italy)"
+msgstr "Італійська (Італія)"
+
+msgid "Item type"
+msgstr "Тип елемента"
+
+msgid "Japanese (Japan)"
+msgstr "Японська (Японія)"
+
+msgid "Join a Personal Area Network"
+msgstr "Приєднатися до особистої мережі"
+
+msgid "Kazakh (Kazakhstan)"
+msgstr "Казахська (Казахстан)"
+
+msgid "Khmer (Cambodia)"
+msgstr "Кхмерська (Камбоджа)"
+
+msgid "Korean (Korea)"
+msgstr "Корейська (Південна Корея)"
+
+msgid "Kyrgyz (Kyrgyzstan)"
+msgstr "Киргизька (Киргизстан)"
+
+msgid "Lao (Lao P.D.R.)"
+msgstr "Лаоська (Лаос)"
+
+msgid "Large icons"
+msgstr "Великі піктограми"
+
+msgid "Latvian (Latvia)"
+msgstr "Латиська (Латвія)"
+
+msgid "Libraries"
+msgstr "Бібліотеки"
+
+msgid "Library locations"
+msgstr "Розташування бібліотеки"
+
+msgid "Lithuanian (Lithuania)"
+msgstr "Литовська (Литва)"
+
+msgid "Local time"
+msgstr "Місцевий час"
+
+msgid "Lock"
+msgstr "Заблокувати"
+
+msgid "Lock the taskbar"
+msgstr "Закріпити панель завдань"
+
+msgid "Lock this computer."
+msgstr "Блокування цього комп'ютера."
+
+msgid "Locked"
+msgstr "Заблоковано"
+
+msgid "Log off"
+msgstr "Вийти з системи"
+
+msgid "MMMM d, yyyy"
+msgstr "d MMMM yyyy 'р.'"
+
+msgid "Macedonian (North Macedonia)"
+msgstr "Македонська (Північна Македонія)"
+
+msgid "Make colors easier to see (High Contrast)"
+msgstr "Збільшити контрастність кольорів (Висока контрастність)"
+
+msgid "Make items on the screen larger (Magnifier)"
+msgstr "Збільшувати елементи на екрані (Екранна лупа)"
+
+msgid "Make your computer easier to use"
+msgstr "Полегшення роботи з комп’ютером"
+
+msgid "Maltese (Malta)"
+msgstr "Мальтійська (Мальта)"
+
+msgid "Manage"
+msgstr "Керування"
+
+msgid "Map network drive..."
+msgstr "Підключити мережевий диск..."
+
+msgid "Medium icons"
+msgstr "Середні піктограми"
+
+msgid "Mixer"
+msgstr "Мікшер"
+
+msgid "Mo"
+msgstr "пн"
+
+msgid "Mobile Broadband"
+msgstr "Мобільна широкосмугова мережа"
+
+msgid "Mobile network is off"
+msgstr "Мобільну мережу вимкнено"
+
+msgid "Mongolian (Mongolia)"
+msgstr "Монгольська (Монголія)"
+
+msgid "More power options"
+msgstr "Додаткові параметри живлення"
+
+msgid "Moroccan Arabic (Morocco)"
+msgstr "Мароканська арабська (Марокко)"
+
+msgid "Move here"
+msgstr "Перемістити сюди"
+
+msgid "Music"
+msgstr "Музика"
+
+msgid "N'Ko (Guinea)"
+msgstr "Н’ко (Гвінея)"
+
+msgid "NVIDIA Control Panel"
+msgstr "Панель керування NVIDIA"
+
+msgid "Name"
+msgstr "Ім'я"
+
+msgid "Nepali (Nepal)"
+msgstr "Непальська (макромова) (Непал)"
+
+msgid "Network"
+msgstr "Мережа"
+
+msgid "New"
+msgstr "Створити"
+
+msgctxt "name prefix"
+msgid "New"
+msgstr "Нов"
+
+msgid "New "
+msgstr "Новий "
+
+msgid "New Text Document"
+msgstr "Новий текстовий документ"
+
+msgid "New folder"
+msgstr "Нова папка"
+
+msgid "New name:"
+msgstr "Нове ім'я:"
+
+msgid "New toolbar..."
+msgstr "Створити панель інструментів..."
+
+msgid "No"
+msgstr "Ні"
+
+msgid "No Bluetooth adapter found"
+msgstr "Адаптер Bluetooth не знайдено"
+
+msgid "No Internet access"
+msgstr "Без доступу до Інтернету"
+
+msgid "No battery is detected"
+msgstr "Акумулятор не виявлено"
+
+msgid "No connections are available"
+msgstr "Немає доступних підключень"
+
+msgid "No current issues detected"
+msgstr "Наразі проблем не виявлено"
+
+msgid "No items match your search."
+msgstr "Немає елементів, що відповідають пошуку."
+
+msgid "No network access"
+msgstr "Без доступу до мережі"
+
+msgid "No unread notifications"
+msgstr "Немає непрочитаних сповіщень"
+
+msgid "Nobody"
+msgstr "Ніхто"
+
+msgid "None"
+msgstr "Відсутня"
+
+msgid "Norwegian (Norway)"
+msgstr "Норвезька (Норвегія)"
+
+msgid "Not connected"
+msgstr "Не підключено"
+
+msgctxt "tray"
+msgid "Not connected"
+msgstr "Немає підключення"
+
+msgid "Nothing found"
+msgstr "Нічого не знайдено"
+
+msgid "Notifications"
+msgstr "Сповіщення"
+
+msgid "On-Screen Keyboard"
+msgstr "Екранна клавіатура"
+
+msgid "Open"
+msgstr "Відкрити"
+
+msgid "Open Action Center"
+msgstr "Відкрити Центр підтримки"
+
+msgid "Open Network and Sharing Center"
+msgstr "Відкрити Центр мереж і спільного доступу"
+
+msgid "Open Settings"
+msgstr "Відкрити параметри"
+
+msgid "Open Windows Explorer"
+msgstr "Відкрити Провідник"
+
+msgid "Open file location"
+msgstr "Відкрити розташування файлу"
+
+msgid "Open in new window"
+msgstr "Відкрити в новому вікні"
+
+msgid "Open with"
+msgstr "Відкрити за допомогою"
+
+msgid "Other user..."
+msgstr "Інший користувач..."
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "Paste"
+msgstr "Вставити"
+
+msgid "Paste shortcut"
+msgstr "Вставити ярлик"
+
+msgid "Persian (Iran)"
+msgstr "Перська (Іран)"
+
+msgid "Personalize"
+msgstr "Персоналізація"
+
+msgid "Pictures"
+msgstr "Зображення"
+
+msgid "Pin to Start Menu"
+msgstr "Закріпити в меню «Пуск»"
+
+msgid "Pin to taskbar"
+msgstr "Закріпити на панелі завдань"
+
+msgid "Please insert a disc into drive \"%1\"."
+msgstr "Вставте диск у пристрій \"%1\"."
+
+msgid "Plugged in, not charging"
+msgstr "Підключено, не заряджається"
+
+msgid "Polish (Poland)"
+msgstr "Польська (Польща)"
+
+msgid "Portuguese (Brazil)"
+msgstr "Португальська (Бразилія)"
+
+msgid "Portuguese (Portugal)"
+msgstr "Португальська (Португалія)"
+
+msgid "Power saver"
+msgstr "Економія енергії"
+
+msgid "Press keyboard shortcuts one key at a time (Sticky Keys)"
+msgstr "Натискати сполучення клавіш по одній (Залипання клавіш)"
+
+msgid "Press the SPACEBAR to select the highlighted option."
+msgstr "Натисніть клавішу ПРОБІЛ, щоб вибрати виділений параметр."
+
+msgid "Program location:"
+msgstr "Шлях до програми:"
+
+msgid "Program name:"
+msgstr "Назва програми:"
+
+msgid "Properties"
+msgstr "Властивості"
+
+msgctxt "network"
+msgid "Properties"
+msgstr "Відомості"
+
+msgid "Publisher:"
+msgstr "Видавець:"
+
+msgid "Read the text on the screen aloud (Narrator)"
+msgstr "Читати текст на екрані вголос (Екранний диктор)"
+
+msgid "Receive a File"
+msgstr "Отримати файл"
+
+msgid "Recent Items"
+msgstr "Останні документи"
+
+msgid "Recent Places"
+msgstr "Недавні місця"
+
+msgid "Recycle Bin"
+msgstr "Смітник"
+
+msgid "Recycle Bin - Shortcut"
+msgstr "Кошик — ярлик"
+
+msgid "Recycle Bin - Shortcut.desktop"
+msgstr "Кошик — ярлик.desktop"
+
+msgid "Refresh"
+msgstr "Оновити"
+
+msgid "Removable Disk (%1)"
+msgstr "Знімний диск (%1)"
+
+msgid "Remove Icon"
+msgstr "Видалити значок"
+
+msgid "Remove from this list"
+msgstr "Видалити з цього списку"
+
+msgid "Rename"
+msgstr "Перейменувати"
+
+msgid "Restart"
+msgstr "Перезавантаження"
+
+msgctxt "logon"
+msgid "Restart"
+msgstr "Перезавантажити"
+
+msgid "Restore favorites links"
+msgstr "Відновити посилання обраного"
+
+msgid "Restore previous versions"
+msgstr "Відновити попередні версії"
+
+msgid "Romanian (Moldova)"
+msgstr "Румунська (Молдова)"
+
+msgid "Romanian (Romania)"
+msgstr "Румунська (Румунія)"
+
+msgid "Run..."
+msgstr "Виконати..."
+
+msgid "Russian (Russia)"
+msgstr "Російська (Російська Федерація)"
+
+msgid "S&how extracted files when complete"
+msgstr "&Показати видобуті файли після завершення"
+
+msgid "Sa"
+msgstr "сб"
+
+msgid ""
+"Save your session in memory and put the computer in a low-power state so "
+"that you can quickly resume working."
+msgstr ""
+"Збереження сеансу в пам'яті та переведення комп'ютера в режим зниженого "
+"енергоспоживання для швидкого відновлення роботи."
+
+msgid "Screen resolution"
+msgstr "Роздільна здатність екрана"
+
+msgid "Screenshot (%1).png"
+msgstr "Знімок екрана (%1).png"
+
+msgid "Select a Destination and Extract Files"
+msgstr "Виберіть місце призначення та видобудьте файли"
+
+msgid "Select a destination"
+msgstr "Виберіть місце призначення"
+
+msgid "Select a power plan:"
+msgstr "Виберіть план живлення:"
+
+msgid "Send a File"
+msgstr "Надіслати файл"
+
+msgid "Send to"
+msgstr "Надіслати"
+
+msgid "Serbian (Montenegro)"
+msgstr "Сербська (Чорногорія)"
+
+msgid "Serbian (Serbia)"
+msgstr "Сербська (Сербія)"
+
+msgid "Setswana (Botswana)"
+msgstr "Тсвана (Ботсвана)"
+
+msgid "Settings..."
+msgstr "Параметри..."
+
+msgid "Share with"
+msgstr "Спільний доступ"
+
+msgid "Show Bluetooth Devices"
+msgstr "Показати пристрої Bluetooth"
+
+msgid "Show Icon"
+msgstr "Показати значок"
+
+msgid "Show desktop icons"
+msgstr "Відображати піктограми робочого стола"
+
+msgid "Show details"
+msgstr "Показати подробиці"
+
+msgid "Show hidden icons"
+msgstr "Показати приховані значки"
+
+msgid "Show information about the publisher's certificate"
+msgstr "Відомості про видавця"
+
+msgid "Show network QR code"
+msgstr "Показати QR-код мережі"
+
+msgid "Show the desktop"
+msgstr "Показати робочий стіл"
+
+msgid "Show windows side by side"
+msgstr "Відображати вікна поруч"
+
+msgid "Show windows stacked"
+msgstr "Відображати вікна стопкою"
+
+msgid "Shut down"
+msgstr "Завершення роботи"
+
+msgctxt "logon"
+msgid "Shut down"
+msgstr "Завершити роботу"
+
+msgid "Sign-in required"
+msgstr "Потрібно ввійти"
+
+msgid "Sinhala (Sri Lanka)"
+msgstr "Сингалійська (Шрі-Ланка)"
+
+msgid "Size"
+msgstr "Розмір"
+
+msgid "Sleep"
+msgstr "Сон"
+
+msgid "Slovak (Slovakia)"
+msgstr "Словацька (Словаччина)"
+
+msgid "Slovenian (Slovenia)"
+msgstr "Словенська (Словенія)"
+
+msgid "Small icons"
+msgstr "Дрібні піктограми"
+
+msgid "Solve PC issues: "
+msgstr "Вирішення проблем ПК: "
+
+msgid "Sort by"
+msgstr "Сортувати за"
+
+msgid "Sort by name"
+msgstr "Сортувати за іменем"
+
+msgid "Spanish (Argentina)"
+msgstr "Іспанська (Аргентина)"
+
+msgid "Spanish (Spain)"
+msgstr "Іспанська (Іспанія)"
+
+msgid "Speakers: $1%"
+msgstr "Динаміки: $1%"
+
+msgid "Speakers: Muted"
+msgstr "Динаміки: звук вимкнено"
+
+msgid "Specific people..."
+msgstr "Певні люди..."
+
+msgid "Speed"
+msgstr "Швидкість"
+
+msgid "Start"
+msgstr "Пуск"
+
+msgid "Start Task Manager"
+msgstr "Запустити диспетчер задач"
+
+msgid "Status"
+msgstr "Стан"
+
+msgid "Su"
+msgstr "нд"
+
+msgid "Swahili (Kenya)"
+msgstr "Суахілі (макромова) (Кенія)"
+
+msgid "Swahili (Tanzania)"
+msgstr "Суахілі (макромова) (Танзанія)"
+
+msgid "Swedish (Sweden)"
+msgstr "Шведська (Швеція)"
+
+msgid "Switch User"
+msgstr "Змінити користувача"
+
+msgid "Switch users without closing programs."
+msgstr "Змінення користувача без закриття програм."
+
+msgid "Syriac (Syria)"
+msgstr "Сирійська (Сирія)"
+
+msgid "Tajik (Tajikistan)"
+msgstr "Таджицька (Таджикистан)"
+
+msgid "Text labels"
+msgstr "Текстові мітки"
+
+msgid "Th"
+msgstr "чт"
+
+msgid "Thai (Thailand)"
+msgstr "Тайська (Таїланд)"
+
+msgid "The Bluetooth adapter is off"
+msgstr "Адаптер Bluetooth вимкнуто"
+
+msgid "The battery is set to charge to about "
+msgstr "Батарею налаштовано заряджати приблизно до "
+
+msgid "The user name or password is incorrect."
+msgstr "Неправильне ім’я користувача або пароль."
+
+msgctxt "uac"
+msgid "The user name or password is incorrect."
+msgstr "Неправильне ім'я користувача або пароль."
+
+msgid "This folder is empty."
+msgstr "Ця папка порожня."
+
+msgid "To continue, type an administrator password, and then click Yes."
+msgstr ""
+"Щоб продовжити, введіть пароль адміністратора й натисніть кнопку «Так»."
+
+msgid "Toolbars"
+msgstr "Панелі інструментів"
+
+msgid "Total messages: "
+msgstr "Усього повідомлень: "
+
+msgid "Total: "
+msgstr "Усього: "
+
+msgid "Troubleshoot problems"
+msgstr "Виправлення неполадок"
+
+msgid "Tu"
+msgstr "вт"
+
+msgid "Turkish (Turkey)"
+msgstr "Турецька (Туреччина)"
+
+msgid "Turkmen (Turkmenistan)"
+msgstr "Туркменська (Туркменістан)"
+
+msgid "Turn Adapter Off"
+msgstr "Вимкнути адаптер"
+
+msgid "Turn Adapter On"
+msgstr "Увімкнути адаптер"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Type without the keyboard (On-Screen Keyboard)"
+msgstr "Вводити текст без клавіатури (Екранна клавіатура)"
+
+msgid "Ukrainian (Ukraine)"
+msgstr "Українська (Україна)"
+
+msgid "Undefined"
+msgstr "Невизначена"
+
+msgid "Unknown"
+msgstr "Невідомо"
+
+msgid "Unpin from Start Menu"
+msgstr "Відкріпити від меню «Пуск»"
+
+msgid "Unpin from taskbar"
+msgstr "Відкріпити від панелі завдань"
+
+msgid "Urdu (Pakistan)"
+msgstr "Урду (Пакистан)"
+
+msgid ""
+"Use Action Center to review the latest messages about your computer and find "
+"solutions to problems."
+msgstr ""
+"За допомогою Центру підтримки можна переглядати останні повідомлення про "
+"стан комп'ютера й знаходити рішення проблем."
+
+msgid "User Account Control"
+msgstr "Контроль облікових записів користувачів"
+
+msgid "Uzbek (Uzbekistan)"
+msgstr "Узбецька (Узбекистан)"
+
+msgid "Verified publisher:"
+msgstr "Перевірений видавець:"
+
+msgid "Videos"
+msgstr "Відео"
+
+msgid "Vietnamese (Vietnam)"
+msgstr "В'єтнамська (В'єтнам)"
+
+msgid "View"
+msgstr "Вигляд"
+
+msgid "We"
+msgstr "ср"
+
+msgid ""
+"Windows cannot complete the extraction.\n"
+"\n"
+"The Compressed (zipped) Folder \"%1\" is invalid."
+msgstr ""
+"Не вдалося завершити видобування.\n"
+"\n"
+"Стиснена ZIP-папка \"%1\" неприпустима."
+
+msgid ""
+"Windows cannot complete the extraction.\n"
+"\n"
+"The destination folder could not be created."
+msgstr ""
+"Не вдалося завершити видобування.\n"
+"\n"
+"Не вдалося створити папку призначення."
+
+msgid ""
+"Windows cannot complete the extraction.\n"
+"\n"
+"The destination folder path is invalid. Please specify a different path."
+msgstr ""
+"Не вдалося завершити видобування.\n"
+"\n"
+"Шлях до папки призначення неприпустимий. Вкажіть інший шлях."
+
+msgid "Wireless Network Connection"
+msgstr "Бездротове мережеве з'єднання"
+
+msgid "Wireless and mobile networks are off"
+msgstr "Бездротові та мобільні мережі вимкнено"
+
+msgid "Wireless network is off"
+msgstr "Бездротову мережу вимкнено"
+
+msgid "Wolof (Senegal)"
+msgstr "Волоф (Сенегал)"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "important message"
+msgstr "важливе повідомлення"
+
+msgid "important messages"
+msgstr "важливі повідомлення"
+
+msgctxt "many"
+msgid "important messages"
+msgstr "важливих повідомлень"
+
+msgid "message"
+msgstr "повідомлення"
+
+msgctxt "many"
+msgid "messages"
+msgstr "повідомлень"
+
+msgid "Fully charged (%1%)"
+msgstr "Повністю заряджено (%1%)"
+
+msgid "%1% available"
+msgstr "Доступно %1%"
+
+msgid "%1% available (plugged in, not charging)"
+msgstr "Доступно %1% (підключено, не заряджається)"
+
+msgid "%1% available (plugged in, charging)"
+msgstr "Доступно %1% (підключено, заряджається)"
+
+msgid "%1 (%2%) remaining"
+msgstr "Залишилося %1 (%2%)"
+
+msgid "%1% remaining"
+msgstr "Залишилося %1%"
+
+msgid "Could not turn on the plan \"%1\""
+msgstr "Не вдалося ввімкнути план «%1»"
+msgid "Welcome"
+msgstr "Ласкаво просимо"
+
