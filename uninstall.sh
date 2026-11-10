@@ -4,7 +4,9 @@
 #   sudo apt install --reinstall dolphin libkf6kiocore6 libkf6kiowidgets6 libkf6kiofilewidgets6 libkf6kiogui6 qt6-style-kvantum
 set -u
 L=$HOME/.local
-echo "Видаляю програми й ресурси SevenPlasma з $L ..."
+case "${LANGUAGE:-${LC_ALL:-${LANG:-}}}" in uk*) UK=1 ;; *) UK=0 ;; esac
+T() { if [ "$UK" = 1 ]; then printf '%s' "$1"; else printf '%s' "$2"; fi; }
+echo "$(T "Видаляю програми й ресурси SevenPlasma з $L ..." "Removing SevenPlasma programs and resources from $L ...")"
 rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop
 rm -rf "$L"/share/seven-* "$L"/lib/sevenplasma "$L"/share/sevenplasma "$L"/share/kwin/scripts/sevenkeys
 rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
@@ -13,7 +15,7 @@ rm -rf "$L/share/fonts/Windows 7" "$L/share/sounds/Windows 7" "$L/share/wallpape
 systemctl --user disable --now seven-folder-refresh.service seven-soundfx.service 2>/dev/null
 rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME/.config/environment.d/60-sevenplasma.conf"
 kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
-echo "Системні частини (потрібен пароль):"
+echo "$(T "Системні частини (потрібен пароль):" "System parts (the password is needed):")"
 sudo rm -f /usr/local/libexec/seven-* /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf \
     /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf /etc/systemd/system.conf.d/seven-stop-timeout.conf \
     /etc/sddm.conf.d/zz-sevenplasma.conf
@@ -25,4 +27,4 @@ if [ -d /usr/share/plymouth/themes/sevenplasma ]; then
 fi
 sudo systemctl daemon-reload
 fc-cache -f >/dev/null; kbuildsycoca6 >/dev/null 2>&1
-echo "Готово. Вийдіть із системи й увійдіть знову."
+echo "$(T "Готово. Вийдіть із системи й увійдіть знову." "Done. Log out and log in again.")"

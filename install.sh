@@ -13,6 +13,9 @@
 set -Eeuo pipefail
 
 REPO=$(cd "$(dirname "$0")" && pwd)
+# messages in Ukrainian when the system language is Ukrainian, in English otherwise
+case "${LANGUAGE:-${LC_ALL:-${LANG:-}}}" in uk*) UK=1 ;; *) UK=0 ;; esac
+L() { if [ "$UK" = 1 ]; then printf '%s' "$1"; else printf '%s' "$2"; fi; }
 WORK=${XDG_CACHE_HOME:-$HOME/.cache}/sevenplasma-build
 LOG=$WORK/install.log
 ISO=""
@@ -28,7 +31,7 @@ while [ $# -gt 0 ]; do
         --no-forks) FORKS=0; shift ;;
         --yes|-y) YES=1; shift ;;
         -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) echo "Невідомий параметр: $1 (див. ./install.sh --help)"; exit 1 ;;
+        *) echo "$(L "Невідомий параметр: $1 (див. ./install.sh --help)" "Unknown option: $1 (see ./install.sh --help)")"; exit 1 ;;
     esac
 done
 
@@ -40,26 +43,26 @@ step() { STEP=$((STEP + 1)); printf '\n[%d/%d] %s\n' "$STEP" "$TOTAL" "$1"; echo
 run() { "$@" >> "$LOG" 2>&1; }
 note() { printf '      %s\n' "$*"; }
 warn() { printf '      ! %s\n' "$*"; }
-die() { printf '\nПомилка: %s\nПодробиці: %s\n' "$*" "$LOG"; exit 1; }
-trap 'die "команда завершилася невдало (рядок $LINENO)"' ERR
+die() { printf "\n$(L 'Помилка' 'Error'): %s\n$(L 'Подробиці' 'Details'): %s\n" "$*" "$LOG"; exit 1; }
+trap 'die "$(L "команда завершилася невдало (рядок $LINENO)" "a command failed (line $LINENO)")"' ERR
 
 # ------------------------------------------------------------------ checks
-[ "$(id -u)" -ne 0 ] || die "запускайте від звичайного користувача, не від root (пароль спитають, коли треба)"
-command -v apt-get >/dev/null || die "потрібен дистрибутив на основі Ubuntu / Debian (Kubuntu)"
-command -v plasmashell >/dev/null || die "KDE Plasma не встановлено"
+[ "$(id -u)" -ne 0 ] || die "$(L "запускайте від звичайного користувача, не від root (пароль спитають, коли треба)" "run as your normal user, not as root (the password is asked when needed)")"
+command -v apt-get >/dev/null || die "$(L "потрібен дистрибутив на основі Ubuntu / Debian (Kubuntu)" "an Ubuntu / Debian based distribution is needed (Kubuntu)")"
+command -v plasmashell >/dev/null || die "$(L "KDE Plasma не встановлено" "KDE Plasma is not installed")"
 PLASMA=$(dpkg-query -W -f='${Version}' plasma-workspace 2>/dev/null | sed 's/^[0-9]*://; s/-.*//')
-case "$PLASMA" in 6.6.*) ;; *) die "потрібна Plasma 6.6 (знайдено: ${PLASMA:-?})" ;; esac
-[ -z "$ISO" ] || [ -f "$ISO" ] || die "файл образу не знайдено: $ISO"
-[ "${XDG_SESSION_TYPE:-x11}" = x11 ] || warn "зараз сесія $XDG_SESSION_TYPE; SevenPlasma розрахована на X11 (її можна вибрати на екрані входу)"
+case "$PLASMA" in 6.6.*) ;; *) die "$(L "потрібна Plasma 6.6 (знайдено: ${PLASMA:-?})" "Plasma 6.6 is needed (found: ${PLASMA:-?})")" ;; esac
+[ -z "$ISO" ] || [ -f "$ISO" ] || die "$(L "файл образу не знайдено: $ISO" "image file not found: $ISO")"
+[ "${XDG_SESSION_TYPE:-x11}" = x11 ] || warn "$(L "зараз сесія $XDG_SESSION_TYPE; SevenPlasma розрахована на X11 (її можна вибрати на екрані входу)" "this is a $XDG_SESSION_TYPE session; SevenPlasma is made for X11 (choose it on the logon screen)")"
 
-echo "SevenPlasma: вигляд Windows 7 для KDE Plasma"
-echo "Журнал встановлення: $LOG"
-[ -n "$ISO" ] && echo "Образ Windows 7: $ISO" || echo "Без образу Windows 7: будуть вільні замінники (іконки й звуки ATP, шрифт Selawik), без ігор."
+echo "$(L "SevenPlasma: вигляд Windows 7 для KDE Plasma" "SevenPlasma: the Windows 7 experience for KDE Plasma")"
+echo "$(L "Журнал встановлення: $LOG" "Install log: $LOG")"
+[ -n "$ISO" ] && echo "$(L "Образ Windows 7: $ISO" "Windows 7 image: $ISO")" || echo "$(L "Без образу Windows 7: будуть вільні замінники (іконки й звуки ATP, шрифт Selawik), без ігор." "No Windows 7 image: free replacements will be used (ATP icons and sounds, the Selawik font), no games.")"
 if [ $YES -eq 0 ]; then
-    read -r -p "Продовжити? [Т/н] " a
+    read -r -p "$(L "Продовжити? [Т/н] " "Continue? [Y/n] ")" a
     case "$a" in ""|[TtYyТт]*) ;; *) exit 0 ;; esac
 fi
-sudo -n true 2>/dev/null || sudo -v || die "потрібні права адміністратора"
+sudo -n true 2>/dev/null || sudo -v || die "$(L "потрібні права адміністратора" "administrator rights are needed")"
 # keep sudo alive while building
 ( while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done ) 2>/dev/null &
 
@@ -84,7 +87,7 @@ cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and in
 }
 
 # ------------------------------------------------------------------ 1. packages
-step "Встановлення пакетів"
+step "$(L "Встановлення пакетів" "Installing packages")"
 PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unzip 7zip python3-pil python3-pyqt6
       qt6-base-dev qt6-svg-dev qt6-multimedia-dev qt6-tools-dev qt6-5compat-dev qt6-declarative-dev
       libqt6virtualkeyboard6 libqt6multimedia6 libqt6core5compat6
@@ -106,10 +109,10 @@ PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unz
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && PKGS+=(wine)
 run sudo apt-get -o DPkg::Lock::Timeout=900 update
 run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 2. AeroThemePlasma
-step "AeroThemePlasma (оболонка, рамки вікон, вхід, UAC) з нашими змінами"
+step "$(L "AeroThemePlasma (оболонка, рамки вікон, вхід, UAC) з нашими змінами" "AeroThemePlasma (shell, window frames, logon, UAC) with our changes")"
 mkdir -p "$WORK/atp/repos" "$WORK/src"
 ln -sfn "$REPO/apps/seven-common" "$WORK/src/seven-common"
 for r in libplasma uac-polkit-agent smod aeroshell-workspace aeroshell-kwin-components aeroshell-sddm-kcm; do
@@ -144,10 +147,10 @@ run sudo install -m 644 "$A/12222.png" "$SH/small.png"
 run sudo install -m 644 "$A/12218.png" "$SH/small-hover.png"
 run sudo install -m 644 "$A/12219.png" "$SH/small-focus.png"
 run sudo install -m 644 "$A/12220.png" "$SH/small-focus-hover.png"
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 3. Explorer (Dolphin / KIO / Kvantum forks)
-step "Провідник, діалоги файлів і стиль вікон (Dolphin, KIO, Kvantum)"
+step "$(L "Провідник, діалоги файлів і стиль вікон (Dolphin, KIO, Kvantum)" "Explorer, file dialogs and widget style (Dolphin, KIO, Kvantum)")"
 v() { dpkg-query -W -f='${Version}' "$1" 2>/dev/null | sed 's/^[0-9]*://; s/-.*//'; }
 fetch libaero-qt "$WORK/src/libaero-qt"
 cmake_install "$WORK/src/libaero-qt" "$WORK/src/libaero-qt/build"
@@ -156,20 +159,20 @@ if [ $FORKS -eq 1 ]; then
         fetch kio "$WORK/src/kio"
         cmake_install "$WORK/src/kio" "$WORK/src/kio/build" -DBUILD_TESTING=OFF
         run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
-    else warn "KIO $(v libkf6kio-dev) не та версія, для якої зроблені зміни (6.24.0): діалоги файлів лишаться звичайні"; fi
+    else warn "$(L "KIO $(v libkf6kio-dev) не та версія, для якої зроблені зміни (6.24.0): діалоги файлів лишаться звичайні" "KIO $(v libkf6kio-dev) is not the version the changes are made for (6.24.0): file dialogs stay as they are")"; fi
     if [ "$(v dolphin)" = 25.12.3 ]; then
         fetch dolphin-aero "$WORK/src/dolphin-aero"
         cmake_install "$WORK/src/dolphin-aero" "$WORK/src/dolphin-aero/build" -DBUILD_TESTING=OFF
-    else warn "Dolphin $(v dolphin) не та версія (25.12.3): Провідник буде звичайним Dolphin"; fi
+    else warn "$(L "Dolphin $(v dolphin) не та версія (25.12.3): Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not the expected version (25.12.3): Explorer stays plain Dolphin")"; fi
     if [ "$(v qt6-style-kvantum)" = 1.1.5 ]; then
         fetch kvantum "$WORK/src/kvantum"
         cmake_install "$WORK/src/kvantum/Kvantum" "$WORK/src/kvantum/Kvantum/build" -DENABLE_QT5=OFF
-    else warn "Kvantum $(v qt6-style-kvantum) не та версія (1.1.5): меню без лінії-розділювача Windows 7"; fi
+    else warn "$(L "Kvantum $(v qt6-style-kvantum) не та версія (1.1.5): меню без лінії-розділювача Windows 7" "Kvantum $(v qt6-style-kvantum) is not the expected version (1.1.5): menus lack the Windows 7 separator line")"; fi
 fi
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 4. our programs
-step "Програми Windows 7 (Панель керування, Paint, WMP, гаджети...)"
+step "$(L "Програми Windows 7 (Панель керування, Paint, WMP, гаджети...)" "Windows 7 programs (Control Panel, Paint, WMP, gadgets...)")"
 for d in "$REPO"/apps/seven-*/; do
     [ -f "$d/CMakeLists.txt" ] || continue
     n=$(basename "$d")
@@ -198,12 +201,12 @@ cp -r "$REPO/apps/kwin/sevenkeys" "$L/share/kwin/scripts/"
 run systemctl --user daemon-reload
 run systemctl --user enable seven-folder-refresh.service || true
 run kbuildsycoca6 || true
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 5. Windows 7 resources from the user's image
-step "Ресурси Windows 7 з вашого образу"
+step "$(L "Ресурси Windows 7 з вашого образу" "Windows 7 resources from your image")"
 if [ -n "$ISO" ]; then
-    note "читаю образ (кілька хвилин)..."
+    note "$(L "читаю образ (кілька хвилин)..." "reading the image (a few minutes)...")"
     TREE=$WORK/windows
     rm -rf "$TREE"; mkdir -p "$TREE"
     run 7z e -y -o"$TREE" "$ISO" sources/install.wim
@@ -216,7 +219,8 @@ if [ -n "$ISO" ]; then
     rm -f "$TREE/install.wim"
     W=$TREE/$IDX
     run python3 "$REPO/extract/seven-extract.py" --tree "$W" "$L/share"
-    note "іконки, картинки, шрифти, звуки, шпалери: $(python3 -c "import json;print(len(json.load(open('$REPO/extract/recipes.json'))))") файлів"
+    N=$(python3 -c "import json;print(len(json.load(open('$REPO/extract/recipes.json'))))")
+    note "$(L "іконки, картинки, шрифти, звуки, шпалери: $N файлів" "icons, pictures, fonts, sounds, wallpapers: $N files")"
     # the shortcut arrow of desktop icons (imageres.dll 163 / 1793) goes into ATP's desktop plasmoid
     run sudo install -D -m 644 -t /usr/share/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/images "$L"/share/sevenplasma/plasmoid-images/shortcut-*.png
     mkdir -p "$HOME/.config/Kvantum"
@@ -230,7 +234,7 @@ if [ -n "$ISO" ]; then
     run sudo cp "$L/share/sounds/Windows 7" -r /usr/share/sounds/ 2>/dev/null || true
     run fc-cache -f
     if [ $GAMES -eq 1 ]; then
-        note "ігри Windows 7 (Wine)"
+        note "$(L "ігри Windows 7 (Wine)" "Windows 7 games (Wine)")"
         export WINEPREFIX="$L/share/sevenplasma/wine"
         WINEDLLOVERRIDES="mscoree,mshtml=" run wineboot -i || true   # no Mono/Gecko install prompts
         mkdir -p "$WINEPREFIX/drive_c/Program Files/Microsoft Games"
@@ -238,7 +242,7 @@ if [ -n "$ISO" ]; then
     fi
     rm -rf "$TREE"
 else
-    note "образ не вказано: беру тему Kvantum ATP і вільний шрифт Selawik"
+    note "$(L "образ не вказано: беру тему Kvantum ATP і вільний шрифт Selawik" "no image given: using ATP's Kvantum theme and the free Selawik font")"
     mkdir -p "$HOME/.config/Kvantum" "$L/share/fonts/Selawik"
     cp -r "$WORK/atp/main/misc/kvantum/Windows7Aero" "$HOME/.config/Kvantum/Windows7"
     mv "$HOME/.config/Kvantum/Windows7/Windows7Aero.svg" "$HOME/.config/Kvantum/Windows7/Windows7.svg" 2>/dev/null || true
@@ -247,10 +251,10 @@ else
         run unzip -o -j "$WORK/selawik.zip" '*.ttf' -d "$L/share/fonts/Selawik" && run fc-cache -f
     fi
 fi
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 6. boot, logon, shutdown
-step "Завантаження, вхід і завершення роботи"
+step "$(L "Завантаження, вхід і завершення роботи" "Boot, logon and shutdown")"
 B=$REPO/apps/seven-common/boot
 run sudo install -D -m 755 "$B/seven-nopass-users" /usr/local/libexec/seven-nopass-users
 run sudo install -D -m 755 "$B/seven-sddm-xsetup" /usr/local/libexec/seven-sddm-xsetup
@@ -280,7 +284,7 @@ fi
 run sudo systemctl mask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
 if [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
     run sudo plymouth-set-default-theme sevenplasma || run sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth 200
-    note "оновлюю initramfs (заставка «Запуск Windows»)..."
+    note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
     run sudo update-initramfs -u
 fi
 # the account picture: like a new Windows 7 account, a random one of the standard pictures (when there is none)
@@ -296,13 +300,13 @@ if [ -f "${PICS[0]}" ] && ! sudo grep -qs '^Icon=/' "$AS"; then
     fi
 fi
 run sudo systemctl daemon-reload
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 7. settings
 # The global theme, effects and Plasma settings need the running session: seven-firstrun does them at the
 # next login (or right now when install.sh runs inside Plasma). AeroThemePlasma's setup wizard and the KDE
 # Welcome Center are not needed then.
-step "Налаштування Plasma"
+step "$(L "Налаштування Plasma" "Plasma settings")"
 kw() { kwriteconfig6 --file "$1" --group "$2" --key "$3" "$4" >> "$LOG" 2>&1; }
 kw aerothemeplasmarc OOTB wizardRun true
 [ -n "$PLASMA" ] && kw plasma-welcomerc General LastSeenVersion "$PLASMA"
@@ -319,15 +323,15 @@ for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run 
 for m in video/mp4 video/x-matroska video/x-msvideo video/webm; do run xdg-mime default seven-wmp.desktop $m; done
 for m in font/ttf font/otf application/x-font-ttf; do run xdg-mime default seven-fontview.desktop $m; done
 if qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1; then
-    note "застосовую тему зараз"
+    note "$(L "застосовую тему зараз" "applying the theme now")"
     run "$L/bin/seven-firstrun" --now
 else
-    note "тема застосується під час наступного входу"
+    note "$(L "тема застосується під час наступного входу" "the theme is applied at the next login")"
 fi
-note "готово"
+note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 8. done
-step "Готово"
-echo "      Перезавантажте комп'ютер. На екрані входу вже вибрано сеанс «AeroThemePlasma (X11)»."
-echo "      Видалення: ./uninstall.sh"
+step "$(L "Готово" "Done")"
+echo "$(L "      Перезавантажте комп'ютер. На екрані входу вже вибрано сеанс «AeroThemePlasma (X11)»." "      Restart the computer. The logon screen already has the \"AeroThemePlasma (X11)\" session selected.")"
+echo "$(L "      Видалення: ./uninstall.sh" "      To remove: ./uninstall.sh")"
 trap - ERR
