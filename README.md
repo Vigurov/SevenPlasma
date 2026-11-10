@@ -1,6 +1,6 @@
 # SevenPlasma
 
-**The Windows 7 look and programs for KDE Plasma 6** · *Вигляд і програми Windows 7 для KDE Plasma 6* ([українською нижче](#українською))
+**The Windows 7 look and programs for KDE Plasma 6**
 
 > Early test release 0.1. Bug reports are welcome in [Issues](https://github.com/Vigurov/SevenPlasma/issues).
 
@@ -94,35 +94,3 @@ repositories (wackyideas, catpswin56 and others), [dolphin-aero and libaero-qt](
 SevenPlasma is distributed under the **GNU AGPL-3.0** licence (see `LICENSE`), like AeroThemePlasma.
 Microsoft, Windows and Windows 7 are trademarks of Microsoft Corporation; SevenPlasma is not affiliated with
 Microsoft. All Windows resources belong to Microsoft and are used only from your own copy of Windows.
-
----
-
-## Українською
-
-SevenPlasma перетворює KDE Plasma на Windows 7: не лише оформлення, а й самі програми — Панель керування з
-десятками розділів, Провідник, Paint, Windows Media Player, Калькулятор, Ножиці, гаджети, Диспетчер завдань,
-Керування комп'ютером, екрани завантаження, входу та завершення роботи, ігри Windows 7. Проєкт побудовано на
-[AeroThemePlasma](https://gitgud.io/wackyideas/aerothemeplasma) від **wackyideas** та учасників AeroShell.
-
-**У SevenPlasma немає жодного файлу Microsoft.** Іконки, звуки, шрифти Segoe UI, шпалери, анімація завантаження,
-картинки програм та ігри витягуються на вашому комп'ютері **з вашої власної копії Windows 7** (`install.wim` з ISO).
-Без образу тема теж встановиться — з іконками й звуками AeroThemePlasma та вільним шрифтом Selawik, але без ігор.
-
-Перевірено на чистій **Kubuntu 26.04** (Plasma 6.6, X11):
-
-```bash
-git clone https://github.com/Vigurov/SevenPlasma.git
-cd SevenPlasma
-./install.sh --iso ~/Завантаження/Windows7.iso
-```
-
-**Де взяти образ.** Microsoft більше не дає завантажити Windows 7, а SevenPlasma не дає посилань на її копії.
-Візьміть свій диск Windows 7 (і зробіть з нього ISO, напр. `dd if=/dev/sr0 of=Windows7.iso`) або образ із
-підписки MSDN / Visual Studio вашої роботи чи навчання. Windows не встановлюється й не активується, ключ не
-потрібен; підходить будь-яка версія, мова й розрядність.
-
-Скрипт спитає пароль адміністратора, встановить пакети, збере все потрібне та витягне ресурси з образу (10–40
-хвилин). Потім перезавантажте комп'ютер: на екрані входу вже вибрано сеанс «AeroThemePlasma (X11)», а під час
-першого входу тема застосується сама — без майстрів і запитань. Видалення: `./uninstall.sh`.
-
-Ліцензія: GNU AGPL-3.0. Windows — товарний знак Microsoft Corporation; SevenPlasma не пов'язаний з Microsoft.
