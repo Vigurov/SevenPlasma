@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Монітор ресурсів
+Comment=Відстеження використання ЦП, пам'яті, диска та мережі
+Exec=seven-taskmgr --resmon
+Icon=seven-resmon
+Categories=System;Monitor;
+StartupWMClass=seven-taskmgr

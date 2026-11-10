@@ -1,0 +1,84 @@
+# Windows 7 for Plymouth.
+#  boot:              "Starting Windows": black screen, the coloured lights gather into the logo
+#                     (frames 0-59, once), then the logo glows (frames 60-104, over and over).
+#  shutdown / reboot: the logon background with the busy ring and "Завершення роботи..." in the middle,
+#                     the Windows 7 watermark at the bottom, like the Windows 7 shutdown screen.
+W = Window.GetWidth();
+H = Window.GetHeight();
+mode = Plymouth.GetMode();
+leaving = (mode == "shutdown" || mode == "reboot");
+
+if (leaving) {
+    Window.SetBackgroundTopColor(0.114, 0.373, 0.478);
+    Window.SetBackgroundBottomColor(0.114, 0.373, 0.478);
+    bg = Sprite(Image("logon_bg.png").Scale(W, H));
+    bg.SetZ(-10);
+    i = 0;
+    while (i < 18) {
+        if (i < 10) pad = "0"; else pad = "";
+        spins[i] = Image("spin" + pad + i + ".png");
+        i++;
+    }
+    text_img = Image("shutdown_text.png");
+    row_w = 20 + 8 + text_img.GetWidth() - 16;
+    row_x = Math.Int(W / 2 - row_w / 2);
+    row_y = Math.Int(H / 2 - 36);
+    spin = Sprite(spins[0]);
+    spin.SetX(row_x);
+    spin.SetY(row_y - 10);
+    text = Sprite(text_img);
+    text.SetX(row_x + 28 - 8);
+    text.SetY(row_y - text_img.GetHeight() / 2);
+    wm_img = Image("watermark.png");
+    wm = Sprite(wm_img);
+    wm.SetX(Math.Int(W / 2 - wm_img.GetWidth() / 2));
+    wm.SetY(H - wm_img.GetHeight() - Math.Int((96 - wm_img.GetHeight()) / 2));
+    tick = 0;
+    fun refresh() {
+        tick++;
+        f = Math.Int(tick * 18 / 45);      # one turn of the ring in 0.9 s at 50 Hz
+        while (f >= 18) f = f - 18;
+        spin.SetImage(spins[f]);
+    }
+    Plymouth.SetRefreshFunction(refresh);
+} else {
+    Window.SetBackgroundTopColor(0, 0, 0);
+    Window.SetBackgroundBottomColor(0, 0, 0);
+    i = 0;
+    while (i < 105) {
+        if (i < 10) pad = "00";
+        else if (i < 100) pad = "0";
+        else pad = "";
+        frames[i] = Image("frame" + pad + i + ".png");
+        i++;
+    }
+    logo = Sprite(frames[0]);
+    logo.SetX(W / 2 - frames[0].GetWidth() / 2);
+    logo.SetY(H * 0.42 - frames[0].GetHeight() / 2);
+
+    starting = Sprite(Image("starting.png"));
+    starting.SetX(W / 2 - starting.GetImage().GetWidth() / 2);
+    starting.SetY(H * 0.615);
+    starting.SetOpacity(0);
+
+    copyright = Sprite(Image("copyright.png"));
+    copyright.SetX(W / 2 - copyright.GetImage().GetWidth() / 2);
+    copyright.SetY(H * 0.925);
+
+    tick = 0;
+    fun refresh() {
+        tick++;
+        f = Math.Int(tick * 30 / 50);      # the animation runs at 30 frames a second, refresh is 50 Hz
+        while (f >= 105) f = f - 45;
+        logo.SetImage(frames[f]);
+        a = (tick - 15) / 25;              # the text fades in shortly after the lights appear
+        if (a < 0) a = 0;
+        if (a > 1) a = 1;
+        starting.SetOpacity(a);
+    }
+    Plymouth.SetRefreshFunction(refresh);
+}
+
+# messages / password prompts are not shown (no disk encryption here); keep the screen clean
+fun message_callback(text) { }
+Plymouth.SetMessageFunction(message_callback);

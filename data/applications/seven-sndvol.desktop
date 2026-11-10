@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Мікшер гучності
+Comment=Гучність пристрою та окремих програм
+Exec=seven-control --sndvol
+Icon=seven-sndvol
+NoDisplay=true
+StartupWMClass=seven-control

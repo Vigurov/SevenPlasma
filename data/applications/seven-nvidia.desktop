@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Панель керування NVIDIA
+Comment=Параметри 3D, вибір графічного процесора, відомості про систему
+Exec=seven-nvidia
+Icon=seven-nvidia
+Categories=Settings;HardwareSettings;
+StartupWMClass=seven-nvidia

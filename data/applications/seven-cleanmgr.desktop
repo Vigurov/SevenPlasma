@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Disk Cleanup
+Name[uk]=Очищення диска
+GenericName[uk]=Звільнення місця на диску
+Comment[uk]=Видалення непотрібних файлів, щоб звільнити місце на диску
+Keywords[uk]=диск;очищення;місце;тимчасові;кеш;disk;cleanup;
+Exec=seven-control --cleanmgr
+Icon=seven-cleanmgr
+Categories=System;Utility;

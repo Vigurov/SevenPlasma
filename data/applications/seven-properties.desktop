@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Властивості
+Exec=seven-control --properties %F
+NoDisplay=true
+# no Icon on purpose: the taskbar and the title bar then show the window's own icon (the item's)

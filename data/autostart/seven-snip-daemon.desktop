@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Ножиці (у фоні)
+Exec=python3 @HOME@/.local/lib/sevenplasma/seven-snip.py --daemon
+NoDisplay=true
+X-KDE-autostart-phase=2

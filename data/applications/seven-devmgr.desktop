@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Device Manager
+Name[uk]=Диспетчер пристроїв
+Comment[uk]=Перегляд обладнання комп'ютера
+Exec=seven-devmgr
+Icon=seven-devmgr-w7
+Categories=Settings;System;HardwareSettings;

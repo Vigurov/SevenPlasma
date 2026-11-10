@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Автозапуск (Windows 7)
+Exec=seven-control --autoplay-watch
+NoDisplay=true
+X-KDE-autostart-phase=2

@@ -1,0 +1,10 @@
+{
+    "CacheThumbnail": false,
+    "KPlugin": {
+        "MimeTypes": [
+            "inode/directory"
+        ],
+        "Name": "Windows 7 folders",
+        "Name[uk]": "Папки як у Windows 7"
+    }
+}

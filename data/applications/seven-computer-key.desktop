@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Комп'ютер
+Exec=dolphin computer:/
+Icon=computer
+NoDisplay=true
+X-KDE-Shortcuts=Meta+E
+X-Win7-HiddenFromStart=true

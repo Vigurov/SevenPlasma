@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ігри
+Comment=Перегляд і запуск ігор, установлених на комп'ютері.
+Exec=seven-control --games
+Icon=seven-games
+Categories=Game;
+StartupWMClass=seven-control

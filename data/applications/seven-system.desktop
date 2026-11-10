@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=System
+Name[uk]=Система
+Comment=Basic information about your computer
+Comment[uk]=Основні відомості про ваш комп'ютер
+Exec=seven-system
+Icon=computer
+Categories=Settings;System;
+X-KDE-Shortcuts=Meta+Pause

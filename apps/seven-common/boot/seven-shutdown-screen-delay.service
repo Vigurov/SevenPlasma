@@ -1,0 +1,15 @@
+[Unit]
+Description=Keep the Windows 7 "Завершення роботи..." screen up a little longer
+# stopped right after the display manager, while Plymouth already shows the shutdown screen
+DefaultDependencies=no
+After=local-fs.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/sleep 3
+
+[Install]
+WantedBy=multi-user.target

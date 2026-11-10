@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Диспетчер пристроїв
+Exec=seven-devmgr
+Icon=seven-mmc
+NoDisplay=true
+StartupWMClass=seven-devmgr-mmc

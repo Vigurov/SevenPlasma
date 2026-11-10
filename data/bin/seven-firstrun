@@ -1,0 +1,117 @@
+#!/bin/bash
+# SevenPlasma: the first login after install.sh (autostart, once). Does what AeroThemePlasma's setup wizard
+# (atpootb) does - effects, global theme, Kvantum, cursor, window rules - without asking, then our settings
+# on top (the global theme resets fonts and styles, so they come after it). Needs the running Plasma session.
+#   seven-firstrun [--now]   (--now: run even if it already ran)
+DONE=$HOME/.config/sevenplasma-firstrun.done
+[ "$1" = --now ] || [ ! -e "$DONE" ] || exit 0
+LOG=$HOME/.cache/sevenplasma-firstrun.log
+exec >> "$LOG" 2>&1
+echo "== $(date)"
+kw() { kwriteconfig6 --file "$1" --group "$2" --key "$3" "$4"; }
+
+# wait for the panel (plasmashell on D-Bus)
+for _ in $(seq 60); do qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1 && break; sleep 1; done
+
+# 1. AeroThemePlasma: effects (the list of atpootb), global theme, cursor, window rules
+for e in smodpeekscript minimizeall aeroglassblur aeroglide smodglow smodpeekeffect libkwin_effect_smodsnap launchfeedback \
+    fadingpopupsaero squashaero dimscreenaero aeroshell-thumbnails sevenkeys; do kw kwinrc Plugins "${e}Enabled" true; done
+for e in blur contrast login logout maximize scale squash slide fade slidingpopups slidingnotifications dialogparent \
+    fadingpopups windowaperture wobblywindows translucency; do kw kwinrc Plugins "${e}Enabled" false; done
+plasma-apply-lookandfeel -a authui7
+sleep 3
+plasma-apply-cursortheme aero-drop --size 32
+aeroshell_update_default_rules aeroshell.rules
+# the Windows 7 wallpaper (img0.jpg from the user's image; without an image the theme keeps the current one)
+W7=$HOME/.local/share/wallpapers/Windows7/Windows/img0.jpg
+[ -f "$W7" ] && plasma-apply-wallpaperimage "$W7"
+
+# 2. ours
+F='Segoe UI,9,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
+fc-list | grep -q 'Segoe UI' || F='Selawik,9,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
+for k in font menuFont toolBarFont; do kw kdeglobals General $k "$F"; done
+kw kdeglobals General smallestReadableFont "${F/,9,/,8,}"
+kw kdeglobals WM activeFont "$F"
+kw kdeglobals KDE widgetStyle kvantum
+kw kdeglobals KDE ShowIconsOnPushButtons false
+kw kdeglobals KDE DndBehavior MoveIfSameDevice
+kw kdeglobals KDE AnimationDurationFactor 0.5
+kw kdeglobals Sounds Theme "Windows 7"
+kw kdeglobals "KFileDialog Settings" "View Style" Detail
+kw kdeglobals PreviewSettings Plugins "imagethumbnail,jpegthumbnail,svgthumbnail,fontthumbnail,ffmpegthumbs,opendocumentthumbnail,sevenfolderthumbnail"
+kw Kvantum/kvantum.kvconfig General theme Windows7
+kw kwinrc Effect-overview BorderActivate 9
+kw ksmserverrc General loginMode emptySession
+kw kscreenlockerrc Daemon Autolock false
+kw dolphinrc General ShowStatusBar Disabled
+kw dolphinrc General MenuBar Disabled
+kw dolphinrc ContentDisplay DirectorySizeMode None
+kw dolphinrc ContentDisplay UseShortRelativeDates false
+kw plasma_workspace.notifyrc Event/deviceAdded Action Sound
+kw plasma_workspace.notifyrc Event/deviceRemoved Action Sound
+# Print = Snipping Tool (Meta+R = Run, Meta+E = Explorer come from the sevenkeys KWin script)
+kw kglobalshortcutsrc "services][seven-snip.desktop" _launch Print
+kw kglobalshortcutsrc "services][org.kde.spectacle.desktop" _launch none
+kw kglobalshortcutsrc "services][org.kde.dolphin.desktop" _launch none
+# Start menu: Run opens our dialog
+qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+panels().forEach(function (p) { p.widgets().forEach(function (w) {
+    if (w.type == "io.gitgud.wackyideas.SevenStart") { w.currentConfigGroup = ["General"]; w.writeConfig("defaultRunnerApp", "seven-control --run"); }
+}); });'
+
+# Recycle Bin on the desktop (the only desktop icon of a new Windows 7 account)
+DESK=$(xdg-user-dir DESKTOP 2>/dev/null); DESK=${DESK:-$HOME/Desktop}
+mkdir -p "$DESK"
+[ -e "$DESK/seven-trash.desktop" ] || printf '[Desktop Entry]\nType=Link\nName=Кошик\nURL=trash:/\nIcon=seven-desk-trash-full\nEmptyIcon=seven-desk-trash-empty\n' > "$DESK/seven-trash.desktop"
+# taskbar: the pinned programs of Windows 7 (browser, Explorer, Media Player)
+L="preferred://browser,applications:org.kde.dolphin.desktop,applications:seven-wmp.desktop"
+qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
+panels().forEach(function (p) { p.widgets().forEach(function (w) {
+    if (w.type == 'io.gitgud.wackyideas.seventasks') { w.currentConfigGroup = ['General']; w.writeConfig('launchers', '$L'.split(',')); }
+}); });"
+
+# 3. reload: window manager, styles, shortcuts
+qdbus6 org.kde.KWin /KWin reconfigure
+qdbus6 org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel.blockGlobalShortcuts false >/dev/null 2>&1
+dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:0 int32:0
+dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:2 int32:0
+# Start menu: the programs a new Windows 7 account shows there (Media Center -> WMP, Calculator, Snipping Tool,
+# Paint, Solitaire) instead of the distribution's favourites. Plasma keeps favourites in the activity database;
+# with the old list removed there, the Start widget imports its "favoriteApps" again when it starts.
+# (a new favourites client starts from kicker-extra-favoritesrc: ours in ~/.config hides the distribution's)
+printf '[General]\nPrepend=seven-wmp.desktop;seven-calc.desktop;seven-snip.desktop;seven-paint.desktop;seven_Solitaire.desktop;\nIgnoreDefaults=true\n' \
+    > "$HOME/.config/kicker-extra-favoritesrc"
+systemctl --user stop plasma-plasmashell.service plasma-kactivitymanagerd.service
+python3 - <<'PY'
+import os, re, sqlite3, subprocess
+db = os.path.expanduser('~/.local/share/kactivitymanagerd/resources/database')
+if os.path.exists(db):
+    c = sqlite3.connect(db)
+    c.execute("DELETE FROM ResourceLink WHERE initiatingAgent = 'org.kde.plasma.favorites.applications'")
+    c.commit()
+rc = os.path.expanduser('~/.config/kactivitymanagerd-statsrc')
+if os.path.exists(rc):
+    out, skip = [], False
+    for line in open(rc, encoding='utf-8'):
+        if line.startswith('['):
+            skip = bool(re.match(r'\[Favorites-org\.kde\.plasma\.(kicker|kickoff)\.favorites\.', line))
+        if not skip:
+            out.append(line)
+    open(rc, 'w', encoding='utf-8').writelines(out)
+apps = os.path.expanduser('~/.config/plasma-io.gitgud.wackyideas.desktop-appletsrc')
+fav = 'seven-wmp.desktop,seven-calc.desktop,seven-snip.desktop,seven-paint.desktop,seven_Solitaire.desktop'
+cur = None
+for line in open(apps, encoding='utf-8') if os.path.exists(apps) else []:
+    m = re.match(r'^\[(.*)\]$', line.strip())
+    if m:
+        cur = m.group(1)
+    elif line.strip() == 'plugin=io.gitgud.wackyideas.SevenStart' and cur:
+        args = []
+        for g in [g for g in re.findall(r'[^\[\]]+', cur)] + ['Configuration', 'General']:
+            args += ['--group', g]
+        for k, v in (('favoriteApps', fav), ('favoritesPortedToKAstats', 'false')):
+            subprocess.run(['kwriteconfig6', '--file', apps] + args + ['--key', k, v])
+PY
+systemctl --user start plasma-kactivitymanagerd.service plasma-plasmashell.service
+touch "$DONE"
+echo "== done"

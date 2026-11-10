@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Computer Management
+Name[uk]=Керування комп'ютером
+Exec=seven-control --compmgmt
+Icon=seven-mmc
+NoDisplay=true
+Categories=System;

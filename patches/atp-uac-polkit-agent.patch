@@ -1,0 +1,664 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a1eae5c..2858063 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 3.16)
+ 
+ project(uac-polkit-agent)
+-set(PROJECT_VERSION "6.6.5")
++set(PROJECT_VERSION "6.6.4")
+ 
+ set(QT_MIN_VERSION "6.9.0")
+ set(KF6_MIN_VERSION "6.17.0")
+diff --git a/QuickAuthDialog.cpp b/QuickAuthDialog.cpp
+index 4a7927e..a10f3d8 100644
+--- a/QuickAuthDialog.cpp
++++ b/QuickAuthDialog.cpp
+@@ -21,10 +21,15 @@
+ #include <QQmlContext>
+ #include <QQuickWindow>
+ #include <QTimer>
++#include <QFont>
++#include <QGuiApplication>
++#include <QDir>
++#include <QFileInfo>
++#include <QProcess>
+ 
+ QuickAuthDialog::QuickAuthDialog(const QString &actionId,
+                                  const QString &message,
+-                                 [[maybe_unused]] const PolkitQt1::Details &details,
++                                 const PolkitQt1::Details &details,
+                                  const PolkitQt1::Identity::List &identities)
+     : QObject(nullptr)
+     , m_actionId(actionId)
+@@ -36,6 +41,69 @@ QuickAuthDialog::QuickAuthDialog(const QString &actionId,
+         {"sevenLike", m_config.group("General").readEntry("sevenLike", true)},
+     };
+ 
++    // Windows 7's "Program name": the program pkexec runs, past env, its variables and a shell
++    // polkit hands over only the pid of the asking process (pkexec): its command line is in /proc
++    QStringList words;
++    {
++        // pkexec makes its parent the subject: the pkexec itself is the subject's child
++        const QString subject = details.lookup(QStringLiteral("polkit.subject-pid"));
++        QString pid = subject;
++        const QStringList procs = QDir(QStringLiteral("/proc")).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
++        for (const QString &p : procs) {
++            bool num = false;
++            p.toInt(&num);
++            if (!num) {
++                continue;
++            }
++            QFile stat(QStringLiteral("/proc/%1/stat").arg(p));
++            if (!stat.open(QIODevice::ReadOnly)) {
++                continue;
++            }
++            const QByteArray st = stat.readAll();
++            const int close = st.lastIndexOf(')');
++            const QByteArray comm = st.mid(st.indexOf('(') + 1, close - st.indexOf('(') - 1);
++            const QList<QByteArray> rest = st.mid(close + 2).split(' ');
++            if (comm == "pkexec" && rest.size() > 1 && QString::fromLatin1(rest.at(1)) == subject) {
++                pid = p;
++            }
++        }
++        QFile f(QStringLiteral("/proc/%1/cmdline").arg(pid));
++        if (f.open(QIODevice::ReadOnly)) {
++            for (const QByteArray &w : f.readAll().split('\0')) {
++                if (!w.isEmpty()) {
++                    words << QString::fromLocal8Bit(w);
++                }
++            }
++        }
++    }
++    // the command pkexec runs: past pkexec, its options, env with its variables and sh -c
++    if (!words.isEmpty() && QFileInfo(words.first()).fileName() == QLatin1String("pkexec")) {
++        words.removeFirst();
++        while (!words.isEmpty() && words.first().startsWith(QLatin1String("--"))) {
++            const QString opt = words.takeFirst();
++            if (opt == QLatin1String("--user") && !words.isEmpty()) {
++                words.removeFirst();
++            }
++        }
++    }
++    const QString commandLine = words.join(QLatin1Char(' '));
++    QString program;
++    for (int i = 0; i < words.size(); ++i) {
++        const QString base = QFileInfo(words.at(i)).fileName();
++        if (base == QLatin1String("env") || words.at(i).contains(QLatin1Char('=')) || words.at(i).startsWith(QLatin1Char('-'))) {
++            continue;
++        }
++        program = words.at(i);
++        // "sh script.sh" names the script
++        if ((base == QLatin1String("sh") || base == QLatin1String("bash")) && i + 1 < words.size() && !words.at(i + 1).startsWith(QLatin1Char('-'))) {
++            program = words.at(i + 1);
++        }
++        break;
++    }
++    props.insert("commandLine", commandLine);
++    props.insert("programPath", program);
++    props.insert("programName", program.isEmpty() ? QString() : QFileInfo(program).fileName());
++
+     const auto actions = PolkitQt1::Authority::instance()->enumerateActionsSync();
+     for (const PolkitQt1::ActionDescription &desc : actions) {
+         if (actionId == desc.actionId()) {
+diff --git a/main.cpp b/main.cpp
+index 9abf0eb..8b83124 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -15,6 +15,9 @@
+ #include <PolkitQt1/Subject>
+ // Qt
+ #include <QApplication>
++#include <QFont>
++#include <KConfigGroup>
++#include <KSharedConfig>
+ #include <QDebug>
+ #include <QSessionManager>
+ // std
+@@ -48,6 +51,16 @@ int main(int argc, char *argv[])
+     app.setQuitOnLastWindowClosed(false);
+     app.setApplicationName("polkit-kde-authentication-agent-1");
+ 
++    // a library may have frozen the application font before the platform theme was loaded (Noto Sans 12):
++    // take the general font of kdeglobals (Segoe UI 9) explicitly
++    {
++        const QString general = KSharedConfig::openConfig(QStringLiteral("kdeglobals"))->group(QStringLiteral("General")).readEntry("font", QString());
++        QFont f;
++        if (!general.isEmpty() && f.fromString(general)) {
++            QApplication::setFont(f);
++        }
++    }
++
+     KLocalizedString::setApplicationDomain(QByteArrayLiteral("uac-polkit-agent"));
+ 
+     KAboutData aboutData("polkit-kde-authentication-agent-1", QString(), UAC_POLKIT_VERSION);
+diff --git a/qml/QuickAuthDialog.qml b/qml/QuickAuthDialog.qml
+index 35b23f9..c1cc778 100644
+--- a/qml/QuickAuthDialog.qml
++++ b/qml/QuickAuthDialog.qml
+@@ -6,6 +6,7 @@
+ */
+ 
+ import QtMultimedia
++import QtCore
+ 
+ import QtQuick
+ import QtQuick.Layouts
+@@ -18,7 +19,7 @@ import org.kde.polkitkde
+ 
+ Kirigami.AbstractApplicationWindow {
+     id: root
+-    title: i18n("User Account Control") //i18n("Authentication Required")
++    title: "Контроль облікових записів користувачів"
+ 
+     maximumHeight: intendedWindowHeight
+     minimumHeight: intendedWindowHeight
+@@ -42,6 +43,17 @@ Kirigami.AbstractApplicationWindow {
+     property string descriptionVendorName
+     property string descriptionVendorUrl
+     property string descriptionIcon
++    property string commandLine
++    property string programPath
++    property string programName
++
++    // Windows 7: pkexec runs any program, so its publisher is unknown (yellow); a described action is verified (blue)
++    readonly property bool unknownPublisher: descriptionActionId === "org.freedesktop.policykit.exec" || descriptionActionId === ""
++    property bool detailsShown: false
++
++    function aero(name) {
++        return "file://" + StandardPaths.locate(StandardPaths.GenericDataLocation, "seven-aero/" + name).toString().replace("file://", "");
++    }
+ 
+     property bool sevenLike: true
+ 
+@@ -85,7 +97,7 @@ Kirigami.AbstractApplicationWindow {
+     }
+ 
+     readonly property real intendedWindowWidth: (Kirigami.Units.largeSpacing * 57) - 5
+-    readonly property real intendedWindowHeight: mainContent.implicitHeight + bottomControls.height + (Kirigami.Units.largeSpacing * 2)
++    readonly property real intendedWindowHeight: mainContent.implicitHeight + bottomControls.height
+ 
+     onActiveChanged: {
+         if (active) {
+@@ -119,255 +131,209 @@ Kirigami.AbstractApplicationWindow {
+     Column {
+         id: mainContent
+ 
+-        anchors.fill: parent
++        anchors.left: parent.left
++        anchors.right: parent.right
++        anchors.top: parent.top
+ 
+-        spacing: 16
++        spacing: 0
+ 
++        // consent.exe's banner: the big shield and the question
+         Rectangle {
+             id: header
+-
+-            property bool isUnknown: descriptionActionId == "org.freedesktop.policykit.exec"
+-
+-            anchors {
+-                right: parent.right
+-                left: parent.left
+-            }
+-
+-            implicitHeight: root.sevenLike ? 52 : 40
++            anchors.left: parent.left
++            anchors.right: parent.right
++            implicitHeight: Math.max(64, bannerText.implicitHeight + 24)
+ 
+             gradient: Gradient {
+                 orientation: Gradient.Horizontal
+-                GradientStop { position: 1.0; color: header.isUnknown ? "#ffcd4a" : "#137798"}
+-                GradientStop { position: 0.0; color: header.isUnknown ? "#f4b200" : "#073f6e"}
++                GradientStop { position: 0.0; color: root.unknownPublisher ? "#f4b200" : "#073f6e" }
++                GradientStop { position: 1.0; color: root.unknownPublisher ? "#ffcd4a" : "#137798" }
+             }
+ 
+-            RowLayout {
+-                spacing: Kirigami.Units.largeSpacing
+-
+-                anchors {
+-                    fill: parent
+-                    leftMargin: Kirigami.Units.largeSpacing
+-                    rightMargin: Kirigami.Units.largeSpacing
+-                }
+-
+-                Kirigami.Icon {
+-                    Layout.alignment: Qt.AlignVCenter
+-
+-                    implicitWidth: Kirigami.Units.iconSizes.medium
+-                    implicitHeight: Kirigami.Units.iconSizes.medium
+-
+-                    source: header.isUnknown ? "firewall-applet-panic" : "dialog-password"
+-                }
+-
+-                Kirigami.Heading {
+-                    Layout.fillWidth: true
+-                    Layout.fillHeight: true
++            Kirigami.Icon {
++                id: shield
++                anchors.left: parent.left
++                anchors.leftMargin: 12
++                anchors.verticalCenter: parent.verticalCenter
++                width: 48
++                height: 48
++                source: root.unknownPublisher ? "seven-uac-unknown" : "seven-uac-verified"
++            }
+ 
+-                    level: 2
+-                    text: root.mainText
+-                    wrapMode: Text.Wrap
+-                    verticalAlignment: Text.AlignVCenter
+-                    elide: Text.ElideRight
+-                    color: header.isUnknown ? "black" : "white"
+-                }
++            Text {
++                id: bannerText
++                anchors.left: shield.right
++                anchors.leftMargin: 12
++                anchors.right: parent.right
++                anchors.rightMargin: 14
++                anchors.verticalCenter: parent.verticalCenter
++                wrapMode: Text.WordWrap
++                font.family: Kirigami.Theme.defaultFont.family
++                font.pointSize: 12
++                color: root.unknownPublisher ? "#000000" : "#ffffff"
++                text: root.unknownPublisher ? "Дозволити наступній програмі від невідомого видавця вносити зміни на цьому комп'ютері?"
++                                            : "Дозволити цій програмі вносити зміни на цьому комп'ютері?"
+             }
+         }
+ 
+-        ColumnLayout {
+-            id: contentItem
++        Item { width: 1; height: 14 }
+ 
+-            anchors {
+-                right: parent.right
+-                left: parent.left
+-                margins: 20
+-            }
+-
+-            spacing: root.sevenLike ? Kirigami.Units.smallSpacing + Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing
++        // Program name / Publisher / File origin
++        GridLayout {
++            anchors.left: parent.left
++            anchors.right: parent.right
++            anchors.leftMargin: 26
++            anchors.rightMargin: 20
++            columns: 2
++            columnSpacing: 18
++            rowSpacing: 5
+ 
+-            RowLayout {
+-                id: content
++            QQC2.Label { text: "Назва програми:" }
++            QQC2.Label {
++                Layout.fillWidth: true
++                elide: Text.ElideRight
++                text: root.unknownPublisher ? (root.programName !== "" ? root.programName : root.descriptionString) : root.descriptionString
++            }
++            QQC2.Label { text: root.unknownPublisher ? "Видавець:" : "Перевірений видавець:" }
++            QQC2.Label {
++                Layout.fillWidth: true
++                elide: Text.ElideRight
++                text: root.unknownPublisher || root.descriptionVendorName === "" ? "Невідомо" : root.descriptionVendorName
++            }
++            QQC2.Label { text: "Походження файлу:" }
++            QQC2.Label {
++                Layout.fillWidth: true
++                text: "Жорсткий диск цього комп'ютера"
++            }
++        }
+ 
+-                Layout.alignment: Qt.AlignLeft
+-                Layout.leftMargin: 50
++        Item { width: 1; height: 14 }
+ 
+-                spacing: Kirigami.Units.largeSpacing * 3
++        Rectangle {
++            anchors.left: parent.left
++            anchors.right: parent.right
++            anchors.leftMargin: 16
++            anchors.rightMargin: 16
++            height: 1
++            color: "#dfdfdf"
++        }
+ 
+-                Kirigami.Icon {
+-                    implicitWidth: Kirigami.Units.iconSizes.medium
+-                    implicitHeight: Kirigami.Units.iconSizes.medium
++        Item { width: 1; height: 12 }
+ 
+-                    Layout.alignment: Qt.AlignTop
++        QQC2.Label {
++            anchors.left: parent.left
++            anchors.right: parent.right
++            anchors.leftMargin: 26
++            anchors.rightMargin: 20
++            wrapMode: Text.WordWrap
++            text: "Щоб продовжити, введіть пароль адміністратора й натисніть кнопку «Так»."
++        }
+ 
+-                    source: descriptionIcon == "" ? "application-default-icon" : descriptionIcon
++        Item { width: 1; height: 10 }
++
++        // the user tile: picture in its frame, name, password
++        Row {
++            id: user
++            anchors.left: parent.left
++            anchors.leftMargin: 26
++            spacing: 10
++            height: 76
++
++            Image {
++                source: "qrc:/qml/res/frame.png"
++                Image {
++                    anchors.centerIn: parent
++                    width: 48
++                    height: 48
++                    source: "file://" + identitiesModel.iconForIndex(identitiesCombo.currentIndex)
++                    z: -1
+                 }
+-                ColumnLayout {
+-                    spacing: 0
+-                    Row {
+-                        spacing: 4
+-
+-                        QQC2.Label {
+-                            text: i18n("ID:")
+-                            visible: root.sevenLike
+-                        }
+-
+-                        QQC2.Label {
+-                            text: descriptionActionId
+-                        }
+-                    }
+-                    Row {
+-                        spacing: 4
+-
+-                        visible: descriptionVendorName !== ""
+-
+-                        QQC2.Label {
+-                            text: i18n("Vendor:")
+-                            visible: root.sevenLike
+-                        }
+-
+-                        QQC2.Label {
+-                            text: descriptionVendorName
+-                            font.bold: true
+-
+-                            Kirigami.UrlButton {
+-                                anchors.left: parent.right
++            }
+ 
+-                                width: Kirigami.Units.iconSizes.small
+-                                height: parent.height
++            Column {
++                anchors.verticalCenter: parent.verticalCenter
++                spacing: 6
+ 
+-                                text: " "
+-                                url: descriptionVendorUrl
+-                                font.underline: false
+-                            }
+-                        }
++                Row {
++                    spacing: 8
++                    QQC2.Label {
++                        text: identitiesCombo.currentText
++                        font.pointSize: Kirigami.Theme.defaultFont.pointSize + 2
+                     }
+-                    Row {
+-                        spacing: 4
+-
+-                        QQC2.Label {
+-                            text: i18n("Action:")
+-                            visible: root.sevenLike
+-                        }
+-
+-                        QQC2.Label {
+-                            text: descriptionString
++                    Kirigami.LinkButton {
++                        id: switchButton
++                        text: "Інший користувач..."
++                        visible: identitiesCombo.count > 1
++                        onClicked: {
++                            identitiesCombo.popup.parent = switchButton;
++                            identitiesCombo.popup.open();
+                         }
+                     }
+                 }
+-            }
+-
+-            ColumnLayout {
+-                spacing: Kirigami.Units.largeSpacing
+-
+-                Rectangle {
+-                    id: sep
+-
+-                    Layout.fillWidth: true
+-                    Layout.rightMargin: root.sevenLike ? -4 : 0
+-                    Layout.leftMargin: root.sevenLike ? -4 : 0
+-
+-                    implicitHeight: 1
+ 
+-                    color: "#dfdfdf"
++                QQC2.TextField {
++                    id: passwordField
++                    width: 220
++                    echoMode: TextInput.Password
++                    placeholderText: "Пароль"
++                    onAccepted: root.accept()
+                 }
+-
+-                LayoutItemProxy { target: sep; visible: root.sevenLike }
+-
+-                QQC2.Label {
+-                    Layout.fillWidth: true
+-
+-                    wrapMode: Text.WordWrap
+-                    text: i18n("To continue, type an administrator password, and then click OK.")
+-                }
+-
+-                LayoutItemProxy { target: sep; visible: !root.sevenLike }
+             }
++        }
+ 
+-            Column {
+-                id: authenticationPrompt
++        Row {
++            id: authenticationError
++            anchors.left: parent.left
++            anchors.leftMargin: 26
++            visible: false
++            spacing: 6
++            height: visible ? 22 : 0
++            Kirigami.Icon {
++                anchors.verticalCenter: parent.verticalCenter
++                width: 16
++                height: 16
++                source: "dialog-error"
++            }
++            Text {
++                anchors.verticalCenter: parent.verticalCenter
++                font: Kirigami.Theme.defaultFont
++                text: "Неправильне ім'я користувача або пароль."
++            }
++        }
+ 
++        // "Show details": the command and the polkit action
++        GridLayout {
++            anchors.left: parent.left
++            anchors.right: parent.right
++            anchors.leftMargin: 26
++            anchors.rightMargin: 20
++            visible: root.detailsShown
++            columns: 2
++            columnSpacing: 18
++            rowSpacing: 5
++
++            Item { Layout.columnSpan: 2; height: 6 }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Шлях до програми:" }
++            QQC2.Label {
+                 Layout.fillWidth: true
+-
+-                spacing: Kirigami.Units.largeSpacing
+-
+-                Item {
+-                    id: user
+-
+-                    anchors {
+-                        right: parent.right
+-                        left: parent.left
+-                    }
+-
+-                    height: 76
+-
+-                    Row {
+-                        anchors.fill: parent
+-
+-                        Image {
+-                            source: "qrc:/qml/res/frame.png"
+-
+-                            Image {
+-                                anchors.centerIn: parent
+-
+-                                width: 48
+-                                height: 48
+-
+-                                source: "file://" + identitiesModel.iconForIndex(identitiesCombo.currentIndex)
+-
+-                                z: -1
+-                            }
+-                        }
+-
+-                        ColumnLayout {
+-                            anchors.verticalCenter: parent.verticalCenter
+-                            anchors.verticalCenterOffset: 2
+-
+-                            spacing: 9
+-
+-                            RowLayout {
+-                                Kirigami.Heading {
+-                                    level: 2
+-                                    text: identitiesCombo.currentText
+-                                }
+-                                Kirigami.LinkButton {
+-                                    Layout.alignment: Qt.AlignVCenter
+-                                    id: switchButton
+-                                    text: i18n("Switch…")
+-                                    visible: identitiesCombo.count > 1
+-                                    onClicked: {
+-                                        identitiesCombo.popup.parent = switchButton;
+-                                        identitiesCombo.popup.open();
+-                                    }
+-                                }
+-                            }
+-
+-                            Kirigami.PasswordField {
+-                                id: passwordField
+-                                Layout.alignment: Qt.AlignLeft
+-                                Layout.preferredHeight: 25
+-                                onAccepted: root.accept()
+-                                placeholderText: i18n("Password…")
+-                            }
+-                        }
+-                    }
+-                }
+-
+-                Row {
+-                    id: authenticationError
+-                    visible: false
+-                    spacing: Kirigami.Units.smallSpacing
+-                    Kirigami.Icon {
+-                        anchors.verticalCenter: parent.verticalCenter
+-                        width: 16
+-                        height: 16
+-                        source: "dialog-error"
+-                    }
+-                    Text {
+-                        anchors.verticalCenter: parent.verticalCenter
+-                        text: i18n("Authentication failure, please try again.")
+-                    }
+-                }
++                wrapMode: Text.WrapAnywhere
++                text: root.commandLine !== "" ? root.commandLine : root.programPath
++                visible: text !== ""
++            }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Дія:" }
++            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: root.descriptionString }
++            QQC2.Label { Layout.alignment: Qt.AlignTop; text: "Ід. дії:" }
++            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: root.descriptionActionId }
++            Item { width: 1; height: 1 }
++            Kirigami.UrlButton {
++                url: root.descriptionVendorUrl
++                text: "Відомості про видавця"
++                visible: root.descriptionVendorUrl !== ""
+             }
++            Item { Layout.columnSpan: 2; height: 4 }
+         }
++
++        Item { width: 1; height: 10 }
+     }
+ 
+     Rectangle {
+@@ -386,6 +352,35 @@ Kirigami.AbstractApplicationWindow {
+         border.color: "#dfdfdf"
+         color: "#f0f0f0"
+ 
++        // the round chevron of consent.exe and its label
++        MouseArea {
++            id: detailsToggle
++            anchors.left: parent.left
++            anchors.leftMargin: 14
++            anchors.verticalCenter: parent.verticalCenter
++            width: chevron.width + 6 + detailsLabel.implicitWidth
++            height: 22
++            hoverEnabled: true
++            cursorShape: Qt.PointingHandCursor
++            onClicked: root.detailsShown = !root.detailsShown
++
++            Image {
++                id: chevron
++                anchors.verticalCenter: parent.verticalCenter
++                // ActionCenterCPL's pictures: 1001/1002 normal, 1006/1007 hot, 1008/1009 pressed; even = up
++                source: root.aero("ac-" + ((detailsToggle.pressed ? 1008 : (detailsToggle.containsMouse ? 1006 : 1001)) + (root.detailsShown ? 1 : 0)) + ".png")
++            }
++            Text {
++                id: detailsLabel
++                anchors.left: chevron.right
++                anchors.leftMargin: 6
++                anchors.verticalCenter: parent.verticalCenter
++                font: Kirigami.Theme.defaultFont
++                color: "#000000"
++                text: root.detailsShown ? "Приховати подробиці" : "Показати подробиці"
++            }
++        }
++
+         RowLayout {
+             anchors.fill: parent
+             anchors.margins: 1
+@@ -401,8 +396,10 @@ Kirigami.AbstractApplicationWindow {
+                 bottomPadding: 2
+                 topPadding: 0
+                 onClicked: root.accept()
++                // the default button (Enter in the password field), with the Windows 7 pulse
++                Accessible.defaultButton: true
+                 contentItem: Text {
+-                    text: i18n("OK")
++                    text: "Так"
+                     font: parent.font
+                     verticalAlignment: Text.AlignVCenter
+                     horizontalAlignment: Text.AlignHCenter
+@@ -415,7 +412,7 @@ Kirigami.AbstractApplicationWindow {
+                 topPadding: 0
+                 onClicked: root.reject()
+                 contentItem: Text {
+-                    text: i18n("Cancel")
++                    text: "Ні"
+                     font: parent.font
+                     verticalAlignment: Text.AlignVCenter
+                     horizontalAlignment: Text.AlignHCenter

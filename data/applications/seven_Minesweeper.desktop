@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Сапер
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Minesweeper/MineSweeper.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-minesweeper
+Categories=Game;

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Chess Titans
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Chess/Chess.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-chess
+Categories=Game;

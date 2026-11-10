@@ -1,0 +1,11 @@
+[Unit]
+Description=Windows 7 folder icons follow their content
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/.local/lib/sevenplasma/folder-refresh.py
+Restart=on-failure
+Nice=10
+
+[Install]
+WantedBy=graphical-session.target

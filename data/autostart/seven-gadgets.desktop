@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Гаджети
+Exec=seven-gadgets
+Icon=gadgets
+NoDisplay=true
+X-KDE-autostart-after=panel

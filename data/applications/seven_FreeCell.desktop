@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Вільна комірка
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\FreeCell/FreeCell.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-freecell
+Categories=Game;

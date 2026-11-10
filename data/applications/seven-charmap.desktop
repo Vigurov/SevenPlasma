@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Таблиця символів
+Comment=Вибір спеціальних символів і копіювання їх у документ
+Exec=seven-control --charmap
+Icon=seven-charmap
+Categories=Utility;System;
+Keywords=charmap;символ;символи;

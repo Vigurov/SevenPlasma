@@ -1,0 +1,50 @@
+[Windeco Exception 0]
+Enabled=true
+ExceptionPattern=^Гаджети$
+ExceptionType=1
+HideCaption=true
+HideIcon=true
+
+[Windeco Exception 1]
+Enabled=true
+ExceptionPattern=^(Зберегти як|Відкрити)$
+ExceptionType=1
+HideCaption=false
+HideIcon=true
+HideInnerBorder=true
+HideMinMax=true
+
+[Windeco Exception 2]
+Enabled=true
+ExceptionPattern=^dolphin( |$)
+ExceptionType=0
+HideInnerBorder=true
+
+[Windeco Exception 3]
+Enabled=true
+ExceptionPattern=^seven-control( |$)
+ExceptionType=0
+HideInnerBorder=true
+
+[Windeco Exception 4]
+Enabled=true
+ExceptionPattern=^seven-cpanel\s
+ExceptionType=0
+HideCaption=true
+HideIcon=true
+HideInnerBorder=true
+
+[Windeco Exception 5]
+Enabled=true
+ExceptionPattern=^seven-explorer\s
+ExceptionType=0
+HideCaption=true
+HideIcon=true
+HideInnerBorder=true
+
+[Windeco Exception 6]
+Enabled=true
+ExceptionPattern=^seven-dialog\s
+ExceptionType=0
+HideIcon=true
+HideMinMax=true

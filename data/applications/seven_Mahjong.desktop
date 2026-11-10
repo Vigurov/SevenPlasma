@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Mahjong Titans
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Mahjong/Mahjong.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-mahjong
+Categories=Game;

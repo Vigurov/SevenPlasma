@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Гаджети робочого столу
+Exec=seven-gadgets --gallery
+Icon=gadgets
+Categories=Utility;

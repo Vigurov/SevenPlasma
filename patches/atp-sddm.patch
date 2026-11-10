@@ -1,0 +1,259 @@
+diff --git a/plasma/sddm/sddm-theme-mod/Main.qml b/plasma/sddm/sddm-theme-mod/Main.qml
+old mode 100755
+new mode 100644
+index 59fe192..975c98f
+--- a/plasma/sddm/sddm-theme-mod/Main.qml
++++ b/plasma/sddm/sddm-theme-mod/Main.qml
+@@ -23,6 +23,35 @@ Item
+     property bool m_biggerUserFrame: config.boolValue("biggerUserFrame")
+     property bool m_biggerMultiUserFrame: config.boolValue("biggerMultiUserFrame")
+ 
++    // Windows 7: an account without a password has no password box, a click on its picture logs on.
++    // SDDM's NeedsPasswordRole is always true with shadow passwords, so ask AccountsService (PasswordMode 2)
++    // through /usr/local/libexec/seven-nopass-users.
++    property var m_noPassword: []
++    function passwordNeeded(username, role)
++    {
++        return role && m_noPassword.indexOf(username) < 0
++    }
++
++    Plasma5Support.DataSource {
++        id: noPasswordSource
++        engine: "executable"
++        connectedSources: []
++        onNewData: (sourceName, data) => {
++            disconnectSource(sourceName)
++            root.m_noPassword = (data["stdout"] || "").split("\n").map(s => s.trim()).filter(s => s.length > 0)
++            // the only account has no password: show its picture to click instead of the password box
++            if (pages.currentIndex == Main.LoginPage.Login && userModel.count < 2 && password.text === "")
++            {
++                let username = userModel.data(userModel.index(0, 0), Main.UserRoles.NameRole)
++                if (username != null && root.m_noPassword.indexOf(username) >= 0)
++                {
++                    pages.currentIndex = Main.LoginPage.SelectUser
++                }
++            }
++        }
++        Component.onCompleted: connectSource("/usr/local/libexec/seven-nopass-users")
++    }
++
+     enum LoginPage
+     {
+         Startup,
+@@ -46,6 +75,13 @@ Item
+     {
+         target: sddm
+ 
++        // Windows 7: after the password the logon screen itself says "Welcome". The same picture is
++        // what the X root window keeps (-background none) until the session's splash, which looks the same
++        function onLoginSucceeded()
++        {
++            win7Welcome.visible = true
++        }
++
+         function onLoginFailed()
+         {
+             password.text = ""
+@@ -248,7 +284,7 @@ Item
+                     {
+                         let realname = model.realName
+                         let pic = model.icon
+-                        let needspassword = model.needsPassword
++                        let needspassword = root.passwordNeeded(username, model.needsPassword)
+ 
+                         if (needspassword)
+                         {
+@@ -291,7 +327,7 @@ Item
+ 
+                 session.addItem(menuitem);
+                 menuitem = session.createMenuItem();
+-                menuitem.text = i18nd("aerothemeplasma-sddm-theme", "On-Screen Keyboard")
++                menuitem.text = "Екранна клавіатура"
+                 menuitem.checkable = false;
+                 menuitem.icon.source = Qt.resolvedUrl("Assets/keyboard.png");
+                 menuitem.triggered.connect(() => {
+@@ -497,7 +533,7 @@ Item
+                         {
+                             let realname = userModel.data(userModel.index(index, 0), Main.UserRoles.RealNameRole)
+                             let pic = userModel.data(userModel.index(index, 0), Main.UserRoles.IconRole)
+-                            let needspassword = userModel.data(userModel.index(index, 0), Main.UserRoles.NeedsPasswordRole)
++                            let needspassword = root.passwordNeeded(username, userModel.data(userModel.index(index, 0), Main.UserRoles.NeedsPasswordRole))
+ 
+                             if (needspassword)
+                             {
+@@ -661,7 +697,7 @@ Item
+                             }
+                         }
+ 
+-                        placeholderText: i18nd("aerothemeplasma-sddm-theme", "Password")
++                        placeholderText: "Пароль"
+                         selectByMouse: true
+                         echoMode : TextInput.Password
+                         inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
+@@ -724,7 +760,7 @@ Item
+                         QQC2.Label {
+                             id: notificationsLabel
+                             font.pointSize: 9
+-                            text: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Caps Lock is on");
++                            text: "Увімкнено клавішу Caps Lock.";
+                             width: implicitWidth
+                             renderType: Text.NativeRendering
+                             color: "white"
+@@ -796,7 +832,7 @@ Item
+ 
+                 //anchors.bottomMargin: 332
+ 
+-                width: 108
++                width: Math.max(108, contentItem.implicitWidth + 28) // as wide as its text, like Windows 7
+                 height: 28
+ 
+                 background: Image
+@@ -813,7 +849,7 @@ Item
+ 
+                 contentItem: Text
+                 {
+-                    text: i18nd("aerothemeplasma-sddm-theme", "Switch User")
++                    text: "Змінити користувача"
+                     color: "white"
+ 
+                     //font.family: mainfont.name
+@@ -890,7 +926,7 @@ Item
+                 anchors.verticalCenterOffset: 126
+                 anchors.horizontalCenterOffset: 14
+ 
+-                text: i18nd("aerothemeplasma-sddm-theme", "The user name or password is incorrect.")
++                text: "Неправильне ім'я користувача або пароль."
+                 renderType: Text.NativeRendering
+                 Layout.alignment: Qt.AlignHCenter
+                 font.pointSize: 9
+@@ -937,7 +973,7 @@ Item
+ 
+                 contentItem: Text
+                 {
+-                    text: i18nd("aerothemeplasma-sddm-theme", "OK")
++                    text: "OK"
+                     color: "white"
+ 
+                     //font.family: mainfont.name
+@@ -995,7 +1031,7 @@ Item
+             KeyNavigation.tab: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
+             KeyNavigation.down: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
+ 
+-            text: keyboard.layouts[currentIndex].shortName
++            text: (function(n) { n = n.toUpperCase(); var m = { "US": "EN", "GB": "EN" }; return m[n] !== undefined ? m[n] : n; })(keyboard.layouts[currentIndex].shortName)   // EN, UA, RU (user)
+             onClicked: currentIndex = (currentIndex + 1) % keyboard.layouts.length
+ 
+             visible: keyboard.layouts.length > 1 && pages.currentIndex != Main.LoginPage.Startup
+@@ -1205,7 +1241,7 @@ Item
+ 
+             QQC2.ToolTip.visible: hovered
+             QQC2.ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
+-            QQC2.ToolTip.text: i18nd("aerothemeplasma-sddm-theme", "Shut down")
++            QQC2.ToolTip.text: "Завершити роботу"
+         }
+ 
+         QQC2.Button
+@@ -1262,31 +1298,31 @@ Item
+ 
+                 Component.onCompleted: {
+                     var menuitem = powerMenu.createMenuItem();
+-                    menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Restart");
++                    menuitem.text = "Перезавантажити";
+                     menuitem.triggered.connect(() => { sddm.reboot() });
+                     powerMenu.addAction(menuitem);
+                     powerMenu.addItem(powerMenu.createMenuSeparator());
+ 
+                     if(sddm.canSuspend) {
+                         menuitem = powerMenu.createMenuItem();
+-                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Sleep");
++                        menuitem.text = "Сон";
+                         menuitem.triggered.connect(() => { sddm.suspend() });
+                         powerMenu.addAction(menuitem);
+                     }
+                     if(sddm.canHibernate) {
+                         menuitem = powerMenu.createMenuItem();
+-                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Hibernate");
++                        menuitem.text = "Режим глибокого сну";
+                         menuitem.triggered.connect(() => { sddm.hibernate() });
+                         powerMenu.addAction(menuitem);
+                     }
+                     if(sddm.canHybridSleep) {
+                         menuitem = powerMenu.createMenuItem();
+-                        menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Hybrid Sleep");
++                        menuitem.text = "Гібридний сплячий режим";
+                         menuitem.triggered.connect(() => { sddm.hybridSleep() });
+                         powerMenu.addAction(menuitem);
+                     }
+                     menuitem = powerMenu.createMenuItem();
+-                    menuitem.text = i18nd("aerothemeplasma-sddm-theme", "Shut down");
++                    menuitem.text = "Завершити роботу";
+                     menuitem.triggered.connect(() => { sddm.powerOff() });
+                     powerMenu.addAction(menuitem);
+                 }
+@@ -1394,4 +1430,66 @@ Item
+         }
+     }
+ 
++
++    // "Welcome", drawn exactly like the session splash (authui7 Splash.qml) so the hand-over is invisible
++    Item
++    {
++        id: win7Welcome
++        z: 150
++        anchors.fill: parent
++        visible: false
++
++        Rectangle { anchors.fill: parent; color: "#1D5F7A" }
++        Image { anchors.fill: parent; source: Qt.resolvedUrl("background") }
++
++        RowLayout
++        {
++            anchors.centerIn: parent
++            anchors.verticalCenterOffset: -36
++            spacing: 8
++            property int spinnum: 0
++            id: welcomeRow
++            Image { source: "file:///usr/share/plasma/look-and-feel/authui7/contents/images/100/spin" + welcomeRow.spinnum + ".png" }
++            Text
++            {
++                text: "Ласкаво просимо"
++                color: "#FFFFFF"
++                font.pointSize: 18
++                renderType: Text.NativeRendering
++                font.hintingPreference: Font.PreferFullHinting
++                font.kerning: false
++                layer.enabled: true
++                layer.effect: DropShadow { horizontalOffset: 0; verticalOffset: 1; radius: 6; samples: 14; spread: 0.0001; color: "#bf000000" }
++            }
++            SequentialAnimation
++            {
++                running: win7Welcome.visible
++                loops: Animation.Infinite
++                NumberAnimation { target: welcomeRow; property: "spinnum"; to: 17; duration: 900 }
++                NumberAnimation { target: welcomeRow; property: "spinnum"; to: 0; duration: 0 }
++            }
++        }
++
++        Image
++        {
++            anchors.bottom: parent.bottom
++            anchors.bottomMargin: (96 - height) / 2
++            anchors.horizontalCenter: parent.horizontalCenter
++            source: "file:///usr/share/plasma/look-and-feel/authui7/contents/images/watermark.png"
++        }
++
++        MouseArea { anchors.fill: parent; cursorShape: Qt.BlankCursor }
++    }
++
++    // Windows 7: the logon screen fades in from the black left by "Starting Windows"
++    Rectangle
++    {
++        id: win7FadeIn
++        z: 200
++        anchors.fill: parent
++        color: "black"
++        opacity: 1
++        NumberAnimation on opacity { from: 1; to: 0; duration: 900; easing.type: Easing.InOutQuad }
++        visible: opacity > 0
++    }
+ }

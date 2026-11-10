@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Windows Task Manager
+Name[uk]=Диспетчер задач
+GenericName[uk]=Диспетчер задач Windows
+Comment[uk]=Програми, процеси, служби та швидкодія комп'ютера
+Exec=seven-taskmgr
+Icon=utilities-system-monitor
+Categories=System;Monitor;
+X-KDE-Shortcuts=Ctrl+Shift+Esc

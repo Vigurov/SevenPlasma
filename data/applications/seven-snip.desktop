@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Ножиці
+Comment=Захоплення знімка екрана або його частини
+Exec=seven-snip
+Icon=seven-snippingtool
+Categories=Utility;
+StartupWMClass=seven-snip
+StartupNotify=false

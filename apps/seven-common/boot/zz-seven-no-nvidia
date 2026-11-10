@@ -1,0 +1,10 @@
+#!/bin/sh
+# Windows 7 boot: the laptop panel is wired to the AMD iGPU, so "Starting Windows" never needs NVIDIA.
+# Keep the NVIDIA driver (10 MB) and its GSP firmware (73 MB) out of the initramfs: GRUB reads the
+# initramfs from the USB disk at firmware speed, ~8 MB/s. NVIDIA still loads normally from the root disk.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in prereqs) prereqs; exit 0;; esac
+rm -f "${DESTDIR}"/lib/modules/*/updates/dkms/nvidia*.ko* "${DESTDIR}"/usr/lib/modules/*/updates/dkms/nvidia*.ko* 2>/dev/null
+rm -rf "${DESTDIR}"/lib/firmware/nvidia/[0-9]* "${DESTDIR}"/usr/lib/firmware/nvidia/[0-9]* 2>/dev/null
+exit 0

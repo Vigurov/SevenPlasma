@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Event Viewer
+Name[uk]=Перегляд подій
+Exec=seven-control --eventvwr
+Icon=seven-ev-app
+NoDisplay=true
+Categories=System;

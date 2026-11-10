@@ -1,0 +1,31 @@
+#!/bin/sh
+# Explorer like explorer.exe: folders (or --select items) open as new windows of the resident Dolphin
+# (dolphin --daemon), which keeps one ready -- no process start. Also installed as ~/.local/bin/dolphin, so every
+# "dolphin ..." of the panel, Start menu and desktop goes this way. Anything else: the real Dolphin.
+REAL=/usr/bin/dolphin
+method=ShowFolders
+for a in "$@"; do
+    case "$a" in
+        --select) method=ShowItems ;;
+        --new-window) ;;
+        --daemon|-*) exec "$REAL" "$@" ;;
+    esac
+done
+uris=""
+for a in "$@"; do
+    case "$a" in
+        -*) continue ;;
+        *://*|*:/*) u="$a" ;;
+        /*) u="file://$a" ;;
+        *) u="file://$(realpath -- "$a")" ;;
+    esac
+    uris="$uris${uris:+,}$u"
+done
+[ -z "$uris" ] && uris="file://$HOME"
+if dbus-send --session --print-reply --reply-timeout=3000 --dest=org.freedesktop.FileManager1 --type=method_call \
+    /org/freedesktop/FileManager1 org.freedesktop.FileManager1.$method "array:string:$uris" "string:${DESKTOP_STARTUP_ID:-}" >/dev/null 2>&1; then
+    exit 0
+fi
+# only if nobody answered at all (no resident Explorer): a normal start
+qdbus6 --session | grep -q org.freedesktop.FileManager1 && exit 0
+exec "$REAL" "$@"

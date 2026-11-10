@@ -1,0 +1,15 @@
+# Pictures the folder thumbnailer reads from <data>/sevenplasma/folderthumb/ (data = ~/.local/share or /usr/share).
+# They are Windows 7's own and are extracted by install.sh from the user's Windows 7 ISO (imageres.dll);
+# left column = file name the code asks for, right = what it is.
+back-16.png       back half of the yellow folder (open folder icon), 16 px
+back-32.png       the same, 32 px
+back-48.png       the same, 48 px
+back-256.png      the same, 256 px
+front-16.png      front flap of the folder, 16 px
+front-32.png      the same, 32 px
+front-48.png      the same, 48 px
+front-256.png     the same, 256 px
+page-text.png     lined text page, 256 px
+page-blank.png    blank page, 256 px
+folder-plain.png  empty folder, 256 px
+folder-folders.png folder that holds only subfolders (imageres icon 1783), 256 px

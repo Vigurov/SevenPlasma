@@ -1,0 +1,19 @@
+#!/bin/sh
+# ExecStop of sddm (the X server with the "Завершення роботи..." screen lives as long as sddm does).
+# Only during shutdown/reboot: keep the picture at least 3 s and as long as other services are still
+# stopping (at most 25 s more), so the screen goes dark only at the very end, as in Windows 7.
+# Then the text consoles are wiped and their cursor hidden: when X lets go of the screen the kernel shows
+# the text console again, and old boot messages must not flash up there.
+case "$(systemctl is-system-running 2>/dev/null)" in stopping) ;; *) exit 0 ;; esac
+sleep 3
+i=0
+while [ "$i" -lt 50 ]; do
+    systemctl list-jobs --no-legend 2>/dev/null | awk '$4 == "running" && $2 != "sddm.service"' | grep -q . || break
+    sleep 0.5
+    i=$((i + 1))
+done
+dmesg -n 1 2>/dev/null
+for t in /dev/tty1 /dev/tty2 /dev/tty3 /dev/tty4 /dev/tty5 /dev/tty6 /dev/tty7; do
+    [ -w "$t" ] && printf '\033[2J\033[3J\033[H\033[?25l' > "$t" 2>/dev/null
+done
+exit 0

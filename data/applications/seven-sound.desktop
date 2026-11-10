@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Звук
+Exec=seven-control --sound
+Icon=seven-sound
+NoDisplay=true

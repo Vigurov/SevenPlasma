@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Paint
+Name[uk]=Paint
+GenericName=Графічний редактор
+Comment=Створення та редагування рисунків.
+Exec=seven-paint %f
+Icon=seven-paint
+Terminal=false
+Categories=Utility;Graphics;2DGraphics;RasterGraphics;
+MimeType=image/png;image/bmp;image/x-bmp;image/jpeg;image/gif;image/tiff;image/x-icon;image/vnd.microsoft.icon;
+StartupWMClass=seven-paint

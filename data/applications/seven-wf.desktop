@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Windows Firewall with Advanced Security
+Name[uk]=Брандмауер Windows у режимі підвищеної безпеки
+Exec=seven-control --wf
+Icon=seven-wf-firewall
+NoDisplay=true
+Categories=System;

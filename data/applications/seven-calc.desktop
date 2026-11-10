@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Калькулятор
+Comment=Виконання простих обчислень
+Exec=seven-calc
+Icon=seven-calc
+Categories=Utility;Calculator;
+StartupWMClass=seven-calc

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Засіб перегляду фотографій Windows
+GenericName=Перегляд фотографій
+Comment=Перегляд, поворот і друк рисунків, показ слайдів
+Exec=seven-photoviewer %f
+Icon=seven-photoviewer
+Terminal=false
+Categories=Graphics;Viewer;
+MimeType=image/jpeg;image/png;image/bmp;image/gif;image/tiff;image/webp;image/x-icon;image/vnd.microsoft.icon;image/x-bmp;
+StartupWMClass=seven-photoviewer

@@ -1,0 +1,3 @@
+# Keeps the internal Windows 10 disk (WDC PC SN730, serial 21071C803243) out of Linux:
+# no icons in Explorer, no automatic or one-click mounting.
+SUBSYSTEM=="block", ENV{ID_SERIAL_SHORT}=="21071C803243", ENV{UDISKS_IGNORE}="1", ENV{UDISKS_AUTO}="0"

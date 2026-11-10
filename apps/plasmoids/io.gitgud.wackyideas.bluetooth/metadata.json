@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "win7 look" }],
+        "Category": "System Information",
+        "Description": "Bluetooth icon of the Windows 7 notification area: the adapter menu and the battery of connected devices",
+        "Description[uk]": "Значок Bluetooth в області сповіщень як у Windows 7: меню адаптера і заряд підключених пристроїв",
+        "EnabledByDefault": true,
+        "FormFactors": ["desktop"],
+        "Icon": "seven-tray-bluetooth",
+        "Id": "io.gitgud.wackyideas.bluetooth",
+        "License": "GPL-2.0+",
+        "Name": "Bluetooth",
+        "Name[uk]": "Пристрої Bluetooth"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-NotificationArea": "true",
+    "X-Plasma-NotificationAreaCategory": "Hardware",
+    "X-Plasma-Provides": ["org.kde.plasma.bluetooth"]
+}

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Windows 7 screen saver
+Exec=seven-control --screensaver-daemon
+NoDisplay=true
+X-KDE-autostart-phase=2

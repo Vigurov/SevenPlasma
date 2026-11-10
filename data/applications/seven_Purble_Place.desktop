@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Purble Place
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Purble Place/PurblePlace.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-purble_place
+Categories=Game;

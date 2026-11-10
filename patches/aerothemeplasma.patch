@@ -1,0 +1,3173 @@
+diff --git a/install.sh b/install.sh
+index 03f6cf7..2849693 100644
+--- a/install.sh
++++ b/install.sh
+@@ -1,7 +1,7 @@
+ #!/bin/bash
+ CUR_DIR=${PWD}
+ 
+-BRANCH_VERSION="Plasma/6.7"
++BRANCH_VERSION="Plasma/6.6"
+ 
+ SU_CMD=sudo
+ if [[ -z "$(command -v $SU_CMD)" ]]; then
+diff --git a/plasma/look-and-feel/authui7/contents/splash/Splash.qml b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
+index 0d84d07..fe8576f 100644
+--- a/plasma/look-and-feel/authui7/contents/splash/Splash.qml
++++ b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
+@@ -23,6 +23,7 @@ import QtQuick.Controls
+ import QtQuick.Templates
+ import org.kde.plasma.core as PlasmaCore
+ import QtMultimedia
++import QtCore
+ import "../components"
+ 
+ import aeroshell.utils as AeroShellUtils
+@@ -38,7 +39,8 @@ Item {
+             //lockSuccess.play();
+ 
+             //fadeOut.running = true;
+-            transitionAnim.opacity = 1;
++            // Windows 7: "Welcome" itself dissolves into the real desktop. KWin's loginaero effect fades
++            // this window out when it closes, so nothing is drawn over it here (no black, no wallpaper picture)
+         }
+     }
+     /*MediaPlayer {
+@@ -64,7 +66,7 @@ Item {
+         id: statusText
+         anchors.centerIn: parent
+         anchors.verticalCenterOffset: -36
+-        statusText: i18nd("okular", "Welcome")
++        statusText: "Ласкаво просимо"
+         speen: true
+     }
+ 
+@@ -83,13 +85,21 @@ Item {
+         Rectangle { Layout.fillWidth: true }
+     }
+ 
++    // Windows 7 goes from "Welcome" straight to the desktop: fade into the desktop wallpaper, not to black
++    // (~/.local/share/seven-aero/splash-wallpaper points at the current wallpaper; black if it is missing)
+     Rectangle {
+         id: transitionAnim
+         opacity: 0
+         color: "black"
+         anchors.fill: parent
++        Image {
++            anchors.fill: parent
++            fillMode: Image.PreserveAspectCrop
++            source: StandardPaths.writableLocation(StandardPaths.GenericDataLocation) + "/seven-aero/splash-wallpaper"
++            asynchronous: false
++        }
+         Behavior on opacity {
+-            NumberAnimation { duration: 640; }
++            NumberAnimation { duration: 420; easing.type: Easing.InOutQuad }   // as in the Windows 7 video: about 0.4 s
+         }
+     }
+ 
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderItemDelegate.qml b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderItemDelegate.qml
+index 9e34656..46ad70e 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderItemDelegate.qml
++++ b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderItemDelegate.qml
+@@ -10,6 +10,7 @@ import Qt5Compat.GraphicalEffects
+ 
+ import org.kde.plasma.plasmoid 2.0
+ import org.kde.plasma.core as PlasmaCore
++import org.kde.plasma.plasma5support as P5Support
+ import org.kde.plasma.extras as PlasmaExtras
+ import org.kde.plasma.components as PlasmaComponents
+ 
+@@ -22,8 +23,10 @@ Item {
+ 
+     property int index:          model.index
+     property string name:        model.blank ? "" : model.display
++    property string itemUrl:     model.blank ? "" : String(model.url)
+     property string nameWrapped: model.blank ? "" : model.displayWrapped
+     property bool blank:         model.blank
++    property bool selected:      model.blank ? false : model.selected
+     property bool isDir:           loader.item ? loader.item.isDir : false
+     property QtObject popupDialog: loader.item ? loader.item.popupDialog    : null
+     property Item iconArea:        loader.item ? loader.item.iconArea       : null
+@@ -33,6 +36,7 @@ Item {
+     property Item hoverArea:       loader.item ? loader.item.hoverArea      : null
+     property Item frame:           loader.item ? loader.item.frame          : null
+     property Item toolTip:         loader.item ? loader.item.toolTip        : null
++    property bool shouldShowToolTip: false
+     Accessible.name: name
+     Accessible.role: Accessible.Canvas
+ 
+@@ -51,7 +55,7 @@ Item {
+     }
+ 
+     function closePopup() {
+-        if (popupDialog) {
++        if (popupDialog && popupDialog.allowClosing) {
+             popupDialog.requestDestroy();
+             loader.item.popupDialog = null;
+         }
+@@ -77,6 +81,13 @@ Item {
+         asynchronous: true
+     }
+ 
++    function updateDragImage() {
++        if (selected && !blank) {
++            loader.grabToImage(result => {
++                dir.addItemDragImage(positioner.map(index), main.x + loader.x, main.y + loader.y, loader.width, loader.height, result.image);
++            });
++        }
++    }
+     Component {
+         id: delegateImplementation
+ 
+@@ -104,7 +115,16 @@ Item {
+ 
+             // When a drop happens, a new item is created, and is set to selected
+             // grabToImagebefore it gets the final width, making grabToImage fail because it's still 0x0
+-            onSelectedChanged: Qt.callLater(updateDragImage)
++            onSelectedChanged: {
++                Qt.callLater(updateDragImage)
++                if(selected && (!toolTip.containsMouse) && main.shouldShowToolTip) {
++                    toolTipTimer.start();
++                    main.shouldShowToolTip = false;
++                } else {
++                    toolTipTimer.stop();
++                    toolTip.hideImmediately();
++                }
++            }
+             function updateDragImage() {
+                 if (selected && !blank) {
+                     frameLoader.grabToImage(result => {
+@@ -165,94 +185,13 @@ Item {
+                 }
+             }
+ 
+-            PlasmaCore.ToolTipArea {
+-                id: toolTip
+-
+-                active: (Plasmoid.configuration.toolTips || label.truncated)
+-                        && popupDialog === null
+-                        && !model.blank
+-                interactive: false
+-                location: root.useListViewMode ? (Plasmoid.location === PlasmaCore.Types.LeftEdge ? PlasmaCore.Types.LeftEdge : PlasmaCore.Types.RightEdge) : Plasmoid.location
+-                z: 999
+-                //anchors.fill: parent
+-                Timer {
+-                    id: showtooltip
+-                    interval: 750
+-                    onTriggered: {
+-                        if(ma.containsMouse) {
+-                            toolTip.showToolTip();
+-                        }
+-                    }
++            Timer {
++                id: toolTipTimer
++                interval: 700
++                onTriggered: {
++                    toolTip.updateToolTip();
++                    toolTip.showToolTip();
+                 }
+-                MouseArea {
+-                    id: ma
+-                    anchors.fill: parent
+-                    hoverEnabled: true
+-                    propagateComposedEvents: true
+-                    onPositionChanged: (mouse) => {
+-
+-                        if (containsMouse && !model.blank) {
+-
+-                            if (toolTip.active) {
+-
+-                                toolTip.textFormat = Text.RichText;
+-                                toolTip.mainText = model.display;
+-
+-                                if (model.size !== undefined) {
+-                                    toolTip.subText = model.type + "<br>" + "Size: " + model.size;
+-                                } else {
+-                                    toolTip.subText = model.type;
+-                                }
+-                                showtooltip.start();
+-                            }
+-
+-                            main.GridView.view.hoveredItem = main;
+-                        }
+-                        mouse.accepted = false;
+-
+-                    }
+-                }
+-
+-
+-                states: [
+-                    State { // icon view
+-                        when: !root.useListViewMode
+-
+-                        AnchorChanges {
+-                            target: toolTip
+-                            anchors.horizontalCenter: parent.horizontalCenter
+-                        }
+-
+-                        PropertyChanges {
+-                            target: toolTip
+-                            x: Kirigami.Units.smallSpacing
+-                            y: Kirigami.Units.smallSpacing
+-                            width: parent.width - Kirigami.Units.smallSpacing
+-                            height: parent.height - Kirigami.Units.smallSpacing
+-                            //width: Math.max(icon.paintedWidth, label.paintedWidth)
+-                            //height: (label.y + label.paintedHeight)
+-                            //y: frameLoader.y + icon.y
+-                            //width: Math.max(icon.paintedWidth, label.paintedWidth)
+-                            //height: (label.y + label.paintedHeight) - y
+-                        }
+-                    },
+-                    State { // list view
+-                        when: root.useListViewMode
+-
+-                        AnchorChanges {
+-                            target: toolTip
+-                            anchors.horizontalCenter: undefined
+-                        }
+-
+-                        PropertyChanges {
+-                            target: toolTip
+-                            x: frameLoader.x
+-                            y: frameLoader.y
+-                            width: frameLoader.width
+-                            height: frameLoader.height
+-                        }
+-                    }
+-                ]
+             }
+ 
+             Loader {
+@@ -265,26 +204,51 @@ Item {
+                 property string prefix: ""
+ 
+                 sourceComponent: frameComponent
+-                active: impl.iconAndLabelsShouldlookSelected || model.selected
++                active: (impl.iconAndLabelsShouldlookSelected || model.selected)
++                        && !(main.GridView.view && main.GridView.view.renamingItem === main)
+                 asynchronous: true
+ 
+-                width: {
+-                    if (root.useListViewMode) {
+-                        if (main.GridView.view.overflowing) {
+-                            return parent.width// - Kirigami.Units.smallSpacing;
+-                        } else {
+-                            return parent.width;
+-                        }
+-                    }
+-
+-                    return parent.width// - (Kirigami.Units.smallSpacing * 2);
+-                }
++                width: parent.width
+ 
+                 height: root.useListViewMode
+                                 ? parent.height
+                                 // the smallSpacings are for padding
+                                 : icon.height + (Kirigami.Units.iconSizes.small * label.lineCount) + (Kirigami.Units.smallSpacing * 3)
+ 
++                // Windows 7 focus rectangle: a dotted line (every other pixel) just inside the item's box
++                Loader {
++                    z: 5
++                    x: 1
++                    y: 1
++                    width: parent.width - 2
++                    height: parent.height - 2
++                    active: main.GridView.view && main.itemUrl !== "" && main.GridView.view.focusCues
++                            && main.GridView.view.focusUrl === main.itemUrl && main.Window.active
++                            && main.GridView.view.renamingItem !== main
++                    sourceComponent: Canvas {
++                        onWidthChanged: requestPaint()
++                        onHeightChanged: requestPaint()
++                        onPaint: {
++                            var ctx = getContext("2d");
++                            ctx.reset();
++                            var w = Math.floor(width), h = Math.floor(height);
++                            var dark = "rgba(0,0,0,0.6)", light = "rgba(255,255,255,0.9)";
++                            for (var x = 0; x < w; x++) {
++                                ctx.fillStyle = (x % 2) ? dark : light;
++                                ctx.fillRect(x, 0, 1, 1);
++                                ctx.fillStyle = ((x + h - 1) % 2) ? dark : light;
++                                ctx.fillRect(x, h - 1, 1, 1);
++                            }
++                            for (var y = 1; y < h - 1; y++) {
++                                ctx.fillStyle = (y % 2) ? dark : light;
++                                ctx.fillRect(0, y, 1, 1);
++                                ctx.fillStyle = ((y + w - 1) % 2) ? dark : light;
++                                ctx.fillRect(w - 1, y, 1, 1);
++                            }
++                        }
++                    }
++                }
++
+                 Kirigami.Icon {
+                     id: iconHighlight
+ 
+@@ -378,14 +342,49 @@ Item {
+                     animated: false
+ 
+                     source: model.decoration
++
++                    // Windows 7 shortcut arrow (imageres.dll 163): on launchers and symbolic links, not on
++                    // the system icons (Computer, Trash). The overlay is drawn at the icon's own size.
++                    Image {
++                        readonly property string path: String(model.url)
++                        readonly property bool shortcut: model.isLink
++                            || (path.endsWith(".desktop") && !path.endsWith("/seven-computer.desktop") && path.indexOf("trash") < 0)
++                        visible: shortcut && !root.useListViewMode
++                        // Windows draws the overlay one size down: a 48 px icon gets the 32 px frame (16 px arrow)
++                        readonly property int side: Math.min(parent.width, parent.height)
++                        x: (parent.width - side) / 2
++                        y: parent.height - height
++                        width: Math.round(side * 2 / 3)
++                        height: width
++                        smooth: true
++                        mipmap: true
++                        source: {
++                            const sizes = [16, 32, 48, 256];
++                            const s = sizes.find(v => v >= width - 2) || 256;
++                            return Qt.resolvedUrl("../images/shortcut-" + s + ".png");
++                        }
++                    }
+                 }
+                 PlasmaComponents.Label {
+                     id: label
+ 
+                     renderType: Text.NativeRendering
+                     font.hintingPreference: Font.PreferFullHinting
++                    font.pixelSize: 12 // Windows 7: Segoe UI 9 pt
+                     z: 2 // So it's always above the highlight effect
++                    font.kerning: Screen.devicePixelRatio == 1.0
++
++                    Timer {
++                        id: hidpi_hack
++                        interval: 50
++                        onTriggered: {
++                            front.anchors.rightMargin += 1;
++                            front.anchors.rightMargin -= 1;
++                            behind.anchors.rightMargin += 1;
++                            behind.anchors.rightMargin -= 1;
+ 
++                        }
++                    }
+                     // Hacks to improve font rendering to increase contrast and text brightness
+                     // This is done to get darker subpixel rendering, closer to ClearType
+                     PlasmaComponents.Label {
+@@ -397,29 +396,15 @@ Item {
+                         color: model.selected && Plasmoid.configuration.selectionStyle ? "black" : "#F9000000"
+                         renderType: Text.NativeRendering
+                         font.hintingPreference: Font.PreferFullHinting
++                    font.pixelSize: 12 // Windows 7: Segoe UI 9 pt
++                        font.kerning: Screen.devicePixelRatio == 1.0
+                         text: parent.text
+                         elide: Text.ElideRight
+                         maximumLineCount: parent.maximumLineCount
+                         wrapMode: (maximumLineCount === 1) ? Text.NoWrap : Text.Wrap
+                         horizontalAlignment: Text.AlignHCenter
+                         visible: Plasmoid.configuration.textShadows
+-
+                     }
+-                    /*PlasmaComponents.Label { // One is enough
+-                        id: behind_right
+-                        z: -1
+-                        anchors.fill: parent
+-                        anchors.rightMargin: -1
+-                        anchors.leftMargin: 1
+-                        color: "#d9000000"
+-                        renderType: Text.NativeRendering
+-                        font.hintingPreference: Font.PreferFullHinting
+-                        text: parent.text
+-                        elide: Text.ElideRight
+-                        maximumLineCount: parent.maximumLineCount
+-                        wrapMode: (maximumLineCount === 1) ? Text.NoWrap : Text.Wrap
+-                        horizontalAlignment: Text.AlignHCenter
+-                    }*/
+                     PlasmaComponents.Label {
+                         id: front
+                         z: -2
+@@ -428,6 +413,8 @@ Item {
+                         color: model.selected && Plasmoid.configuration.selectionStyle ? "black" : "#ffffffff"
+                         renderType: Text.NativeRendering
+                         font.hintingPreference: Font.PreferFullHinting
++                    font.pixelSize: 12 // Windows 7: Segoe UI 9 pt
++                        font.kerning: Screen.devicePixelRatio == 1.0
+                         text: parent.text
+                         elide: Text.ElideRight
+                         maximumLineCount: parent.maximumLineCount
+@@ -440,17 +427,42 @@ Item {
+                         State { // icon view
+                             when: !root.useListViewMode
+ 
++                            PropertyChanges {
++                                target: label
++                                anchors.topMargin: Kirigami.Units.smallSpacing
++                                // Ffs
++                                width: Math.floor((parent.width - Kirigami.Units.smallSpacing + (Screen.devicePixelRatio != 1.0) * 2 * Screen.devicePixelRatio) * Screen.devicePixelRatio) / Screen.devicePixelRatio
++                                maximumLineCount: Plasmoid.configuration.textLines
++                                horizontalAlignment: Text.AlignHCenter
++                            }
+                             AnchorChanges {
+                                 target: label
+                                 anchors.top: icon.bottom
+                                 anchors.horizontalCenter: parent.horizontalCenter
+                             }
++                            AnchorChanges {
++                                target: behind
++                                anchors.top: parent.top
++                                anchors.left: parent.left
++                                anchors.right: parent.right
++                                anchors.bottom: parent.bottom
++                            }
++                            AnchorChanges {
++                                target: front
++                                anchors.top: parent.top
++                                anchors.left: parent.left
++                                anchors.right: parent.right
++                                anchors.bottom: parent.bottom
++                            }
+                             PropertyChanges {
+-                                target: label
+-                                anchors.topMargin: Kirigami.Units.smallSpacing
+-                                width: parent.width - Kirigami.Units.smallSpacing
+-                                maximumLineCount: Plasmoid.configuration.textLines
+-                                horizontalAlignment: Text.AlignHCenter
++                                target: behind
++                                anchors.rightMargin: 1
++                                anchors.leftMargin: -1
++                            }
++                            StateChangeScript {
++                                script: {
++                                    hidpi_hack.start();
++                                }
+                             }
+                         },
+                         State { // list view
+@@ -531,14 +543,17 @@ Item {
+                 Component {
+                     id: frameComponent
+ 
+-                    PlasmaExtras.Highlight {
+-                        // Workaround for a bug where the frameComponent does not
+-                        // get unloaded when items are dragged to a different
+-                        // place on the desktop.
++                    KSvg.FrameSvgItem {
++                        imagePath: "widgets/viewitem"
+                         visible: this === frameLoader.item && !Plasmoid.configuration.selectionStyle
+-                        hovered: impl.iconAndLabelsShouldlookSelected
+-                        pressed: model.selected
+-                        active: Window.active
++                        property bool hovered: impl.iconAndLabelsShouldlookSelected
++                        property bool pressed: model.selected
++                        prefix: {
++                            if(hovered && pressed) return "selected+hover";
++                            if(hovered) return "hover";
++                            if(pressed) return "selected";
++                            return "normal";
++                        }
+                     }
+                 }
+ 
+@@ -595,6 +610,156 @@ Item {
+ 
+             }
+ 
++            PlasmaCore.ToolTipArea {
++                id: toolTip
++
++                // the Plasma tooltip draws a glass frame; Windows 7 shows a plain one (win7Tip below)
++                active: false
++                readonly property bool wanted: (Plasmoid.configuration.toolTips || label.truncated)
++                && popupDialog === null
++                && !model.blank
++                interactive: false
++                location: {
++                    if(toolTip.containsMouse) {
++                        return PlasmaCore.Types.Floating | PlasmaCore.Types.Desktop
++                    } else {
++                        return root.useListViewMode ? (Plasmoid.location === PlasmaCore.Types.LeftEdge ? PlasmaCore.Types.LeftEdge : PlasmaCore.Types.RightEdge) : Plasmoid.location
++                    }
++                }
++                z: 999
++                // Windows 7: a plain tooltip with the item's details (no title), e.g. for a folder
++                // "Дата створення / Розмір / Папки / Файли"; the text comes from tooltip-info.py
++                backgroundHints: "SolidBackground"
++                property string infoFor: ""
++                function updateToolTip() {
++                    if (toolTip.wanted && !model.blank) {
++                        toolTip.textFormat = Text.RichText;
++                        toolTip.mainText = "";
++                        const url = String(model.url);
++                        if (infoFor !== url) {
++                            infoFor = url;
++                            toolTip.subText = model.type;
++                            const q = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
++                            tipSource.connectSource("python3 \"$HOME/.local/lib/sevenplasma/tooltip-info.py\" " + q(url) + " " + q(model.type) + " #" + Date.now());
++                        }
++                    }
++                }
++                P5Support.DataSource {
++                    id: tipSource
++                    engine: "executable"
++                    onNewData: (source, data) => {
++                        const text = String(data["stdout"] || "").trim();
++                        if (text !== "") {
++                            toolTip.subText = text.split("\n").map(l => l.replace(/&/g, "&amp;").replace(/</g, "&lt;")).join("<br>");
++                        }
++                        disconnectSource(source);
++                    }
++                }
++                // Windows 7 tooltip: white to light grey-blue, 1 px #767676 border, grey text, under the cursor
++                Timer {
++                    id: win7TipTimer
++                    interval: 600
++                    onTriggered: {
++                        if (!toolTipMA.containsMouse || !toolTip.wanted || toolTip.subText === "") {
++                            return;
++                        }
++                        const g = toolTipMA.mapToGlobal(toolTipMA.mouseX, toolTipMA.mouseY);
++                        // keep it on the screen like Windows does (move left at the right edge, above at the bottom)
++                        const sw = Screen.virtualX + Screen.width, sh = Screen.virtualY + Screen.desktopAvailableHeight;
++                        const tw = win7Tip.mainItem.width, th = win7Tip.mainItem.height;
++                        win7Tip.x = Math.round(Math.min(g.x, sw - tw - 2));
++                        win7Tip.y = Math.round(g.y + 21 + th > sh ? g.y - th - 4 : g.y + 21);
++                        win7Tip.visible = true;
++                    }
++                }
++                PlasmaCore.Dialog {
++                    id: win7Tip
++                    type: PlasmaCore.Dialog.Tooltip
++                    backgroundHints: PlasmaCore.Dialog.NoBackground
++                    flags: Qt.ToolTip | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput | Qt.BypassWindowManagerHint
++                    location: PlasmaCore.Types.Floating
++                    visible: false
++                    mainItem: Rectangle {
++                        width: tipText.implicitWidth + 12
++                        height: tipText.implicitHeight + 8
++                        radius: 2
++                        border.color: "#767676"
++                        gradient: Gradient {
++                            GradientStop { position: 0.0; color: "#ffffff" }
++                            GradientStop { position: 1.0; color: "#e4e5f0" }
++                        }
++                        Text {
++                            id: tipText
++                            x: 6
++                            y: 4
++                            text: toolTip.subText
++                            textFormat: Text.StyledText
++                            color: "#575757"
++                            font.family: "Segoe UI"
++                            font.pixelSize: 12
++                            lineHeight: 1.08
++                            renderType: Text.NativeRendering
++                        }
++                    }
++                }
++                MouseArea {
++                    id: toolTipMA
++                    anchors.fill: parent
++                    enabled: !Plasmoid.containment.corona.editMode
++
++                    hoverEnabled: true
++                    onPositionChanged: {
++                        if (containsMouse) {
++                            toolTip.updateToolTip();
++                            main.GridView.view.hoveredItem = main;
++                            if (!win7Tip.visible) {
++                                win7TipTimer.restart();
++                            }
++                        } else if(!containsMouse && main.GridView.view.hoveredItem === main) {
++                            toolTip.hideImmediately();
++                        }
++                    }
++                    onContainsMouseChanged: {
++                        if (!containsMouse) {
++                            win7TipTimer.stop();
++                            win7Tip.visible = false;
++                            toolTip.infoFor = "";
++                        }
++                    }
++                }
++
++                states: [
++                    State { // icon view
++                        when: !root.useListViewMode
++
++                        PropertyChanges {
++                            target: toolTip
++                            x: frameLoader.x
++                            y: frameLoader.y
++                            width: frameLoader.width
++                            height: frameLoader.height
++                        }
++                    },
++                    State { // list view
++                        when: root.useListViewMode
++
++                        AnchorChanges {
++                            target: toolTip
++                            anchors.horizontalCenter: undefined
++                        }
++
++                        PropertyChanges {
++                            target: toolTip
++                            x: frameLoader.x
++                            y: frameLoader.y
++                            width: frameLoader.width
++                            height: frameLoader.height
++                        }
++                    }
++                ]
++            }
++
++
+             Column {
+                 id: actions
+ 
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderView.qml b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderView.qml
+index 9159ced..14ca469 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderView.qml
++++ b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/FolderView.qml
+@@ -41,6 +41,7 @@ FocusScope {
+     property alias filterPattern: dir.filterPattern
+     property alias filterMimeTypes: dir.filterMimeTypes
+     property alias showHiddenFiles: dir.showHiddenFiles
++    property alias creatingNewItems: dir.creatingNewItems
+     property alias flow: gridView.flow
+     property alias layoutDirection: gridView.layoutDirection
+     property alias cellWidth: gridView.cellWidth
+@@ -64,6 +65,91 @@ FocusScope {
+         gridView.positionViewAtBeginning();
+     }
+ 
++    // Windows 7: a new file or folder is renamed in place right away. The desktop rebuilds its icons now and
++    // then (saving positions, re-reading the folder); the name edit must survive that: it is opened again on
++    // the same item with the text typed so far.
++    property string renamingUrl: ""
++    property string keptRenameText: ""
++    property int keptRenameStart: 0
++    property int keptRenameEnd: 0
++    property bool restoreRenameText: false
++
++    function renameItemAt(url) {
++        var i = positioner.enabled ? positioner.indexForUrl(url) : dir.indexForUrl(url);
++        if (i < 0) {
++            return false;
++        }
++        dir.clearSelection();
++        dir.setSelected(positioner.map(i));
++        gridView.currentIndex = i;
++        gridView.focusCues = true;
++        gridView.positionViewAtIndex(i, GridView.Contain);
++        rename();
++        return true;
++    }
++
++    function startNewItemRename(url) {
++        restoreRenameText = false;
++        renameItemAt(url);
++    }
++
++    function renameEditLost() {
++        // the edited icon went away without Enter / Esc / a click elsewhere: open the edit again
++        if (renamingUrl === "") {
++            return;
++        }
++        restoreRenameText = true;
++        renameRetry.retries = 0;
++        renameRetry.restart();
++    }
++
++    function renameFinished() {
++        renamingUrl = "";
++        restoreRenameText = false;
++        renameRetry.stop();
++    }
++
++    Timer {
++        id: selectAfterRename
++        property string url: ""
++        property int retries: 0
++        interval: 100
++        onTriggered: {
++            var i = positioner.enabled ? positioner.indexForUrl(url) : dir.indexForUrl(url);
++            if (i < 0) {
++                if (++retries < 30) {
++                    restart();
++                }
++                return;
++            }
++            dir.clearSelection();
++            dir.setSelected(positioner.map(i));
++            gridView.currentIndex = i;
++            if (gridView.currentItem && gridView.currentItem.itemUrl) {
++                gridView.focusUrl = gridView.currentItem.itemUrl;
++            }
++            // the desktop may still rebuild its icons once more: check again a little later
++            if (retries < 30) {
++                retries = 30;
++                restart();
++            }
++        }
++    }
++
++    Timer {
++        id: renameRetry
++        property int retries: 0
++        interval: 80
++        onTriggered: {
++            if (renamingUrl === "" || (editor && editor.targetItem)) {
++                return;
++            }
++            if (!renameItemAt(renamingUrl) && ++retries < 40) {
++                restart(); // the icon is not back yet
++            }
++        }
++    }
++
+     function rename() {
+         if (gridView.currentIndex !== -1) {
+             var renameAction = folderView.model.action("rename");
+@@ -75,11 +161,19 @@ FocusScope {
+                 editor = editorComponent.createObject(listener);
+             }
+ 
++            var keep = restoreRenameText;
++            var keptText = keptRenameText, keptStart = keptRenameStart, keptEnd = keptRenameEnd;
+             editor.targetItem = gridView.currentItem;
++            renamingUrl = gridView.currentItem ? gridView.currentItem.itemUrl : "";
++            if (keep) {
++                editor.restoreEdit(keptText, keptStart, keptEnd);
++            }
++            restoreRenameText = false;
+         }
+     }
+ 
+     function cancelRename() {
++        renameFinished();
+         if (editor) {
+             editor.targetItem = null;
+         }
+@@ -172,6 +266,20 @@ FocusScope {
+         function onSelectionDone() {
+             main.generateDragImage();
+         }
++
++        function onHasRefreshed(isExplicit) {
++            if(isExplicit) {
++                gridView.visible = false;
++                refreshGridView.start();
++            }
++        }
++    }
++    Timer {
++        id: refreshGridView
++        interval: 100
++        onTriggered: {
++            gridView.visible = true;
++        }
+     }
+ 
+     Connections {
+@@ -230,8 +338,23 @@ FocusScope {
+         id: eventGenerator
+     }
+ 
++    Watermark {
++        id: watermark
++
++        anchors {
++            right: parent.right
++            bottom: parent.bottom
++
++            rightMargin: 5
++            bottomMargin: 5
++        }
++
++        width: Math.floor(parent.width/4)
++    }
++
+     MouseEventListener {
+         id: listener
++        enabled: !Plasmoid.containment.corona.editMode
+ 
+         anchors {
+             topMargin: backButton !== null ? backButton.height : undefined
+@@ -321,8 +444,14 @@ FocusScope {
+ 
+                 if (mouse.buttons & Qt.RightButton) {
+                     clearPressState();
+-                    dir.openContextMenu(main, mouse.modifiers);
+-                    mouse.accepted = true;
++
++                    // If it's the desktop, fall through to the desktop context menu plugin
++                    // Disallow opening contextmenu if we're already creating new items
++                    if (!dir.usedByContainment && !dir.creatingNewItems) {
++                        dir.openContextMenu(main, mouse.modifiers);
++                        mouse.accepted = true;
++                    }
++
+                 }
+             } else {
+                 pressedItem = hoveredItem;
+@@ -347,6 +476,8 @@ FocusScope {
+                     }
+ 
+                     gridView.currentIndex = hoveredItem.index;
++                    gridView.focusUrl = hoveredItem.itemUrl;
++                    gridView.focusCues = false;
+ 
+                     if (mouse.buttons & Qt.RightButton) {
+                         if (pressedItem.toolTip && pressedItem.toolTip.active) {
+@@ -567,6 +698,9 @@ FocusScope {
+         onContainsMouseChanged: {
+             if (!containsMouse && !main.rubberBand) {
+                 clearPressState();
++                if (!(hoveredItem?.popupDialog?.visible ?? false)) {
++                    hoveredItem = null;
++                }
+             }
+         }
+ 
+@@ -647,6 +781,13 @@ FocusScope {
+             GridView {
+                 id: gridView
+                 clip: true
++                // the icon whose name is being edited: Windows 7 shows it without the selection frame
++                property Item renamingItem: main.editor ? main.editor.targetItem : null
++                // Windows 7 focus rectangle (dotted): the icon the keyboard is on. It stays on the last icon
++                // when the selection is cleared by a click on the empty desktop; it is shown once the keyboard
++                // has been used (typing a new name included) and hidden again by a click on an icon.
++                property string focusUrl: ""
++                property bool focusCues: false
+                 anchors.fill: parent
+ 
+                 property bool isRootView: false
+@@ -851,6 +992,9 @@ FocusScope {
+                 }
+ 
+                 onCurrentIndexChanged: {
++                    if (currentIndex !== -1 && currentItem && currentItem.itemUrl) {
++                        focusUrl = currentItem.itemUrl;
++                    }
+                     positionViewAtIndex(currentIndex, GridView.Contain);
+                 }
+ 
+@@ -978,6 +1122,12 @@ FocusScope {
+                 Behavior on contentX { id: smoothX; enabled: false; SmoothedAnimation { velocity: 700 } }
+                 Behavior on contentY { id: smoothY; enabled: false; SmoothedAnimation { velocity: 700 } }
+ 
++                property string searchString: ""
++                Timer {
++                    id: typeAheadTimer
++                    interval: 500 // Resets search string after 0.5 seconds of inactivity
++                    onTriggered: searchString = ""
++                }
+                 Keys.onReturnPressed: event => {
+                     if (event.modifiers === Qt.AltModifier) {
+                         dir.openPropertiesDialog();
+@@ -1032,6 +1182,7 @@ FocusScope {
+                 }
+ 
+                 Keys.onPressed: event => {
++                    focusCues = true;
+                     event.accepted = true;
+ 
+                     if (event.key === Qt.Key_Control) {
+@@ -1057,9 +1208,43 @@ FocusScope {
+                     } else if (event.matches(StandardKey.Undo)) {
+                         dir.undo();
+                     } else if (event.matches(StandardKey.Refresh)) {
+-                        dir.refresh();
++                        dir.refresh(true);
+                     } else if (event.matches(StandardKey.SelectAll)) {
+                         positioner.setRangeSelected(0, count - 1);
++                    } else if ( (root.isPopup || Plasmoid.configuration.useTypeAhead) && event.text.length === 1 && event.modifiers === Qt.NoModifier) {
++                        typeAheadTimer.restart();
++                        const charPressed = event.text.toLowerCase();
++
++                        if (searchString.length >= 1 && searchString.indexOf(charPressed) !== 0) {
++                            searchString += charPressed;
++                        } else if (searchString !== charPressed) {
++                            searchString = charPressed;
++                        }
++
++                        let matches = [];
++                        for (let i = 0; i < gridView.count; i++) {
++                            const itemData = positioner.data(positioner.index(i, 0), Qt.DisplayRole);
++                            if (itemData && itemData.toLowerCase().indexOf(searchString) === 0) {
++                                matches.push(i);
++                            }
++                        }
++
++                        if (matches.length > 0) {
++                            let nextIdx = matches[0];
++                            if (searchString.length === 1) {
++                                for (let j = 0; j < matches.length; j++) {
++                                    if (matches[j] > gridView.currentIndex) {
++                                        nextIdx = matches[j];
++                                        break;
++                                    }
++                                }
++                            }
++                            currentIndex = nextIdx;
++                            dir.clearSelection();
++                            dir.setSelected(positioner.map(nextIdx));
++                        } else {
++                            searchString = charPressed;
++                        }
+                     } else {
+                         event.accepted = false;
+                     }
+@@ -1085,6 +1270,7 @@ FocusScope {
+ 
+                         if (newIndex !== -1) {
+                             currentIndex = newIndex;
++                            if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                             updateSelection(event.modifiers);
+                         }
+                     } else {
+@@ -1096,6 +1282,7 @@ FocusScope {
+                             return;
+                         }
+ 
++                        if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                         updateSelection(event.modifiers);
+                     }
+                 }
+@@ -1111,6 +1298,7 @@ FocusScope {
+ 
+                         if (newIndex !== -1) {
+                             currentIndex = newIndex;
++                            if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                             updateSelection(event.modifiers);
+                         }
+                     } else {
+@@ -1122,6 +1310,7 @@ FocusScope {
+                             return;
+                         }
+ 
++                        if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                         updateSelection(event.modifiers);
+                     }
+                 }
+@@ -1133,6 +1322,7 @@ FocusScope {
+ 
+                         if (newIndex !== -1) {
+                             currentIndex = newIndex;
++                            if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                             updateSelection(event.modifiers);
+                         }
+                     } else {
+@@ -1143,7 +1333,7 @@ FocusScope {
+                         if (oldIndex === currentIndex) {
+                             return;
+                         }
+-
++                        if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                         updateSelection(event.modifiers);
+                     }
+                 }
+@@ -1155,6 +1345,7 @@ FocusScope {
+ 
+                         if (newIndex !== -1) {
+                             currentIndex = newIndex;
++                            if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                             updateSelection(event.modifiers);
+                         }
+                     } else {
+@@ -1166,6 +1357,7 @@ FocusScope {
+                             return;
+                         }
+ 
++                        if(event.modifiers === Qt.NoModifier) currentItem.shouldShowToolTip = true;
+                         updateSelection(event.modifiers);
+                     }
+                 }
+@@ -1223,6 +1415,11 @@ FocusScope {
+             previewPlugins: Plasmoid.configuration.previewPlugins
+             applet: Plasmoid
+ 
++            onSelectionChanged: {
++                if(gridView.currentIndex === -1) {
++                    gridView.searchString = "";
++                }
++            }
+             onListingCompleted: {
+                 if (!gridView.model && root.expanded) {
+                     gridView.model = positioner;
+@@ -1289,7 +1486,6 @@ FocusScope {
+                         moves.push(to);
+                     }
+                 }
+-                console.log(moves);
+                 if (moves.length) {
+                     // Update also the currentIndex, otherwise it
+                     // is not set properly.
+@@ -1309,9 +1505,19 @@ FocusScope {
+ 
+             folderModel: dir
+ 
++            optimalStripes: Math.floor((gridView.flow === GridView.FlowLeftToRight)
++            ? (gridView.height / gridView.cellHeight)
++            : (gridView.width / gridView.cellWidth))
++
+             perStripe: Math.floor((gridView.flow === GridView.FlowLeftToRight)
+                 ? (gridView.width / gridView.cellWidth)
+                 : (gridView.height / gridView.cellHeight))
++
++            Component.onCompleted: {
++                positioner.updateResolution();
++                positioner.loadAndApplyPositionsConfig();
++            }
++
+         }
+ 
+         Folder.ItemViewAdapter {
+@@ -1336,9 +1542,27 @@ FocusScope {
+ 
+                 visible: false
+ 
++                onTargetItemChanged: {
++                    if (targetItem === null) {
++                        renameEditLost();
++                    }
++                }
++                onEditChanged: {
++                    keptRenameText = text;
++                    keptRenameStart = selectionStart;
++                    keptRenameEnd = selectionEnd;
++                }
++                onCancelled: renameFinished()
++
+                 onCommit: {
++                    renameFinished();
+                     if (targetItem) {
+-                        dir.rename(positioner.map(targetItem.index), text);
++                        // Windows 7: the renamed icon stays selected (and keeps the focus rectangle)
++                        var oldUrl = targetItem.itemUrl;
++                        selectAfterRename.url = oldUrl.substring(0, oldUrl.lastIndexOf("/") + 1) + fullName;
++                        selectAfterRename.retries = 0;
++                        selectAfterRename.restart();
++                        dir.rename(positioner.map(targetItem.index), fullName);
+                         targetItem = null;
+                         gridView.forceActiveFocus();
+                     }
+@@ -1356,6 +1580,25 @@ FocusScope {
+ 
+         Component.onCompleted: {
+             dir.requestRename.connect(rename);
++            // Windows 7: a new file or folder is selected and its name edited in place right away
++            dir.newItemReady.connect(function(url) {
++                startNewItemRename(url);
++            });
++            // Windows 7: the new icon takes the cell under the point where the menu was opened, right away
++            dir.newItemPlacement.connect(function(fileName, x, y) {
++                if (!positioner.enabled) {
++                    return;
++                }
++                var rows = (gridView.flow === GridView.FlowLeftToRight);
++                var perStripe = Math.floor((rows ? gridView.width : gridView.height) / (rows ? gridView.cellWidth : gridView.cellHeight));
++                var p = main.mapToItem(gridView.contentItem, x, y);
++                var col = Math.max(0, Math.floor(p.x / gridView.cellWidth));
++                var row = Math.max(0, Math.floor(p.y / gridView.cellHeight));
++                if ((rows ? col : row) >= perStripe) {
++                    return;
++                }
++                positioner.reservePlace(fileName, rows ? row * perStripe + col : col * perStripe + row);
++            });
+         }
+     }
+ 
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/RenameEditor.qml b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/RenameEditor.qml
+index 5810c8d..cb69358 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/RenameEditor.qml
++++ b/plasma/plasmoids/src/desktopcontainment/src/package/contents/ui/RenameEditor.qml
+@@ -20,6 +20,21 @@ PlasmaComponents.ScrollView {
+     property alias text: editor.text
+     property alias targetItem: editor.targetItem
+     signal commit
++    property string hiddenExtension: ""
++    readonly property string fullName: text + hiddenExtension
++    signal cancelled // Esc
++    signal editChanged // text or selection changed
++    readonly property int selectionStart: editor.selectionStart
++    readonly property int selectionEnd: editor.selectionEnd
++
++    function restoreEdit(text, start, end) {
++        if (text === editor.text) {
++            return; // nothing typed yet: the name stays selected as when the edit opened
++        }
++        editor.text = text;
++        editor.adjustSize();
++        editor.select(text.length, text.length); // carry on typing at the end
++    }
+ 
+     onFocusChanged: {
+         if (focus) {
+@@ -28,19 +43,49 @@ PlasmaComponents.ScrollView {
+     }
+ 
+     PlasmaComponents.TextArea {
++        font.pixelSize: 12 // Windows 7: Segoe UI 9 pt
+         id: editor
+ 
+         wrapMode: root.useListViewMode ? TextEdit.NoWrap : TextEdit.Wrap
+ 
+         textMargin: 0
++        topPadding: root.useListViewMode ? undefined : 1
++        bottomPadding: root.useListViewMode ? undefined : 1
++        leftPadding: root.useListViewMode ? undefined : 2
++
++        // the name wrapped the way the box will show it (for the box size)
++        Text {
++            id: measure
++            visible: false
++            text: editor.text
++            font: editor.font
++            wrapMode: Text.Wrap
++            horizontalAlignment: Text.AlignHCenter
++        }
+         //leftPadding:
+ 
+         horizontalAlignment: root.useListViewMode ? TextEdit.AlignLeft : TextEdit.AlignHCenter
+ 
+-        rightPadding: root.PlasmaComponents.ScrollBar.vertical.visible ? root.PlasmaComponents.ScrollBar.vertical.width : Kirigami.Units.smallSpacing
++        rightPadding: root.useListViewMode ? (root.PlasmaComponents.ScrollBar.vertical.visible ? root.PlasmaComponents.ScrollBar.vertical.width : Kirigami.Units.smallSpacing) : 2
+ 
+         property Item targetItem: null
+ 
++        // keep the selection when the edit loses the focus for a moment (the icon being rebuilt)
++        persistentSelection: true
++        onTextChanged: if (targetItem) root.editChanged()
++        onSelectionStartChanged: if (targetItem) root.editChanged()
++        onSelectionEndChanged: if (targetItem) root.editChanged()
++
++        // Windows 7: a plain white box with a thin dark frame, black text, the name selected in blue
++        background: Rectangle {
++            color: "white"
++            border.color: "#000000"
++            border.width: 1
++        }
++        color: "black"
++        selectionColor: "#3399ff"
++        selectedTextColor: "white"
++
+         Binding {
+             target: editor.background
+             property: "width"
+@@ -60,13 +105,16 @@ PlasmaComponents.ScrollView {
+                 root.y = xy[1];
+                 root.width = getWidth();
+                 root.height = getInitHeight();
+-                text = targetItem.name;
++                // Windows 7 edits the name without its extension and keeps the extension on Enter
++                var boundary = dir.fileExtensionBoundary(positioner.map(targetItem.index));
++                root.hiddenExtension = targetItem.name.substring(boundary);
++                text = targetItem.name.substring(0, boundary);
+                 adjustSize();
+-                editor.select(0, dir.fileExtensionBoundary(positioner.map(targetItem.index)));
++                editor.select(0, text.length);
+                 if (isPopup) {
+                     root.contentItem.contentX = Math.max(root.contentItem.contentWidth - contentItem.width, 0);
+                 } else {
+-                    root.contentItem.contentY = Math.max(root.contentItem.contentHeight - contentItem.height, 0);
++                    root.contentItem.contentY = 0; // Windows 7: the name is shown from its first line
+                 }
+                 root.visible = true;
+             } else {
+@@ -83,6 +131,7 @@ PlasmaComponents.ScrollView {
+                 root.commit();
+                 break;
+             case Qt.Key_Escape:
++                root.cancelled();
+                 if (targetItem) {
+                     targetItem = null;
+                     event.accepted = true;
+@@ -155,9 +204,8 @@ PlasmaComponents.ScrollView {
+             if (isPopup || init) {
+                 _height = targetItem.labelArea.height + editor.topPadding + editor.bottomPadding;
+             } else {
+-                var realHeight = contentHeight + editor.topPadding + editor.bottomPadding;
+-                var maxHeight = Kirigami.Units.iconSizes.sizeForLabels * (Plasmoid.configuration.textLines + 1) + editor.topPadding + editor.bottomPadding;
+-                _height = Math.min(realHeight, maxHeight);
++                // Windows 7: the box grows with the name, the whole name is always visible (no scroll bar)
++                _height = contentHeight + editor.topPadding + editor.bottomPadding;
+             }
+             return _height + (addWidthHoriozontalScroller ? root.PlasmaComponents.ScrollBar.horizontal.height : 0);
+         }
+@@ -176,17 +224,27 @@ PlasmaComponents.ScrollView {
+                     root.PlasmaComponents.ScrollBar.horizontal.policy = Qt.ScrollBarAlwaysOff;
+                     root.height = getHeight();
+                 }
++            } else if (!root.useListViewMode) {
++                // Windows 7: a white box that just fits the (wrapped) name, centred under the icon
++                root.PlasmaComponents.ScrollBar.vertical.policy = Qt.ScrollBarAlwaysOff;
++                // Windows 7 wraps the name at about the width of the icon cell (75 px at 96 dpi)
++                measure.width = Math.max(78, gridView.cellWidth) - editor.leftPadding - editor.rightPadding;
++                root.width = Math.ceil(measure.contentWidth) + editor.leftPadding + editor.rightPadding + 2;
++                root.height = Math.ceil(measure.contentHeight) + editor.topPadding + editor.bottomPadding;
++                root.contentItem.contentY = 0;
++                if (targetItem) {
++                    var p = main.mapFromItem(targetItem, targetItem.labelArea.x, targetItem.labelArea.y);
++                    var center = main.mapFromItem(targetItem, targetItem.width / 2, 0).x;
++                    var origin = main.mapFromItem(root.parent, 0, 0);
++                    root.x = Math.round(center - origin.x - root.width / 2);
++                    root.y = Math.round(p.y - origin.y);
++                }
++                return;
+             } else {
++                root.PlasmaComponents.ScrollBar.vertical.policy = Qt.ScrollBarAlwaysOff;
++                root.width = getWidth();
+                 root.height = getHeight();
+-                if(contentHeight + editor.topPadding + editor.bottomPadding > root.height) {
+-                    root.visible = targetItem !== null;
+-                    root.PlasmaComponents.ScrollBar.vertical.policy = Qt.ScrollBarAlwaysOn;
+-                    root.width = getWidth(true);
+-
+-                } else {
+-                    root.PlasmaComponents.ScrollBar.vertical.policy = Qt.ScrollBarAlwaysOff;
+-                    root.width = getWidth();
+-                }
++                root.contentItem.contentY = 0;
+             }
+ 
+             var xy = getXY();
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
+index b5d2c66..b41a7b9 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
+@@ -9,6 +9,10 @@
+ */
+ 
+ #include "foldermodel.h"
++#include <KConfig>
++#include <QFileInfo>
++#include <QStandardPaths>
++#include <QProcess>
+ #include "desktopschemehelper.h"
+ #include "itemviewadapter.h"
+ #include "positioner.h"
+@@ -33,6 +37,7 @@
+ #include <QScreen>
+ #include <QStack>
+ #include <QTimer>
++#include <QDebug>
+ #include <qplatformdefs.h>
+ 
+ #include <KAuthorized>
+@@ -43,6 +48,8 @@
+ #include <KDirWatch>
+ #include <KFileCopyToMenu>
+ #include <KFileItemActions>
++
++#include "seven-common/win7zip.h"
+ #include <KFileItemListProperties>
+ #include <KIO/CopyJob>
+ #include <KIO/DeleteJob>
+@@ -235,6 +242,13 @@ FolderModel::FolderModel(QObject *parent)
+         for (int i = first; i <= last; ++i) {
+             const auto idx = index(i, 0, parent);
+             const auto url = itemForIndex(idx).url();
++            if (!m_renameAfterCreate.isEmpty() && url.fileName() == m_renameAfterCreate.fileName() && !m_renameShown) {
++                m_renameShown = true;
++                // after the item has been moved to where the menu was opened
++                QTimer::singleShot(250, this, [this, url]() {
++                    Q_EMIT newItemReady(url);
++                });
++            }
+             auto it = m_dropTargetPositions.find(url.fileName());
+             if (it != m_dropTargetPositions.end()) {
+                 const auto pos = it.value();
+@@ -339,25 +353,79 @@ void FolderModel::invalidateFilterIfComplete()
+     invalidateFilter();
+ }
+ 
+-void FolderModel::newFileMenuItemCreated(const QUrl &url)
++void FolderModel::prepareNewItem(const QUrl &url)
+ {
+-    if (m_usedByContainment && !m_screenMapper->sharedDesktops()) {
+-        m_screenMapper->addMapping(url, m_screen, m_currentActivity, ScreenMapper::DelayedSignal);
+-        m_dropTargetPositions.insert(url.fileName(), localMenuPosition());
++    // Windows 7: the new icon appears where the menu was opened (not in the first free place, moved later)
++    if (m_usedByContainment && !m_menuPosition.isNull()) {
++        if (!m_screenMapper->sharedDesktops()) {
++            m_screenMapper->addMapping(url, m_screen, m_currentActivity, ScreenMapper::ImmediateSignal);
++        }
++        // the view reserves the cell under the pointer; the icon is put there the moment it appears
++        const QPoint pos = localMenuPosition();
+         m_menuPosition = {};
+-        m_dropTargetPositionsCleanup->start();
++        Q_EMIT newItemPlacement(url.fileName(), pos.x(), pos.y());
++    }
++    m_preparedNewItem = url.fileName();
++}
++
++void FolderModel::newFileMenuItemCreated(const QUrl &url)
++{
++    // Windows 7: the new file or folder gets selected and its name edited in place (see newItemReady)
++    // (compared by name: the menu reports file:// URLs, the desktop lists desktop:/ ones)
++    if (m_preparedNewItem != url.fileName()) {
++        prepareNewItem(url);
++    }
++    m_preparedNewItem.clear();
++    if (!m_renameAfterCreate.isEmpty() && m_renameAfterCreate.fileName() == url.fileName() && m_renameShown) {
++        // already being renamed (it showed up before the menu reported it)
++        m_renameAfterCreate.clear();
++        m_renameShown = false;
++        setCreatingNewItems(false);
++        return;
+     }
++    m_renameAfterCreate = url;
++    m_renameShown = false;
++    QTimer::singleShot(300, this, [this, url]() {
++        if (m_renameAfterCreate != url || m_renameShown) {
++            return;
++        }
++        for (int i = 0; i < rowCount(); ++i) {
++            const QUrl itemUrl = itemForIndex(index(i, 0)).url();
++            if (itemUrl.fileName() == url.fileName()) {
++                m_renameAfterCreate.clear();
++                Q_EMIT newItemReady(itemUrl);
++                return;
++            }
++        }
++    });
+     setCreatingNewItems(false);
+ }
+ void FolderModel::newFileMenuItemRejected(const QUrl &url)
+ {
+     Q_UNUSED(url);
++    m_preparedNewItem.clear();
+     setCreatingNewItems(false);
+ }
+ void FolderModel::newFileMenuItemCreationStarted(const QUrl &url)
+ {
+-    Q_UNUSED(url);
+     setCreatingNewItems(true);
++    // our KIO reports the final name of a new file / folder before making it: place it right away
++    const auto localPath = [](const QUrl &u) {
++        if (u.isLocalFile()) {
++            return QDir::cleanPath(u.toLocalFile());
++        }
++        if (u.scheme() == QLatin1String("desktop")) {
++            return QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + QLatin1Char('/') + u.path());
++        }
++        return QString();
++    };
++    const QString dirPath = localPath(resolvedUrl());
++    const QString itemPath = localPath(url);
++    if (!dirPath.isEmpty() && !itemPath.isEmpty() && QFileInfo(itemPath).absolutePath() == dirPath && !QFileInfo::exists(itemPath)) {
++        prepareNewItem(url);
++        m_renameAfterCreate = url;
++        m_renameShown = false;
++    }
+ }
+ 
+ 
+@@ -879,21 +947,46 @@ void FolderModel::rename(int row, const QString &name)
+ 
+     QModelIndex idx = index(row, 0);
+     const QString filename = data(idx, UrlRole).toString();
++    if (QUrl(filename).fileName() == name) {
++        return; // unchanged: nothing to do (and the icon keeps its place)
++    }
+     Q_EMIT itemAboutToRename(filename);
+-    m_dirModel->setData(mapToSource(idx), name, Qt::EditRole);
+-    connect(
+-        m_dirModel,
+-        &KDirModel::dataChanged,
+-        this,
+-        [=, this](const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles) {
+-            Q_UNUSED(roles)
+-            QString newFilename;
+-            if (topLeft == bottomRight) {
+-                newFilename = data(mapFromSource(topLeft), UrlRole).toString();
+-            }
+-            Q_EMIT itemRenamed(filename, newFilename);
+-        },
+-        Qt::SingleShotConnection);
++    {
++        // the desktop:/ worker reports a rename as "removed" + "added": tell the positioner the new name,
++        // so the icon keeps its place instead of going to the first free cell
++        QUrl newUrl(filename);
++        newUrl = newUrl.adjusted(QUrl::RemoveFilename);
++        newUrl.setPath(newUrl.path() + name);
++        Q_EMIT itemRenameStarted(filename, newUrl.toString());
++    }
++    const QPersistentModelIndex sourceIdx(mapToSource(idx));
++    m_dirModel->setData(sourceIdx, name, Qt::EditRole);
++    // Wait for this very item to change its name: other items' updates (icons, previews of a file just made)
++    // must not end the wait, or the positioner forgets the place and the icon jumps to the first free cell.
++    auto *conn = new QMetaObject::Connection;
++    auto *timeout = new QTimer(this);
++    timeout->setSingleShot(true);
++    timeout->start(5000);
++    auto finish = [conn, timeout]() {
++        timeout->stop();
++        timeout->disconnect();
++        QObject::disconnect(*conn);
++        delete conn;
++        timeout->deleteLater();
++    };
++    *conn = connect(m_dirModel, &KDirModel::dataChanged, this,
++                    [=, this](const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &) {
++                        if (!sourceIdx.isValid() || topLeft.row() > sourceIdx.row() || bottomRight.row() < sourceIdx.row()) {
++                            return;
++                        }
++                        const QString newFilename = data(mapFromSource(sourceIdx), UrlRole).toString();
++                        if (newFilename == filename) {
++                            return;
++                        }
++                        finish();
++                        Q_EMIT itemRenamed(filename, newFilename);
++                    });
++    connect(timeout, &QTimer::timeout, this, finish);
+ }
+ 
+ int FolderModel::fileExtensionBoundary(int row)
+@@ -1734,14 +1827,20 @@ void FolderModel::createActions()
+ 
+     QAction *undo = KStandardAction::undo(manager, &KIO::FileUndoManager::undo, this);
+     undo->setEnabled(manager->isUndoAvailable());
++    // Windows 7 shows "Undo ..." only while there is something to undo, never greyed out
++    undo->setVisible(manager->isUndoAvailable());
+     undo->setShortcutContext(Qt::WidgetShortcut);
+     connect(manager, SIGNAL(undoAvailable(bool)), undo, SLOT(setEnabled(bool)));
++    connect(manager, SIGNAL(undoAvailable(bool)), undo, SLOT(setVisible(bool)));
+     connect(manager, &KIO::FileUndoManager::undoTextChanged, this, &FolderModel::undoTextChanged);
+ 
+     QAction *paste = KStandardAction::paste(this, &FolderModel::paste, this);
+     QAction *pasteTo = KStandardAction::paste(this, &FolderModel::pasteTo, this);
+ 
+     QAction *refresh = new QAction(QIcon::fromTheme(QStringLiteral("view-refresh")), i18n("&Refresh View"), this);
++    // Windows 7's desktop menu shows no shortcut next to Refresh and Paste
++    refresh->setShortcutVisibleInContextMenu(false);
++    paste->setShortcutVisibleInContextMenu(false);
+     refresh->setShortcut(QKeySequence(QKeySequence::Refresh));
+     connect(refresh, &QAction::triggered, this, [refresh, this]() { this->refresh(true); });
+ 
+@@ -1771,6 +1870,17 @@ void FolderModel::createActions()
+     m_actionCollection.addAction(QStringLiteral("undo"), undo);
+     m_actionCollection.addAction(QStringLiteral("copy"), copy);
+     m_actionCollection.addAction(QStringLiteral("paste"), paste);
++
++    // Windows 7 "Paste shortcut": links to the copied files in this folder
++    QAction *pasteLink = new QAction(QStringLiteral("Вставити ярлик"), this);
++    connect(pasteLink, &QAction::triggered, this, [this]() {
++        const QList<QUrl> urls = KUrlMimeData::urlsFromMimeData(QApplication::clipboard()->mimeData());
++        if (!urls.isEmpty()) {
++            KIO::CopyJob *job = KIO::link(urls, m_dirModel->dirLister()->url());
++            job->setUiDelegate(new KNotificationJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled));
++        }
++    });
++    m_actionCollection.addAction(QStringLiteral("pasteLink"), pasteLink);
+     m_actionCollection.addAction(QStringLiteral("pasteto"), pasteTo);
+     m_actionCollection.addAction(QStringLiteral("refresh"), refresh);
+     m_actionCollection.addAction(QStringLiteral("rename"), rename);
+@@ -1855,7 +1965,7 @@ void FolderModel::updateActions()
+         if (QAction *newMenuAction = m_actionCollection.action(QStringLiteral("newMenu"))) {
+             newMenuAction->setEnabled(itemProperties.supportsWriting());
+             newMenuAction->setVisible(!isTrash);
+-            newMenuAction->setText(i18n("New"));
++            newMenuAction->setText(QStringLiteral("Створити")); // Windows 7 (uk)
+             newMenuAction->setIcon(QIcon());
+         }
+     }
+@@ -1882,6 +1992,10 @@ void FolderModel::updateActions()
+         cut->setVisible(!isTrash);
+     }
+ 
++    if (QAction *pasteLink = m_actionCollection.action(QStringLiteral("pasteLink"))) {
++        pasteLink->setEnabled(!KUrlMimeData::urlsFromMimeData(QApplication::clipboard()->mimeData()).isEmpty());
++    }
++
+     if (QAction *paste = m_actionCollection.action(QStringLiteral("paste"))) {
+         bool enable = false;
+ 
+@@ -1957,72 +2071,281 @@ void FolderModel::openContextMenu(QQuickItem *visualParent, Qt::KeyboardModifier
+ 
+         KFileItemListProperties itemProperties(items);
+ 
+-        // Start adding the actions:
+-        // "Open" and "Open with" actions
+-        m_fileItemActions->setItemListProperties(itemProperties);
+-        m_fileItemActions->insertOpenWithActionsTo(nullptr, menu, QStringList());
+-        menu->addSeparator();
+-
+-        // Add "Show Target" action only if the file *has* a target
+-        QAction *showTargetAction = m_actionCollection.action(QStringLiteral("showTarget"));
+-        if (showTargetAction->isEnabled()) {
+-            menu->addAction(showTargetAction);
++        // Windows 7 "Computer" icon: its own menu (Open, Manage, map network drives, shortcut, delete, rename, properties)
++        if (items.size() == 1 && items.first().url().fileName() == QLatin1String("seven-computer.desktop")) {
++            const KFileItem computer = items.first();
++            const QString control = QDir::homePath() + QStringLiteral("/.local/bin/seven-control");
++            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [] {
++                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("computer:/")});
++            });
++            QFont bold = open->font();
++            bold.setBold(true);
++            open->setFont(bold);
++            menu->addAction(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Керування"), this, [control] {
++                QProcess::startDetached(control, {QStringLiteral("--compmgmt")});
++            });
++            menu->addSeparator();
++            QAction *map = menu->addAction(QStringLiteral("Підключити мережевий диск..."), this, [] {
++                QProcess::startDetached(QStringLiteral("knetattach"), {});
++            });
++            map->setEnabled(!QStandardPaths::findExecutable(QStringLiteral("knetattach")).isEmpty());
++            menu->addAction(QStringLiteral("Відключити мережевий диск..."), this, [] {
++                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("remote:/")});
++            });
+             menu->addSeparator();
++            menu->addAction(QStringLiteral("Створити ярлик"), this, [computer] {
++                // "Computer - Shortcut" next to it on the desktop
++                const QString dir = computer.url().adjusted(QUrl::RemoveFilename).toLocalFile();
++                QString target = dir + QStringLiteral("seven-computer-shortcut.desktop");
++                for (int n = 2; QFileInfo::exists(target); ++n) {
++                    target = dir + QStringLiteral("seven-computer-shortcut-%1.desktop").arg(n);
++                }
++                if (QFile::copy(computer.localPath(), target)) {
++                    KConfig link(target, KConfig::SimpleConfig);
++                    link.group(QStringLiteral("Desktop Entry")).writeEntry("Name", QStringLiteral("Комп'ютер — ярлик"));
++                    QFile::setPermissions(target, QFile::permissions(target) | QFileDevice::ExeUser);
++                }
++            });
++            menu->addAction(QStringLiteral("Видалити"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
++            menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++            menu->addSeparator();
++            menu->addAction(QStringLiteral("Властивості"), this, [] {
++                const QString system = QDir::homePath() + QStringLiteral("/.local/bin/seven-system");
++                QProcess::startDetached(QFileInfo::exists(system) ? system : QStringLiteral("kinfocenter"), {});
++            });
++            menu->setAttribute(Qt::WA_TranslucentBackground);
++            menu->winId();
++            if (visualParent && menu->windowHandle()) {
++                menu->windowHandle()->setTransientParent(visualParent->window());
++            }
++            menu->popup(m_menuPosition);
++            connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater);
++            return;
+         }
+ 
+-        menu->addAction(m_actionCollection.action(QStringLiteral("cut")));
+-        menu->addAction(m_actionCollection.action(QStringLiteral("copy")));
+-        if (urls.length() == 1) {
+-            if (items.first().isDir()) {
+-                menu->addAction(m_actionCollection.action(QStringLiteral("pasteto")));
++        // Windows 7 Explorer menu of files and folders:
++        // Open | Open with > | Send to > | Cut, Copy | Create shortcut, Delete, Rename | Properties
++        const bool single = items.size() == 1;
++        const KFileItem first = items.first();
++        // desktop:/ items: the menu works on the real files (~/Desktop/...)
++        {
++            QList<QUrl> local;
++            for (const KFileItem &it : std::as_const(items)) {
++                const QString lp = it.localPath();
++                local << (lp.isEmpty() ? it.url() : QUrl::fromLocalFile(lp));
+             }
+-        } else {
+-            menu->addAction(m_actionCollection.action(QStringLiteral("paste")));
++            urls = local;
+         }
+-
+-        menu->addAction(m_actionCollection.action(QStringLiteral("rename")));
+-        menu->addSeparator();
+-        menu->addAction(m_actionCollection.action(QStringLiteral("restoreFromTrash")));
+-
+-        if (isDeleteCommandShown()) {
+-            QAction *trashAction = m_actionCollection.action(QStringLiteral("trash"));
+-            QAction *deleteAction = m_actionCollection.action(QStringLiteral("del"));
+-            menu->addAction(trashAction);
+-            menu->addAction(deleteAction);
++        const bool trashLink = single && first.isDesktopFile() && KDesktopFile(first.localPath()).readUrl() == QLatin1String("trash:/");
++        if (trashLink) {
++            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [] {
++                QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("trash:/")});
++            });
++            menu->setDefaultAction(open);
++            QAction *empty = menu->addAction(QIcon::fromTheme(QStringLiteral("seven-desk-trash-empty")), QStringLiteral("Очистити кошик"), this, [] {
++                KIO::emptyTrash();
++            });
++            empty->setEnabled(!QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/Trash/files"))
++                                   .entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden)
++                                   .isEmpty());
++            menu->addSeparator();
++            menu->addAction(QStringLiteral("Створити ярлик"), this, [] {
++                const QString dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + QLatin1Char('/');
++                KConfig link(dir + QStringLiteral("Кошик — ярлик.desktop"), KConfig::SimpleConfig);
++                KConfigGroup g(&link, QStringLiteral("Desktop Entry"));
++                g.writeEntry("Type", "Link");
++                g.writeEntry("URL", "trash:/");
++                g.writeEntry("Icon", "seven-desk-trash-full");
++                g.writeEntry("EmptyIcon", "seven-desk-trash-empty");
++                g.writeEntry("Name", QStringLiteral("Кошик — ярлик"));
++            });
++            menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++            menu->addSeparator();
++            menu->addAction(QStringLiteral("Властивості"), this, [] {
++                KPropertiesDialog::showDialog(QUrl(QStringLiteral("trash:/")));
++            });
+         } else {
+-            if (RemoveAction *removeAction = qobject_cast<RemoveAction *>(m_actionCollection.action(QStringLiteral("remove")))) {
+-                removeAction->update();
+-                menu->addAction(removeAction);
+-
+-                // Used to monitor Shift modifier usage while the menu is open, to
+-                // swap the Trash and Delete actions.
+-                menu->installEventFilter(removeAction);
+-                QCoreApplication::instance()->installEventFilter(removeAction);
++            // Open (bold), Open with
++            QAction *open = menu->addAction(QStringLiteral("Відкрити"), this, [urls]() {
++                for (const QUrl &u : urls) {
++                    auto *job = new KIO::OpenUrlJob(u);
++                    job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
++                    job->setRunExecutables(true);
++                    job->start();
++                }
++            });
++            menu->setDefaultAction(open);
++            // a ZIP file: "Extract All..." (Compressed (zipped) Folders)
++            if (single && !first.localPath().isEmpty() && Win7Zip::isArchive(first.localPath(), first.mimetype())) {
++                Win7Zip::addExtractActions(menu, first.localPath());
+             }
+-        }
+-
+-        menu->addAction(m_actionCollection.action(QStringLiteral("emptyTrash")));
++            if (single && !first.isDir() && !first.isDesktopFile()) {
++                m_fileItemActions->setItemListProperties(itemProperties);
++                QMenu probe;
++                m_fileItemActions->insertOpenWithActionsTo(nullptr, &probe, QStringList());
++                QList<QAction *> found;
++                for (QAction *a : probe.actions()) {
++                    if (a->menu()) {
++                        found += a->menu()->actions();
++                    } else if (!a->isSeparator() && !a->text().isEmpty()) {
++                        found << a;
++                    }
++                }
++                if (!found.isEmpty()) {
++                    auto *with = menu->addMenu(QStringLiteral("Відкрити за допомогою"));
++                    for (QAction *a : std::as_const(found)) {
++                        if (!a->isSeparator()) {
++                            a->setParent(menu);
++                            with->addAction(a);
++                        }
++                    }
++                }
++            }
++            menu->addSeparator();
+ 
+-        menu->addSeparator();
++            // Windows 7: Share with > , Restore previous versions, Include in library > (folders only)
++            const QString target = single ? first.localPath() : QString();
++            if (!target.isEmpty()) {
++                auto *share = menu->addMenu(QStringLiteral("Спільний доступ"));
++                share->addAction(QIcon::fromTheme(QStringLiteral("seven-share-nobody"), QIcon::fromTheme(QStringLiteral("object-locked"))),
++                                 QStringLiteral("Ніхто"), this, [target]() {
++                                     // stop sharing: remove the Samba user shares of this folder
++                                     auto *list = new QProcess;
++                                     QObject::connect(list, &QProcess::finished, list, [list, target]() {
++                                         QString shareName;
++                                         for (const QString &line : QString::fromLocal8Bit(list->readAllStandardOutput()).split(QLatin1Char('\n'))) {
++                                             if (line.startsWith(QLatin1Char('['))) {
++                                                 shareName = line.mid(1, line.indexOf(QLatin1Char(']')) - 1);
++                                             } else if (line.startsWith(QLatin1String("path=")) && line.mid(5) == target && !shareName.isEmpty()) {
++                                                 QProcess::startDetached(QStringLiteral("net"), {QStringLiteral("usershare"), QStringLiteral("delete"), shareName});
++                                             }
++                                         }
++                                         list->deleteLater();
++                                     });
++                                     list->start(QStringLiteral("net"), {QStringLiteral("usershare"), QStringLiteral("info")});
++                                 })->setEnabled(first.isDir());
++                share->addAction(QIcon::fromTheme(QStringLiteral("seven-share-people"), QIcon::fromTheme(QStringLiteral("system-users"))),
++                                 QStringLiteral("Певні люди..."), this, [target]() {
++                                     // the sharing page of the properties (installs Samba if needed)
++                                     auto *dialog = new KPropertiesDialog(QUrl::fromLocalFile(target));
++                                     dialog->setAttribute(Qt::WA_DeleteOnClose);
++                                     dialog->show();
++                                 });
++                // there are no previous versions here: Windows 7 opens the properties at that page
++                menu->addAction(QStringLiteral("Відновити попередні версії"), this, &FolderModel::openPropertiesDialog);
++                if (first.isDir()) {
++                    auto *include = menu->addMenu(QStringLiteral("Додати до бібліотеки"));
++                    const struct {
++                        QStandardPaths::StandardLocation location;
++                        const char *name;
++                        const char *icon;
++                    } libraries[] = {
++                        {QStandardPaths::DocumentsLocation, "Документи", "library-txt"},
++                        {QStandardPaths::MusicLocation, "Музика", "library-music"},
++                        {QStandardPaths::PicturesLocation, "Зображення", "library-images"},
++                        {QStandardPaths::MoviesLocation, "Відео", "library-video"},
++                    };
++                    for (const auto &library : libraries) {
++                        const QString dir = QStandardPaths::writableLocation(library.location);
++                        // a library is a folder with links to the included folders (as in Explorer)
++                        QAction *a = include->addAction(QIcon::fromTheme(QString::fromLatin1(library.icon)), QString::fromUtf8(library.name), this, [target, dir]() {
++                            const QString base = dir + QLatin1Char('/') + QFileInfo(target).fileName();
++                            QString link = base;
++                            for (int n = 2; QFileInfo(link).exists() || QFileInfo(link).isSymLink(); ++n) {
++                                link = base + QStringLiteral(" (%1)").arg(n);
++                            }
++                            QFile::link(target, link);
++                        });
++                        const bool related = target == dir || target.startsWith(dir + QLatin1Char('/')) || dir.startsWith(target + QLatin1Char('/'));
++                        a->setEnabled(!related);
++                    }
++                }
++            }
++            // compressing: "Send to -> Compressed (zipped) folder" below
++            {
++                QStringList paths;
++                for (const QUrl &u : urls) {
++                    if (u.isLocalFile()) {
++                        paths << u.toLocalFile();
++                    }
++                }
++                if (paths.size() == urls.size()) {
++                    Win7Zip::addCompressActions(menu, paths);
++                }
++            }
++            menu->addSeparator();
+ 
+-        m_fileItemActions->addActionsTo(menu);
++            // Send to
++            auto *send = menu->addMenu(QStringLiteral("Надіслати"));
++            const bool local = !first.localPath().isEmpty();
++            send->addAction(QIcon::fromTheme(QStringLiteral("application-zip")), QStringLiteral("Стиснена ZIP-папка"), this, [urls]() {
++                const QFileInfo fi(urls.first().toLocalFile());
++                QString zip = fi.absolutePath() + QLatin1Char('/') + fi.completeBaseName() + QStringLiteral(".zip");
++                for (int n = 2; QFileInfo::exists(zip); ++n) {
++                    zip = fi.absolutePath() + QLatin1Char('/') + fi.completeBaseName() + QStringLiteral(" (%1).zip").arg(n);
++                }
++                QStringList args{QStringLiteral("-r"), QStringLiteral("-q"), zip};
++                for (const QUrl &u : urls) {
++                    args << QFileInfo(u.toLocalFile()).fileName();
++                }
++                auto *z = new QProcess;
++                z->setWorkingDirectory(fi.absolutePath());
++                QObject::connect(z, &QProcess::finished, z, &QObject::deleteLater);
++                z->start(QStringLiteral("zip"), args);
++            })->setEnabled(local && !QStandardPaths::findExecutable(QStringLiteral("zip")).isEmpty());
++            send->addAction(QIcon::fromTheme(QStringLiteral("user-desktop")), QStringLiteral("Робочий стіл (створити ярлик)"), this, [urls]() {
++                const QString dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
++                for (const QUrl &u : urls) {
++                    const QString name = QFileInfo(u.toLocalFile()).fileName();
++                    QString link = dir + QLatin1Char('/') + name + QStringLiteral(" — ярлик");
++                    for (int n = 2; QFileInfo::exists(link); ++n) {
++                        link = dir + QLatin1Char('/') + name + QStringLiteral(" — ярлик (%1)").arg(n);
++                    }
++                    QFile::link(u.toLocalFile(), link);
++                }
++            })->setEnabled(local);
++            const QDir media(QStringLiteral("/run/media/") + qEnvironmentVariable("USER"));
++            const QStringList drives = media.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
++            if (!drives.isEmpty()) {
++                send->addSeparator();
++                for (const QString &d : drives) {
++                    const QString target = media.absoluteFilePath(d);
++                    send->addAction(QIcon::fromTheme(QStringLiteral("drive-removable-media-usb")), QStringLiteral("Знімний диск (%1)").arg(d), this, [urls, target]() {
++                        KIO::copy(urls, QUrl::fromLocalFile(target));
++                    });
++                }
++            }
++            menu->addSeparator();
+ 
+-        // Copy To, Move To
+-        KSharedConfig::Ptr dolphin = KSharedConfig::openConfig(QStringLiteral("dolphinrc"));
+-        if (KConfigGroup(dolphin, QStringLiteral("General")).readEntry("ShowCopyMoveMenu", false)) {
+-            m_copyToMenu->setUrls(urls);
+-            m_copyToMenu->setReadOnly(!itemProperties.supportsMoving());
+-            m_copyToMenu->addActionsTo(menu);
++            menu->addAction(QStringLiteral("Вирізати"), m_actionCollection.action(QStringLiteral("cut")), &QAction::trigger);
++            menu->addAction(QStringLiteral("Копіювати"), m_actionCollection.action(QStringLiteral("copy")), &QAction::trigger);
++            if (single && first.isDir()) {
++                // Windows 7 shows "Paste" only while there is something to paste
++                QAction *pasteTo = m_actionCollection.action(QStringLiteral("pasteto"));
++                if (pasteTo->isEnabled()) {
++                    menu->addAction(QStringLiteral("Вставити"), pasteTo, &QAction::trigger);
++                }
++            }
+             menu->addSeparator();
+-        }
+ 
+-        // Properties
+-        if (KPropertiesDialog::canDisplay(items)) {
++            menu->addAction(QStringLiteral("Створити ярлик"), this, [urls]() {
++                for (const QUrl &u : urls) {
++                    const QFileInfo fi(u.toLocalFile());
++                    QString link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + QStringLiteral(" — ярлик");
++                    for (int n = 2; QFileInfo::exists(link); ++n) {
++                        link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + QStringLiteral(" — ярлик (%1)").arg(n);
++                    }
++                    QFile::link(fi.absoluteFilePath(), link);
++                }
++            })->setEnabled(local);
++            menu->addAction(QStringLiteral("Видалити"), m_actionCollection.action(QStringLiteral("trash")), &QAction::trigger);
++            if (single) {
++                menu->addAction(QStringLiteral("Перейменувати"), m_actionCollection.action(QStringLiteral("rename")), &QAction::trigger);
++            }
+             menu->addSeparator();
+-            QAction *act = new QAction(QIcon::fromTheme(QStringLiteral("document-properties")), i18n("&Properties"), menu);
+-            act->setShortcuts({Qt::ALT | Qt::Key_Return, Qt::ALT | Qt::Key_Enter});
+-            QObject::connect(act, &QAction::triggered, this, &FolderModel::openPropertiesDialog);
+-            menu->addAction(act);
++            if (KPropertiesDialog::canDisplay(items)) {
++                QObject::connect(menu->addAction(QStringLiteral("Властивості")), &QAction::triggered, this, &FolderModel::openPropertiesDialog);
++            }
+         }
+     }
+ 
+@@ -2316,3 +2639,4 @@ bool FolderModel::isDeleteCommandShown()
+ }
+ 
+ #include "moc_foldermodel.cpp"
++
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.h b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.h
+index fd020e1..22e9ce1 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.h
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.h
+@@ -282,12 +282,15 @@ Q_SIGNALS:
+     void screenChanged() const;
+     void appletChanged() const;
+     void requestRename() const;
++    void newItemReady(const QUrl &url);
++    void newItemPlacement(const QString &fileName, int x, int y);
+     void move(int x, int y, QList<QUrl> urls);
+     void popupMenuAboutToShow(KIO::DropJob *dropJob, QMimeData *mimeData, int x, int y);
+     void selectionChanged() const;
+     void showHiddenFilesChanged() const;
+     void itemAboutToRename(const QString &filename) const;
+     void itemRenamed(const QString &filename, const QString &newFilename) const;
++    void itemRenameStarted(const QString &filename, const QString &newFilename) const;
+     void screenGeometryChanged() const;
+     void selectionDone();
+     void creatingNewItemsChanged() const;
+@@ -388,6 +391,10 @@ private:
+      */
+     QString m_currentActivity;
+     bool m_showHiddenFiles;
++    QUrl m_renameAfterCreate;
++    bool m_renameShown = false;
++    QString m_preparedNewItem;
++    void prepareNewItem(const QUrl &url);
+ };
+ 
+ class DragTracker : public QObject
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.cpp
+index 583e474..d89f58d 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.cpp
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.cpp
+@@ -572,6 +572,8 @@ void Positioner::sourceStatusChanged()
+             if (m_deferRestoreChangedPositions) {
+                 maybeRestoreAndApplyChangedPositions(false);
+             }
++            applyPendingRename();
++            applyReservedPlace();
+         }
+     }
+ 
+@@ -774,6 +776,60 @@ void Positioner::sourceRowsInserted(const QModelIndex &parent, int first, int la
+         if (m_deferRestoreChangedPositions) {
+             maybeRestoreAndApplyChangedPositions(false);
+         }
++        applyPendingRename();
++        applyReservedPlace();
++    }
++}
++
++void Positioner::reservePlace(const QString &fileName, int index)
++{
++    m_reservedName = fileName;
++    m_reservedIndex = index;
++    applyReservedPlace(); // in case it is already there
++}
++
++void Positioner::applyReservedPlace()
++{
++    if (m_reservedName.isEmpty() || !m_enabled || !m_folderModel || m_deferApplyPositions) {
++        return;
++    }
++    for (int i = 0; i < m_folderModel->rowCount(); ++i) {
++        if (m_folderModel->data(m_folderModel->index(i, 0), FolderModel::FileNameRole).toString() != m_reservedName) {
++            continue;
++        }
++        const int from = m_sourceToProxy.value(i, -1);
++        if (from < 0) {
++            return; // not placed yet
++        }
++        const int to = m_reservedIndex;
++        m_reservedName.clear();
++        m_reservedIndex = -1;
++        if (to >= 0 && from != to) {
++            move({from, to}, true);
++        }
++        return;
++    }
++}
++
++void Positioner::applyPendingRename()
++{
++    // a renamed item that came back as a new one (removed + added): put it where it was
++    if (!m_pendingRenamed.has_value()) {
++        return;
++    }
++    auto positionsIt = m_positions.find(m_pendingRenamed->first);
++    if (positionsIt == m_positions.end()) {
++        return;
++    }
++    const GridPosition old = m_pendingRenamed->second;
++    m_pendingRenamed.reset();
++    const bool taken = std::ranges::any_of(m_positions.asKeyValueRange(), [&](auto &&kv) {
++        return kv.first != positionsIt.key() && kv.second == old;
++    });
++    if (!taken) {
++        positionsIt.value() = old;
++        convertFolderModelData();
++        savePositionsConfig();
+     }
+ }
+ 
+@@ -1276,8 +1332,16 @@ void Positioner::onItemAboutToRename(const QString &filename)
+     }
+ }
+ 
++void Positioner::onItemRenameStarted(const QString &filename, const QString &newFilename)
++{
++    if (auto positionsIt = m_positions.constFind(filename); positionsIt != m_positions.constEnd()) {
++        m_pendingRenamed = {newFilename, positionsIt.value()};
++    }
++}
++
+ void Positioner::onItemRenamed(const QString &filename, const QString &newFilename)
+ {
++    m_pendingRenamed.reset();
+     updatePositionsList();
+     // "m_toRename" has 3 items: filename, row, stripe-pos
+     if (m_toRename.has_value() && m_toRename->first == filename && filename != newFilename) {
+@@ -1319,6 +1383,7 @@ void Positioner::connectSignals(FolderModel *model)
+     connect(m_folderModel, &FolderModel::statusChanged, this, &Positioner::sourceStatusChanged, Qt::UniqueConnection);
+     connect(m_folderModel, &FolderModel::itemAboutToRename, this, &Positioner::onItemAboutToRename, Qt::UniqueConnection);
+     connect(m_folderModel, &FolderModel::itemRenamed, this, &Positioner::onItemRenamed, Qt::UniqueConnection);
++    connect(m_folderModel, &FolderModel::itemRenameStarted, this, &Positioner::onItemRenameStarted, Qt::UniqueConnection);
+     connect(m_folderModel, &FolderModel::listingCompleted, this, &Positioner::onListingCompleted, Qt::UniqueConnection);
+ }
+ 
+@@ -1337,6 +1402,7 @@ void Positioner::disconnectSignals(FolderModel *model)
+     disconnect(m_folderModel, &FolderModel::statusChanged, this, &Positioner::sourceStatusChanged);
+     disconnect(m_folderModel, &FolderModel::itemAboutToRename, this, &Positioner::onItemAboutToRename);
+     disconnect(m_folderModel, &FolderModel::itemRenamed, this, &Positioner::onItemRenamed);
++    disconnect(m_folderModel, &FolderModel::itemRenameStarted, this, &Positioner::onItemRenameStarted);
+     disconnect(m_folderModel, &FolderModel::listingCompleted, this, &Positioner::onListingCompleted);
+ }
+ 
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.h b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.h
+index 694a46e..67b0a6f 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.h
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/positioner.h
+@@ -67,6 +67,8 @@ public:
+     Q_INVOKABLE void setRangeSelected(int anchor, int to);
+ 
+     Q_INVOKABLE void reset();
++    /** Windows 7: a new file made from the menu goes straight to the cell where the menu was opened */
++    Q_INVOKABLE void reservePlace(const QString &fileName, int index);
+ 
+     /**
+      * Loads the position configuration from a config file,
+@@ -143,6 +145,9 @@ private Q_SLOTS:
+     void sourceLayoutChanged(const QList<QPersistentModelIndex> &parents, QAbstractItemModel::LayoutChangeHint hint);
+     void onItemAboutToRename(const QString &filename);
+     void onItemRenamed(const QString &filename, const QString &newFilename);
++    void onItemRenameStarted(const QString &filename, const QString &newFilename);
++    void applyPendingRename();
++    void applyReservedPlace();
+     void onListingCompleted();
+ 
+ private:
+@@ -191,6 +196,9 @@ private:
+     Plasma::Applet *m_applet = nullptr;
+ 
+     std::optional<QPair<QString, GridPosition>> m_toRename;
++    std::optional<QPair<QString, GridPosition>> m_pendingRenamed; // new name -> old place
++    QString m_reservedName;
++    int m_reservedIndex = -1;
+ 
+     friend class PositionerTest;
+ };
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/rubberband.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/rubberband.cpp
+index b911082..476c1dc 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/rubberband.cpp
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/rubberband.cpp
+@@ -6,6 +6,8 @@
+ 
+ #include "rubberband.h"
+ 
++#include <QPainter>
++
+ #include <QApplication>
+ #include <QStyleOptionRubberBand>
+ 
+@@ -20,9 +22,17 @@ RubberBand::~RubberBand()
+ 
+ void RubberBand::paint(QPainter *painter)
+ {
+-    if (!qApp || !qApp->style()) {
+-        return;
++    // Windows 7: the selection blue (#3399ff) with a solid edge and a ~45 % fill, as in Explorer
++    const QRect r = contentsBoundingRect().toRect();
++    if (r.width() > 0 && r.height() > 0) {
++        painter->save();
++        painter->setRenderHint(QPainter::Antialiasing, false);
++        painter->setPen(QColor(0x33, 0x99, 0xff));
++        painter->setBrush(QColor(0x33, 0x99, 0xff, 105));
++        painter->drawRect(r.adjusted(0, 0, -1, -1));
++        painter->restore();
+     }
++    return;
+ 
+     QStyleOptionRubberBand opt;
+     opt.state = QStyle::State_None;
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
+index 0b3b9a0..8ebc956 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.cpp
+@@ -98,12 +98,104 @@ ViewPropertiesMenu::ViewPropertiesMenu(QObject *parent)
+                                  this,
+                                  &ViewPropertiesMenu::lockedChanged);
+     m_locked->setCheckable(true);
++
++    // ---- Windows 7 "View" menu ----
++    m_win7ViewMenu = new QMenu();
++    m_win7Size = new QActionGroup(this);
++    m_win7Size->setExclusionPolicy(QActionGroup::ExclusionPolicy::ExclusiveOptional);
++    // Plasma icon size index: 1 = 32 px, 2 = 48 px, 4 = 96 px (like Windows' small / medium / large)
++    const QList<QPair<QString, int>> sizes{{QStringLiteral("Великі піктограми"), 4},
++                                           {QStringLiteral("Середні піктограми"), 2},
++                                           {QStringLiteral("Дрібні піктограми"), 1}};
++    for (const auto &[text, value] : sizes) {
++        QAction *a = m_win7ViewMenu->addAction(text);
++        a->setCheckable(true);
++        a->setData(value);
++        m_win7Size->addAction(a);
++    }
++    connect(m_win7Size, &QActionGroup::triggered, this, [this](QAction *a) {
++        setIconSize(a->data().toInt());
++        a->setChecked(true);
++        Q_EMIT iconSizeChanged();
++    });
++    m_win7ViewMenu->addSeparator();
++    m_win7AutoArrange = m_win7ViewMenu->addAction(QStringLiteral("Упорядковувати піктограми автоматично"));
++    m_win7AutoArrange->setCheckable(true);
++    connect(m_win7AutoArrange, &QAction::triggered, this, [this](bool on) {
++        setSortMode(on ? int(KDirModel::Name) : -1);
++        Q_EMIT sortModeChanged();
++    });
++    QAction *grid = m_win7ViewMenu->addAction(QStringLiteral("Вирівняти піктограми за сіткою"));
++    grid->setCheckable(true);
++    grid->setChecked(true);
++    grid->setEnabled(false); // Plasma always keeps desktop icons on a grid
++    m_win7ViewMenu->addSeparator();
++    m_win7ShowIcons = m_win7ViewMenu->addAction(QStringLiteral("Відображати піктограми робочого стола"));
++    m_win7ShowIcons->setCheckable(true);
++    m_win7ShowIcons->setChecked(true);
++    connect(m_win7ShowIcons, &QAction::triggered, this, &ViewPropertiesMenu::showIconsChanged);
++    connect(m_win7ViewMenu, &QMenu::aboutToShow, this, &ViewPropertiesMenu::syncWin7);
++
++    // ---- Windows 7 "Sort by" menu: sorts once, no check marks ----
++    m_win7SortMenu = new QMenu();
++    const QList<QPair<QString, int>> sorts{{QStringLiteral("Ім'я"), int(KDirModel::Name)},
++                                           {QStringLiteral("Розмір"), int(KDirModel::Size)},
++                                           {QStringLiteral("Тип елемента"), int(KDirModel::Type)},
++                                           {QStringLiteral("Дата змінення"), int(KDirModel::ModifiedTime)}};
++    for (const auto &[text, value] : sorts) {
++        QAction *a = m_win7SortMenu->addAction(text);
++        connect(a, &QAction::triggered, this, [this, value]() {
++            setSortMode(value);
++            Q_EMIT sortModeChanged();
++        });
++    }
+ }
+ 
+ ViewPropertiesMenu::~ViewPropertiesMenu()
+ {
+     delete m_menu;
+     delete m_sortMenu;
++    delete m_win7ViewMenu;
++    delete m_win7SortMenu;
++}
++
++QObject *ViewPropertiesMenu::win7ViewMenu() const
++{
++    return m_win7ViewMenu;
++}
++
++QObject *ViewPropertiesMenu::win7SortMenu() const
++{
++    return m_win7SortMenu;
++}
++
++bool ViewPropertiesMenu::showIcons() const
++{
++    return m_win7ShowIcons->isChecked();
++}
++
++void ViewPropertiesMenu::setShowIcons(bool show)
++{
++    if (m_win7ShowIcons->isChecked() != show) {
++        m_win7ShowIcons->setChecked(show);
++    }
++}
++
++void ViewPropertiesMenu::syncWin7()
++{
++    // Reflect the current state in the Windows 7 menus
++    const int size = iconSize();
++    bool found = false;
++    for (QAction *a : m_win7Size->actions()) {
++        if (a->data().toInt() == size) {
++            a->setChecked(true);
++            found = true;
++        }
++    }
++    if (!found && m_win7Size->checkedAction()) {
++        m_win7Size->checkedAction()->setChecked(false);
++    }
++    m_win7AutoArrange->setChecked(m_sortMode->checkedAction() && sortMode() != -1);
+ }
+ 
+ QObject *ViewPropertiesMenu::menu() const
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.h b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.h
+index 513542b..d1a2188 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.h
++++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/viewpropertiesmenu.h
+@@ -20,6 +20,10 @@ class ViewPropertiesMenu : public QObject
+ 
+     Q_PROPERTY(QObject *menu READ menu CONSTANT)
+     Q_PROPERTY(QObject *sortMenu READ sortMenu CONSTANT)
++    // Windows 7 style "View" and "Sort by" menus for the desktop
++    Q_PROPERTY(QObject *win7ViewMenu READ win7ViewMenu CONSTANT)
++    Q_PROPERTY(QObject *win7SortMenu READ win7SortMenu CONSTANT)
++    Q_PROPERTY(bool showIcons READ showIcons WRITE setShowIcons NOTIFY showIconsChanged)
+ 
+     Q_PROPERTY(bool showLayoutActions READ showLayoutActions WRITE setShowLayoutActions NOTIFY showLayoutActionsChanged)
+     Q_PROPERTY(bool showLockAction READ showLockAction WRITE setShowLockAction NOTIFY showLockActionChanged)
+@@ -41,6 +45,11 @@ public:
+ 
+     QObject *menu() const;
+     QObject *sortMenu() const;
++    QObject *win7ViewMenu() const;
++    QObject *win7SortMenu() const;
++
++    bool showIcons() const;
++    void setShowIcons(bool show);
+ 
+     bool showLayoutActions() const;
+     void setShowLayoutActions(bool show);
+@@ -91,6 +100,7 @@ Q_SIGNALS:
+     void sortDescChanged() const;
+     void sortDirsFirstChanged() const;
+     void iconSizeChanged();
++    void showIconsChanged();
+ 
+ private:
+     QMenu *m_sortMenu;
+@@ -106,4 +116,11 @@ private:
+     QAction *m_sortDirsFirst;
+     QAction *m_previews;
+     QAction *m_locked;
++
++    void syncWin7();
++    QMenu *m_win7ViewMenu;
++    QMenu *m_win7SortMenu;
++    QActionGroup *m_win7Size;
++    QAction *m_win7AutoArrange;
++    QAction *m_win7ShowIcons;
+ };
+diff --git a/plasma/plasmoids/src/notifications_src/notifications/CompactRepresentation.qml b/plasma/plasmoids/src/notifications_src/notifications/CompactRepresentation.qml
+index e229b8d..8a780dd 100644
+--- a/plasma/plasmoids/src/notifications_src/notifications/CompactRepresentation.qml
++++ b/plasma/plasmoids/src/notifications_src/notifications/CompactRepresentation.qml
+@@ -30,6 +30,7 @@ MouseArea {
+     property int jobsPercentage: 0
+ 
+     property bool inhibited: false
++    property int acImportant: 0
+ 
+     property bool wasExpanded: false
+     onPressed: wasExpanded = root.expanded
+@@ -57,6 +58,8 @@ MouseArea {
+             let iconName;
+             if(compactRoot.jobsCount > 0) {
+                 iconName = "notification-progress-active"
++            } else if (compactRoot.acImportant > 0) {
++                iconName = "seven-tray-ac-important"
+             } else if (compactRoot.inhibited) {
+                 iconName = "notification-disabled";
+             } else if (compactRoot.unreadCount > 0) {
+diff --git a/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml b/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
+index 4a9c605..2c9bd28 100644
+--- a/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
++++ b/plasma/plasmoids/src/notifications_src/notifications/FullRepresentation.qml
+@@ -43,9 +43,10 @@ PlasmaExtras.Representation {
+     required property NotificationManager.Notifications historyModel
+ 
+     Layout.minimumWidth: Kirigami.Units.gridUnit * 12
+-    Layout.minimumHeight: Kirigami.Units.gridUnit * 12
+-    Layout.preferredWidth: Kirigami.Units.gridUnit * 18
+-    Layout.preferredHeight: Kirigami.Units.gridUnit * 24
++    Layout.minimumHeight: Kirigami.Units.gridUnit * 4
++    // as wide as Windows 7's flyout (250 + margins) and as tall as what it shows
++    Layout.preferredWidth: 300
++    Layout.preferredHeight: Math.min(Kirigami.Units.gridUnit * 28, list.contentHeight + list.bottomMargin + 4)
+     Layout.maximumWidth: Kirigami.Units.gridUnit * 80
+     Layout.maximumHeight: Kirigami.Units.gridUnit * 40
+ 
+@@ -53,6 +54,10 @@ PlasmaExtras.Representation {
+ 
+     collapseMarginsHint: true
+ 
++    function overrideFunction() {
++        appletInterface.openActionCenter();
++    }
++
+     Keys.onDownPressed: dndCheck.forceActiveFocus(Qt.TabFocusReason);
+ 
+     Connections {
+@@ -70,6 +75,8 @@ PlasmaExtras.Representation {
+     }
+ 
+     header: PlasmaExtras.PlasmoidHeading {
++        visible: false
++        height: 0
+         ColumnLayout {
+             anchors {
+                 fill: parent
+@@ -281,8 +288,8 @@ PlasmaExtras.Representation {
+             model: fullRepresentationRoot.appletInterface.expanded ? fullRepresentationRoot.historyModel : null
+             currentIndex: -1
+ 
+-            topMargin: Kirigami.Units.largeSpacing
+-            bottomMargin: Kirigami.Units.largeSpacing
++            topMargin: 0
++            bottomMargin: count > 0 ? Kirigami.Units.largeSpacing : 0
+             spacing: Kirigami.Units.smallSpacing
+ 
+             KeyNavigation.up: dndCheck
+@@ -345,6 +352,131 @@ PlasmaExtras.Representation {
+                 }
+             }
+ 
++            // Windows 7 Action Center flyout (ActionCenter.dll UIFILE 100) above the notifications
++            header: ColumnLayout {
++                id: acFlyout
++                width: list.width
++                spacing: 0
++                readonly property var messages: fullRepresentationRoot.appletInterface.acMessages
++                readonly property int important: fullRepresentationRoot.appletInterface.acImportant
++                readonly property font flyoutFont: Kirigami.Theme.defaultFont
++
++                function plural(n, one, few, many) {
++                    const m10 = n % 10, m100 = n % 100;
++                    return n + " " + (m10 === 1 && m100 !== 11 ? one : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many));
++                }
++
++                // header: the big flag and "Solve PC issues: N messages"
++                RowLayout {
++                    Layout.fillWidth: true
++                    Layout.leftMargin: 14
++                    Layout.rightMargin: 14
++                    Layout.topMargin: 12
++                    Layout.bottomMargin: 12
++                    spacing: 9
++                    Kirigami.Icon {
++                        Layout.alignment: Qt.AlignTop
++                        implicitWidth: 32
++                        implicitHeight: 32
++                        source: acFlyout.messages.length === 0 ? "seven-ac-flag" : (acFlyout.important > 0 ? "seven-ac-flag-alert" : "seven-ac-flag-warning")
++                    }
++                    ColumnLayout {
++                        Layout.fillWidth: true
++                        spacing: 1
++                        Text {
++                            Layout.fillWidth: true
++                            wrapMode: Text.WordWrap
++                            font.family: acFlyout.flyoutFont.family
++                            font.pointSize: acFlyout.flyoutFont.pointSize
++                            font.bold: true
++                            color: "#0066cc"
++                            text: acFlyout.messages.length === 0 ? "Наразі проблем не виявлено"
++                                  : "Вирішення проблем ПК: " + acFlyout.plural(acFlyout.messages.length, "повідомлення", "повідомлення", "повідомлень")
++                        }
++                        Text {
++                            Layout.fillWidth: true
++                            wrapMode: Text.WordWrap
++                            visible: acFlyout.important > 0
++                            font: acFlyout.flyoutFont
++                            color: "#0066cc"
++                            text: acFlyout.plural(acFlyout.important, "важливе повідомлення", "важливі повідомлення", "важливих повідомлень")
++                                  + "   " + "Усього: " + acFlyout.messages.length
++                        }
++                    }
++                }
++
++                Rectangle {
++                    Layout.fillWidth: true
++                    implicitHeight: 1
++                    color: "#dde0e2"
++                }
++
++                // nothing to do: the explanation of what Action Center is for
++                Text {
++                    Layout.fillWidth: true
++                    Layout.margins: 20
++                    Layout.bottomMargin: 24
++                    visible: acFlyout.messages.length === 0
++                    wrapMode: Text.WordWrap
++                    font: acFlyout.flyoutFont
++                    color: "#000000"
++                    text: "За допомогою Центру підтримки можна переглядати останні повідомлення про стан комп'ютера й знаходити рішення проблем."
++                }
++
++                // the messages: one blue line each, a light blue box under the mouse
++                ColumnLayout {
++                    Layout.fillWidth: true
++                    Layout.topMargin: 10
++                    Layout.bottomMargin: 14
++                    visible: acFlyout.messages.length > 0
++                    spacing: 0
++                    Repeater {
++                        model: acFlyout.messages
++                        delegate: MouseArea {
++                            id: acItem
++                            required property var modelData
++                            Layout.fillWidth: true
++                            Layout.leftMargin: 3
++                            Layout.rightMargin: 3
++                            implicitHeight: acText.implicitHeight + 14
++                            hoverEnabled: true
++                            cursorShape: Qt.PointingHandCursor
++                            onClicked: fullRepresentationRoot.appletInterface.openActionCenter()
++                            Rectangle {
++                                anchors.fill: parent
++                                visible: acItem.containsMouse
++                                radius: 3
++                                border.color: acItem.pressed ? "#7da2ce" : "#b8d6fb"
++                                gradient: Gradient {
++                                    GradientStop { position: 0; color: acItem.pressed ? "#dcebfc" : "#fafbfd" }
++                                    GradientStop { position: 1; color: acItem.pressed ? "#c1dcfc" : "#ebf3fd" }
++                                }
++                            }
++                            Text {
++                                id: acText
++                                anchors.left: parent.left
++                                anchors.right: parent.right
++                                anchors.verticalCenter: parent.verticalCenter
++                                anchors.leftMargin: 17
++                                anchors.rightMargin: 17
++                                wrapMode: Text.WordWrap
++                                font: acFlyout.flyoutFont
++                                color: "#0066cc"
++                                text: acItem.modelData.flyout || acItem.modelData.title
++                            }
++                        }
++                    }
++                }
++
++                // KDE's notification history follows, under its own rule
++                Rectangle {
++                    Layout.fillWidth: true
++                    implicitHeight: 1
++                    color: "#dde0e2"
++                    visible: list.count > 0
++                }
++            }
++
+             highlightMoveDuration: 0
+             highlightResizeDuration: 0
+             // Not using PlasmaExtras.Highlight as this is only for indicating keyboard focus
+@@ -650,8 +782,9 @@ PlasmaExtras.Representation {
+ 
+             Loader {
+                 anchors.centerIn: parent
++                anchors.verticalCenterOffset: list.headerItem ? list.headerItem.height / 2 : 0
+                 width: fixDpi(parent.width - Kirigami.Units.gridUnit * 4);
+-                active: list.count === 0
++                active: list.count === 0 && !NotificationManager.Server.valid
+                 visible: active
+                 asynchronous: true
+ 
+diff --git a/plasma/plasmoids/src/notifications_src/notifications/main.qml b/plasma/plasmoids/src/notifications_src/notifications/main.qml
+index c73fe41..e216c71 100644
+--- a/plasma/plasmoids/src/notifications_src/notifications/main.qml
++++ b/plasma/plasmoids/src/notifications_src/notifications/main.qml
+@@ -18,6 +18,7 @@ import org.kde.kcmutils as KCMUtils
+ import org.kde.config as KConfig
+ 
+ import org.kde.notificationmanager as NotificationManager
++import org.kde.plasma.plasma5support as P5Support
+ 
+ import plasma.applet.io.gitgud.wackyideas.notifications as Notifications
+ 
+@@ -26,6 +27,42 @@ PlasmoidItem {
+ 
+     readonly property int unreadCount: Math.min(99, historyModel.unreadNotificationsCount)
+ 
++    // Windows 7 Action Center: its messages come from seven-control (the same checks as the Control Panel page)
++    property var acMessages: []
++    readonly property int acImportant: acMessages.filter(m => m.important).length
++    readonly property string acCommand: "seven-control --action-center-status"
++
++    function openActionCenter() {
++        acRunner.connectSource("seven-control --action-center");
++        root.expanded = false;
++    }
++    function refreshActionCenter() {
++        acRunner.connectSource(acCommand);
++    }
++
++    P5Support.DataSource {
++        id: acRunner
++        engine: "executable"
++        connectedSources: []
++        onNewData: (source, data) => {
++            if (source === root.acCommand) {
++                try {
++                    root.acMessages = JSON.parse(data["stdout"]);
++                } catch (e) {
++                    root.acMessages = [];
++                }
++            }
++            disconnectSource(source);
++        }
++    }
++    Timer {
++        interval: 60000
++        running: true
++        repeat: true
++        triggeredOnStart: true
++        onTriggered: root.refreshActionCenter()
++    }
++
+     readonly property bool inhibitedOrBroken: Notifications.Globals.inhibited || !NotificationManager.Server.valid
+ 
+     readonly property bool inPanel: (Plasmoid.location === PlasmaCore.Types.TopEdge
+@@ -36,7 +73,8 @@ PlasmoidItem {
+     readonly property int effectiveStatus: historyModel.activeJobsCount > 0
+                      || historyModel.unreadNotificationsCount > 0
+                      || historyModel.dismissedResidentNotificationsCount > 0
+-                     || Notifications.Globals.inhibited ? PlasmaCore.Types.ActiveStatus
++                     || Notifications.Globals.inhibited
++                     || acMessages.length > 0 ? PlasmaCore.Types.ActiveStatus
+                                           : PlasmaCore.Types.PassiveStatus
+     onEffectiveStatusChanged: {
+         if (effectiveStatus === PlasmaCore.Types.PassiveStatus) {
+@@ -54,9 +92,20 @@ PlasmoidItem {
+ 
+     Plasmoid.status: effectiveStatus
+ 
++    toolTipMainText: i18n("Центр підтримки")
+     toolTipSubText: {
+         var lines = [];
+ 
++        // Windows 7: "1 important message" / "3 messages in total"
++        if (acMessages.length > 0) {
++            const n = acImportant;
++            if (n > 0) {
++                const m10 = n % 10, m100 = n % 100;
++                lines.push(n + (m10 === 1 && m100 !== 11 ? " важливе повідомлення" : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? " важливі повідомлення" : " важливих повідомлень")));
++            }
++            lines.push("Усього повідомлень: " + acMessages.length);
++        }
++
+         if (jobAggregator.count > 0) {
+             let description = i18np("%1 running job", "%1 running jobs", jobAggregator.count);
+ 
+@@ -114,7 +163,7 @@ PlasmoidItem {
+         return lines.join("\n");
+     }
+ 
+-    Plasmoid.title: i18n("Open Action Center")
++    Plasmoid.title: i18n("Відкрити Центр підтримки")
+     // Even though the actual icon is drawn with custom code in CompactRepresentation,
+     // set the icon property here anyway because it's useful in other contexts
+     Plasmoid.icon: {
+@@ -144,6 +193,7 @@ PlasmoidItem {
+ 
+     onExpandedChanged: expanded => {
+         if (expanded) {
++            root.refreshActionCenter();
+             Notifications.Globals.popupNotificationsModel.hideInhibitionSummary();
+         } else {
+             historyModel.lastRead = undefined; // reset to now
+@@ -159,6 +209,7 @@ PlasmoidItem {
+         jobsPercentage: historyModel.jobsPercentage
+ 
+         inhibited: root.inhibitedOrBroken
++        acImportant: root.acImportant
+     }
+ 
+     fullRepresentation: FullRepresentation {
+diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
+index a424fc4..529c14e 100644
+--- a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
++++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/AuthUI.qml
+@@ -35,9 +35,26 @@ Item {
+     property alias switchUserVisible: switchUser.visible
+     property bool  capsLockOn: false
+ 
++    // Windows 7: an account without a password shows no password box when locked; a click on the picture
++    // (or Enter) unlocks. AccountsService knows it (PasswordMode 2), see /usr/local/libexec/seven-nopass-users.
++    property bool noPassword: false
++
++    Plasma5Support.DataSource {
++        id: noPasswordSource
++        engine: "executable"
++        connectedSources: []
++        onNewData: (sourceName, data) => {
++            disconnectSource(sourceName);
++            root.noPassword = (data["stdout"] || "").trim() === "yes";
++            if (root.noPassword) loginColumn.forceActiveFocus();
++        }
++        Component.onCompleted: connectSource("sh -c '/usr/local/libexec/seven-nopass-users | grep -qx \"$(id -un)\" && echo yes'")
++    }
++
+     function resetFocus(clear: bool) {
+         if(clear) password.clear();
+-        password.forceActiveFocus();
++        if(root.noPassword) loginColumn.forceActiveFocus();
++        else password.forceActiveFocus();
+     }
+ 
+     function beginAuth() {
+@@ -106,7 +123,7 @@ Item {
+         function onFailed(kind) {
+             // If this is coming from the noninteractive authenticators
+             if(kind != 0) return;
+-            showMessage(i18nd("kscreenlocker_greet", "The user name or password is incorrect."), "dialog-error");
++            showMessage("Неправильне ім’я користувача або пароль.", "dialog-error");
+         }
+         function onBusyChanged() {
+             /*if(!authenticator.busy && !statusPage.visible) {
+@@ -251,13 +268,28 @@ Item {
+                     id: loginColumn
+ 
+                     anchors.centerIn: parent
+-                    anchors.verticalCenterOffset: Math.round(bigSpaceForNoReason.height / 2)
++                    // the small tile of an account without a password sits lower, as in Windows 7 (refs/nopass_locked.png)
++                    anchors.verticalCenterOffset: Math.round(bigSpaceForNoReason.height / 2) + (root.noPassword ? 97 : 0)
+ 
+                     spacing: 0
+ 
++                    Keys.onReturnPressed: if(root.noPassword) root.beginAuth();
++                    Keys.onEnterPressed: if(root.noPassword) root.beginAuth();
++
+                     PFPContainer {
+                         Layout.alignment: Qt.AlignHCenter
+                         avatarPath: kscreenlocker_userImage
++                        small: root.noPassword
++                        hovered: tileMa.containsMouse
++                        focused: loginColumn.activeFocus
++
++                        MouseArea {
++                            id: tileMa
++                            anchors.fill: parent
++                            enabled: root.noPassword && !authenticator.busy
++                            hoverEnabled: true
++                            onClicked: root.beginAuth();
++                        }
+                     }
+ 
+                     CorrectedLabel {
+@@ -265,7 +297,7 @@ Item {
+ 
+                         Layout.alignment: Qt.AlignHCenter
+ 
+-                        font.pointSize: 18
++                        font.pointSize: root.noPassword ? 9 : 18
+                         text: kscreenlocker_userName
+                         color: "white"
+                     }
+@@ -273,13 +305,14 @@ Item {
+                     CorrectedLabel {
+                         Layout.alignment: Qt.AlignHCenter
+                         color: "white"
+-                        text: i18nd("kscreenlocker_greet", "Locked")
++                        text: "Заблоковано"
+                     }
+ 
+                     Item { implicitHeight: Kirigami.Units.smallSpacing - 1 }
+ 
+                     RowLayout {
+                         Layout.alignment: Qt.AlignHCenter
++                        visible: !root.noPassword
+ 
+                         spacing: Kirigami.Units.smallSpacing
+ 
+@@ -299,7 +332,7 @@ Item {
+                             rightPadding: 8
+                             topPadding: 4
+                             bottomPadding: 4
+-                            placeholderText: i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Password")
++                            placeholderText: "Пароль"
+                             echoMode: TextInput.Password
+                             inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+                             background: BorderImage {
+@@ -362,19 +395,19 @@ Item {
+                         id: bigSpaceForNoReason
+ 
+                         Layout.fillWidth: true
+-                        Layout.preferredHeight: 61
++                        Layout.preferredHeight: root.noPassword ? 48 : 61
+ 
+                         InfoLabel {
+                             Layout.fillWidth: true
+ 
+-                            text: i18nd("kscreenlocker_greet", "Caps Lock is on");
++                            text: "Увімкнено клавішу Caps Lock.";
+                             icon.source: "dialog-warning"
+                         }
+ 
+                         InfoLabel {
+                             Layout.fillWidth: true
+ 
+-                            text: i18nd("kscreenlocker_greet", "(or place your fingerprint on the reader)")
++                            text: "(або прикладіть палець до сканера)"
+                             icon.source: "dialog-information"
+ 
+                             visible: authenticator.authenticatorTypes & ScreenLocker.Authenticator.Fingerprint
+@@ -382,7 +415,7 @@ Item {
+                         InfoLabel {
+                             Layout.fillWidth: true
+ 
+-                            text: i18nd("kscreenlocker_greet", "(or use your smartcard)")
++                            text: "(або скористайтеся смарт-карткою)"
+                             icon.source: "dialog-information"
+ 
+                             visible: authenticator.authenticatorTypes & ScreenLocker.Authenticator.Smartcard
+@@ -396,11 +429,11 @@ Item {
+ 
+                         Layout.alignment: Qt.AlignHCenter
+ 
+-                        implicitWidth: 108
++                        implicitWidth: Math.max(108, label.implicitWidth + 28)   // as wide as its text, like Windows 7 (and the logon screen)
+                         implicitHeight: 30
+ 
+                         focusPolicy: Qt.TabFocus
+-                        text: i18nd("kscreenlocker_greet", "Switch User")
++                        text: "Змінити користувача"
+                         label.font.pointSize: 11
+ 
+                         onClicked: root.switchUserClicked()
+@@ -417,7 +450,7 @@ Item {
+                     anchors.centerIn: parent
+                     anchors.verticalCenterOffset: -36
+ 
+-                    statusText: i18nd("okular", "Welcome")
++                    statusText: "Ласкаво просимо"
+                     speen: welcomePage.visible
+                 }
+             }
+@@ -503,16 +536,35 @@ Item {
+             label.font.capitalization: Font.AllUppercase
+             focusPolicy: Qt.TabFocus
+             Accessible.description: i18ndc("plasma_lookandfeel_org.kde.lookandfeel", "Button to change keyboard layout", "Switch layout")
+-            text: keyboardLayoutSwitcher.layoutNames.shortName
+-            onClicked: keyboardLayoutSwitcher.keyboardLayout.switchToNextLayout()
+-
+-            visible: keyboardLayoutSwitcher.hasMultipleKeyboardLayouts
++            // language indicator: EN, UA, RU (user: Ukrainian is UA, not UK)
++            readonly property var kls: kbLoader.item
++            readonly property string shortName: kls && kls.layoutNames ? (kls.layoutNames.shortName || "") : ""
++            text: {
++                var k = shortName.toLowerCase();
++                var map = { "us": "EN", "gb": "EN", "en": "EN", "ua": "UA", "uk": "UA", "ru": "RU", "by": "BE",
++                            "pl": "PL", "de": "DE", "fr": "FR", "cz": "CS", "sk": "SK", "hu": "HU", "ro": "RO" };
++                return map[k] !== undefined ? map[k] : k.toUpperCase();
++            }
++            onClicked: if (kls) kls.keyboardLayout.switchToNextLayout()
+ 
+-            PW.KeyboardLayoutSwitcher {
+-                id: keyboardLayoutSwitcher
++            visible: shortName !== ""
+ 
++            Loader {
++                id: kbLoader
+                 anchors.fill: parent
+-                acceptedButtons: Qt.NoButton
++                sourceComponent: Component {
++                    PW.KeyboardLayoutSwitcher {
++                        anchors.fill: parent
++                        acceptedButtons: Qt.NoButton
++                    }
++                }
++            }
++            // on a real lock the keyboard daemon often answers only after the first key press, so the switcher is
++            // re-created (it asks D-Bus again on creation) until it knows the current layout
++            Timer {
++                interval: 600; repeat: true
++                running: switchLayoutButton.shortName === ""
++                onTriggered: { kbLoader.active = false; kbLoader.active = true }
+             }
+         }
+ 
+@@ -526,20 +578,12 @@ Item {
+ 
+             spacing: Kirigami.Units.largeSpacing
+ 
++            // Windows 7: a single Ease of Access button; the keyboard is one of its options
+             Components.GenericButton {
+                 id: easeOfAccess
+                 iconSource: "access"
+                 opacity: pageView.currentItem == mainPage
+-            }
+-
+-            Components.GenericButton {
+-                implicitHeight: easeOfAccess.height
+-
+-                iconImage: "../images/osk.png"
+-                checked: inputPanel.keyboardActive
+-                onClicked: inputPanel.showHide();
+-
+-                opacity: pageView.currentItem == mainPage
++                onClicked: win7Ease.visible = !win7Ease.visible
+             }
+         }
+     }
+@@ -561,6 +605,27 @@ Item {
+         }
+     }
+ 
++    Win7EaseDialog {
++        id: win7Ease
++        visible: false
++        z: 101
++        keyboardOn: win7Osk.visible
++        onApply: (keyboard) => win7Osk.visible = keyboard
++        onClosed: visible = false
++    }
++    Win7Osk {
++        id: win7Osk
++        visible: false
++        z: 100
++        target: password
++        layout: {
++            var n = switchLayoutButton.shortName.toLowerCase();
++            return n === "ua" || n === "uk" ? "ua" : (n === "ru" ? "ru" : "us");
++        }
++        onAccepted: root.beginAuth()
++        onClosed: visible = false
++    }
++
+     Loader {
+         id: inputPanel
+ 
+diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/PFPContainer.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/PFPContainer.qml
+index 94c1ef9..727a313 100644
+--- a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/PFPContainer.qml
++++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/PFPContainer.qml
+@@ -16,17 +16,22 @@ Item {
+     id: root
+ 
+     property alias avatarPath: face.source
++    // Windows 7 shows the small 80 px tile (48 px picture) for an account without a password: nothing to type,
++    // just click it. The frames are the logon screen's (12222 / 12218 / 12219 / 12220).
++    property bool small: false
++    property bool hovered: false
++    property bool focused: false
+ 
+-    implicitWidth: 190
+-    implicitHeight: 190
++    implicitWidth: small ? 80 : 190
++    implicitHeight: small ? 80 : 190
+ 
+     Item {
+         id: imageSource
+ 
+         anchors.centerIn: parent
+ 
+-        width: 126
+-        height: 126
++        width: root.small ? 48 : 126
++        height: root.small ? 48 : 126
+ 
+         LinearGradient {
+             id: gradient
+@@ -62,6 +67,12 @@ Item {
+ 
+     Image {
+         anchors.fill: parent
+-        source: "../images/pfp/user.png"
++        source: {
++            if (!root.small) return "../images/pfp/user.png";
++            if (root.hovered && root.focused) return "../images/pfp/small-focus-hover.png";
++            if (root.hovered) return "../images/pfp/small-hover.png";
++            if (root.focused) return "../images/pfp/small-focus.png";
++            return "../images/pfp/small.png";
++        }
+     }
+ }
+diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml
+new file mode 100644
+index 0000000..8fdc599
+--- /dev/null
++++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7EaseDialog.qml
+@@ -0,0 +1,138 @@
++/*
++    The "Ease of Access" window of the Windows 7 logon / lock screen (measured on the real one: 505x405 at
++    (101,102), Basic frame, six options with their icons, OK / Cancel / Apply). Only the On-Screen Keyboard
++    option does something here; the others are remembered like ticked boxes.
++*/
++import QtQuick
++
++Item {
++    id: dlg
++
++    property bool keyboardOn: false
++    signal apply(bool keyboard)
++    signal closed()
++
++    width: 505
++    height: 405
++    x: 101
++    y: 102
++
++    property var checks: [false, false, false, keyboardOn, false, false]
++    property bool dirty: false
++    onVisibleChanged: if (visible) { checks = [false, false, false, keyboardOn, false, false]; dirty = false; }
++
++    readonly property var labels: [
++        "Читати текст на екрані вголос (Екранний диктор)",
++        "Збільшувати елементи на екрані (Екранна лупа)",
++        "Збільшити контрастність кольорів (Висока контрастність)",
++        "Вводити текст без клавіатури (Екранна клавіатура)",
++        "Натискати сполучення клавіш по одній (Залипання клавіш)",
++        "Ігнорувати повторні натискання (Фільтрація введення)"
++    ]
++
++    BorderImage {
++        anchors.fill: parent
++        source: "../images/win7osk/frame-dialog.png"
++        border { left: 28; right: 48; top: 30; bottom: 9 }
++    }
++    Text {
++        x: 29; y: 8
++        text: "Спеціальні можливості"
++        font.family: "Segoe UI"; font.pixelSize: 12
++        color: "#1e395b"
++    }
++    MouseArea {
++        x: 0; y: 0; width: parent.width - 48; height: 28
++        property point grab
++        onPressed: (m) => grab = Qt.point(m.x, m.y)
++        onPositionChanged: (m) => { dlg.x += m.x - grab.x; dlg.y += m.y - grab.y; }
++    }
++    MouseArea {
++        x: parent.width - 42; y: 3; width: 32; height: 20
++        onClicked: dlg.closed()
++    }
++
++    // white page and the grey button bar, like the real dialog
++    Rectangle { x: 8; y: 30; width: parent.width - 16; height: 323; color: "white" }
++    Rectangle { x: 8; y: 353; width: parent.width - 16; height: 1; color: "#dfdfdf" }
++    Rectangle { x: 8; y: 354; width: parent.width - 16; height: 42; color: "#f0f0f0" }
++
++    Text {
++        x: 30; y: 40
++        text: "Полегшення роботи з комп’ютером"
++        font.family: "Segoe UI"; font.pixelSize: 15
++        color: "#003399"
++    }
++    Text {
++        x: 30; y: 64
++        text: "Натисніть клавішу ПРОБІЛ, щоб вибрати виділений параметр."
++        font.family: "Segoe UI"; font.pixelSize: 11
++        color: "#7f1e1e"
++    }
++
++    Repeater {
++        model: 6
++        delegate: Item {
++            x: 25; y: 88 + index * 45
++            width: 470; height: 30
++            Image { x: 0; y: 0; source: "../images/win7osk/ease-icon" + index + ".png" }
++            Image { x: 30; y: 6; source: dlg.checks[index] ? "../images/win7osk/check-on.png" : "../images/win7osk/check-off.png" }
++            Text {
++                x: 47; y: 3
++                text: dlg.labels[index]
++                font.family: "Segoe UI"; font.pixelSize: 15
++                color: "black"
++            }
++            MouseArea {
++                anchors.fill: parent
++                onClicked: {
++                    var c = dlg.checks.slice();
++                    c[index] = !c[index];
++                    dlg.checks = c;
++                    dlg.dirty = true;
++                }
++            }
++        }
++    }
++
++    component DlgButton: Item {
++        id: btn
++        property string label
++        property bool enabledButton: true
++        property bool isDefault: false     // blue frame that pulses (1 s to light blue, 1 s back), as in Windows 7
++        signal clicked()
++        width: 74; height: 22
++        readonly property bool showDefault: isDefault && enabledButton && dlg.visible
++        BorderImage {
++            anchors.fill: parent
++            source: "../images/win7osk/button.png"
++            border { left: 3; right: 3; top: 3; bottom: 3 }
++            opacity: parent.enabledButton ? 1 : 0.55
++            visible: !btn.showDefault
++        }
++        Image { visible: btn.showDefault; source: "../images/win7osk/button-default.png" }
++        Image {
++            id: pulse
++            visible: btn.showDefault
++            source: "../images/win7osk/button-defaultanim.png"
++            opacity: 0
++            SequentialAnimation on opacity {
++                running: btn.showDefault
++                loops: Animation.Infinite
++                NumberAnimation { from: 0; to: 1; duration: 1000 }
++                NumberAnimation { from: 1; to: 0; duration: 1000 }
++            }
++        }
++        Text {
++            anchors.centerIn: parent
++            text: parent.label
++            font.family: "Segoe UI"; font.pixelSize: 12
++            color: parent.enabledButton ? "black" : "#838383"
++        }
++        MouseArea { anchors.fill: parent; enabled: parent.enabledButton; onClicked: parent.clicked() }
++    }
++
++    DlgButton { x: 250; y: 365; label: "OK"; isDefault: true; onClicked: { dlg.apply(dlg.checks[3]); dlg.closed(); } }
++    DlgButton { x: 331; y: 365; label: "Скасувати"; onClicked: dlg.closed() }
++    DlgButton { x: 412; y: 365; label: "Застосувати"; enabledButton: dlg.dirty; onClicked: { dlg.apply(dlg.checks[3]); dlg.dirty = false; } }
++}
+diff --git a/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml
+new file mode 100644
+index 0000000..f0c20a4
+--- /dev/null
++++ b/plasma/shells/io.gitgud.wackyideas.desktop/contents/lockscreen/Win7Osk.qml
+@@ -0,0 +1,214 @@
++/*
++    Windows 7 On-Screen Keyboard (osk.exe) on the lock screen, measured on the real one at 1920x1080:
++    window 827x233 at (101,102), keys 38 px on a 42 px grid, rows 40 px apart, genuine key images and
++    the Basic window frame of the logon screen (images/win7osk). Types straight into the password field.
++*/
++import QtQuick
++
++Item {
++    id: osk
++
++    property var target              // the password TextField
++    property string layout: "us"     // us / ua / ru (from the language indicator)
++    signal accepted()
++    signal closed()
++
++    width: 827
++    height: 233
++    x: 101
++    y: 102
++
++    property bool shift: false
++    property bool caps: false
++    property int hovered: -1
++    property int pressedKey: -1
++
++    // printable keys of a row: [plain, shifted] per layout, 47 keys in US keyboard order
++    readonly property var chars: ({
++        "us": ["`~", "1!", "2@", "3#", "4$", "5%", "6^", "7&", "8*", "9(", "0)", "-_", "=+",
++               "qQ", "wW", "eE", "rR", "tT", "yY", "uU", "iI", "oO", "pP", "[{", "]}", "\\|",
++               "aA", "sS", "dD", "fF", "gG", "hH", "jJ", "kK", "lL", ";:", "'\"",
++               "zZ", "xX", "cC", "vV", "bB", "nN", "mM", ",<", ".>", "/?"],
++        "ua": ["'₴", "1!", "2\"", "3№", "4;", "5%", "6:", "7?", "8*", "9(", "0)", "-_", "=+",
++               "йЙ", "цЦ", "уУ", "кК", "еЕ", "нН", "гГ", "шШ", "щЩ", "зЗ", "хХ", "їЇ", "ґҐ",
++               "фФ", "іІ", "вВ", "аА", "пП", "рР", "оО", "лЛ", "дД", "жЖ", "єЄ",
++               "яЯ", "чЧ", "сС", "мМ", "иИ", "тТ", "ьЬ", "бБ", "юЮ", ".,"],
++        "ru": ["ёЁ", "1!", "2\"", "3№", "4;", "5%", "6:", "7?", "8*", "9(", "0)", "-_", "=+",
++               "йЙ", "цЦ", "уУ", "кК", "еЕ", "нН", "гГ", "шШ", "щЩ", "зЗ", "хХ", "ъЪ", "\\/",
++               "фФ", "ыЫ", "вВ", "аА", "пП", "рР", "оО", "лЛ", "дД", "жЖ", "эЭ",
++               "яЯ", "чЧ", "сС", "мМ", "иИ", "тТ", "ьЬ", "бБ", "юЮ", ".,"]
++    })
++
++    // key list: name, width in units, kind (c = character index into chars, or a special key)
++    readonly property var rows: [
++        [["Esc", 1.5, "esc"], ["", 1, 0], ["", 1, 1], ["", 1, 2], ["", 1, 3], ["", 1, 4], ["", 1, 5], ["", 1, 6], ["", 1, 7], ["", 1, 8], ["", 1, 9],
++         ["", 1, 10], ["", 1, 11], ["", 1, 12], ["Bksp", 1.5, "bksp"]],
++        [["Tab", 2, "tab"], ["", 1, 13], ["", 1, 14], ["", 1, 15], ["", 1, 16], ["", 1, 17], ["", 1, 18], ["", 1, 19], ["", 1, 20], ["", 1, 21],
++         ["", 1, 22], ["", 1, 23], ["", 1, 24], ["", 1, 25], ["Del", 1, "del"]],
++        [["Caps", 2.5, "caps"], ["", 1, 26], ["", 1, 27], ["", 1, 28], ["", 1, 29], ["", 1, 30], ["", 1, 31], ["", 1, 32], ["", 1, 33], ["", 1, 34],
++         ["", 1, 35], ["", 1, 36], ["", 2.5, "enter"]],
++        [["Shift", 3, "shift"], ["", 1, 37], ["", 1, 38], ["", 1, 39], ["", 1, 40], ["", 1, 41], ["", 1, 42], ["", 1, 43], ["", 1, 44], ["", 1, 45],
++         ["", 1, 46], ["", 1, "up"], ["Shift", 2, "shift"]],
++        [["Ctrl", 1.5, "ctrl"], ["", 1, "win"], ["Alt", 1, "alt"], ["", 5, "space"], ["Alt", 1, "alt"], ["", 1, "menu"], ["Ctrl", 1.5, "ctrl"],
++         ["", 1, "left"], ["", 1, "down"], ["", 1, "right"], ["Fn", 1, "fn"]]
++    ]
++    readonly property var side: [[["Home", "home"], ["PgUp", "pgup"]], [["End", "end"], ["PgDn", "pgdn"]], [["Insert", "ins"], ["Pause", "pause"]],
++                                 [["PrtScn", "prtscn"], ["ScrLk", "scrlk"]], [["Options", "options"]]]
++    readonly property var rowTop: [0, 40, 80, 120, 159]
++    readonly property var rowH: [36, 36, 36, 36, 35]
++
++    // flattened keys with geometry (window coordinates: client keys start at 9,30)
++    readonly property var keys: {
++        var out = [];
++        for (var r = 0; r < rows.length; ++r) {
++            var u = 0;
++            for (var i = 0; i < rows[r].length; ++i) {
++                var k = rows[r][i];
++                out.push({ x: 9 + u * 42, y: 30 + rowTop[r], w: k[1] * 42 - 4, h: rowH[r], name: k[0], kind: k[2] });
++                u += k[1];
++            }
++            var sx = 9 + 676;
++            if (side[r].length === 2) {
++                out.push({ x: sx, y: 30 + rowTop[r], w: 64, h: rowH[r], name: side[r][0][0], kind: side[r][0][1] });
++                out.push({ x: sx + 68, y: 30 + rowTop[r], w: 64, h: rowH[r], name: side[r][1][0], kind: side[r][1][1] });
++            } else {
++                out.push({ x: sx, y: 30 + rowTop[r], w: 132, h: rowH[r], name: side[r][0][0], kind: side[r][0][1] });
++            }
++        }
++        return out;
++    }
++
++    function table() { return chars[layout] !== undefined ? chars[layout] : chars["us"]; }
++    function isLetter(c) { return c.toLowerCase() !== c.toUpperCase(); }
++
++    function press(k) {
++        var t = target;
++        if (typeof k.kind === "number") {
++            var pair = table()[k.kind];
++            var plain = pair.charAt(0), up = pair.substring(1);
++            var useUpper = isLetter(plain) ? (shift !== caps) : shift;
++            if (t) {
++                t.forceActiveFocus();
++                t.insert(t.cursorPosition, useUpper ? up : plain);
++            }
++            shift = false;
++            return;
++        }
++        switch (k.kind) {
++        case "shift": shift = !shift; return;
++        case "caps": caps = !caps; return;
++        case "space": if (t) { t.insert(t.cursorPosition, " "); } shift = false; return;
++        case "bksp":
++            if (t) {
++                if (t.selectedText.length > 0) t.remove(t.selectionStart, t.selectionEnd);
++                else if (t.cursorPosition > 0) t.remove(t.cursorPosition - 1, t.cursorPosition);
++            }
++            return;
++        case "del": if (t && t.cursorPosition < t.length) { t.remove(t.cursorPosition, t.cursorPosition + 1); } return;
++        case "left": if (t && t.cursorPosition > 0) { t.cursorPosition -= 1; } return;
++        case "right": if (t && t.cursorPosition < t.length) { t.cursorPosition += 1; } return;
++        case "home": if (t) { t.cursorPosition = 0; } return;
++        case "end": if (t) { t.cursorPosition = t.length; } return;
++        case "enter": osk.accepted(); return;
++        case "esc": if (t) { t.text = ""; } return;
++        default: return;
++        }
++    }
++
++    // ---------- the window ----------
++    BorderImage {
++        anchors.fill: parent
++        source: "../images/win7osk/frame-osk.png"
++        border { left: 28; right: 120; top: 30; bottom: 9 }
++    }
++    Text {
++        x: 29; y: 8
++        text: "Екранна клавіатура"
++        font.family: "Segoe UI"; font.pixelSize: 12
++        color: "#1e395b"
++        renderType: Text.NativeRendering
++    }
++    // drag by the title bar, close with the [x] button (the min / max buttons do nothing on the logon screen)
++    MouseArea {
++        x: 0; y: 0; width: parent.width - 110; height: 28
++        property point grab
++        onPressed: (m) => grab = Qt.point(m.x, m.y)
++        onPositionChanged: (m) => { osk.x += m.x - grab.x; osk.y += m.y - grab.y; }
++    }
++    MouseArea {
++        x: parent.width - 42; y: 3; width: 32; height: 20
++        onClicked: osk.closed()
++    }
++
++    // ---------- keys ----------
++    Repeater {
++        model: osk.keys.length
++        delegate: Item {
++            id: keyItem
++            readonly property var k: osk.keys[index]
++            readonly property bool latched: (k.kind === "shift" && osk.shift) || (k.kind === "caps" && osk.caps)
++            readonly property bool down: osk.pressedKey === index || latched
++            readonly property color ink: down ? "black" : "white"
++            readonly property string pair: typeof k.kind === "number" ? osk.table()[k.kind] : ""
++            readonly property string plain: pair.charAt(0)
++            readonly property string upper: pair.substring(1)
++            readonly property bool letter: pair.length > 0 && osk.isLetter(plain)
++            x: k.x; y: k.y; width: k.w; height: k.h
++
++            BorderImage {
++                anchors.fill: parent
++                border { left: 6; right: 6; top: 6; bottom: 6 }
++                source: keyItem.down ? "../images/win7osk/key-pressed.png"
++                                     : (osk.hovered === index ? "../images/win7osk/key-hover.png" : "../images/win7osk/key-normal.png")
++            }
++            // names (Esc, Shift, Home, Options): 18 px, top left
++            Text {
++                visible: keyItem.k.name !== ""
++                x: 4; y: 1
++                text: keyItem.k.name
++                font.family: "Segoe UI"; font.pixelSize: 18; font.hintingPreference: Font.PreferFullHinting
++                color: keyItem.ink
++            }
++            // letters: one large character
++            Text {
++                visible: keyItem.letter
++                x: 5; y: -2
++                text: (osk.shift !== osk.caps) ? keyItem.upper : keyItem.plain
++                font.family: "Segoe UI"; font.pixelSize: 22; font.hintingPreference: Font.PreferFullHinting
++                color: keyItem.ink
++            }
++            // digits and signs: shifted one small at the top left, plain one large at the bottom right
++            Text {
++                visible: keyItem.pair.length > 0 && !keyItem.letter
++                x: 5; y: -1
++                text: keyItem.upper
++                font.family: "Segoe UI"; font.pixelSize: 16; font.hintingPreference: Font.PreferFullHinting
++                color: keyItem.ink
++            }
++            Text {
++                visible: keyItem.pair.length > 0 && !keyItem.letter
++                x: 19; y: 6
++                text: keyItem.plain
++                font.family: "Segoe UI"; font.pixelSize: 22; font.hintingPreference: Font.PreferFullHinting
++                color: keyItem.ink
++            }
++            // pictures cut from osk.exe: Windows flag, menu, Enter, arrows
++            Image {
++                readonly property var glyphs: ({ "win": [3, 2, "flag"], "menu": [3, 2, "menu"], "enter": [3, 1, "enter"], "up": [3, 1, "up"],
++                                                 "left": [3, 2, "left"], "down": [3, 2, "down"], "right": [3, 2, "right"] })
++                readonly property var g: glyphs[keyItem.k.kind]
++                visible: g !== undefined
++                x: g ? g[0] : 0; y: g ? g[1] : 0
++                source: g ? "../images/win7osk/glyph-" + g[2] + (keyItem.down ? "-dark" : "") + ".png" : ""
++            }
++            MouseArea {
++                anchors.fill: parent
++                hoverEnabled: true
++                onEntered: osk.hovered = index
++                onExited: if (osk.hovered === index) osk.hovered = -1
++                onPressed: osk.pressedKey = index
++                onReleased: { osk.pressedKey = -1; if (containsMouse) osk.press(keyItem.k); }
++            }
++        }
++    }
++}

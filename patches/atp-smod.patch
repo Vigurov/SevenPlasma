@@ -1,0 +1,104 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 24053a0..644933e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ cmake_minimum_required(VERSION 3.16)
+ project(breeze)
+-set(PROJECT_VERSION "6.6.5")
++set(PROJECT_VERSION "6.6.4")
+ set(PROJECT_VERSION_MAJOR 6)
+ 
+ set(KF5_MIN_VERSION "5.102.0")
+diff --git a/kdecoration/breezebutton.cpp b/kdecoration/breezebutton.cpp
+index be81d39..7440775 100644
+--- a/kdecoration/breezebutton.cpp
++++ b/kdecoration/breezebutton.cpp
+@@ -86,7 +86,7 @@ Button *Button::create(DecorationButtonType type, KDecoration3::Decoration *deco
+             break;
+ 
+         case DecorationButtonType::Maximize:
+-            b->setVisible(c->isMaximizeable() || c->isMinimizeable());
++            b->setVisible((c->isMaximizeable() || c->isMinimizeable()) && !d->hideMinMax());
+             b->setEnabled(c->isMaximizeable());
+             QObject::connect(c, &KDecoration3::DecoratedWindow::maximizeableChanged, b,
+             [b](bool maximizeable) {
+@@ -98,7 +98,7 @@ Button *Button::create(DecorationButtonType type, KDecoration3::Decoration *deco
+                     return;
+                 }
+ 
+-                b->setVisible(c->isMaximizeable() || c->isMinimizeable());
++                b->setVisible((c->isMaximizeable() || c->isMinimizeable()) && !d->hideMinMax());
+                 b->setEnabled(maximizeable);
+             });
+             //b->setVisible(c->isMaximizeable());
+@@ -108,7 +108,7 @@ Button *Button::create(DecorationButtonType type, KDecoration3::Decoration *deco
+         case DecorationButtonType::Minimize:
+             //b->setVisible(c->isMinimizeable());
+             //QObject::connect(c, &KDecoration3::DecoratedWindow::minimizeableChanged, b, &Breeze::Button::setVisible);
+-            b->setVisible(c->isMinimizeable() || c->isMaximizeable());
++            b->setVisible((c->isMinimizeable() || c->isMaximizeable()) && !d->hideMinMax());
+             b->setEnabled(c->isMinimizeable());
+             QObject::connect(c, &KDecoration3::DecoratedWindow::minimizeableChanged, b,
+             [b](bool minimizeable) {
+@@ -120,7 +120,7 @@ Button *Button::create(DecorationButtonType type, KDecoration3::Decoration *deco
+                     return;
+                 }
+ 
+-                b->setVisible(c->isMinimizeable() || c->isMaximizeable());
++                b->setVisible((c->isMinimizeable() || c->isMaximizeable()) && !d->hideMinMax());
+                 b->setEnabled(minimizeable);
+             });
+             break;
+diff --git a/kdecoration/breezedecoration.h b/kdecoration/breezedecoration.h
+index 6fe2419..73ecadf 100644
+--- a/kdecoration/breezedecoration.h
++++ b/kdecoration/breezedecoration.h
+@@ -132,6 +132,11 @@ public:
+ 
+     inline bool hideTitleBar() const;
+     inline bool hideIcon() const;
++    //! Windows 7 common dialogs (Save As / Open): only the close button
++    inline bool hideMinMax() const
++    {
++        return m_internalSettings->hideMinMax();
++    }
+     inline bool hideCaption() const;
+     inline bool hideInnerBorder() const;
+ 
+diff --git a/kdecoration/breezeexceptionlist.cpp b/kdecoration/breezeexceptionlist.cpp
+index 22b2c43..9586fc2 100644
+--- a/kdecoration/breezeexceptionlist.cpp
++++ b/kdecoration/breezeexceptionlist.cpp
+@@ -42,6 +42,7 @@ void ExceptionList::readConfig(KSharedConfig::Ptr config)
+         configuration->setHideTitleBar(exception.hideTitleBar());
+         configuration->setHideIcon(exception.hideIcon());
+         configuration->setHideCaption(exception.hideCaption());
++        configuration->setHideMinMax(exception.hideMinMax());
+         configuration->setHideInnerBorder(exception.hideInnerBorder());
+ 
+         // append to exceptions
+@@ -76,7 +77,7 @@ QString ExceptionList::exceptionGroupName(int index)
+ void ExceptionList::writeConfig(KCoreConfigSkeleton *skeleton, KConfig *config, const QString &groupName)
+ {
+     // list of items to be written
+-    const QStringList keys = {"Enabled", "ExceptionPattern", "ExceptionType", "HideTitleBar", "HideIcon", "HideCaption", "HideInnerBorder", "Mask", "BorderSize"};
++    const QStringList keys = {"Enabled", "ExceptionPattern", "ExceptionType", "HideTitleBar", "HideIcon", "HideMinMax", "HideCaption", "HideInnerBorder", "Mask", "BorderSize"};
+ 
+     // write all items
+     for (auto key : keys) {
+diff --git a/kdecoration/breezesettingsdata.kcfg b/kdecoration/breezesettingsdata.kcfg
+index 3c027c6..4e17d04 100644
+--- a/kdecoration/breezesettingsdata.kcfg
++++ b/kdecoration/breezesettingsdata.kcfg
+@@ -83,6 +83,10 @@
+        <default>false</default>
+     </entry>
+ 
++    <entry name="HideMinMax" type = "Bool">
++       <default>false</default>
++    </entry>
++
+     <entry name="HideCaption" type = "Bool">
+        <default>false</default>
+     </entry>

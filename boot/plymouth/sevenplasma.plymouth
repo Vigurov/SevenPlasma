@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=SevenPlasma
+Description=Starting Windows, with the original boot animation of Windows 7 (bootres.dll activity.bmp)
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/sevenplasma
+ScriptFile=/usr/share/plymouth/themes/sevenplasma/sevenplasma.script

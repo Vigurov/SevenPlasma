@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Екран
+Exec=seven-control --screensaver-settings
+Icon=seven-desk
+NoDisplay=true
+StartupWMClass=seven-desk

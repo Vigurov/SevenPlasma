@@ -1,0 +1,13 @@
+[Unit]
+Description=Keep the Windows 7 "Завершення роботи..." screen up a little longer
+# runs once Plymouth already shows the shutdown screen, right before the machine powers off / reboots
+DefaultDependencies=no
+After=plymouth-poweroff.service plymouth-reboot.service
+Before=systemd-poweroff.service systemd-reboot.service final.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sleep 3
+
+[Install]
+WantedBy=poweroff.target reboot.target

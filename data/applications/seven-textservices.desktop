@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Мови та служби текстового введення
+Exec=seven-control --text-services
+Icon=seven-textservices
+NoDisplay=true

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Taskbar and Start Menu Properties
+Name[uk]=Властивості панелі завдань і меню «Пуск»
+Exec=seven-control --taskbar-props
+Icon=seven-taskbar-props
+NoDisplay=true

@@ -1,0 +1,11 @@
+aerothemeplasma https://gitgud.io/wackyideas/aerothemeplasma.git c0c2733a9e5e924fa7c19bfd84cbe900c173ab76
+atp-aeroshell-kwin-components https://gitgud.io/aeroshell/aeroshell-kwin-components.git 97cc934b54aa9b237a8b814cb86f93f7d33b5ebf
+atp-aeroshell-workspace https://gitgud.io/aeroshell/aeroshell-workspace.git ea5dfad53b09031b6804124fa3e938ba373bca45
+atp-aeroshell-sddm-kcm https://gitgud.io/aeroshell/aeroshell-sddm-kcm.git 8c94283c2689b3f0837efda0be8107e42a265e0f
+atp-libplasma https://gitgud.io/aeroshell/libplasma.git 31f72c780a194460eed467d57cc13128768dc161
+atp-smod https://gitgud.io/aeroshell/smod.git caa995773984f21928b16f0ba8e122887740bcbe
+atp-uac-polkit-agent https://gitgud.io/aeroshell/uac-polkit-agent.git cb3c75fc680124391cf938bb275be099db0e1f82
+dolphin-aero https://gitgud.io/atmk/dolphin-aero.git f0500fae7c4aadf75df23300557c0288404c6575
+kio https://invent.kde.org/frameworks/kio.git c347b3cbc49480ba8977b75f1240d40b84a53c82
+libaero-qt https://gitgud.io/atmk/libaero-qt.git 0bd71cc7f34718dc7726a72fc402bf0ece12c0d0
+kvantum https://github.com/tsujan/Kvantum.git 8acc24e13ffea00e7b4b50abc0fdf81b59757465

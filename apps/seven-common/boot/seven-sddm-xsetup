@@ -1,0 +1,7 @@
+#!/bin/sh
+# Windows 7 logon: give the greeter's X server the system keyboard layouts (/etc/default/keyboard) on its
+# core keyboard right away. Otherwise the core keyboard gets them only on the first key press, and the
+# layout indicator (EN/UK, top left) appears only once you start typing.
+. /etc/default/keyboard 2>/dev/null
+setxkbmap -model "${XKBMODEL:-pc105}" -layout "${XKBLAYOUT:-us}" -variant "${XKBVARIANT}" -option "" -option "${XKBOPTIONS}" 2>/dev/null
+exec /usr/share/sddm/scripts/Xsetup "$@"

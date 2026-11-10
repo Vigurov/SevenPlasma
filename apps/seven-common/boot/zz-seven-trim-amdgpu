@@ -1,0 +1,12 @@
+#!/bin/sh
+# The laptop panel is wired to the AMD iGPU (Ryzen 7 5800H "Cezanne" = green_sardine), so amdgpu is loaded
+# from the initramfs and "Starting Windows" is on screen from the start. amdgpu lists the firmware of every
+# Radeon ever made (~100 MB); keep only this chip's, the initramfs is read from the USB disk at ~8 MB/s.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in prereqs) prereqs; exit 0;; esac
+for d in "${DESTDIR}"/usr/lib/firmware/amdgpu "${DESTDIR}"/lib/firmware/amdgpu; do
+    [ -d "$d" ] || continue
+    find "$d" -maxdepth 1 -type f ! -name 'green_sardine*' -delete 2>/dev/null
+done
+exit 0

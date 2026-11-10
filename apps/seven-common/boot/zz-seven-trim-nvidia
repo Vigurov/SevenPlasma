@@ -1,0 +1,8 @@
+#!/bin/sh
+# The laptop's RTX 3070 (GA104) needs only gsp_ga10x.bin; the Turing firmware (30 MB) only slows the boot
+# (GRUB reads the initramfs from the USB disk at firmware speed)
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case $1 in prereqs) prereqs; exit 0;; esac
+rm -f "${DESTDIR}"/usr/lib/firmware/nvidia/*/gsp_tu10x.bin* "${DESTDIR}"/lib/firmware/nvidia/*/gsp_tu10x.bin* 2>/dev/null
+exit 0

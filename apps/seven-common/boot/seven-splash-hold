@@ -1,0 +1,13 @@
+#!/bin/sh
+# ExecStartPre of plymouth-quit: Windows 7 shows "Starting Windows" for several seconds, so keep the boot
+# animation on screen at least 9 s after it appeared (plymouth-start.service became active), however fast the
+# rest of the boot is. Both times are CLOCK_MONOTONIC (the clock of /proc/uptime).
+start=$(systemctl show -p ActiveEnterTimestampMonotonic --value plymouth-start.service 2>/dev/null)
+case "$start" in ''|0|*[!0-9]*) exit 0 ;; esac
+until=$((start / 10000 + 900))        # in hundredths of a second
+while :; do
+    now=$(cut -d' ' -f1 /proc/uptime | tr -d .)
+    [ "$now" -ge "$until" ] && break
+    sleep 0.2
+done
+exit 0

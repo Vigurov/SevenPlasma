@@ -1,0 +1,11 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "sevenkeys",
+        "Name": "Windows 7 window keys",
+        "Description": "Win+Up maximises, Win+Down restores / minimises, Win+Shift+Up maximises vertically, Win+Home minimises every other window (Aero Shake)",
+        "License": "GPL-2.0-or-later",
+        "EnabledByDefault": true
+    },
+    "X-Plasma-API": "javascript"
+}

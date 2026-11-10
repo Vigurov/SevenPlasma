@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Програвач Windows Media
+GenericName=Мультимедійний програвач
+Comment=Відтворення цифрових мультимедійних файлів
+Exec=seven-wmp %F
+Icon=seven-wmp
+Terminal=false
+Categories=AudioVideo;Player;Video;Audio;
+MimeType=video/mp4;video/x-matroska;video/webm;video/x-msvideo;video/avi;video/quicktime;video/x-ms-wmv;video/mpeg;video/x-flv;video/3gpp;video/ogg;video/mp2t;audio/mpeg;audio/mp3;audio/x-wav;audio/wav;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/mp4;audio/aac;audio/x-ms-wma;audio/opus;audio/x-m4a;audio/x-mpegurl;application/vnd.ms-wpl;
+StartupWMClass=seven-wmp

@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{"Name": "win7"}],
+        "Category": "Windows and Tasks",
+        "Description": "Windows 7 taskbar toolbar: Desktop, Address or a folder",
+        "Description[uk]": "Панель інструментів Windows 7 на панелі завдань: «Робочий стіл», «Адреса» або папка",
+        "Icon": "folder",
+        "Id": "io.gitgud.wackyideas.win7toolbar",
+        "License": "GPL-2.0+",
+        "Name": "Toolbar",
+        "Name[uk]": "Панель інструментів",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": []
+}

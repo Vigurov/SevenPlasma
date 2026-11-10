@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Косинка
+Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Solitaire/Solitaire.exe"
+Type=Application
+StartupNotify=true
+Icon=seven-game-solitaire
+Categories=Game;

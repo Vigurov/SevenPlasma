@@ -1,0 +1,13 @@
+#!/bin/sh
+# Usage: seven-arrange cascade|stack|side  — arranges the windows like the Windows 7 taskbar menu
+mode="${1:-cascade}"
+case "$mode" in cascade|stack|side) ;; *) echo "usage: $0 cascade|stack|side" >&2; exit 1;; esac
+tmp="${XDG_RUNTIME_DIR:-/tmp}/seven-arrange-$mode.js"
+sed "s/\"MODE\"/\"$mode\"/" "$HOME/.local/share/seven-arrange/arrange.js" > "$tmp"
+name="win7arrange$mode$$"
+id=$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$tmp" "$name")
+qdbus6 org.kde.KWin "/Scripting/Script$id" org.kde.kwin.Script.run >/dev/null 2>&1 \
+  || qdbus6 org.kde.KWin "/$id" org.kde.kwin.Script.run >/dev/null 2>&1
+sleep 0.3
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$name" >/dev/null 2>&1
+rm -f "$tmp"

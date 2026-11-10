@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Виконати
+Comment=Відкриває програму, папку, документ або веб-сайт.
+Exec=seven-control --run
+Icon=seven-run
+NoDisplay=true
+X-KDE-Shortcuts=Meta+R
+StartupWMClass=seven-control

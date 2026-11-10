@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Control Panel
+Name[uk]=Панель керування
+Comment[uk]=Налаштування параметрів комп'ютера
+Exec=seven-control
+Icon=seven-cpi-controlpanel
+Categories=Settings;System;

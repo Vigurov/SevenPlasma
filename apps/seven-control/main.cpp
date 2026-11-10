@@ -1,0 +1,2558 @@
+/*
+ * Control Panel in the style of Windows 7: "Category", "Large icons" and "Small icons" views.
+ * Every link opens the matching KDE settings module or one of our Windows 7 style tools.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "win7chrome.h"
+#include "win7power.h"
+#include "win7network.h"
+#include "win7display.h"
+#include "win7background.h"
+#include "win7openwith.h"
+#include "win7windowcolor.h"
+#include "win7screensaver.h"
+#include "win7firewall.h"
+#include "win7trayicons.h"
+#include "win7taskbar.h"
+#include "win7region.h"
+#include "win7sound.h"
+#include "win7sndvol.h"
+#include "win7sysprops.h"
+#include "win7visualfx.h"
+#include "win7devices.h"
+#include "win7mouse.h"
+#include "win7autoplay.h"
+#include "win7programs.h"
+#include "win7users.h"
+#include "win7access.h"
+#include "win7cleanup.h"
+#include "win7memtest.h"
+#include "win7diskmgmt.h"
+#include "win7eventvwr.h"
+#include "win7backup.h"
+#include "win7wf.h"
+#include "win7fonts.h"
+#include "win7fontview.h"
+#include "win7charmap.h"
+#include "win7cttune.h"
+#include "win7folderopts.h"
+#include "win7compmgmt.h"
+#include "win7update.h"
+#include "win7actioncenter.h"
+#include "win7sharing.h"
+#include "win7trash.h"
+#include "win7perf.h"
+#include "win7games.h"
+#include "win7indexing.h"
+#include "win7properties.h"
+#include "win7notepad.h"
+#include "win7run.h"
+#include "win7inetopts.h"
+#include "win7colormgmt.h"
+
+#include <AeroQt/insetwindow.h>
+#include <AeroQt/stylesheet.h>
+
+#include <QActionGroup>
+#include <QListWidget>
+#include <QCollator>
+#include <QScrollArea>
+#include <QDir>
+#include <QProcess>
+#include <QTimer>
+
+namespace
+{
+/* ---------------- what the links open ---------------- */
+
+std::function<void(int)> g_openCategoryPage; // set by the window; index into categoryPages()
+std::function<void(int)> g_openView; // set by the window; any view, e.g. Win7Power::PlansView
+int g_launchView = -1; // the page asked for on the command line (its OK / Cancel closes the window)
+
+std::function<void()> view(int v)
+{
+    return [v] {
+        g_openView(v);
+    };
+}
+
+
+/** Windows 7 buttons have no icons, except the UAC shield. Kvantum's iconless_pushbutton (set for every
+ *  program) removes all of them, so seven-control draws the icons it sets itself (shields) on top of it. */
+class Win7ButtonStyle : public QProxyStyle
+{
+public:
+    using QProxyStyle::QProxyStyle;
+    int styleHint(StyleHint h, const QStyleOption *o, const QWidget *w, QStyleHintReturn *r) const override
+    {
+        if (h == SH_DialogButtonBox_ButtonsHaveIcons) {
+            return 0; // no ticks and crosses on OK / Cancel
+        }
+        return QProxyStyle::styleHint(h, o, w, r);
+    }
+    QSize sizeFromContents(ContentsType t, const QStyleOption *o, const QSize &s, const QWidget *w) const override
+    {
+        QSize sz = QProxyStyle::sizeFromContents(t, o, s, w);
+        if (t == CT_PushButton) {
+            if (auto *b = qstyleoption_cast<const QStyleOptionButton *>(o); b && !b->icon.isNull() && !b->text.isEmpty()) {
+                sz.rwidth() += b->iconSize.width() + 8;
+            }
+        }
+        return sz;
+    }
+    void drawControl(ControlElement el, const QStyleOption *o, QPainter *p, const QWidget *w) const override
+    {
+        if (el == CE_PushButton) {
+            // Kvantum paints the whole button here: bevel without text, then our label
+            if (auto *b = qstyleoption_cast<const QStyleOptionButton *>(o); b && !b->icon.isNull() && !b->text.isEmpty()) {
+                QStyleOptionButton bevel(*b);
+                bevel.text.clear();
+                bevel.icon = QIcon();
+                QProxyStyle::drawControl(CE_PushButton, &bevel, p, w);
+                drawControl(CE_PushButtonLabel, b, p, w);
+                return;
+            }
+        }
+        if (el == CE_PushButtonLabel) {
+            if (auto *b = qstyleoption_cast<const QStyleOptionButton *>(o); b && !b->icon.isNull() && !b->text.isEmpty()) {
+                const QSize is = b->iconSize.isValid() ? b->iconSize : QSize(16, 16);
+                const QFontMetrics fm(b->fontMetrics);
+                const int tw = fm.horizontalAdvance(b->text), gap = 4;
+                const int total = is.width() + gap + tw;
+                int x = b->rect.center().x() - total / 2 + 1;
+                const int y = b->rect.center().y() - is.height() / 2 + 1;
+                const bool on = b->state & State_Enabled;
+                p->drawPixmap(x, y, b->icon.pixmap(is, on ? QIcon::Normal : QIcon::Disabled));
+                QStyleOptionButton t(*b);
+                t.icon = QIcon();
+                // Kvantum centres the text with its own side margins: give it room on both sides
+                const int pad = 12;
+                t.rect = QRect(x + is.width() + gap - pad, b->rect.top(), tw + 2 * pad, b->rect.height());
+                QProxyStyle::drawControl(el, &t, p, w);
+                return;
+            }
+        }
+        QProxyStyle::drawControl(el, o, p, w);
+    }
+};
+
+/** Windows 7 dialogs run as their own program, so the title bar shows their own icon */
+std::function<void()> self(const QStringList &args)
+{
+    return [args] {
+        QProcess::startDetached(QCoreApplication::applicationFilePath(), args);
+    };
+}
+
+std::function<void()> editActivePlan()
+{
+    return [] {
+        g_openView(Win7Power::EditView + Win7Power::planIndex(Win7Power::activePlan()));
+    };
+}
+
+std::function<void()> kcm(const QString &module)
+{
+    return [module] {
+        launch(QStringLiteral("systemsettings"), {module});
+    };
+}
+
+std::function<void()> tool(const QString &name, const QString &fallback = QStringLiteral("systemsettings"))
+{
+    return [name, fallback] {
+        launchWin7Tool(name, fallback);
+    };
+}
+
+std::function<void()> program(const QString &exe, const QStringList &args = {})
+{
+    return [exe, args] {
+        launch(exe, args);
+    };
+}
+
+/** "Administrative Tools" is a folder of shortcuts in Explorer, like in Windows 7 */
+std::function<void()> adminTools()
+{
+    return [] {
+        launch(QStringLiteral("dolphin"), {QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/seven-control/Адміністрування")});
+    };
+}
+
+struct SubLink {
+    QString text;
+    std::function<void()> open;
+    bool shield = false;
+};
+
+struct CategoryInfo {
+    QString icon;
+    QString title;
+    std::function<void()> open;
+    QList<SubLink> links;
+};
+
+const QList<CategoryInfo> &leftColumn()
+{
+    static const QList<CategoryInfo> list{
+        {QStringLiteral("seven-cp-system"),
+         QStringLiteral("Система й безпека"),
+         [] {
+             g_openCategoryPage(1);
+         },
+         {{QStringLiteral("Перегляд стану комп'ютера"), view(Win7Action::CenterView)},
+          {QStringLiteral("Архівування даних комп'ютера"), view(Win7Backup::BackupView)},
+          // no troubleshooting packs here: the Action Center has the problem reports and fixes
+          {QStringLiteral("Пошук і виправлення проблем"), view(Win7Action::CenterView)}}},
+        {QStringLiteral("seven-cp-network"),
+         QStringLiteral("Мережа й Інтернет"),
+         [] {
+             g_openCategoryPage(2);
+         },
+         {{QStringLiteral("Перегляд стану мережі та завдань"), view(Win7Net::CenterView)},
+          {QStringLiteral("Вибір параметрів домашньої групи та спільного доступу до даних"), program(QStringLiteral("dolphin"), {QStringLiteral("smb:/")})}}},
+        {QStringLiteral("seven-cp-hardware"),
+         QStringLiteral("Устаткування та звук"),
+         [] {
+             g_openCategoryPage(4);
+         },
+         {{QStringLiteral("Перегляд пристроїв і принтерів"), view(Win7Dev::DevicesView)},
+          {QStringLiteral("Додавання пристрою"), [] { Win7Dev::addDeviceWizard(nullptr, [] {}); }}}},
+        {QStringLiteral("seven-cp-programs"),
+         QStringLiteral("Програми"),
+         [] {
+             g_openCategoryPage(5);
+         },
+         {{QStringLiteral("Видалення програми"), view(Win7Programs::ProgramsView)}}},
+    };
+    return list;
+}
+
+const QList<CategoryInfo> &rightColumn()
+{
+    static const QList<CategoryInfo> list{
+        {QStringLiteral("seven-cp-users"),
+         QStringLiteral("Облікові записи користувачів і сімейна безпека"),
+         [] {
+             g_openCategoryPage(6);
+         },
+         {{QStringLiteral("Додавання й видалення облікових записів користувачів"), view(Win7Users::ManageView), true},
+          // Linux has no parental controls of its own: the accounts page, where they would be set per user
+          {QStringLiteral("Налаштування батьківського контролю для будь-якого користувача"), view(Win7Users::ManageView), true}}},
+        {QStringLiteral("seven-cp-appearance"),
+         QStringLiteral("Оформлення та персоналізація"),
+         [] {
+             g_openCategoryPage(0);
+         },
+         {{QStringLiteral("Змінення теми"), view(Win7Display::PersonalizeView)},
+          {QStringLiteral("Змінення фону робочого столу"), view(Win7Background::BackgroundView)},
+          {QStringLiteral("Налаштування роздільної здатності екрана"), view(Win7Display::ResolutionView)}}},
+        {QStringLiteral("seven-cp-clock"),
+         QStringLiteral("Годинник, мова та регіон"),
+         [] {
+             g_openCategoryPage(3);
+         },
+         {{QStringLiteral("Змінення розкладки клавіатури або інших способів введення"), self({QStringLiteral("--text-services")})},
+          {QStringLiteral("Змінення мови інтерфейсу"), self({QStringLiteral("--region"), QStringLiteral("1")})}}},
+        {QStringLiteral("seven-cp-access"),
+         QStringLiteral("Спеціальні можливості"),
+         [] {
+             g_openCategoryPage(7);
+         },
+         {{QStringLiteral("Рекомендовані параметри"), view(Win7Access::QuestionsView)},
+          {QStringLiteral("Оптимізація зображення на екрані"), view(Win7Access::SeeView)}}},
+    };
+    return list;
+}
+
+/* ---------------- "All Control Panel Items" ---------------- */
+
+struct Item {
+    QString name;
+    QString icon;      // Windows 7 16 px icon (seven-cpi-*)
+    QString bigIcon;   // theme icon for the 32 px view
+    std::function<void()> open;
+};
+
+/* a GPU of this PCI vendor (0x1002 AMD, 0x8086 Intel, 0x10de NVIDIA) in /sys/class/drm */
+bool hasGpuVendor(const QString &vendor)
+{
+    const QDir d(QStringLiteral("/sys/class/drm"));
+    for (const QString &c : d.entryList({QStringLiteral("card?"), QStringLiteral("card??")}, QDir::AllEntries | QDir::System)) {
+        QFile f(d.absoluteFilePath(c) + QStringLiteral("/device/vendor"));
+        if (f.open(QIODevice::ReadOnly) && QString::fromLatin1(f.readAll()).trimmed() == vendor) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QList<Item> allItems()
+{
+    QList<Item> items{
+        {QStringLiteral("Автозапуск"), QStringLiteral("seven-cpi-autostart"), QStringLiteral("seven-cpi-autostart"), view(Win7Autoplay::AutoplayView)},
+        {QStringLiteral("Відновлення"), QStringLiteral("seven-cpi-recovery"), QStringLiteral("seven-cpi-recovery"), view(Win7Backup::RecoveryView)},
+        {QStringLiteral("Диспетчер пристроїв"), QStringLiteral("seven-cpi-devmgr"), QStringLiteral("seven-cpi-devmgr"), tool(QStringLiteral("seven-devmgr"), QStringLiteral("kinfocenter"))},
+        {QStringLiteral("Звук"), QStringLiteral("seven-cpi-sound"), QStringLiteral("seven-cpi-sound"), self({QStringLiteral("--sound")})},
+        {QStringLiteral("Панель завдань і меню «Пуск»"), QStringLiteral("seven-cpi-taskbar"), QStringLiteral("seven-cpi-taskbar"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props")}); }},
+        {QStringLiteral("Пристрої та принтери"), QStringLiteral("seven-cpi-printers"), QStringLiteral("seven-cpi-printers"), view(Win7Dev::DevicesView)},
+        {QStringLiteral("Екран"), QStringLiteral("seven-cpi-display"), QStringLiteral("seven-cpi-display"), view(Win7Display::DisplayView)},
+        {QStringLiteral("Адміністрування"), QStringLiteral("seven-cpi-admin"), QStringLiteral("seven-cpi-admin"), adminTools()},
+        {QStringLiteral("Значки області сповіщень"), QStringLiteral("seven-cpi-trayicons"), QStringLiteral("seven-cpi-trayicons"), view(Win7Tray::IconsView)},
+        {QStringLiteral("Параметри індексування"), QStringLiteral("seven-cpi-indexing"), QStringLiteral("seven-cpi-indexing"), self({QStringLiteral("--indexing")})},
+        {QStringLiteral("Облікові записи користувачів"), QStringLiteral("seven-cpi-users"), QStringLiteral("seven-cpi-users"), view(Win7Users::HomeView)},
+        {QStringLiteral("Центр спеціальних можливостей"), QStringLiteral("seven-cpi-access"), QStringLiteral("seven-cpi-access"), view(Win7Access::CenterView)},
+        {QStringLiteral("Електроживлення"), QStringLiteral("seven-cpi-power"), QStringLiteral("seven-cpi-power"), view(Win7Power::PlansView)},
+        {QStringLiteral("Архівація і відновлення"), QStringLiteral("seven-cpi-backup"), QStringLiteral("seven-cpi-backup"), view(Win7Backup::BackupView)},
+        {QStringLiteral("Дата й час"), QStringLiteral("seven-cpi-datetime"), QStringLiteral("seven-cpi-datetime"), self({QStringLiteral("--datetime")})},
+        {QStringLiteral("Домашня група"), QStringLiteral("seven-cpi-homegroup"), QStringLiteral("seven-cpi-homegroup"), program(QStringLiteral("dolphin"), {QStringLiteral("smb:/")})},
+        {QStringLiteral("Клавіатура"), QStringLiteral("seven-cpi-keyboard"), QStringLiteral("seven-cpi-keyboard"), self({QStringLiteral("--keyboard")})},
+        {QStringLiteral("Програми та засоби"), QStringLiteral("seven-cpi-programs"), QStringLiteral("seven-cpi-programs"), view(Win7Programs::ProgramsView)},
+        {QStringLiteral("Властивості оглядача"), QStringLiteral("seven-cpi-inetopts"), QStringLiteral("seven-cpi-inetopts"), self({QStringLiteral("--inetopts")})},
+        {QStringLiteral("Керування кольорами"), QStringLiteral("seven-cpi-color"), QStringLiteral("seven-cpi-color"), self({QStringLiteral("--colormgmt")})},
+        {QStringLiteral("Панель керування NVIDIA"), QStringLiteral("seven-nvidia"), QStringLiteral("seven-nvidia"), program(QStringLiteral("seven-nvidia"))},
+        {QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("seven-ccc"), QStringLiteral("seven-ccc"), program(QStringLiteral("seven-ccc"))},
+        {QStringLiteral("Графіка Intel® HD"), QStringLiteral("seven-igfx"), QStringLiteral("seven-igfx"), program(QStringLiteral("seven-igfx"))},
+        {QStringLiteral("Центр оновлення Windows"), QStringLiteral("seven-cpi-update"), QStringLiteral("seven-cpi-update"), view(Win7Update::UpdateView)},
+        {QStringLiteral("Центр мереж і спільного доступу"), QStringLiteral("seven-cpi-network"), QStringLiteral("seven-cpi-network"), view(Win7Net::CenterView)},
+        {QStringLiteral("Мова та регіональні стандарти"), QStringLiteral("seven-cpi-region"), QStringLiteral("seven-cpi-region"), self({QStringLiteral("--region")})},
+        {QStringLiteral("Брандмауер"), QStringLiteral("seven-cpi-firewall"), QStringLiteral("seven-cpi-firewall"), view(Win7Firewall::StatusView)},
+        {QStringLiteral("Миша"), QStringLiteral("seven-cpi-mouse"), QStringLiteral("seven-cpi-mouse"), self({QStringLiteral("--mouse")})},
+        {QStringLiteral("Персоналізація"), QStringLiteral("seven-cpi-personalize"), QStringLiteral("seven-cpi-personalize"), view(Win7Display::PersonalizeView)},
+        {QStringLiteral("Програми за замовчуванням"), QStringLiteral("seven-cpi-defaults"), QStringLiteral("seven-cpi-defaults"), view(Win7Programs::DefaultsView)},
+        {QStringLiteral("Система"), QStringLiteral("seven-cpi-system"), QStringLiteral("seven-cpi-system"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
+        {QStringLiteral("Центр підтримки"), QStringLiteral("seven-cpi-actioncenter"), QStringLiteral("seven-cpi-actioncenter"), view(Win7Action::CenterView)},
+        {QStringLiteral("Шрифти"), QStringLiteral("seven-cpi-fonts"), QStringLiteral("seven-cpi-fonts"), view(Win7Fonts::FontsView)},
+        {QStringLiteral("Лічильники та засоби продуктивності"), QStringLiteral("seven-cpi-perf"), QStringLiteral("seven-cpi-perf"), view(Win7Perf::PerfView)},
+        {QStringLiteral("Панель керування NVIDIA"), QStringLiteral("seven-cpa-nvidia"), QStringLiteral("seven-cpa-nvidia"), program(QStringLiteral("nvidia-settings"))},
+        {QStringLiteral("Гаджети робочого столу"), QStringLiteral("gadgets"), QStringLiteral("gadgets"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")})},
+        {QStringLiteral("Розпізнавання мовлення"), QStringLiteral("seven-snd-mic"), QStringLiteral("seven-snd-mic"), view(97)},
+        {QStringLiteral("Параметри папок"), QStringLiteral("seven-cpi-folderopts"), QStringLiteral("seven-cpi-folderopts"), self({QStringLiteral("--folder-options")})},
+    };
+    // the Linux nvidia-settings window is hidden when our Win7-style NVIDIA panel is installed (it still uses nvidia-settings underneath)
+    if (QStandardPaths::findExecutable(QStringLiteral("nvidia-settings")).isEmpty()
+        || QFileInfo::exists(QStringLiteral("seven-nvidia"))) {
+        items.erase(std::remove_if(items.begin(), items.end(), [](const Item &i) {
+                        return i.icon == QLatin1String("seven-cpa-nvidia");
+                    }),
+                    items.end());
+    }
+    {
+        const bool amd = hasGpuVendor(QStringLiteral("0x1002")), intel = hasGpuVendor(QStringLiteral("0x8086"));
+        items.erase(std::remove_if(items.begin(), items.end(), [amd, intel](const Item &i) {
+                        return (i.icon == QLatin1String("seven-ccc") && !amd) || (i.icon == QLatin1String("seven-igfx") && !intel);
+                    }),
+                    items.end());
+    }
+    // alphabetical like Windows: names in Latin letters (Flash Player, Java...) come first
+    QCollator collator(QLocale(QLocale::Ukrainian));
+    std::sort(items.begin(), items.end(), [&collator](const Item &a, const Item &b) {
+        const bool la = a.name.at(0).script() == QChar::Script_Latin, lb = b.name.at(0).script() == QChar::Script_Latin;
+        if (la != lb) {
+            return la;
+        }
+        return collator.compare(a.name, b.name) < 0;
+    });
+    return items;
+}
+
+/* ---------------- page pieces ---------------- */
+
+/** Clickable row: icon + text, the text underlines on hover */
+class ItemLink : public QWidget
+{
+public:
+    ItemLink(const QIcon &icon, int iconSize, const QString &text, std::function<void()> open, QWidget *parent = nullptr)
+        : QWidget(parent)
+        , m_open(std::move(open))
+    {
+        setCursor(Qt::PointingHandCursor);
+        auto *h = new QHBoxLayout(this);
+        h->setContentsMargins(2, 1, 2, 1);
+        h->setSpacing(iconSize > 16 ? 8 : 5);
+        auto *ic = new QLabel(this);
+        ic->setPixmap(icon.pixmap(iconSize, iconSize));
+        ic->setFixedSize(iconSize, iconSize);
+        h->addWidget(ic, 0, Qt::AlignVCenter);
+        m_label = new QLabel(text, this);
+        m_label->setWordWrap(iconSize > 16);
+        h->addWidget(m_label, 1, Qt::AlignVCenter);
+        apply(false);
+    }
+
+protected:
+    void enterEvent(QEnterEvent *) override
+    {
+        apply(true);
+    }
+    void leaveEvent(QEvent *) override
+    {
+        apply(false);
+    }
+    void mouseReleaseEvent(QMouseEvent *e) override
+    {
+        if (e->button() == Qt::LeftButton && m_open) {
+            m_open();
+        }
+    }
+
+private:
+    void apply(bool hover)
+    {
+        m_label->setStyleSheet(QStringLiteral("QLabel { color: %1; text-decoration: %2; }")
+                                   .arg(hover ? QStringLiteral("#3399ff") : QStringLiteral("#1e6b1e"), hover ? QStringLiteral("underline") : QStringLiteral("none")));
+    }
+    std::function<void()> m_open;
+    QLabel *m_label;
+};
+
+QWidget *categoryBlock(const CategoryInfo &c)
+{
+    auto *w = new QWidget;
+    auto *h = new QHBoxLayout(w);
+    h->setContentsMargins(0, 0, 0, 0);
+    h->setSpacing(12);
+    auto *icon = new QLabel;
+    icon->setPixmap(QIcon::fromTheme(c.icon).pixmap(48, 48));
+    icon->setFixedSize(52, 52);
+    icon->setCursor(Qt::PointingHandCursor);
+    h->addWidget(icon, 0, Qt::AlignTop);
+    auto *v = new QVBoxLayout;
+    v->setSpacing(1);
+    auto *title = new Link(c.title, c.open, QStringLiteral("#1e7b1e"));
+    QFont tf = title->font();
+    tf.setPixelSize(16);
+    title->setFont(tf);
+    v->addWidget(title);
+    for (const SubLink &l : c.links) {
+        if (l.shield) {
+            auto *row = new QHBoxLayout;
+            row->setSpacing(3);
+            auto *sh = new QLabel;
+            sh->setPixmap(QIcon::fromTheme(QStringLiteral("seven-cp-shield")).pixmap(16, 16));
+            row->addWidget(sh, 0, Qt::AlignTop);
+            row->addWidget(new Link(l.text, l.open), 1);
+            v->addLayout(row);
+        } else {
+            v->addWidget(new Link(l.text, l.open));
+        }
+    }
+    v->addStretch(1);
+    h->addLayout(v, 1);
+    return w;
+}
+
+/* ---------------- category pages ("Appearance and Personalization" ...) ---------------- */
+
+struct PageSection {
+    QString icon; // 24 px
+    QString title;
+    std::function<void()> open;
+    QList<SubLink> links;
+};
+
+struct CategoryPage {
+    QString title;
+    QList<PageSection> sections;
+};
+
+std::function<void()> shell(const QString &cmd)
+{
+    return [cmd] {
+        QProcess::startDetached(QStringLiteral("sh"), {QStringLiteral("-c"), cmd});
+    };
+}
+
+const QList<CategoryPage> &categoryPages()
+{
+    static QList<CategoryPage> pages{
+        {QStringLiteral("Оформлення та персоналізація"),
+         {
+             {QStringLiteral("seven-cpi-personalize"), QStringLiteral("Персоналізація"), view(Win7Display::PersonalizeView),
+              {{QStringLiteral("Змінення теми"), view(Win7Display::PersonalizeView)},
+               {QStringLiteral("Змінення фону робочого столу"), view(Win7Background::BackgroundView)},
+               {QStringLiteral("Змінення кольорів віконного скла"), [] { Win7Display::openWindowColor(); }},
+               {QStringLiteral("Змінення звукових ефектів"), self({QStringLiteral("--sound"), QStringLiteral("2")})},
+               {QStringLiteral("Змінення заставки"), kcm(QStringLiteral("kcm_screenlocker"))}}},
+             {QStringLiteral("seven-cpi-display"), QStringLiteral("Екран"), view(Win7Display::DisplayView),
+              {{QStringLiteral("Змінення розміру тексту та інших елементів"), view(Win7Display::DisplayView)},
+               {QStringLiteral("Налаштування роздільної здатності екрана"), view(Win7Display::ResolutionView)},
+               {QStringLiteral("Підключення до зовнішнього дисплея"), [] { Win7Display::showDisplaySwitcher(); }}}},
+             {QStringLiteral("seven-cpi-gadgets"), QStringLiteral("Гаджети робочого столу"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")}),
+              {{QStringLiteral("Додавання гаджетів на робочий стіл"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")})}}},
+             {QStringLiteral("seven-cpi-taskbar"), QStringLiteral("Панель завдань і меню «Пуск»"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props")}); },
+              {{QStringLiteral("Налаштування меню «Пуск»"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props"), QStringLiteral("start")}); }},
+               {QStringLiteral("Налаштування значків на панелі завдань"), view(Win7Tray::IconsView)},
+               {QStringLiteral("Змінення зображення в меню «Пуск»"), [] {
+                    Win7Users::target().clear();
+                    g_openView(Win7Users::PictureView);
+                }}}},
+             {QStringLiteral("seven-cpi-access"), QStringLiteral("Центр спеціальних можливостей"), view(Win7Access::CenterView),
+              {{QStringLiteral("Налаштування для слабкого зору"), view(Win7Access::SeeView)},
+               {QStringLiteral("Використати програму читання з екрана"), view(Win7Access::NoDisplayView)},
+               {QStringLiteral("Увімкнення клавіш зручного доступу"), view(Win7Access::KeyboardView)},
+               {QStringLiteral("Увімкнення високої контрастності"), view(Win7Display::PersonalizeView)}}},
+             {QStringLiteral("seven-cpi-folderopts"), QStringLiteral("Параметри папок"), self({QStringLiteral("--folder-options")}),
+              {{QStringLiteral("Вибір відкриття одним або подвійним клацанням"), self({QStringLiteral("--folder-options")})},
+               {QStringLiteral("Показ прихованих файлів і папок"), self({QStringLiteral("--folder-options"), QString(), QStringLiteral("--tab"), QStringLiteral("1")})}}},
+             {QStringLiteral("seven-cpi-fonts"), QStringLiteral("Шрифти"), view(Win7Fonts::FontsView),
+              {{QStringLiteral("Перегляд, видалення, показ або приховування шрифтів"), view(Win7Fonts::FontsView)},
+               {QStringLiteral("Змінення параметрів шрифту"), view(Win7Fonts::SettingsView)},
+               {QStringLiteral("Настроювання тексту ClearType"), self({QStringLiteral("--cttune")})}}},
+         }},
+        {QStringLiteral("Система й безпека"),
+         {
+             {QStringLiteral("seven-cpi-actioncenter"), QStringLiteral("Центр підтримки"), view(Win7Action::CenterView),
+              {{QStringLiteral("Перегляд стану комп'ютера та вирішення проблем"), view(Win7Action::CenterView)},
+               {QStringLiteral("Відновлення попереднього стану комп'ютера"), view(Win7Backup::RecoveryView)}}},
+             {QStringLiteral("seven-cpi-firewall"), QStringLiteral("Брандмауер"), view(Win7Firewall::StatusView),
+              {{QStringLiteral("Перевірка стану брандмауера"), view(Win7Firewall::StatusView)},
+               {QStringLiteral("Дозвіл запуску програми через брандмауер"), view(Win7Firewall::AllowedView)}}},
+             {QStringLiteral("seven-cpi-system"), QStringLiteral("Система"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter")),
+              {{QStringLiteral("Перегляд обсягу ОЗП і швидкості процесора"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
+               {QStringLiteral("Перегляд імені цього комп'ютера"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
+               {QStringLiteral("Перевірити індекс продуктивності Windows"), view(Win7Perf::PerfView)},
+               {QStringLiteral("Диспетчер пристроїв"), tool(QStringLiteral("seven-devmgr"), QStringLiteral("kinfocenter")), true}}},
+             {QStringLiteral("seven-cpi-update"), QStringLiteral("Центр оновлення Windows"), view(Win7Update::UpdateView),
+              {{QStringLiteral("Увімкнення або вимкнення автоматичного оновлення"), view(Win7Update::SettingsView)},
+               {QStringLiteral("Перевірка оновлень"), [] {
+                    Win7Update::Engine::self().check();
+                    if (g_openView) {
+                        g_openView(Win7Update::UpdateView);
+                    }
+                }},
+               {QStringLiteral("Перегляд встановлених оновлень"), view(Win7Programs::UpdatesView)}}},
+             {QStringLiteral("seven-cpi-power"), QStringLiteral("Електроживлення"), view(Win7Power::PlansView),
+              {{QStringLiteral("Запит пароля під час виходу зі сплячого режиму"), view(Win7Power::ButtonsView)},
+               {QStringLiteral("Налаштування функцій кнопок живлення"), view(Win7Power::ButtonsView)},
+               {QStringLiteral("Налаштування переходу в сплячий режим"), editActivePlan()}}},
+             {QStringLiteral("seven-cpi-backup"), QStringLiteral("Архівація і відновлення"), view(Win7Backup::BackupView),
+              {{QStringLiteral("Архівування даних комп'ютера"), view(Win7Backup::BackupView)},
+               {QStringLiteral("Відновлення файлів з архіву"), self({QStringLiteral("--restore-files")})}}},
+             {QStringLiteral("seven-cpi-admin"), QStringLiteral("Адміністрування"), adminTools(),
+              {{QStringLiteral("Звільнення місця на диску"), self({QStringLiteral("--cleanmgr")})},
+               {QStringLiteral("Створення і форматування розділів жорсткого диска"), self({QStringLiteral("--diskmgmt")}), true},
+               {QStringLiteral("Перегляд журналів подій"), self({QStringLiteral("--eventvwr")}), true}}},
+         }},
+        {QStringLiteral("Мережа й Інтернет"),
+         {
+             {QStringLiteral("seven-cpi-network"), QStringLiteral("Центр мереж і спільного доступу"), view(Win7Net::CenterView),
+              {{QStringLiteral("Перегляд стану мережі та завдань"), view(Win7Net::CenterView)},
+               {QStringLiteral("Підключення до мережі"), [] { Win7Net::openNetworkFlyout(); }},
+               {QStringLiteral("Перегляд мережевих комп'ютерів і пристроїв"), program(QStringLiteral("dolphin"), {QStringLiteral("network:/")})}}},
+             {QStringLiteral("seven-cpi-homegroup"), QStringLiteral("Домашня група"), program(QStringLiteral("dolphin"), {QStringLiteral("smb:/")}),
+              {{QStringLiteral("Вибір параметрів домашньої групи та спільного доступу до даних"), program(QStringLiteral("dolphin"), {QStringLiteral("smb:/")})}}},
+             {QStringLiteral("seven-cpi-inetopts"), QStringLiteral("Властивості оглядача"), self({QStringLiteral("--inetopts")}), {}},
+         }},
+        {QStringLiteral("Годинник, мова та регіон"),
+         {
+             {QStringLiteral("seven-cpi-datetime"), QStringLiteral("Дата й час"), self({QStringLiteral("--datetime")}),
+              {{QStringLiteral("Установлення дати й часу"), self({QStringLiteral("--set-datetime")})},
+               {QStringLiteral("Змінення часового поясу"), self({QStringLiteral("--timezone")})},
+               {QStringLiteral("Годинники для різних часових поясів"), self({QStringLiteral("--datetime"), QStringLiteral("1")})},
+               {QStringLiteral("Додавання гаджета «Годинник» на робочий стіл"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--add"), QStringLiteral("clock")})}}},
+             {QStringLiteral("seven-cpi-region"), QStringLiteral("Мова та регіональні стандарти"), self({QStringLiteral("--region")}),
+              {{QStringLiteral("Змінення форматів дати, часу й чисел"), self({QStringLiteral("--region")})},
+               {QStringLiteral("Змінення розкладки клавіатури або інших способів введення"), self({QStringLiteral("--text-services")})}}},
+         }},
+        {QStringLiteral("Устаткування та звук"),
+         {
+             {QStringLiteral("seven-cpi-printers"), QStringLiteral("Пристрої та принтери"), view(Win7Dev::DevicesView),
+              {{QStringLiteral("Додавання пристрою"), [] { Win7Dev::addDeviceWizard(nullptr, [] {}); }},
+               {QStringLiteral("Установка принтера"), [] { Win7Printer::addPrinterWizard(nullptr); }},
+               {QStringLiteral("Миша"), self({QStringLiteral("--mouse")})},
+               {QStringLiteral("Диспетчер пристроїв"), tool(QStringLiteral("seven-devmgr"), QStringLiteral("kinfocenter")), true}}},
+             {QStringLiteral("seven-cpi-autostart"), QStringLiteral("Автозапуск"), view(Win7Autoplay::AutoplayView),
+              {{QStringLiteral("Настроювання параметрів за замовчуванням для носіїв або пристроїв"), view(Win7Autoplay::AutoplayView)},
+               {QStringLiteral("Автоматичне відтворення компакт-дисків або інших носіїв"), view(Win7Autoplay::AutoplayView)}}},
+             {QStringLiteral("seven-cpi-sound"), QStringLiteral("Звук"), self({QStringLiteral("--sound")}),
+              {{QStringLiteral("Настроювання гучності"), self({QStringLiteral("--sndvol")})},
+               {QStringLiteral("Змінення системних звуків"), self({QStringLiteral("--sound"), QStringLiteral("2")})},
+               {QStringLiteral("Керування звуковими пристроями"), self({QStringLiteral("--sound")})}}},
+             {QStringLiteral("seven-cpi-power"), QStringLiteral("Електроживлення"), view(Win7Power::PlansView),
+              {{QStringLiteral("Змінення параметрів енергозбереження"), view(Win7Power::PlansView)},
+               {QStringLiteral("Налаштування функцій кнопок живлення"), view(Win7Power::ButtonsView)},
+               {QStringLiteral("Запит пароля під час виходу зі сплячого режиму"), view(Win7Power::ButtonsView)},
+               {QStringLiteral("Налаштування переходу в сплячий режим"), editActivePlan()},
+               {QStringLiteral("Вибір плану електроживлення"), view(Win7Power::PlansView)}}},
+             {QStringLiteral("seven-cpi-display"), QStringLiteral("Екран"), view(Win7Display::DisplayView),
+              {{QStringLiteral("Змінення розміру тексту та інших елементів"), view(Win7Display::DisplayView)},
+               {QStringLiteral("Налаштування роздільної здатності екрана"), view(Win7Display::ResolutionView)},
+               {QStringLiteral("Підключення до зовнішнього дисплея"), [] { Win7Display::showDisplaySwitcher(); }},
+               {QStringLiteral("Усунення мерехтіння монітора (частота оновлення)"), view(Win7Display::ResolutionView)}}},
+             {QStringLiteral("seven-nvidia"), QStringLiteral("Панель керування NVIDIA"), program(QStringLiteral("seven-nvidia")), {}},
+             {QStringLiteral("seven-ccc"), QStringLiteral("AMD Catalyst Control Center"), program(QStringLiteral("seven-ccc")), {}},
+             {QStringLiteral("seven-igfx"), QStringLiteral("Графіка Intel® HD"), program(QStringLiteral("seven-igfx")), {}},
+         }},
+        {QStringLiteral("Програми"),
+         {
+             {QStringLiteral("seven-cpi-programs"), QStringLiteral("Програми та засоби"), view(Win7Programs::ProgramsView),
+              {{QStringLiteral("Видалення програми"), view(Win7Programs::ProgramsView)},
+               {QStringLiteral("Увімкнення або вимкнення компонентів Windows"), [] { Win7Programs::showFeatures(); }, true},
+               {QStringLiteral("Перегляд встановлених оновлень"), view(Win7Programs::UpdatesView)},
+               {QStringLiteral("Запуск програм, створених для попередніх версій Windows"), program(QStringLiteral("winecfg"))},
+               {QStringLiteral("Як установити програму"), view(Win7Programs::ProgramsView)}}},
+             {QStringLiteral("seven-cpi-defaults"), QStringLiteral("Програми за замовчуванням"), view(Win7Programs::DefaultsView),
+              {{QStringLiteral("Змінення параметрів за замовчуванням для носіїв або пристроїв"), view(Win7Autoplay::AutoplayView)},
+               {QStringLiteral("Призначення програми для відкриття файлів цього типу"), view(Win7Programs::AssocView)},
+               {QStringLiteral("Задання програм за замовчуванням"), view(Win7Programs::SetDefaultsView)}}},
+             {QStringLiteral("seven-cpi-gadgets"), QStringLiteral("Гаджети робочого столу"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")}),
+              {{QStringLiteral("Додавання гаджетів на робочий стіл"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")})},
+               {QStringLiteral("Видалення гаджетів"), program(QStringLiteral("seven-gadgets"), {QStringLiteral("--gallery")})}}},
+         }},
+        {QStringLiteral("Облікові записи користувачів і сімейна безпека"),
+         {
+             {QStringLiteral("seven-cpi-users"), QStringLiteral("Облікові записи користувачів"), view(Win7Users::HomeView),
+              {{QStringLiteral("Зміна рисунка облікового запису"), [] {
+                    Win7Users::target().clear();
+                    g_openView(Win7Users::PictureView);
+                }},
+               {QStringLiteral("Додавання й видалення облікових записів користувачів"), view(Win7Users::ManageView), true},
+               {QStringLiteral("Зміна пароля Windows"), view(Win7Users::HomeView)}}},
+         }},
+        {QStringLiteral("Спеціальні можливості"),
+         {
+             {QStringLiteral("seven-cpi-access"), QStringLiteral("Центр спеціальних можливостей"), view(Win7Access::CenterView),
+              {{QStringLiteral("Налаштування для слабкого зору"), view(Win7Access::SeeView)},
+               {QStringLiteral("Використання програми читання з екрана"), view(Win7Access::NoDisplayView)},
+               {QStringLiteral("Увімкнення клавіш зручного доступу"), view(Win7Access::KeyboardView)},
+               {QStringLiteral("Увімкнення або вимкнення високої контрастності"), view(Win7Display::PersonalizeView)}}},
+             {QStringLiteral("seven-cpi-speech"), QStringLiteral("Розпізнавання мовлення"), view(97),
+              {{QStringLiteral("Запуск розпізнавання мовлення"), view(97)},
+               {QStringLiteral("Налаштування мікрофона"), self({QStringLiteral("--sound"), QStringLiteral("1")})}}},
+         }},
+    };
+    static const bool pruned = [] {
+        // vendor panels only for the GPUs that are really there
+        const bool amd = hasGpuVendor(QStringLiteral("0x1002")), intel = hasGpuVendor(QStringLiteral("0x8086"));
+        for (CategoryPage &c : pages) {
+            c.sections.erase(std::remove_if(c.sections.begin(), c.sections.end(), [amd, intel](const PageSection &s) {
+                                 return (s.icon == QLatin1String("seven-ccc") && !amd) || (s.icon == QLatin1String("seven-igfx") && !intel);
+                             }),
+                             c.sections.end());
+        }
+        return true;
+    }();
+    Q_UNUSED(pruned);
+    return pages;
+}
+
+/** Links separated by thin grey bars that wrap to the next line, like Windows 7 */
+class LinkFlow : public QWidget
+{
+public:
+    explicit LinkFlow(const QList<SubLink> &links, QWidget *parent = nullptr)
+        : QWidget(parent)
+    {
+        for (const SubLink &l : links) {
+            auto *item = new QWidget(this);
+            auto *h = new QHBoxLayout(item);
+            h->setContentsMargins(0, 0, 0, 0);
+            h->setSpacing(2);
+            if (l.shield) {
+                auto *sh = new QLabel(item);
+                sh->setPixmap(QIcon::fromTheme(QStringLiteral("seven-cp-shield")).pixmap(16, 16));
+                h->addWidget(sh);
+            }
+            auto *link = new Link(l.text, l.open, QStringLiteral("#0066cc"), item);
+            link->setWordWrap(false);
+            h->addWidget(link);
+            m_items.append(item);
+        }
+        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    }
+    bool hasHeightForWidth() const override
+    {
+        return true;
+    }
+    int heightForWidth(int w) const override
+    {
+        return place(w, false);
+    }
+    QSize sizeHint() const override
+    {
+        const int w = width() > 50 ? width() : 600;
+        return QSize(w, place(w, false));
+    }
+    QSize minimumSizeHint() const override
+    {
+        return QSize(100, 0);
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *) override
+    {
+        place(width(), true);
+        updateGeometry();
+    }
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter p(this);
+        p.setPen(QColor(0xc8, 0xcc, 0xd4));
+        for (const QRect &r : std::as_const(m_bars)) {
+            p.drawLine(r.center().x(), r.top() + 3, r.center().x(), r.bottom() - 2);
+        }
+    }
+
+private:
+    int place(int w, bool apply) const
+    {
+        const int gap = 13;
+        int x = 0, y = 0, lineH = 0;
+        QList<QRect> bars;
+        for (int i = 0; i < m_items.size(); ++i) {
+            QWidget *it = m_items.at(i);
+            const QSize sz = it->sizeHint();
+            if (x > 0 && x + sz.width() > w) {
+                x = 0;
+                y += lineH + 1;
+                lineH = 0;
+            }
+            if (apply) {
+                it->setGeometry(x, y, sz.width(), sz.height());
+            }
+            x += sz.width();
+            lineH = qMax(lineH, sz.height());
+            if (i + 1 < m_items.size()) {
+                bars.append(QRect(x, y, gap, sz.height())); // Windows 7 keeps the bar even at the end of a line
+                x += gap;
+            }
+        }
+        if (apply) {
+            m_bars = bars;
+        }
+        return y + lineH;
+    }
+    QList<QWidget *> m_items;
+    mutable QList<QRect> m_bars;
+};
+
+/** Section of a category page; Windows 7 draws a light blue box around the one under the mouse */
+class HoverBox : public QWidget
+{
+public:
+    HoverBox()
+    {
+        setAttribute(Qt::WA_Hover);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        if (!underMouse()) {
+            return;
+        }
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        QLinearGradient g(0, 0, 0, height());
+        g.setColorAt(0, QColor(0xfa, 0xfc, 0xff));
+        g.setColorAt(1, QColor(0xf0, 0xf6, 0xfe));
+        p.setBrush(g);
+        p.setPen(QColor(0xd4, 0xe4, 0xf7));
+        p.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), 3, 3);
+    }
+    void enterEvent(QEnterEvent *) override
+    {
+        update();
+    }
+    void leaveEvent(QEvent *) override
+    {
+        update();
+    }
+};
+
+QWidget *pageSection(const PageSection &sec)
+{
+    auto *w = new HoverBox;
+    auto *h = new QHBoxLayout(w);
+    h->setContentsMargins(4, 3, 4, 4);
+    h->setSpacing(8);
+    auto *icon = new QLabel;
+    icon->setPixmap(QIcon::fromTheme(sec.icon).pixmap(32, 32));
+    icon->setFixedSize(34, 34);
+    h->addWidget(icon, 0, Qt::AlignTop);
+    auto *v = new QVBoxLayout;
+    v->setSpacing(0);
+    auto *title = new Link(sec.title, sec.open, QStringLiteral("#1e7b1e"));
+    QFont tf = title->font();
+    tf.setPixelSize(15);
+    title->setFont(tf);
+    v->addWidget(title);
+    if (!sec.links.isEmpty()) {
+        v->addWidget(new LinkFlow(sec.links));
+    }
+    h->addLayout(v, 1);
+    return w;
+}
+
+enum View {
+    CategoryView = 0,
+    LargeIcons,
+    SmallIcons,
+    FirstCategoryPage = 100, // 100 + index into categoryPages()
+};
+
+QString viewName(int v)
+{
+    switch (v) {
+    case LargeIcons:
+        return QStringLiteral("Великі значки");
+    case SmallIcons:
+        return QStringLiteral("Дрібні значки");
+    default:
+        return QStringLiteral("Категорія");
+    }
+}
+
+/* ---------------- window ---------------- */
+
+class ControlPanel : public QMainWindow
+{
+public:
+    explicit ControlPanel(bool allItems)
+    {
+        m_view = allItems ? SmallIcons : CategoryView;
+        if (QCoreApplication::arguments().contains(QStringLiteral("--large"))) {
+            m_view = LargeIcons;
+        }
+        setWindowTitle(QStringLiteral("Панель керування"));
+        setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-controlpanel")));
+
+        m_scroll = new QScrollArea(this);
+        m_scroll->setFrameShape(QFrame::NoFrame);
+        m_scroll->setWidgetResizable(true);
+        m_scroll->viewport()->setObjectName(QStringLiteral("win7viewport"));
+        m_scroll->setStyleSheet(QStringLiteral("QScrollArea { background: #ffffff; border: none; } #win7viewport { background: #ffffff; }"));
+        setCentralWidget(m_scroll);
+        m_commandBar = new QToolBar(this);
+        m_commandBar->setMovable(false);
+        m_commandBar->setFloatable(false);
+        m_commandBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        m_commandBar->setContextMenuPolicy(Qt::PreventContextMenu);
+        addToolBar(Qt::TopToolBarArea, m_commandBar);
+        m_commandBar->hide();
+
+        m_header = makeWin7Header(this, {}, QStringLiteral("seven-cpi-controlpanel"), QStringLiteral("Пошук у панелі керування"));
+        connect(m_header.refresh, &QToolButton::clicked, this, [this] {
+            rebuild();
+        });
+        connect(m_header.search, &QLineEdit::textChanged, this, [this](const QString &text) {
+            if (m_view == Win7Net::ConnectionsView && m_connections) {
+                m_connections->setFilter(text.trimmed());
+                return;
+            }
+            if (m_view == Win7Dev::DevicesView && m_devices) {
+                m_devices->setFilter(text.trimmed());
+                return;
+            }
+            if (m_programs && (m_view == Win7Programs::ProgramsView || m_view == Win7Programs::UpdatesView)) {
+                m_programs->setFilter(text.trimmed());
+                return;
+            }
+            if (m_assoc && m_view == Win7Programs::AssocView) {
+                m_assoc->setFilter(text.trimmed());
+                return;
+            }
+            if (m_fonts && (m_view == Win7Fonts::FontsView || m_view == Win7Fonts::FamilyView)) {
+                m_fonts->setFilter(text.trimmed());
+                return;
+            }
+            m_filter = text.trimmed();
+            if (!m_filter.isEmpty() && m_view != LargeIcons && m_view != SmallIcons) {
+                m_view = SmallIcons; // Windows 7 shows matching items while you type
+            }
+            rebuild();
+        });
+        connect(m_header.navs->back(), &QAbstractButton::clicked, this, [this] {
+            goBack();
+        });
+        connect(m_header.navs->forward(), &QAbstractButton::clicked, this, [this] {
+            if (!m_future.isEmpty()) {
+                m_history.append(m_view);
+                m_view = m_future.takeLast();
+                rebuild(false);
+            }
+        });
+        connect(m_header.history, &QToolButton::clicked, this, [this] {
+            QMenu menu(this);
+            menu.addAction(QIcon::fromTheme(QStringLiteral("seven-cpi-controlpanel")), QStringLiteral("Панель керування"), this, [this] {
+                setView(CategoryView);
+            });
+            menu.addAction(QIcon::fromTheme(QStringLiteral("seven-cpi-controlpanel")), QStringLiteral("Усі елементи панелі керування"), this, [this] {
+                setView(SmallIcons);
+            });
+            // Windows 7: the "▾" stays pressed while the list is open
+            auto *band = static_cast<Win7BandButton *>(m_header.history);
+            band->menuOpen = true;
+            band->update();
+            menu.exec(m_header.history->mapToGlobal(QPoint(0, m_header.history->height())));
+            band->menuOpen = false;
+            band->update();
+            if (band->partner) {
+                band->partner->update();
+            }
+        });
+        g_openCategoryPage = [this](int index) {
+            setView(FirstCategoryPage + index);
+        };
+        g_openView = [this](int view) {
+            setView(view);
+        };
+        Aero::makeInsetWindow(this, nullptr, m_header.widget, nullptr);
+        rebuild(false);
+        resize(980, 640);
+    }
+
+private:
+    static bool isPowerView(int v)
+    {
+        return v == Win7Power::PlansView || v == Win7Power::ButtonsView
+            || (v >= Win7Power::EditView && v < Win7Power::EditView + Win7Power::plans().size());
+    }
+
+    static bool isDisplayView(int v)
+    {
+        return v == Win7Display::PersonalizeView || v == Win7Display::DisplayView || v == Win7Display::ResolutionView
+            || v == Win7Background::BackgroundView || v == Win7WindowColor::ColorView;
+    }
+
+    static bool isFirewallView(int v)
+    {
+        return v == Win7Firewall::StatusView || v == Win7Firewall::SettingsView || v == Win7Firewall::AllowedView;
+    }
+
+    static constexpr int SpeechView = 97;
+
+    static bool isTrayView(int v)
+    {
+        return v == Win7Tray::IconsView || v == Win7Tray::SystemView;
+    }
+
+    static bool isProgramsView(int v)
+    {
+        return v >= Win7Programs::ProgramsView && v <= Win7Programs::ProgramAssocView;
+    }
+
+    static bool isFontsView(int v)
+    {
+        return v == Win7Fonts::FontsView || v == Win7Fonts::FamilyView || v == Win7Fonts::SettingsView;
+    }
+
+    static bool isNetView(int v)
+    {
+        return v == Win7Net::CenterView || v == Win7Net::ConnectionsView || v == Win7Net::SharingView;
+    }
+
+    void goBack()
+    {
+        if (m_history.isEmpty()) {
+            setView(Win7Power::PlansView);
+            return;
+        }
+        m_future.append(m_view);
+        m_view = m_history.takeLast();
+        rebuild(false);
+    }
+
+    void setView(int view)
+    {
+        if (view == m_view && m_filter.isEmpty()) {
+            rebuild(); // e.g. a power page reloading itself
+            return;
+        }
+        Win7Sound::playNavigationSound();
+        m_history.append(m_view);
+        m_future.clear();
+        m_view = view;
+        m_filter.clear();
+        m_header.search->blockSignals(true);
+        m_header.search->clear();
+        m_header.search->blockSignals(false);
+        rebuild(false);
+    }
+
+    void rebuild(bool keepScroll = true)
+    {
+        Q_UNUSED(keepScroll)
+        // Address bar: "▸ Control Panel ▸" or "▸ Control Panel ▸ All Control Panel Items ▸"
+        QList<Crumbs::Crumb> crumbs{{QStringLiteral("Панель керування"), [this] {
+                                         setView(CategoryView);
+                                     }}};
+        const bool power = isPowerView(m_view);
+        if (Win7Games::isGamesView(m_view)) {
+            crumbs = {{QStringLiteral("Ігри"), nullptr}};
+        } else if (m_view >= FirstCategoryPage) {
+            crumbs.append({categoryPages().at(m_view - FirstCategoryPage).title, nullptr});
+        } else if (isFirewallView(m_view)) {
+            crumbs.append({QStringLiteral("Система й безпека"), [this] {
+                               setView(FirstCategoryPage + 1);
+                           }});
+            crumbs.append({QStringLiteral("Брандмауер"), m_view == Win7Firewall::StatusView ? std::function<void()>() : [this] {
+                               setView(Win7Firewall::StatusView);
+                           }});
+            if (m_view == Win7Firewall::AllowedView) {
+                crumbs.append({QStringLiteral("Дозволені програми"), nullptr});
+            }
+            if (m_view == Win7Firewall::SettingsView) {
+                crumbs.append({QStringLiteral("Налаштування параметрів"), nullptr});
+            }
+        } else if (isDisplayView(m_view)) {
+            // Windows 7 (opened from the desktop menu): Control Panel > Appearance and Personalization > ...
+            crumbs.append({QStringLiteral("Оформлення та персоналізація"), [this] {
+                               setView(FirstCategoryPage + 0);
+                           }});
+            if (m_view == Win7Display::PersonalizeView) {
+                crumbs.append({QStringLiteral("Персоналізація"), nullptr});
+            } else if (m_view == Win7Background::BackgroundView) {
+                crumbs.append({QStringLiteral("Персоналізація"), [this] {
+                                   setView(Win7Display::PersonalizeView);
+                               }});
+                crumbs.append({QStringLiteral("Фон робочого столу"), nullptr});
+            } else if (m_view == Win7WindowColor::ColorView) {
+                crumbs.append({QStringLiteral("Персоналізація"), [this] {
+                                   setView(Win7Display::PersonalizeView);
+                               }});
+                crumbs.append({QStringLiteral("Колір і оформлення вікна"), nullptr});
+            } else {
+                crumbs.append({QStringLiteral("Екран"), m_view == Win7Display::DisplayView ? std::function<void()>() : [this] {
+                                   setView(Win7Display::DisplayView);
+                               }});
+                if (m_view == Win7Display::ResolutionView) {
+                    crumbs.append({QStringLiteral("Роздільна здатність екрана"), nullptr});
+                }
+            }
+        } else if (m_view == Win7Dev::DevicesView || m_view == Win7Autoplay::AutoplayView) {
+            crumbs.append({QStringLiteral("Устаткування та звук"), [this] {
+                               setView(FirstCategoryPage + 4);
+                           }});
+            crumbs.append({m_view == Win7Dev::DevicesView ? QStringLiteral("Пристрої та принтери") : QStringLiteral("Автозапуск"), nullptr});
+        } else if (m_view == SpeechView) {
+            crumbs.append({QStringLiteral("Спеціальні можливості"), nullptr});
+            crumbs.append({QStringLiteral("Розпізнавання мовлення"), nullptr});
+        } else if (isTrayView(m_view)) {
+            crumbs.append({QStringLiteral("Усі елементи панелі керування"), [this] {
+                               setView(SmallIcons);
+                           }});
+            crumbs.append({QStringLiteral("Значки області сповіщень"), m_view == Win7Tray::IconsView ? std::function<void()>() : [this] {
+                               setView(Win7Tray::IconsView);
+                           }});
+            if (m_view == Win7Tray::SystemView) {
+                crumbs.append({QStringLiteral("Системні значки"), nullptr});
+            }
+        } else if (Win7Access::isAccessView(m_view)) {
+            crumbs.append({QStringLiteral("Спеціальні можливості"), [this] {
+                               setView(FirstCategoryPage + 7);
+                           }});
+            crumbs.append({QStringLiteral("Центр спеціальних можливостей"), m_view == Win7Access::CenterView ? std::function<void()>() : [this] {
+                               setView(Win7Access::CenterView);
+                           }});
+            if (m_view == Win7Access::MouseKeysView || m_view == Win7Access::StickyView || m_view == Win7Access::FilterView) {
+                crumbs.append({QStringLiteral("Полегшення роботи з клавіатурою"), [this] {
+                                   setView(Win7Access::KeyboardView);
+                               }});
+            }
+            if (m_view != Win7Access::CenterView) {
+                crumbs.append({Win7Access::viewTitle(m_view), nullptr});
+            }
+        } else if (Win7Users::isUsersView(m_view)) {
+            crumbs.append({QStringLiteral("Облікові записи користувачів і сімейна безпека"), [this] {
+                               setView(FirstCategoryPage + 6);
+                           }});
+            crumbs.append({QStringLiteral("Облікові записи користувачів"), m_view == Win7Users::HomeView ? std::function<void()>() : [this] {
+                               setView(Win7Users::HomeView);
+                           }});
+            if (m_view != Win7Users::HomeView) {
+                const bool managing = m_view == Win7Users::ManageView || m_view == Win7Users::CreateView || m_view == Win7Users::AccountView || m_view == Win7Users::GuestView
+                    || m_view == Win7Users::DeleteView || !Win7Users::target().isEmpty();
+                if (managing && m_view != Win7Users::ManageView) {
+                    crumbs.append({QStringLiteral("Керування обліковими записами"), [this] {
+                                       setView(Win7Users::ManageView);
+                                   }});
+                }
+                crumbs.append({Win7Users::viewTitle(m_view), nullptr});
+            }
+        } else if (isProgramsView(m_view)) {
+            crumbs.append({QStringLiteral("Програми"), [this] {
+                               setView(FirstCategoryPage + 5);
+                           }});
+            const bool features = m_view == Win7Programs::ProgramsView || m_view == Win7Programs::UpdatesView;
+            const int parent = features ? Win7Programs::ProgramsView : Win7Programs::DefaultsView;
+            crumbs.append({features ? QStringLiteral("Програми та засоби") : QStringLiteral("Програми за замовчуванням"), m_view == parent ? std::function<void()>() : [this, parent] {
+                               setView(parent);
+                           }});
+            if (m_view == Win7Programs::UpdatesView) {
+                crumbs.append({QStringLiteral("Встановлені оновлення"), nullptr});
+            } else if (m_view == Win7Programs::SetDefaultsView || m_view == Win7Programs::ProgramAssocView) {
+                crumbs.append({QStringLiteral("Задання програм за замовчуванням"), m_view == Win7Programs::SetDefaultsView ? std::function<void()>() : [this] {
+                                   setView(Win7Programs::SetDefaultsView);
+                               }});
+                if (m_view == Win7Programs::ProgramAssocView) {
+                    crumbs.append({QStringLiteral("Задання зіставлень"), nullptr});
+                }
+            } else if (m_view == Win7Programs::AssocView) {
+                crumbs.append({QStringLiteral("Задання зіставлень"), nullptr});
+            }
+        } else if (m_view == Win7Backup::BackupView) {
+            crumbs.append({QStringLiteral("Система й безпека"), [this] {
+                               setView(FirstCategoryPage + 1);
+                           }});
+            crumbs.append({QStringLiteral("Архівація і відновлення"), nullptr});
+        } else if (Win7Backup::isBackupView(m_view)) {
+            // the address bar of the recovery pages keeps the two last places, like Windows 7 ("« Recovery ▸ Advanced recovery methods")
+            static const QHash<int, QPair<int, QString>> parent{{Win7Backup::AdvancedView, {Win7Backup::RecoveryView, QStringLiteral("Відновлення")}},
+                                                                {Win7Backup::UserFilesView, {Win7Backup::AdvancedView, QStringLiteral("Розширені методи відновлення")}},
+                                                                {Win7Backup::RestartView, {Win7Backup::UserFilesView, QStringLiteral("Архівація файлів користувача")}}};
+            if (m_view == Win7Backup::RecoveryView) {
+                crumbs.append({QStringLiteral("Усі елементи панелі керування"), [this] {
+                                   setView(SmallIcons);
+                               }});
+            } else {
+                const auto up = parent.value(m_view);
+                crumbs.append({up.second, [this, up] {
+                                   setView(up.first);
+                               }});
+            }
+            crumbs.append({Win7Backup::viewTitle(m_view), nullptr});
+        } else if (Win7Perf::isPerfView(m_view)) {
+            crumbs.append({QStringLiteral("Усі елементи панелі керування"), [this] {
+                               setView(SmallIcons);
+                           }});
+            crumbs.append({Win7Perf::viewTitle(Win7Perf::PerfView), m_view == Win7Perf::PerfView ? std::function<void()>() : [this] {
+                               setView(Win7Perf::PerfView);
+                           }});
+            if (m_view != Win7Perf::PerfView) {
+                crumbs.append({Win7Perf::viewTitle(m_view), nullptr});
+            }
+        } else if (Win7Action::isActionView(m_view)) {
+            crumbs.append({QStringLiteral("Система й безпека"), [this] {
+                               setView(FirstCategoryPage + 1);
+                           }});
+            crumbs.append({QStringLiteral("Центр підтримки"), m_view == Win7Action::CenterView ? std::function<void()>() : [this] {
+                               setView(Win7Action::CenterView);
+                           }});
+            if (m_view != Win7Action::CenterView) {
+                crumbs.append({Win7Action::viewTitle(m_view), nullptr});
+            }
+        } else if (Win7Update::isUpdateView(m_view)) {
+            crumbs.append({QStringLiteral("Система й безпека"), [this] {
+                               setView(FirstCategoryPage + 1);
+                           }});
+            crumbs.append({QStringLiteral("Центр оновлення Windows"), m_view == Win7Update::UpdateView ? std::function<void()>() : [this] {
+                               setView(Win7Update::UpdateView);
+                           }});
+            if (m_view != Win7Update::UpdateView) {
+                crumbs.append({Win7Update::viewTitle(m_view), nullptr});
+            }
+        } else if (isFontsView(m_view)) {
+            crumbs.append({QStringLiteral("Усі елементи панелі керування"), [this] {
+                               setView(SmallIcons);
+                           }});
+            crumbs.append({QStringLiteral("Шрифти"), m_view == Win7Fonts::FontsView ? std::function<void()>() : [this] {
+                               setView(Win7Fonts::FontsView);
+                           }});
+            if (m_view == Win7Fonts::FamilyView) {
+                crumbs.append({Win7Fonts::openedFamily(), nullptr});
+            } else if (m_view == Win7Fonts::SettingsView) {
+                crumbs.append({QStringLiteral("Параметри шрифту"), nullptr});
+            }
+        } else if (isNetView(m_view)) {
+            crumbs.append({QStringLiteral("Мережа й Інтернет"), [this] {
+                               setView(FirstCategoryPage + 2);
+                           }});
+            if (m_view == Win7Net::SharingView) {
+                crumbs.append({QStringLiteral("Центр мереж і спільного доступу"), [this] {
+                                   setView(Win7Net::CenterView);
+                               }});
+                crumbs.append({QStringLiteral("Додаткові параметри спільного доступу"), nullptr});
+            } else {
+                crumbs.append({m_view == Win7Net::CenterView ? QStringLiteral("Центр мереж і спільного доступу") : QStringLiteral("Мережеві підключення"), nullptr});
+            }
+        } else if (power) {
+            crumbs.append({QStringLiteral("Усі елементи панелі керування"), [this] {
+                               setView(SmallIcons);
+                           }});
+            crumbs.append({QStringLiteral("Електроживлення"), m_view == Win7Power::PlansView ? std::function<void()>() : [this] {
+                               setView(Win7Power::PlansView);
+                           }});
+            if (m_view != Win7Power::PlansView) {
+                crumbs.append({m_view == Win7Power::ButtonsView ? QStringLiteral("Системні параметри") : QStringLiteral("Змінити параметри плану"), nullptr});
+            }
+        } else if (m_view != CategoryView) {
+            crumbs.append({QStringLiteral("Усі елементи панелі керування"), nullptr});
+        }
+        auto *newCrumbs = new Crumbs(crumbs, m_header.crumbs->parentWidget());
+        newCrumbs->setArrowMenu([this](QMenu *menu, int after) {
+            if (after < 0) {
+                menu->addAction(QStringLiteral("Панель керування"), this, [this] {
+                    setView(CategoryView);
+                });
+                return;
+            }
+            for (const auto *col : {&leftColumn(), &rightColumn()}) {
+                for (const CategoryInfo &c : *col) {
+                    menu->addAction(QIcon::fromTheme(c.icon), c.title, c.open);
+                }
+            }
+            menu->addSeparator();
+            menu->addAction(QStringLiteral("Усі елементи панелі керування"), this, [this] {
+                setView(SmallIcons);
+            });
+        });
+        m_header.crumbs->parentWidget()->layout()->replaceWidget(m_header.crumbs, newCrumbs);
+        m_header.crumbs->deleteLater();
+        m_header.crumbs = newCrumbs;
+        m_header.navs->back()->setEnabled(!m_history.isEmpty());
+        m_header.navs->forward()->setEnabled(!m_future.isEmpty());
+        // the address bar shows the icon of the current place
+        QString placeIcon = QStringLiteral("seven-cpi-controlpanel");
+        if (power) {
+            placeIcon = QStringLiteral("seven-cpi-power");
+        } else if (m_view == SpeechView) {
+            placeIcon = QStringLiteral("seven-snd-mic");
+        } else if (m_view == Win7Dev::DevicesView) {
+            placeIcon = QStringLiteral("seven-cpi-printers");
+        } else if (m_view == Win7Autoplay::AutoplayView) {
+            placeIcon = QStringLiteral("seven-cpi-autostart");
+        } else if (isTrayView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-trayicons");
+        } else if (isFirewallView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-firewall");
+        } else if (isDisplayView(m_view)) {
+            placeIcon = (m_view == Win7Display::PersonalizeView || m_view == Win7Background::BackgroundView || m_view == Win7WindowColor::ColorView)
+                ? QStringLiteral("seven-cpi-personalize")
+                                                                                                                : QStringLiteral("seven-cpi-display");
+        } else if (Win7Access::isAccessView(m_view)) {
+            placeIcon = QStringLiteral("seven-eoa");
+        } else if (Win7Users::isUsersView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-users");
+        } else if (isProgramsView(m_view)) {
+            placeIcon = m_view <= Win7Programs::UpdatesView ? QStringLiteral("seven-cpi-programs") : QStringLiteral("seven-cpi-defaults");
+        } else if (Win7Backup::isBackupView(m_view)) {
+            placeIcon = m_view == Win7Backup::BackupView ? QStringLiteral("seven-cpi-backup") : QStringLiteral("seven-cpi-recovery");
+        } else if (Win7Update::isUpdateView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-update");
+        } else if (Win7Action::isActionView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-actioncenter");
+        } else if (Win7Perf::isPerfView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-perf");
+        } else if (Win7Games::isGamesView(m_view)) {
+            placeIcon = QStringLiteral("seven-games");
+        } else if (isFontsView(m_view)) {
+            placeIcon = QStringLiteral("seven-cpi-fonts");
+        } else if (isNetView(m_view)) {
+            placeIcon = m_view != Win7Net::ConnectionsView ? QStringLiteral("seven-net-center") : QStringLiteral("seven-net-computers");
+        } else if (m_view >= FirstCategoryPage) {
+            for (const auto *col : {&leftColumn(), &rightColumn()}) {
+                for (const CategoryInfo &c : *col) {
+                    if (c.title == categoryPages().at(m_view - FirstCategoryPage).title) {
+                        placeIcon = c.icon;
+                    }
+                }
+            }
+        }
+        m_header.icon->setPixmap(QIcon::fromTheme(placeIcon).pixmap(16, 16));
+        m_commandBar->setVisible(m_view == Win7Net::ConnectionsView || m_view == Win7Dev::DevicesView);
+        m_connections = nullptr;
+        m_devices = nullptr;
+        m_programs = nullptr;
+        m_assoc = nullptr;
+        m_fonts = nullptr;
+        m_header.search->setPlaceholderText(m_view == Win7Net::ConnectionsView ? QStringLiteral("Пошук: Мережеві підключення")
+                                                : m_view == Win7Dev::DevicesView ? QStringLiteral("Пошук: Пристрої та принтери")
+                                                : m_view == Win7Games::GamesView ? QStringLiteral("Пошук: Ігри")
+                                                : m_view == Win7Programs::ProgramsView ? QStringLiteral("Пошук: Програми та засоби")
+                                                : m_view == Win7Programs::UpdatesView ? QStringLiteral("Пошук: Встановлені оновлення")
+                                                : m_view == Win7Programs::AssocView ? QStringLiteral("Пошук: Задання зіставлень")
+                                                : (m_view == Win7Fonts::FontsView || m_view == Win7Fonts::FamilyView) ? QStringLiteral("Пошук: Шрифти")
+                                                                                 : QStringLiteral("Пошук у панелі керування"));
+        if (m_view == Win7Dev::DevicesView) {
+            setWindowTitle(QStringLiteral("Пристрої та принтери"));
+            m_devices = new Win7Dev::DevicesPage(m_commandBar, {[this](int v) {
+                                                                    setView(v);
+                                                                },
+                                                                [this] {
+                                                                    close();
+                                                                }});
+            m_scroll->setWidget(m_devices);
+            return;
+        }
+        if (Win7Access::isAccessView(m_view)) {
+            setWindowTitle(Win7Access::viewTitle(m_view));
+            m_scroll->setWidget(Win7Access::build(m_view,
+                                                  {[this](int v) {
+                                                       setView(v);
+                                                   },
+                                                   [this] {
+                                                       setView(CategoryView);
+                                                   },
+                                                   [this] {
+                                                       if (g_launchView == m_view) {
+                                                           close();
+                                                       } else {
+                                                           goBack();
+                                                       }
+                                                   },
+                                                   [](const QStringList &args) {
+                                                       QProcess::startDetached(QCoreApplication::applicationFilePath(), args);
+                                                   }},
+                                                  SpeechView));
+            return;
+        }
+        if (Win7Backup::isBackupView(m_view)) {
+            setWindowTitle(Win7Backup::viewTitle(m_view));
+            m_scroll->setWidget(Win7Backup::build(m_view, {[this](int v) {
+                                                               setView(v);
+                                                           },
+                                                           [this] {
+                                                               setView(CategoryView);
+                                                           },
+                                                           [this] {
+                                                               goBack();
+                                                           },
+                                                           [this](int v) {
+                                                               setView(v);
+                                                           }}));
+            return;
+        }
+        if (Win7Users::isUsersView(m_view)) {
+            setWindowTitle(Win7Users::viewTitle(m_view));
+            m_scroll->setWidget(Win7Users::build(m_view, {[this](int v) {
+                                                               setView(v);
+                                                           },
+                                                           [this] {
+                                                               setView(CategoryView);
+                                                           },
+                                                           [this] {
+                                                               goBack();
+                                                           }}));
+            return;
+        }
+        if (isProgramsView(m_view)) {
+            const Win7Programs::Nav nav{[this](int v) {
+                                            setView(v);
+                                        },
+                                        [this] {
+                                            setView(CategoryView);
+                                        },
+                                        [this] {
+                                            if (g_launchView == m_view) {
+                                                close();
+                                            } else {
+                                                goBack();
+                                            }
+                                        }};
+            switch (m_view) {
+            case Win7Programs::ProgramsView:
+            case Win7Programs::UpdatesView:
+                setWindowTitle(m_view == Win7Programs::ProgramsView ? QStringLiteral("Програми та засоби") : QStringLiteral("Встановлені оновлення"));
+                m_programs = new Win7Programs::ProgramsPage(m_view == Win7Programs::UpdatesView, nav);
+                m_scroll->setWidget(m_programs);
+                break;
+            case Win7Programs::DefaultsView:
+                setWindowTitle(QStringLiteral("Програми за замовчуванням"));
+                m_scroll->setWidget(Win7Programs::buildDefaultsPage(nav, [this] {
+                    setView(Win7Autoplay::AutoplayView);
+                }));
+                break;
+            case Win7Programs::SetDefaultsView:
+                setWindowTitle(QStringLiteral("Задання програм за замовчуванням"));
+                m_scroll->setWidget(new Win7Programs::SetDefaultsPage(nav));
+                break;
+            case Win7Programs::AssocView:
+                setWindowTitle(QStringLiteral("Задання зіставлень"));
+                m_assoc = new Win7Programs::AssocPage(nav);
+                m_scroll->setWidget(m_assoc);
+                break;
+            default:
+                setWindowTitle(QStringLiteral("Задання зіставлень"));
+                m_scroll->setWidget(Win7Programs::buildProgramAssocPage(nav));
+                break;
+            }
+            return;
+        }
+        if (Win7Games::isGamesView(m_view)) {
+            setWindowTitle(QStringLiteral("Ігри"));
+            m_scroll->setWidget(Win7Games::buildGamesPage());
+            return;
+        }
+        if (Win7Perf::isPerfView(m_view)) {
+            setWindowTitle(Win7Perf::viewTitle(m_view));
+            m_scroll->setWidget(Win7Perf::build(m_view, {[this](int v) {
+                                                             setView(v);
+                                                         },
+                                                         [this] {
+                                                             setView(CategoryView);
+                                                         }}));
+            return;
+        }
+        if (Win7Action::isActionView(m_view)) {
+            setWindowTitle(Win7Action::viewTitle(m_view));
+            m_scroll->setWidget(Win7Action::build(m_view, {[this](int v) {
+                                                               setView(v);
+                                                           },
+                                                           [this] {
+                                                               setView(CategoryView);
+                                                           },
+                                                           [this] {
+                                                               if (g_launchView == m_view) {
+                                                                   close();
+                                                               } else {
+                                                                   goBack();
+                                                               }
+                                                           }}));
+            return;
+        }
+        if (Win7Update::isUpdateView(m_view)) {
+            setWindowTitle(Win7Update::viewTitle(m_view));
+            m_scroll->setWidget(Win7Update::build(m_view, {[this](int v) {
+                                                               setView(v);
+                                                           },
+                                                           [this] {
+                                                               setView(CategoryView);
+                                                           },
+                                                           [this] {
+                                                               if (g_launchView == m_view) {
+                                                                   close();
+                                                               } else {
+                                                                   goBack();
+                                                               }
+                                                           }}));
+            return;
+        }
+        if (isFontsView(m_view)) {
+            const Win7Fonts::Nav nav{[this](int v) {
+                                         setView(v);
+                                     },
+                                     [this] {
+                                         setView(CategoryView);
+                                     },
+                                     [this] {
+                                         if (g_launchView == m_view) {
+                                             close();
+                                         } else {
+                                             goBack();
+                                         }
+                                     },
+                                     [](const QStringList &args) {
+                                         QProcess::startDetached(QCoreApplication::applicationFilePath(), args);
+                                     }};
+            if (m_view == Win7Fonts::SettingsView) {
+                setWindowTitle(QStringLiteral("Параметри шрифту"));
+                m_scroll->setWidget(Win7Fonts::buildSettingsPage(nav));
+            } else {
+                setWindowTitle(m_view == Win7Fonts::FamilyView ? Win7Fonts::openedFamily() : QStringLiteral("Шрифти"));
+                m_fonts = new Win7Fonts::FontsPage(m_view == Win7Fonts::FamilyView, nav);
+                m_scroll->setWidget(m_fonts);
+            }
+            return;
+        }
+        if (m_view == Win7Autoplay::AutoplayView) {
+            setWindowTitle(QStringLiteral("Автозапуск"));
+            m_scroll->setWidget(Win7Autoplay::buildPage({[this] {
+                if (g_launchView == Win7Autoplay::AutoplayView) {
+                    close();
+                } else {
+                    goBack();
+                }
+            }}));
+            return;
+        }
+        if (m_view == SpeechView) {
+            setWindowTitle(QStringLiteral("Розпізнавання мовлення"));
+            m_scroll->setWidget(Win7Sound::buildSpeechPage([] {
+                QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--tts")});
+            }));
+            return;
+        }
+        if (isTrayView(m_view)) {
+            const Win7Tray::Nav nav{[this](int v) {
+                                        setView(v);
+                                    },
+                                    [this] {
+                                        if (g_launchView >= 0) { // opened from the tray's "Customize..."
+                                            close();
+                                        } else {
+                                            goBack();
+                                        }
+                                    }};
+            setWindowTitle(QStringLiteral("Значки області сповіщень"));
+            m_scroll->setWidget(m_view == Win7Tray::IconsView ? Win7Tray::buildIconsPage(nav) : Win7Tray::buildSystemPage(nav));
+            return;
+        }
+        if (isFirewallView(m_view)) {
+            const Win7Firewall::Nav nav{[this](int v) {
+                                            setView(v);
+                                        },
+                                        [this] {
+                                            setView(CategoryView);
+                                        },
+                                        [this] {
+                                            goBack();
+                                        },
+                                        [this] {
+                                            setView(Win7Net::CenterView);
+                                        }};
+            if (m_view == Win7Firewall::StatusView) {
+                setWindowTitle(QStringLiteral("Брандмауер"));
+                m_scroll->setWidget(Win7Firewall::buildStatusPage(nav));
+            } else if (m_view == Win7Firewall::AllowedView) {
+                setWindowTitle(QStringLiteral("Дозволені програми"));
+                m_scroll->setWidget(Win7Firewall::buildAllowedPage(nav));
+            } else {
+                setWindowTitle(QStringLiteral("Налаштування параметрів"));
+                m_scroll->setWidget(Win7Firewall::buildSettingsPage(nav));
+            }
+            return;
+        }
+        if (isDisplayView(m_view)) {
+            const Win7Display::Nav nav{[this](int v) {
+                                           setView(v);
+                                       },
+                                       [this] {
+                                           setView(CategoryView);
+                                       },
+                                       [this] {
+                                           goBack();
+                                       },
+                                       [this] {
+                                           setView(Win7Power::PlansView);
+                                       }};
+            if (m_view == Win7Display::PersonalizeView) {
+                setWindowTitle(QStringLiteral("Персоналізація"));
+                m_scroll->setWidget(Win7Display::buildPersonalizePage(nav));
+            } else if (m_view == Win7Background::BackgroundView) {
+                setWindowTitle(QStringLiteral("Фон робочого столу"));
+                auto *page = new Win7Background::BackgroundPage;
+                page->back = [this] {
+                    setView(Win7Display::PersonalizeView);
+                };
+                m_scroll->setWidget(page);
+            } else if (m_view == Win7WindowColor::ColorView) {
+                setWindowTitle(QStringLiteral("Колір і оформлення вікна"));
+                auto *page = new Win7WindowColor::ColorPage;
+                page->back = [this] {
+                    setView(Win7Display::PersonalizeView);
+                };
+                m_scroll->setWidget(page);
+            } else if (m_view == Win7Display::DisplayView) {
+                setWindowTitle(QStringLiteral("Екран"));
+                m_scroll->setWidget(Win7Display::buildDisplayPage(nav));
+            } else {
+                setWindowTitle(QStringLiteral("Роздільна здатність екрана"));
+                m_scroll->setWidget(Win7Display::buildResolutionPage(nav));
+            }
+            return;
+        }
+        if (isNetView(m_view)) {
+            if (m_view == Win7Net::CenterView) {
+                setWindowTitle(QStringLiteral("Центр мереж і спільного доступу"));
+                m_scroll->setWidget(Win7Net::buildCenterPage({[this](int v) {
+                                                                  setView(v);
+                                                              },
+                                                              [this] {
+                                                                  setView(CategoryView);
+                                                              }}));
+            } else if (m_view == Win7Net::SharingView) {
+                setWindowTitle(QStringLiteral("Додаткові параметри спільного доступу"));
+                auto *page = new Win7Sharing::SharingPage;
+                page->back = [this] {
+                    setView(Win7Net::CenterView);
+                };
+                m_scroll->setWidget(page);
+            } else {
+                setWindowTitle(QStringLiteral("Мережеві підключення"));
+                m_connections = new Win7Net::ConnectionsPage(m_commandBar, [this] {
+                    close();
+                });
+                m_scroll->setWidget(m_connections);
+            }
+            return;
+        }
+        if (power) {
+            setWindowTitle(m_view == Win7Power::PlansView     ? QStringLiteral("Електроживлення")
+                               : m_view == Win7Power::ButtonsView ? QStringLiteral("Системні параметри")
+                                                                  : QStringLiteral("Змінити параметри плану"));
+            const Win7Power::Nav nav{[this](int v) {
+                                         setView(v);
+                                     },
+                                     [this] {
+                                         goBack();
+                                     },
+                                     [this] {
+                                         setView(CategoryView);
+                                     }};
+            m_scroll->setWidget(m_view == Win7Power::PlansView     ? Win7Power::buildPlansPage(nav)
+                                : m_view == Win7Power::ButtonsView ? Win7Power::buildButtonsPage(nav)
+                                                                   : Win7Power::buildEditPage(m_view - Win7Power::EditView, nav));
+            return;
+        }
+        setWindowTitle(m_view >= FirstCategoryPage ? categoryPages().at(m_view - FirstCategoryPage).title
+                           : m_view == CategoryView ? QStringLiteral("Панель керування")
+                                                    : QStringLiteral("Усі елементи панелі керування"));
+        if (m_view >= FirstCategoryPage) {
+            m_scroll->setWidget(buildCategoryPage(categoryPages().at(m_view - FirstCategoryPage)));
+            return;
+        }
+
+        auto *page = new QWidget;
+        page->setObjectName(QStringLiteral("win7page"));
+        page->setAttribute(Qt::WA_StyledBackground, true);
+        page->setStyleSheet(QStringLiteral("#win7page { background: #ffffff; }"));
+        // Windows 7 (measured): the category view is a column at most 698 px wide, centred in the window;
+        // the icon views use the whole width
+        auto *outerH = new QHBoxLayout(page);
+        outerH->setContentsMargins(0, 0, 0, 0);
+        auto *column = new QWidget;
+        if (m_view == CategoryView) {
+            column->setMaximumWidth(698);
+            outerH->addStretch(1);
+            outerH->addWidget(column, 100);
+            outerH->addStretch(1);
+        } else {
+            outerH->addWidget(column, 1);
+        }
+        auto *v = new QVBoxLayout(column);
+        v->setContentsMargins(m_view == CategoryView ? 0 : 40, 14, m_view == CategoryView ? 0 : 40, 20);
+        v->setSpacing(0);
+
+        // Title and "View by: Category ▾"
+        auto *top = new QHBoxLayout;
+        auto *title = new QLabel(QStringLiteral("Налаштування параметрів комп'ютера"));
+        QFont tf = title->font();
+        tf.setPixelSize(16);
+        title->setFont(tf);
+        title->setStyleSheet(QStringLiteral("color: #1e3287;"));
+        top->addWidget(title, 1);
+        top->addWidget(grey(QStringLiteral("Перегляд:")));
+        auto *viewBy = new QToolButton;
+        viewBy->setText(viewName(m_view));
+        viewBy->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        viewBy->setPopupMode(QToolButton::InstantPopup);
+        viewBy->setCursor(Qt::PointingHandCursor);
+        viewBy->setStyleSheet(QStringLiteral(
+            "QToolButton { border: 1px solid transparent; border-radius: 2px; color: #0066cc; background: transparent; padding: 1px 14px 1px 3px; }"
+            "QToolButton:hover { border-color: #b8d6fb; background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fafbfd, stop:1 #ebf3fd); }"
+            "QToolButton::menu-indicator { image: none; width: 0px; }"));
+        auto *arrowLabel = new QLabel(viewBy);
+        {
+            QPixmap arrow(7, 4);
+            arrow.fill(Qt::transparent);
+            QPainter p(&arrow);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(0x33, 0x66, 0xcc));
+            p.drawPolygon(QPolygonF({QPointF(0, 0), QPointF(7, 0), QPointF(3.5, 4)}));
+            p.end();
+            arrowLabel->setPixmap(arrow);
+        }
+        auto *menu = new QMenu(viewBy);
+        auto *group = new QActionGroup(menu);
+        for (int view : {CategoryView, LargeIcons, SmallIcons}) {
+            QAction *a = menu->addAction(viewName(view), this, [this, view] {
+                setView(view);
+            });
+            a->setCheckable(true);
+            a->setChecked(view == m_view);
+            group->addAction(a);
+            if (view == CategoryView) {
+                menu->addSeparator();
+            }
+        }
+        viewBy->setMenu(menu);
+        top->addWidget(viewBy);
+        v->addLayout(top);
+        QTimer::singleShot(0, arrowLabel, [viewBy, arrowLabel] {
+            arrowLabel->move(viewBy->width() - 11, (viewBy->height() - 4) / 2 + 1);
+        });
+
+        if (m_view == CategoryView) {
+            v->addSpacing(28);
+            auto *cols = new QHBoxLayout;
+            cols->setSpacing(0); // two 350 px columns (Windows 7)
+            for (const auto *col : {&leftColumn(), &rightColumn()}) {
+                auto *cv = new QVBoxLayout;
+                cv->setSpacing(18);
+                for (const CategoryInfo &c : *col) {
+                    cv->addWidget(categoryBlock(c));
+                }
+                cv->addStretch(1);
+                cols->addLayout(cv, 1);
+            }
+            v->addLayout(cols);
+        } else {
+            // thin line under the title, then the items in columns
+            auto *line = new QFrame;
+            line->setFixedHeight(1);
+            line->setStyleSheet(QStringLiteral("background: #e6ebf3;"));
+            v->addSpacing(12);
+            v->addWidget(line);
+            v->addSpacing(16);
+            QList<Item> items = allItems();
+            if (!m_filter.isEmpty()) {
+                items.erase(std::remove_if(items.begin(), items.end(), [this](const Item &i) {
+                                return !i.name.contains(m_filter, Qt::CaseInsensitive);
+                            }),
+                            items.end());
+            }
+            const bool large = (m_view == LargeIcons);
+            // the items flow left to right and wrap like an Explorer icon view
+            const int columns = itemColumns();
+            m_columns = columns;
+            auto *grid = new QGridLayout;
+            grid->setHorizontalSpacing(large ? 24 : 16);
+            grid->setVerticalSpacing(large ? 10 : 3);
+            for (int k = 0; k < items.size(); ++k) {
+                const Item &it = items.at(k);
+                QIcon icon = large ? QIcon::fromTheme(it.bigIcon, QIcon::fromTheme(it.icon)) : QIcon::fromTheme(it.icon);
+                grid->addWidget(new ItemLink(icon, large ? 32 : 16, it.name, it.open), k / columns, k % columns);
+            }
+            for (int c = 0; c < columns; ++c) {
+                grid->setColumnStretch(c, 1);
+            }
+            v->addLayout(grid);
+            if (items.isEmpty()) {
+                v->addWidget(grey(QStringLiteral("Немає елементів, що відповідають умовам пошуку.")));
+            }
+        }
+        v->addStretch(1);
+        m_scroll->setWidget(page);
+    }
+
+    /** Left: category list on a light blue pane. Right: the sections of the category */
+    QWidget *buildCategoryPage(const CategoryPage &page)
+    {
+        auto *root = new QWidget;
+        root->setObjectName(QStringLiteral("win7page"));
+        root->setAttribute(Qt::WA_StyledBackground, true);
+        root->setStyleSheet(QStringLiteral("#win7page { background: #ffffff; }"
+                                           "#win7side { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #e3ecf8, stop:0.5 #eef3fb, stop:1 #f3f7fc);"
+                                           " border-right: 1px solid #e0e8f3; }"));
+        auto *h = new QHBoxLayout(root);
+        h->setContentsMargins(0, 0, 0, 0);
+        h->setSpacing(0);
+
+        auto *side = new QWidget;
+        side->setObjectName(QStringLiteral("win7side"));
+        side->setAttribute(Qt::WA_StyledBackground, true);
+        side->setFixedWidth(200);
+        auto *sv = new QVBoxLayout(side);
+        sv->setContentsMargins(6, 16, 10, 14);
+        sv->setSpacing(7);
+        const QString sideColor = QStringLiteral("#151c55");
+        // one row = [bullet column][text]; the bullet is only shown for the current category
+        auto addRow = [sv](QWidget *text, bool current) {
+            auto *row = new QHBoxLayout;
+            row->setContentsMargins(0, 0, 0, 0);
+            row->setSpacing(0);
+            // Win7 draws a small antialiased 6x5 dot in the text colour, centred on the cap height
+            struct Dot : QWidget {
+                bool on;
+                explicit Dot(bool c) : on(c) { setFixedSize(23, 16); }
+                void paintEvent(QPaintEvent *) override
+                {
+                    if (!on) {
+                        return;
+                    }
+                    QPainter p(this);
+                    p.setRenderHint(QPainter::Antialiasing);
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(QColor(0x15, 0x1c, 0x55));
+                    p.drawEllipse(QRectF(5.6, 6.4, 5.4, 5.4));
+                }
+            };
+            auto *dot = new Dot(current);
+            row->addWidget(dot, 0, Qt::AlignTop);
+            row->addWidget(text, 1);
+            sv->addLayout(row);
+        };
+        addRow(new Link(QStringLiteral("Панель керування — домашня сторінка"), [this] {
+                   setView(CategoryView);
+               }, sideColor),
+               false);
+        sv->addSpacing(9);
+        for (const auto *col : {&leftColumn(), &rightColumn()}) {
+            for (const CategoryInfo &c : *col) {
+                if (c.title == page.title) {
+                    auto *cur = new QLabel(c.title);
+                    cur->setWordWrap(true);
+                    cur->setStyleSheet(QStringLiteral("color: #151c55; font-weight: bold;"));
+                    addRow(cur, true);
+                } else {
+                    addRow(new Link(c.title, c.open, sideColor), false);
+                }
+            }
+        }
+        sv->addStretch(1);
+        h->addWidget(side);
+
+        auto *main = new QWidget;
+        auto *mv = new QVBoxLayout(main);
+        mv->setContentsMargins(10, 10, 26, 20);
+        mv->setSpacing(4);
+        for (const PageSection &sec : page.sections) {
+            mv->addWidget(pageSection(sec));
+        }
+        mv->addStretch(1);
+        h->addWidget(main, 1);
+        return root;
+    }
+
+    QScrollArea *m_scroll;
+    /** as many columns as fit, like the Large/Small icons views of Windows 7 */
+    int itemColumns() const
+    {
+        const int w = m_scroll->viewport()->width() - 80;
+        return m_view == LargeIcons ? qBound(2, w / 250, 6) : qBound(2, w / 220, 7);
+    }
+
+    void resizeEvent(QResizeEvent *e) override
+    {
+        QMainWindow::resizeEvent(e);
+        if ((m_view == LargeIcons || m_view == SmallIcons) && m_columns && itemColumns() != m_columns) {
+            QTimer::singleShot(0, this, [this] {
+                rebuild();
+            });
+        }
+    }
+
+    int m_columns = 0;
+    QToolBar *m_commandBar;
+    Win7Net::ConnectionsPage *m_connections = nullptr;
+    Win7Dev::DevicesPage *m_devices = nullptr;
+    Win7Programs::ProgramsPage *m_programs = nullptr;
+    Win7Fonts::FontsPage *m_fonts = nullptr;
+    Win7Programs::AssocPage *m_assoc = nullptr;
+    Win7Header m_header;
+    int m_view = CategoryView;
+    QList<int> m_history;
+    QList<int> m_future;
+    QString m_filter;
+};
+}
+
+#include <xcb/xcb.h>
+
+int runKRunner(); // sevenrunner.cpp
+
+int main(int argc, char **argv)
+{
+    // Disk Management: a WM_CLASS no desktop file is named after, so KWin keeps the snap-in icon in the title bar
+    // while the taskbar maps it to seven-diskmgmt.desktop (taskmanagerrulesrc) and shows the mmc.exe toolbox
+    for (int i = 1; i < argc; ++i) {
+        // the Action Center flag in the tray asks for the messages, no window
+        if (qstrcmp(argv[i], "--action-center-status") == 0) {
+            QCoreApplication core(argc, argv);
+            fputs(Win7Action::statusJson().constData(), stdout);
+            fputs("\n", stdout);
+            return 0;
+        }
+        if (qstrcmp(argv[i], "--screensaver-settings") == 0 || qstrcmp(argv[i], "--appearance-advanced") == 0) {
+            qputenv("RESOURCE_NAME", "seven-desk"); // desk.cpl's own taskbar button and icon
+        }
+        if (qstrcmp(argv[i], "--notepad") == 0) {
+            qputenv("RESOURCE_NAME", "seven-notepad"); // its own taskbar button and icon
+        }
+        if (qstrcmp(argv[i], "--diskmgmt") == 0) {
+            qputenv("RESOURCE_NAME", "win7diskmgmtconsole");
+        }
+        if (qstrcmp(argv[i], "--backup-run") == 0) {
+            qputenv("QT_QPA_PLATFORM", "offscreen"); // runs from the systemd timer, without windows
+        }
+        if (qstrcmp(argv[i], "--eventvwr") == 0) {
+            qputenv("RESOURCE_NAME", "win7eventvwrconsole");
+        }
+        if (qstrcmp(argv[i], "--compmgmt") == 0) {
+            qputenv("RESOURCE_NAME", "win7compmgmtconsole");
+        }
+    }
+    QApplication app(argc, argv);
+    // Windows 7 screen savers: one running full screen, or the resident part that starts them after the wait
+    {
+        const int saverArg = app.arguments().indexOf(QStringLiteral("--screensaver"));
+        if (saverArg > 0) {
+            app.setQuitOnLastWindowClosed(true);
+            new Win7ScreenSaver::FullScreen(app.arguments().value(saverArg + 1, QStringLiteral("blank")),
+                                            app.arguments().contains(QStringLiteral("--lock")) || (app.arguments().size() <= saverArg + 2
+                                                                                                   && Win7ScreenSaver::config().readEntry("Lock", false)
+                                                                                                   && !app.arguments().contains(QStringLiteral("--preview"))));
+            return app.exec();
+        }
+        if (app.arguments().contains(QStringLiteral("--screensaver-daemon"))) {
+            // one at a time
+            QDBusConnection bus = QDBusConnection::sessionBus();
+            if (!bus.registerService(QStringLiteral("org.sevenplasma.ScreenSaverDaemon"))) {
+                return 0;
+            }
+            app.setQuitOnLastWindowClosed(false);
+            new Win7ScreenSaver::Daemon;
+            return app.exec();
+        }
+        if (app.arguments().contains(QStringLiteral("--appearance-advanced"))) {
+            app.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-desk")));
+            app.setDesktopFileName(QStringLiteral("seven-desk")); // its own taskbar button
+            Win7WindowColor::AdvancedDialog dlg;
+            dlg.show();
+            QObject::connect(&dlg, &QDialog::finished, &app, &QApplication::quit);
+            return app.exec();
+        }
+        if (app.arguments().contains(QStringLiteral("--screensaver-settings"))) {
+            app.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-desk")));
+            app.setDesktopFileName(QStringLiteral("seven-desk")); // its own taskbar button
+            Win7ScreenSaver::SettingsDialog dlg;
+            dlg.show();
+            QObject::connect(&dlg, &QDialog::finished, &app, &QApplication::quit);
+            return app.exec();
+        }
+    }
+    // test helper: WIN7_GRAB=<prefix> saves the active window every 1.5 s (offscreen too); WIN7_GRAB_CLICK="Далі|Далі"
+    // presses those buttons one by one in between, so pages can be checked without touching the screen
+    if (!qEnvironmentVariableIsEmpty("WIN7_GRAB")) {
+        auto *timer = new QTimer(&app);
+        static int shot = 0;
+        static QStringList clicks = qEnvironmentVariable("WIN7_GRAB_CLICK").split(QLatin1Char('|'), Qt::SkipEmptyParts);
+        QObject::connect(timer, &QTimer::timeout, &app, [] {
+            QWidget *w = QApplication::activeModalWidget();
+            if (!w) {
+                for (QWidget *t : QApplication::topLevelWidgets()) {
+                    if (t->isVisible() && !qobject_cast<QMenu *>(t) && t->width() > 200) {
+                        w = t;
+                    }
+                }
+            }
+            if (!w) {
+                return;
+            }
+            w->grab().save(qEnvironmentVariable("WIN7_GRAB") + QStringLiteral("%1.png").arg(shot++, 2, 10, QLatin1Char('0')));
+            if (clicks.isEmpty()) {
+                QApplication::exit(0);
+                _exit(0);
+            }
+            const QString want = clicks.takeFirst();
+            if (want.startsWith(QLatin1String("radio:"))) {
+                for (QRadioButton *b : w->findChildren<QRadioButton *>()) {
+                    if (b->text() == want.mid(6) && b->isVisible()) {
+                        b->click();
+                    }
+                }
+                return;
+            }
+            if (want.startsWith(QLatin1String("item:"))) {
+                for (QTreeWidget *t : w->findChildren<QTreeWidget *>()) {
+                    const auto found = t->findItems(want.mid(5), Qt::MatchExactly | Qt::MatchRecursive);
+                    if (!found.isEmpty()) {
+                        t->setCurrentItem(found.first());
+                        return;
+                    }
+                }
+                return;
+            }
+            if (want.startsWith(QLatin1String("tab:"))) {
+                if (auto *t = w->findChild<QTabWidget *>()) {
+                    t->setCurrentIndex(want.mid(4).toInt());
+                }
+                return;
+            }
+            if (want.startsWith(QLatin1String("size:"))) {
+                w->resize(want.mid(5).section(QLatin1Char('x'), 0, 0).toInt(), want.mid(5).section(QLatin1Char('x'), 1, 1).toInt());
+                return;
+            }
+            if (want.startsWith(QLatin1String("view:")) && g_openView) {
+                g_openView(want.mid(5).toInt());
+                return;
+            }
+            if (want.startsWith(QLatin1String("link:"))) {
+                for (QLabel *l : w->findChildren<QLabel *>()) {
+                    if (l->text() == want.mid(5) && l->isVisible()) {
+                        QTimer::singleShot(0, l, [l] {
+                            const QPointF c = QRectF(l->rect()).center();
+                            QMouseEvent press(QEvent::MouseButtonPress, c, l->mapToGlobal(c), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                            QMouseEvent release(QEvent::MouseButtonRelease, c, l->mapToGlobal(c), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                            QCoreApplication::sendEvent(l, &press);
+                            QCoreApplication::sendEvent(l, &release);
+                        });
+                        return;
+                    }
+                }
+                return;
+            }
+            if (want.startsWith(QLatin1String("list:"))) {
+                for (QListWidget *l : w->findChildren<QListWidget *>()) {
+                    if (l->isVisible() && l->count() > want.mid(5).toInt()) {
+                        l->setCurrentRow(want.mid(5).toInt());
+                    }
+                }
+                return;
+            }
+            if (want.startsWith(QLatin1String("row:"))) {
+                for (QTreeWidget *t : w->findChildren<QTreeWidget *>()) {
+                    if (t->isVisible() && t->topLevelItemCount() > want.mid(4).toInt()) {
+                        t->setCurrentItem(t->topLevelItem(want.mid(4).toInt()));
+                    }
+                }
+                return;
+            }
+            for (QAbstractButton *b : w->findChildren<QAbstractButton *>()) {
+                if (b->text().remove(QLatin1Char('&')) == want && b->isVisible() && b->isEnabled()) {
+                    QTimer::singleShot(0, b, &QAbstractButton::click);
+                    return;
+                }
+            }
+        });
+        timer->start(1500);
+    }
+    app.setApplicationName(QStringLiteral("seven-control"));
+    app.setApplicationDisplayName(QStringLiteral("Панель керування"));
+    app.setDesktopFileName(QStringLiteral("seven-control"));
+    Aero::registerStylesheet(&app);
+    app.setStyle(new Win7ButtonStyle(QApplication::style())); // on top of the Aero style: shields on buttons
+    Win7TabEdgeFix::install(&app);
+
+    // tray menu "Troubleshoot problems"
+    if (app.arguments().contains(QStringLiteral("--net-troubleshoot"))) {
+        Win7Net::diagnoseNetwork(nullptr);
+        return 0;
+    }
+    // desktop shortcuts of network connections open only the dialog
+    const int netConnect = app.arguments().indexOf(QStringLiteral("--net-connect"));
+    const int netStatus = app.arguments().indexOf(QStringLiteral("--net-status"));
+    if (netConnect > 0 || netStatus > 0) {
+        app.setApplicationDisplayName(QString()); // "Стан: …" without " — Панель керування", like Windows 7
+        const auto tile = Win7Net::findTile(app.arguments().value((netConnect > 0 ? netConnect : netStatus) + 1));
+        if (!tile) {
+            QMessageBox::warning(nullptr, QStringLiteral("Мережеві підключення"), QStringLiteral("Підключення не знайдено."));
+            return 1;
+        }
+        if (netConnect > 0 && !tile->active) {
+            Win7Net::connectDialog(nullptr, *tile, [] {});
+            return 0;
+        }
+        if (!tile->active) {
+            return 0;
+        }
+        auto *status = new Win7Net::StatusDialog(nullptr, *tile, [] {});
+        status->show();
+        return app.exec();
+    }
+
+    // stand-alone Windows 7 dialogs: plain titles, without " — Панель керування"
+    if (app.arguments().contains(QStringLiteral("--autoplay-ask"))) { // test helper: the AutoPlay window for a USB drive
+        Win7Autoplay::Media m;
+        m.device = QStringLiteral("/dev/sdx1");
+        m.label = QStringLiteral("Знімний диск");
+        m.type = QStringLiteral("mixed");
+        Win7Autoplay::askDialog(m);
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--soundfx-rebuild"))) {
+        Win7SoundFx::rebuild(); // regenerate the Enhancements filters from ~/.config/seven-soundfxrc
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--balloon-test"))) { // test helper: the USB speed balloon
+        Win7SafelyRemove::balloon(QStringLiteral("Цей пристрій може працювати швидше"),
+                                  QStringLiteral("Цей USB-пристрій може працювати швидше, якщо підключити його до високошвидкісного порту USB 2.0.\nЩоб переглянути список доступних портів, клацніть тут."));
+        QTimer::singleShot(4000, &app, &QCoreApplication::quit);
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--autoplay-watch"))) {
+        return Win7Autoplay::watch(app);
+    }
+    for (const char *flag : {"--sysprops", "--visualfx", "--sndvol", "--mouse", "--sound", "--tts", "--datetime", "--set-datetime", "--timezone", "--region", "--text-services", "--taskbar-props", "--new-toolbar"}) {
+        if (app.arguments().contains(QLatin1String(flag))) {
+            app.setApplicationDisplayName(QString());
+        }
+    }
+    // Date and Time, Region and Language (each with its own desktop file for the title bar icon)
+    auto argAfter = [&](const QString &flag) {
+        return app.arguments().value(app.arguments().indexOf(flag) + 1).toInt();
+    };
+    if (app.arguments().contains(QStringLiteral("--datetime"))) {
+        app.setDesktopFileName(QStringLiteral("seven-datetime"));
+        auto *dlg = new Win7Time::DateTimeDialog(argAfter(QStringLiteral("--datetime")));
+        dlg->openRegion = [] {
+            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--region")});
+        };
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--set-datetime"))) {
+        app.setDesktopFileName(QStringLiteral("seven-datetime"));
+        Win7Time::DateTimeSettings dlg(nullptr);
+        dlg.openCalendarSettings = [] {
+            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--region")});
+        };
+        dlg.exec();
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--timezone"))) {
+        app.setDesktopFileName(QStringLiteral("seven-datetime"));
+        Win7Time::TimeZoneSettings dlg(nullptr);
+        dlg.exec();
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--play-sound"))) {
+        Win7Sound::playSound(app.arguments().value(app.arguments().indexOf(QStringLiteral("--play-sound")) + 1));
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--sound"))) {
+        app.setDesktopFileName(QStringLiteral("seven-sound"));
+        auto *dlg = new Win7Sound::SoundDialog(argAfter(QStringLiteral("--sound")));
+        dlg->openSpeech = [] {
+            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--speech")});
+        };
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--winsat"))) {
+        // like "winsat formal": rate the computer and print the scores
+        const bool ok = Win7Perf::rate(nullptr);
+        QSettings &w = Win7Perf::store();
+        for (const char *k : {"Processor", "Memory", "Graphics", "Gaming", "Disk"}) {
+            printf("%s: %.1f\n", k, w.value(QStringLiteral("Scores/") + QLatin1String(k)).toDouble());
+        }
+        return ok ? 0 : 1;
+    }
+    if (app.arguments().contains(QStringLiteral("--sysprops"))) {
+        app.setDesktopFileName(QStringLiteral("seven-system"));
+        (new Win7SysProps::SystemProperties(argAfter(QStringLiteral("--sysprops"))))->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--sndvol"))) {
+        app.setDesktopFileName(QStringLiteral("seven-sndvol"));
+        (new Win7SndVol::Mixer)->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--visualfx-apply"))) {
+        return Win7VisualFx::applyAtLogin();
+    }
+    if (app.arguments().contains(QStringLiteral("--visualfx"))) {
+        app.setDesktopFileName(QStringLiteral("seven-system"));
+        (new Win7VisualFx::PerformanceOptions)->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--mouse"))) {
+        app.setDesktopFileName(QStringLiteral("seven-mouse"));
+        (new Win7Mouse::MouseDialog(argAfter(QStringLiteral("--mouse"))))->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--tts"))) {
+        app.setDesktopFileName(QStringLiteral("seven-sound"));
+        Win7Sound::SpeechProperties dlg;
+        dlg.exec();
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--region"))) {
+        app.setDesktopFileName(QStringLiteral("seven-region"));
+        (new Win7Region::RegionDialog(argAfter(QStringLiteral("--region"))))->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--text-services"))) {
+        app.setDesktopFileName(QStringLiteral("seven-textservices"));
+        Win7Region::TextServicesDialog dlg(argAfter(QStringLiteral("--text-services")));
+        dlg.exec();
+        return 0;
+    }
+
+    // taskbar menu > Toolbars
+    const int toolbarArg = app.arguments().indexOf(QStringLiteral("--toolbar"));
+    if (toolbarArg > 0) {
+        Win7Taskbar::toggleToolbar(app.arguments().value(toolbarArg + 1));
+        return 0;
+    }
+    const int removeArg = app.arguments().indexOf(QStringLiteral("--toolbar-remove"));
+    if (removeArg > 0) {
+        Win7Taskbar::removeToolbar(app.arguments().value(removeArg + 1).toInt());
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--new-toolbar"))) {
+        Win7Taskbar::newToolbar();
+        return 0;
+    }
+    const int propsArg = app.arguments().indexOf(QStringLiteral("--taskbar-props"));
+    if (propsArg > 0) { // right click on the taskbar / Start button > Properties
+        app.setDesktopFileName(QStringLiteral("seven-taskbar-props")); // the title bar takes its icon from here
+        Win7Taskbar::showProperties(app.arguments().value(propsArg + 1) == QLatin1String("start") ? 1 : 0);
+        return app.exec();
+    }
+
+    ControlPanel w(app.arguments().contains(QStringLiteral("--all")));
+    const int pageArg = app.arguments().indexOf(QStringLiteral("--page"));
+    if (pageArg > 0 && g_openCategoryPage) {
+        g_openCategoryPage(app.arguments().value(pageArg + 1).toInt());
+    }
+    // "--view <n>": open one applet page directly (Explorer's "Uninstall or change a program" opens 30)
+    const int viewArg = app.arguments().indexOf(QStringLiteral("--view"));
+    if (viewArg > 0 && g_openView) {
+        g_openView(app.arguments().value(viewArg + 1).toInt());
+    }
+    if (app.arguments().contains(QStringLiteral("--desktop-icons"))) {
+        Win7Display::desktopIconsDialog(nullptr);
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--speech")) && g_openView) {
+        g_openView(97);
+    }
+    const int trayArg = app.arguments().indexOf(QStringLiteral("--tray-icons"));
+    if (trayArg > 0 && g_openView) {
+        g_launchView = app.arguments().value(trayArg + 1) == QLatin1String("system") ? Win7Tray::SystemView : Win7Tray::IconsView;
+        g_openView(g_launchView);
+    }
+    if (app.arguments().contains(QStringLiteral("--games")) && g_openView) {
+        app.setDesktopFileName(QStringLiteral("seven-games"));
+        g_openView(Win7Games::GamesView);
+    }
+    if (app.arguments().contains(QStringLiteral("--perf")) && g_openView) {
+        g_openView(Win7Perf::PerfView);
+    }
+    if (app.arguments().contains(QStringLiteral("--devices")) && g_openView) {
+        g_openView(Win7Dev::DevicesView);
+    }
+    if (app.arguments().contains(QStringLiteral("--autoplay")) && g_openView) {
+        g_launchView = Win7Autoplay::AutoplayView;
+        g_openView(g_launchView);
+    }
+    if (app.arguments().contains(QStringLiteral("--add-printer"))) {
+        app.setDesktopFileName(QStringLiteral("seven-add-printer"));
+        auto *wiz = new Win7Printer::AddPrinterWizard(nullptr, {});
+        QObject::connect(wiz, &QObject::destroyed, &app, &QCoreApplication::quit);
+        wiz->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--krunner"))) {
+        app.setQuitOnLastWindowClosed(false);
+        return runKRunner();
+    }
+    const int cleanArg = app.arguments().indexOf(QStringLiteral("--cleanmgr"));
+    if (cleanArg > 0) {
+        app.setDesktopFileName(QStringLiteral("seven-cleanmgr"));
+        auto *dlg = new Win7Cleanup::CleanupDialog(app.arguments().value(cleanArg + 1) == QLatin1String("system"));
+        if (!dlg->prepare()) {
+            return 0;
+        }
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--diskmgmt"))) {
+        // Windows 7: the title bar shows the snap-in icon, the taskbar the mmc.exe toolbox. KWin would take the
+        // title bar icon from a desktop file too, so the taskbar finds seven-diskmgmt.desktop by window class instead
+        app.setDesktopFileName(QStringLiteral("win7diskmgmtconsole")); // no such desktop file: KWin keeps our window icon
+        app.setApplicationName(QStringLiteral("Win7DiskMgmtConsole"));
+        auto *w = new Win7Disk::DiskManagement;
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--compmgmt"))) {
+        // like the other MMC consoles: the snap-in icon in the title bar, the console in the taskbar
+        app.setDesktopFileName(QStringLiteral("win7compmgmtconsole"));
+        app.setApplicationName(QStringLiteral("Win7CompMgmtConsole"));
+        app.setApplicationDisplayName(QString());
+        auto *cm = new Win7Compmgmt::ComputerManagement;
+        cm->window()->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--eventvwr"))) {
+        // same as Disk Management: the snap-in icon in the title bar, the mmc.exe toolbox in the taskbar
+        app.setDesktopFileName(QStringLiteral("win7eventvwrconsole"));
+        app.setApplicationName(QStringLiteral("Win7EventVwrConsole"));
+        app.setApplicationDisplayName(QString());
+        auto *w = new Win7Event::EventViewer;
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--wf-newrule"))) { // test helper: the new rule wizard alone
+        Win7Wf::RuleWizard w(nullptr, true);
+        w.exec();
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--wf"))) {
+        app.setDesktopFileName(QStringLiteral("seven-wf"));
+        app.setApplicationDisplayName(QString());
+        auto *w = new Win7Wf::FirewallConsole;
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--backup-run"))) {
+        return Win7Backup::runBackup();
+    }
+    if (app.arguments().contains(QStringLiteral("--restore-files"))) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        const Win7Backup::Settings bs = Win7Backup::load();
+        const QString root = bs.configured ? Win7Backup::destinationRoot(bs) : QString();
+        Win7Backup::RestoreWizard w(nullptr, root.isEmpty() || Win7Backup::setsIn(root).isEmpty(), root);
+        w.exec();
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--sysimage"))) {
+        Win7Backup::createSystemImage(nullptr);
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--rstrui"))) {
+        if (Win7Backup::ensureTimeshift(nullptr)) {
+            Win7Backup::SystemRestore(nullptr).exec();
+        }
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--memtest"))) {
+        app.setDesktopFileName(QStringLiteral("seven-memtest"));
+        return Win7Memtest::run();
+    }
+    if (app.arguments().contains(QStringLiteral("--osk"))) {
+        app.setDesktopFileName(QStringLiteral("seven-osk"));
+        (new Win7Access::KeyboardWindow)->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--magnifier"))) {
+        app.setDesktopFileName(QStringLiteral("seven-magnifier"));
+        auto *m = new Win7Access::MagnifierWindow;
+        m->move(QGuiApplication::primaryScreen()->availableGeometry().topLeft() + QPoint(60, 40));
+        m->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--narrator"))) {
+        app.setDesktopFileName(QStringLiteral("seven-narrator"));
+        (new Win7Access::NarratorWindow)->show();
+        return app.exec();
+    }
+    const int keyboardArg = app.arguments().indexOf(QStringLiteral("--keyboard"));
+    if (keyboardArg > 0) {
+        app.setDesktopFileName(QStringLiteral("seven-keyboard"));
+        (new Win7Access::KeyboardDialog(app.arguments().value(keyboardArg + 1).toInt()))->show();
+        return app.exec();
+    }
+    const int fontviewArg = app.arguments().indexOf(QStringLiteral("--fontview"));
+    if (fontviewArg > 0) {
+        app.setDesktopFileName(QStringLiteral("seven-fontview"));
+        const QString file = QFileInfo(app.arguments().value(fontviewArg + 1)).absoluteFilePath();
+        auto *w = new Win7Fonts::FontViewer(file, app.arguments().value(fontviewArg + 2).toInt());
+        w->show();
+        if (app.arguments().contains(QStringLiteral("--print"))) {
+            QTimer::singleShot(0, w, [w] {
+                w->printSheet();
+                w->close();
+            });
+        }
+        return app.exec();
+    }
+    const int installArg = app.arguments().indexOf(QStringLiteral("--font-install"));
+    if (installArg > 0) {
+        QStringList files;
+        for (const QString &f : app.arguments().mid(installArg + 1)) {
+            files << QFileInfo(f).absoluteFilePath();
+        }
+        Win7Fonts::installFonts(nullptr, files);
+        return 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--inetopts"))) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        auto *dlg = new Win7Inet::InternetOptions;
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--colormgmt"))) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        auto *dlg = new Win7Color::ColorManagement;
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--run"))) {
+        app.setDesktopFileName(QStringLiteral("seven-run"));
+        auto *dlg = new Win7Run::RunDialog;
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        dlg->raise();
+        dlg->activateWindow();
+        return app.exec();
+    }
+    const int notepadArg = app.arguments().indexOf(QStringLiteral("--notepad"));
+    if (notepadArg > 0) {
+        app.setDesktopFileName(QStringLiteral("seven-notepad"));
+        app.setApplicationDisplayName(QString());
+        QString file = app.arguments().value(notepadArg + 1);
+        if (file.startsWith(QLatin1String("file://"))) {
+            file = QUrl(file).toLocalFile();
+        }
+        auto *w = new Win7Notepad::Notepad(file.startsWith(QLatin1String("--")) ? QString() : file);
+        w->setAttribute(Qt::WA_DeleteOnClose);
+        w->show();
+        return app.exec();
+    }
+    const int propertiesArg = app.arguments().indexOf(QStringLiteral("--properties"));
+    if (propertiesArg > 0) {
+        // seven-properties.desktop has no icon: the taskbar and the title bar show the item's icon, like Windows 7
+        app.setDesktopFileName(QStringLiteral("seven-properties"));
+        QStringList paths;
+        for (const QString &f : app.arguments().mid(propertiesArg + 1)) {
+            if (!f.startsWith(QLatin1String("--")) && QFileInfo::exists(f)) {
+                paths << QFileInfo(f).absoluteFilePath();
+            }
+        }
+        if (paths.isEmpty()) {
+            return 1;
+        }
+        // the Recycle Bin on the desktop: its own Properties, like Windows 7
+        if (paths.size() == 1 && Win7Trash::isTrashLink(paths.first())) {
+            app.setApplicationDisplayName(QString());
+            auto *bin = new Win7Trash::RecycleBinDialog;
+            QObject::connect(bin, &QObject::destroyed, &app, &QCoreApplication::quit);
+            bin->show();
+            return app.exec();
+        }
+        auto *dlg = new Win7Props::PropertiesDialog(paths);
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    const int openWithArg = app.arguments().indexOf(QStringLiteral("--open-with"));
+    if (openWithArg > 0) {                                 // Windows 7 "Open with" for local files (called by kio-win7)
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        QStringList files;
+        for (const QString &a : app.arguments().mid(openWithArg + 1)) if (!a.startsWith(QLatin1String("--"))) files << QFileInfo(a).absoluteFilePath();
+        if (files.isEmpty()) return 1;
+        auto *dlg = new Win7OpenWith::Dialog(files);
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--netplwiz"))) {       // netplwiz / control userpasswords2
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        Win7Users::NetplwizDialog d;
+        // a Windows 7 dialog frame: no icon, no minimise / maximise (smodrc exception ^seven-dialog)
+        if (auto *x11 = app.nativeInterface<QNativeInterface::QX11Application>()) {
+            static const char wmClass[] = "seven-dialog\0seven-control";
+            xcb_change_property(x11->connection(), XCB_PROP_MODE_REPLACE, d.winId(), XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, sizeof(wmClass), wmClass);
+        }
+        return d.exec() == QDialog::Accepted ? 0 : 1;
+    }
+    const int browseArg = app.arguments().indexOf(QStringLiteral("--browse-folder"));
+    if (browseArg > 0) {                                   // Windows 7 "Browse For Folder"; prints the chosen folder
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        const QString start = app.arguments().value(browseArg + 1);
+        const QString dir = Win7BrowseFolder::getFolder(nullptr, QStringLiteral("Виберіть папку."), start.startsWith(QLatin1String("--")) ? QString() : start);
+        if (!dir.isEmpty()) printf("%s\n", dir.toLocal8Bit().constData());
+        return dir.isEmpty() ? 1 : 0;
+    }
+    if (app.arguments().contains(QStringLiteral("--trash-props"))) {
+        app.setDesktopFileName(QStringLiteral("seven-properties"));
+        app.setApplicationDisplayName(QString());
+        auto *bin = new Win7Trash::RecycleBinDialog;
+        QObject::connect(bin, &QObject::destroyed, &app, &QCoreApplication::quit);
+        bin->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--add-device"))) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        app.setQuitOnLastWindowClosed(true);
+        Win7Dev::addDeviceWizard(nullptr, {});
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--indexing"))) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        auto *dlg = new Win7Indexing::IndexingDialog;
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    const int folderOptsArg = app.arguments().indexOf(QStringLiteral("--folder-options"));
+    if (folderOptsArg > 0) {
+        app.setDesktopFileName(QStringLiteral("seven-control"));
+        const QString folder = app.arguments().value(folderOptsArg + 1);
+        auto *dlg = new Win7FolderOpts::FolderOptionsDialog(folder.startsWith(QLatin1String("--")) ? QString() : folder);
+        const int tabArg = app.arguments().indexOf(QStringLiteral("--tab"));
+        if (tabArg > 0) {
+            dlg->findChild<QTabWidget *>()->setCurrentIndex(app.arguments().value(tabArg + 1).toInt());
+        }
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--charmap"))) {
+        app.setDesktopFileName(QStringLiteral("seven-charmap"));
+        (new Win7Fonts::CharMap)->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--cttune"))) {
+        app.setDesktopFileName(QStringLiteral("seven-cttune"));
+        (new Win7Fonts::ClearTypeTuner)->show();
+        return app.exec();
+    }
+    if (app.arguments().contains(QStringLiteral("--features"))) {
+        app.setDesktopFileName(QStringLiteral("seven-features"));
+        auto *dlg = new Win7Programs::FeaturesDialog;
+        QObject::connect(dlg, &QObject::destroyed, &app, &QCoreApplication::quit);
+        dlg->show();
+        return app.exec();
+    }
+    for (const auto &[flag, v] : {std::pair{"--programs", int(Win7Programs::ProgramsView)}, std::pair{"--updates", int(Win7Programs::UpdatesView)},
+                                  std::pair{"--default-programs", int(Win7Programs::DefaultsView)}, std::pair{"--set-defaults", int(Win7Programs::SetDefaultsView)},
+                                  std::pair{"--associations", int(Win7Programs::AssocView)}, std::pair{"--users", int(Win7Users::HomeView)},
+                                  std::pair{"--manage-users", int(Win7Users::ManageView)}, std::pair{"--backup", int(Win7Backup::BackupView)},
+                                  std::pair{"--recovery", int(Win7Backup::RecoveryView)}}) {
+        if (app.arguments().contains(QLatin1String(flag)) && g_openView) {
+            g_openView(v);
+        }
+    }
+    const int easeArg = app.arguments().indexOf(QStringLiteral("--ease"));
+    if (easeArg > 0 && g_openView) {
+        static const QHash<QString, int> pages{{QStringLiteral("see"), Win7Access::SeeView},         {QStringLiteral("nodisplay"), Win7Access::NoDisplayView},
+                                               {QStringLiteral("noinput"), Win7Access::NoInputView}, {QStringLiteral("mouse"), Win7Access::MouseView},
+                                               {QStringLiteral("keyboard"), Win7Access::KeyboardView}, {QStringLiteral("sounds"), Win7Access::SoundsView},
+                                               {QStringLiteral("focus"), Win7Access::FocusView}};
+        const QString page = app.arguments().value(easeArg + 1);
+        g_launchView = pages.value(page, -1);
+        g_openView(pages.value(page, Win7Access::CenterView));
+    }
+    if (app.arguments().contains(QStringLiteral("--firewall")) && g_openView) {
+        g_openView(Win7Firewall::StatusView);
+    }
+    if (app.arguments().contains(QStringLiteral("--action-center")) && g_openView) {
+        g_openView(Win7Action::CenterView);
+    }
+    if (app.arguments().contains(QStringLiteral("--windows-update")) && g_openView) {
+        g_openView(Win7Update::UpdateView);
+    }
+    if (app.arguments().contains(QStringLiteral("--fonts")) && g_openView) {
+        g_openView(Win7Fonts::FontsView);
+    }
+    if (app.arguments().contains(QStringLiteral("--personalize")) && g_openView) {
+        g_openView(Win7Display::PersonalizeView);
+    }
+    if (app.arguments().contains(QStringLiteral("--display")) && g_openView) {
+        g_openView(Win7Display::DisplayView);
+    }
+    if (app.arguments().contains(QStringLiteral("--resolution")) && g_openView) {
+        g_openView(Win7Display::ResolutionView);
+    }
+    if (app.arguments().contains(QStringLiteral("--net-center")) && g_openView) {
+        g_openView(Win7Net::CenterView);
+    }
+    if (app.arguments().contains(QStringLiteral("--net-sharing")) && g_openView) {
+        g_openView(Win7Net::SharingView);
+    }
+    if (app.arguments().contains(QStringLiteral("--net-connections")) && g_openView) {
+        g_openView(Win7Net::ConnectionsView);
+    }
+    const int powerArg = app.arguments().indexOf(QStringLiteral("--power"));
+    if (powerArg > 0 && g_openView) {
+        const QString what = app.arguments().value(powerArg + 1);
+        g_openView(what == QLatin1String("buttons") ? Win7Power::ButtonsView
+                       : what == QLatin1String("edit") ? Win7Power::EditView + Win7Power::planIndex(Win7Power::activePlan())
+                                                       : Win7Power::PlansView);
+    }
+    // Windows 7 hosts the Control Panel in Explorer, whose frame shows neither an icon nor a title. Give this
+    // window its own WM_CLASS instance so the decoration exception (smodrc, ^seven-cpanel) hides both, while the
+    // dialogs it starts keep their captions; the taskbar still maps it through _KDE_NET_WM_DESKTOP_FILE
+    if (auto *x11 = app.nativeInterface<QNativeInterface::QX11Application>()) {
+        static const char wmClass[] = "seven-cpanel\0seven-control";
+        xcb_change_property(x11->connection(), XCB_PROP_MODE_REPLACE, w.winId(), XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, sizeof(wmClass), wmClass);
+    }
+    w.show();
+    return app.exec();
+}

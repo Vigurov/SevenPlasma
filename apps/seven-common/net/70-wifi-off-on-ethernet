@@ -1,0 +1,18 @@
+#!/bin/sh
+# One network at a time, Windows-like: while a cable (Ethernet, also USB tethering) is connected the Wi-Fi
+# card stays on (the list of networks is visible, you may still connect by hand) but is disconnected and does
+# not auto-connect; when the last cable goes away Wi-Fi auto-connects to known networks again.
+IF="$1"; STATUS="$2"
+case "$IF" in en*|eth*) ;; *) exit 0 ;; esac
+export LC_ALL=C
+wifi_devs() { nmcli -t -f DEVICE,TYPE device | awk -F: '$2 == "wifi" {print $1}'; }
+cable_up() { nmcli -t -f TYPE,STATE device | grep -q '^ethernet:connected$'; }
+nmcli radio wifi on
+case "$STATUS" in
+    up)
+        for d in $(wifi_devs); do nmcli device disconnect "$d" >/dev/null 2>&1; done ;;
+    down)
+        cable_up && exit 0
+        for d in $(wifi_devs); do nmcli device set "$d" autoconnect yes; nmcli device connect "$d" >/dev/null 2>&1 & done ;;
+esac
+exit 0

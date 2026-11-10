@@ -1,0 +1,11 @@
+[Unit]
+Description=Sound enhancements (Windows 7 Sound > Enhancements)
+After=pipewire.service wireplumber.service
+Requires=pipewire.service
+
+[Service]
+ExecStart=/usr/bin/pipewire -c %h/.config/seven-soundfx/filter-chain.conf
+Restart=on-failure
+
+[Install]
+WantedBy=pipewire.service
