@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Диспетчер пристроїв
+Name=Device Manager
+Name[uk]=Диспетчер пристроїв
 Exec=seven-devmgr
 Icon=seven-mmc
 NoDisplay=true

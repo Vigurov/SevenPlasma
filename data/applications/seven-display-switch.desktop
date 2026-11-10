@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Перемикання дисплея
-Comment=Windows 7 Win+P: лише комп'ютер / дублювати / розширити / лише проектор
+Name=Display Switch
+Name[uk]=Перемикання дисплея
+Comment=Windows 7 Win+P: computer only / duplicate / extend / projector only
+Comment[uk]=Windows 7 Win+P: лише комп'ютер / дублювати / розширити / лише проектор
 Exec=qdbus6 org.kde.kscreen.osdService /org/kde/kscreen/osdService org.kde.kscreen.osdService.showActionSelector
 Icon=video-display
 NoDisplay=true

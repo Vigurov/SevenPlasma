@@ -62,7 +62,7 @@ panels().forEach(function (p) { p.widgets().forEach(function (w) {
 # Recycle Bin on the desktop (the only desktop icon of a new Windows 7 account)
 DESK=$(xdg-user-dir DESKTOP 2>/dev/null); DESK=${DESK:-$HOME/Desktop}
 mkdir -p "$DESK"
-[ -e "$DESK/seven-trash.desktop" ] || printf '[Desktop Entry]\nType=Link\nName=Recycle Bin\nName[uk]=Кошик\nURL=trash:/\nIcon=seven-desk-trash-full\nEmptyIcon=seven-desk-trash-empty\n' > "$DESK/seven-trash.desktop"
+printf '[Desktop Entry]\nType=Link\nName=Recycle Bin\nName[uk]=Кошик\nURL=trash:/\nIcon=seven-desk-trash-full\nEmptyIcon=seven-desk-trash-empty\n' > "$DESK/seven-trash.desktop"
 # taskbar: the pinned programs of Windows 7 (browser, Explorer, Media Player)
 L="preferred://browser,applications:org.kde.dolphin.desktop,applications:seven-wmp.desktop"
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "

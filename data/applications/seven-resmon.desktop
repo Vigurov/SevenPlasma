@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Монітор ресурсів
-Comment=Відстеження використання ЦП, пам'яті, диска та мережі
+Name=Resource Monitor
+Name[uk]=Монітор ресурсів
+Comment=Monitors the usage of CPU, memory, disk and network.
+Comment[uk]=Відстеження використання ЦП, пам'яті, диска та мережі
 Exec=seven-taskmgr --resmon
 Icon=seven-resmon
 Categories=System;Monitor;

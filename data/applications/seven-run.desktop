@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Виконати
-Comment=Відкриває програму, папку, документ або веб-сайт.
+Name=Run
+Name[uk]=Виконати
+Comment=Opens a program, folder, document, or Web site.
+Comment[uk]=Відкриває програму, папку, документ або веб-сайт.
 Exec=seven-control --run
 Icon=seven-run
 NoDisplay=true

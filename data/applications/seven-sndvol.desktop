@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Мікшер гучності
-Comment=Гучність пристрою та окремих програм
+Name=Volume Mixer
+Name[uk]=Мікшер гучності
+Comment=Volume of the device and of each program
+Comment[uk]=Гучність пристрою та окремих програм
 Exec=seven-control --sndvol
 Icon=seven-sndvol
 NoDisplay=true

@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Комп'ютер
+Name=Computer
+Name[uk]=Комп'ютер
 Exec=dolphin computer:/
 Icon=computer
 NoDisplay=true

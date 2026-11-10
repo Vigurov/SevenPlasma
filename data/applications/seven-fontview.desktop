@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Засіб перегляду шрифтів Windows
+Name=Windows Font Viewer
+Name[uk]=Засіб перегляду шрифтів Windows
 Exec=seven-control --fontview %f
 Icon=seven-fontview
 MimeType=font/ttf;font/otf;font/collection;application/x-font-ttf;application/x-font-otf;application/vnd.ms-opentype;font/sfnt;

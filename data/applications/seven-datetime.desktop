@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Дата й час
+Name=Date and Time
+Name[uk]=Дата й час
 Exec=seven-control --datetime
 Icon=seven-datetime
 NoDisplay=true

@@ -1,5 +1,6 @@
 [Desktop Entry]
-Name=Павук
+Name=Spider Solitaire
+Name[uk]=Павук
 Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\SpiderSolitaire/SpiderSolitaire.exe"
 Type=Application
 StartupNotify=true

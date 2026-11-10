@@ -1,9 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Блокнот
+Name=Notepad
 Name[uk]=Блокнот
-GenericName=Текстовий редактор
-Comment=Створення й редагування текстових файлів зі звичайним форматуванням.
+GenericName=Text Editor
+GenericName[uk]=Текстовий редактор
+Comment=Creates and edits text files using basic text formatting.
+Comment[uk]=Створення й редагування текстових файлів зі звичайним форматуванням.
 Exec=seven-control --notepad %f
 Icon=seven-notepad
 Terminal=false

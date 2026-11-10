@@ -1,5 +1,6 @@
 [Desktop Entry]
-Name=Черви
+Name=Hearts
+Name[uk]=Черви
 Exec=env WINEPREFIX="@HOME@/.local/share/sevenplasma/wine" wine "C:\\Program Files\\Microsoft Games\\Hearts/Hearts.exe"
 Type=Application
 StartupNotify=true

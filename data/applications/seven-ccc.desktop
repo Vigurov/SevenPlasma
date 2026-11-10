@@ -2,7 +2,8 @@
 Type=Application
 Name=AMD Catalyst Control Center
 GenericName=Catalyst Control Center
-Comment=Параметри дисплеїв, кольору, 3D та живлення для графіки AMD Radeon
+Comment=Display, color, 3D and power settings for AMD Radeon graphics
+Comment[uk]=Параметри дисплеїв, кольору, 3D та живлення для графіки AMD Radeon
 Exec=seven-ccc
 Icon=seven-ccc
 Categories=Settings;HardwareSettings;

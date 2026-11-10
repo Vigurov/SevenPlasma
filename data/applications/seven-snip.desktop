@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Ножиці
-Comment=Захоплення знімка екрана або його частини
+Name=Snipping Tool
+Name[uk]=Ножиці
+Comment=Captures a screenshot of the whole screen or a part of it.
+Comment[uk]=Захоплення знімка екрана або його частини
 Exec=seven-snip
 Icon=seven-snippingtool
 Categories=Utility;

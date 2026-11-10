@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Засіб настроювання тексту ClearType
+Name=ClearType Text Tuner
+Name[uk]=Засіб настроювання тексту ClearType
 Exec=seven-control --cttune
 Icon=seven-cttune
 NoDisplay=true

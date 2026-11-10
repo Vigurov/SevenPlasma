@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Панель керування NVIDIA
-Comment=Параметри 3D, вибір графічного процесора, відомості про систему
+Name=NVIDIA Control Panel
+Name[uk]=Панель керування NVIDIA
+Comment=3D settings, graphics processor selection, system information
+Comment[uk]=Параметри 3D, вибір графічного процесора, відомості про систему
 Exec=seven-nvidia
 Icon=seven-nvidia
 Categories=Settings;HardwareSettings;

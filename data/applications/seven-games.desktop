@@ -1,7 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Ігри
-Comment=Перегляд і запуск ігор, установлених на комп'ютері.
+Name=Games
+Name[uk]=Ігри
+Comment=Shows and starts the games installed on your computer.
+Comment[uk]=Перегляд і запуск ігор, установлених на комп'ютері.
 Exec=seven-control --games
 Icon=seven-games
 Categories=Game;

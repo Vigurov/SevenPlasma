@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Гаджети
+Name=Gadgets
+Name[uk]=Гаджети
 Exec=seven-gadgets
 Icon=gadgets
 NoDisplay=true

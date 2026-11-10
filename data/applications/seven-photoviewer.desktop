@@ -1,8 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Засіб перегляду фотографій Windows
-GenericName=Перегляд фотографій
-Comment=Перегляд, поворот і друк рисунків, показ слайдів
+Name=Windows Photo Viewer
+Name[uk]=Засіб перегляду фотографій Windows
+GenericName=Photo Viewer
+GenericName[uk]=Перегляд фотографій
+Comment=Views, rotates and prints pictures and plays slide shows.
+Comment[uk]=Перегляд, поворот і друк рисунків, показ слайдів
 Exec=seven-photoviewer %f
 Icon=seven-photoviewer
 Terminal=false

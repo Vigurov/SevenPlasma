@@ -1,8 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Програвач Windows Media
-GenericName=Мультимедійний програвач
-Comment=Відтворення цифрових мультимедійних файлів
+Name=Windows Media Player
+Name[uk]=Програвач Windows Media
+GenericName=Media Player
+GenericName[uk]=Мультимедійний програвач
+Comment=Plays digital media files.
+Comment[uk]=Відтворення цифрових мультимедійних файлів
 Exec=seven-wmp %F
 Icon=seven-wmp
 Terminal=false

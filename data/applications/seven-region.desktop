@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Мова та регіональні стандарти
+Name=Region and Language
+Name[uk]=Мова та регіональні стандарти
 Exec=seven-control --region
 Icon=seven-region
 NoDisplay=true

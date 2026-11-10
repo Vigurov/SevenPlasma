@@ -1,8 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Таблиця символів
-Comment=Вибір спеціальних символів і копіювання їх у документ
+Name=Character Map
+Name[uk]=Таблиця символів
+Comment=Selects special characters and copies them to your document.
+Comment[uk]=Вибір спеціальних символів і копіювання їх у документ
 Exec=seven-control --charmap
 Icon=seven-charmap
 Categories=Utility;System;
-Keywords=charmap;символ;символи;
+Keywords=charmap;character;symbol;
+Keywords[uk]=charmap;символ;символи;

@@ -2,8 +2,10 @@
 Type=Application
 Name=Paint
 Name[uk]=Paint
-GenericName=Графічний редактор
-Comment=Створення та редагування рисунків.
+GenericName=Image Editor
+GenericName[uk]=Графічний редактор
+Comment=Creates and edits drawings.
+Comment[uk]=Створення та редагування рисунків.
 Exec=seven-paint %f
 Icon=seven-paint
 Terminal=false

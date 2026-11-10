@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Екран
+Name=Display
+Name[uk]=Екран
 Exec=seven-control --screensaver-settings
 Icon=seven-desk
 NoDisplay=true
