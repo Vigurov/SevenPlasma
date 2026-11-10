@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -82,7 +83,7 @@ inline bool scheduleCheck(QWidget *parent)
     const int code = QProcess::execute(QStringLiteral("pkexec"), {QStringLiteral("grub-reboot"), QStringLiteral("memtest86+")});
     if (code != 0) {
         if (code != 126 && code != 127) {
-            QMessageBox::warning(parent, QStringLiteral("Засіб перевірки пам'яті Windows"), QStringLiteral("Не вдалося запланувати перевірку пам'яті."));
+            QMessageBox::warning(parent, tr7("Windows Memory Diagnostic"), tr7("The memory test could not be scheduled."));
         }
         return false;
     }
@@ -92,7 +93,7 @@ inline bool scheduleCheck(QWidget *parent)
 inline int run()
 {
     auto *dlg = new QDialog;
-    dlg->setWindowTitle(QStringLiteral("Засіб перевірки пам'яті Windows"));
+    dlg->setWindowTitle(tr7("Windows Memory Diagnostic"));
     dlg->setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-at-memtest")));
     dlg->setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg->setFixedWidth(500);
@@ -105,26 +106,26 @@ inline int run()
     auto *wv = new QVBoxLayout(white);
     wv->setContentsMargins(16, 14, 16, 14);
     wv->setSpacing(8);
-    auto *title = new QLabel(QStringLiteral("Перевірка комп'ютера на наявність проблем з пам'яттю"));
+    auto *title = new QLabel(tr7("Check your computer for memory problems"));
     QFont tf = title->font();
     tf.setPixelSize(16);
     title->setFont(tf);
     title->setStyleSheet(QStringLiteral("color: #1e3287;"));
     title->setWordWrap(true);
     wv->addWidget(title);
-    auto *text = new QLabel(QStringLiteral("Проблеми з пам'яттю можуть призвести до втрати даних або до того, що комп'ютер перестане відповідати."));
+    auto *text = new QLabel(tr7("Memory problems can cause your computer to lose information or stop working."));
     text->setWordWrap(true);
     wv->addWidget(text);
     wv->addSpacing(6);
-    wv->addWidget(new Choice(QStringLiteral("Перезавантажити зараз і перевірити наявність проблем (рекомендовано)"),
-                             QStringLiteral("Перш ніж вибрати цей параметр, збережіть роботу й закрийте всі програми."), [dlg] {
+    wv->addWidget(new Choice(tr7("Restart now and check for problems (recommended)"),
+                             tr7("Save your work and close any open programs before choosing this option."), [dlg] {
                                  if (scheduleCheck(dlg)) {
                                      QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.Shutdown"), QStringLiteral("/Shutdown"),
                                                                                         QStringLiteral("org.kde.Shutdown.logoutAndReboot")});
                                      dlg->accept();
                                  }
                              }));
-    wv->addWidget(new Choice(QStringLiteral("Виконати перевірку під час наступного запуску комп'ютера"), QString(), [dlg] {
+    wv->addWidget(new Choice(tr7("Check for problems the next time I start my computer"), QString(), [dlg] {
         if (scheduleCheck(dlg)) {
             dlg->accept();
         }
@@ -133,7 +134,7 @@ inline int run()
     auto *row = new QHBoxLayout;
     row->setContentsMargins(10, 10, 14, 0);
     row->addStretch(1);
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     cancel->setMinimumWidth(75);
     row->addWidget(cancel);
     v->addLayout(row);

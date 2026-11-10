@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Devices for the Burn and Sync tabs: optical burners (Solid OpticalDrive; data discs written with xorriso) and
  * sync targets (removable storage mounted by Solid, phones / players over MTP through KIO's mtp:/).
@@ -45,7 +46,7 @@ inline QPair<QString, QString> burner()
                 : (media & (Solid::OpticalDrive::Dvdr | Solid::OpticalDrive::Dvdplusr))                                   ? QStringLiteral("DVD-R")
                                                                                                                             : QStringLiteral("CD-RW");
             // the Windows name: "Дисковод DVD RW (E:)"; the device name stands in for the letter
-            return {QStringLiteral("Дисковод %1 (%2)").arg(kind, QFileInfo(dev).fileName()), dev};
+            return {tr7("Drive %1 (%2)").arg(kind, QFileInfo(dev).fileName()), dev};
         }
     }
     return {};

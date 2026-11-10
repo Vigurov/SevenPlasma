@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7fontdata.h"
 
@@ -136,12 +137,12 @@ protected:
         QPainter p(this);
         p.fillRect(rect(), Qt::white);
         static const QStringList text{
-            QStringLiteral("Чуєш їх, доцю, га? Кумедна ж ти, прощайся без ґольфів!"),
+            tr7("The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs!"),
             QStringLiteral("The Quick Brown Fox Jumps Over the Lazy Dog."),
             QStringLiteral("Lorem ipsum dolor sit amet, consectetuer adipiscing elit."),
             QStringLiteral("Mauris ornare odio vel risus. Maecenas elit metus,"),
-            QStringLiteral("pellentesque quis, pretium. Щастям б'єш жук їх глицю в фон й ґедзь пріч."),
-            QStringLiteral("ClearType покращує читабельність тексту на РК-моніторах."),
+            tr7("pellentesque quis, pretium. Sphinx of black quartz, judge my vow. How vexingly quick daft zebras jump."),
+            tr7("ClearType improves the readability of text on LCD monitors."),
         };
         p.setClipRect(rect().adjusted(6, 6, -6, -6));
         for (int i = 0; i < m_lines; ++i) {
@@ -178,7 +179,7 @@ public:
         , m_font(uiFontFile())
     {
         setAttribute(Qt::WA_DeleteOnClose);
-        setWindowTitle(QStringLiteral("Засіб настроювання тексту ClearType"));
+        setWindowTitle(tr7("ClearType Text Tuner"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cttune")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         m_start = m_mode;
@@ -199,7 +200,7 @@ public:
         auto *hicon = new QLabel;
         hicon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-cttune")).pixmap(16, 16));
         head->addWidget(hicon);
-        head->addWidget(new QLabel(QStringLiteral("Засіб настроювання тексту ClearType")), 1);
+        head->addWidget(new QLabel(tr7("ClearType Text Tuner")), 1);
         wv->addLayout(head);
         m_title = new QLabel;
         QFont tf = m_title->font();
@@ -221,8 +222,8 @@ public:
         auto *btnRow = new QHBoxLayout;
         btnRow->setContentsMargins(10, 10, 10, 10);
         btnRow->addStretch(1);
-        m_next = new QPushButton(QStringLiteral("Далі"));
-        m_cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_next = new QPushButton(tr7("Next"));
+        m_cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_next, m_cancel}) {
             b->setMinimumWidth(75);
             btnRow->addWidget(b);
@@ -277,11 +278,11 @@ private:
     {
         m_page = qBound(0, page, lastPage());
         m_back->setEnabled(m_page > 0);
-        m_next->setText(m_page == lastPage() ? QStringLiteral("Готово") : QStringLiteral("Далі"));
+        m_next->setText(m_page == lastPage() ? tr7("Done") : tr7("Next"));
         clearBody();
         if (m_page == 0) {
-            m_title->setText(QStringLiteral("Зробіть текст на екрані зручнішим для читання"));
-            auto *on = new QCheckBox(QStringLiteral("Увімкнути ClearType"));
+            m_title->setText(tr7("Make the text on your screen easier to read"));
+            auto *on = new QCheckBox(tr7("Turn on ClearType"));
             on->setChecked(m_mode.lcd);
             m_bodyLayout->addWidget(on);
             auto *sample = new SampleBox(m_mode, m_font, 540, 4);
@@ -290,17 +291,16 @@ private:
                 m_mode.lcd = v;
                 go(0);
             });
-            auto *about = new QLabel(QStringLiteral("ClearType — це технологія, яка покращує читабельність тексту на РК-моніторах, зокрема на екранах ноутбуків "
-                                                    "і пласких моніторах. Завдяки ClearType слова на екрані виглядають майже так само чітко, як надруковані на папері."));
+            auto *about = new QLabel(tr7("ClearType is a technology that improves the readability of text on LCD monitors, such as laptop screens and flat panel monitors. With ClearType, the words on your screen look almost as sharp and clear as those printed on paper."));
             about->setWordWrap(true);
             m_bodyLayout->addWidget(about);
         } else if (m_page == 1) {
-            m_title->setText(QStringLiteral("Windows перевіряє, чи встановлено для монітора основну роздільну здатність..."));
+            m_title->setText(tr7("Windows is making sure that your monitor is set to its native resolution..."));
             m_bodyLayout->addWidget(new QLabel(nativeResolutionText()));
         } else if (m_page < lastPage()) {
             const int step = m_page - 2;
             const int kind = steps().at(step);
-            m_title->setText(QStringLiteral("Клацніть зразок тексту, який виглядає найкраще (%1 з %2)").arg(step + 1).arg(steps().size()));
+            m_title->setText(tr7("Click the text sample that looks best to you (%1 of %2)").arg(step + 1).arg(steps().size()));
             QList<RenderMode> choices;
             int current = 0;
             for (int i = 0; i < 3; ++i) {
@@ -348,8 +348,8 @@ private:
                 };
             }
         } else {
-            m_title->setText(QStringLiteral("Ви завершили настроювання тексту на моніторі"));
-            auto *note = new QLabel(QStringLiteral("Нові параметри тексту застосуються до програм, відкритих після натискання кнопки «Готово»."));
+            m_title->setText(tr7("You have finished tuning the text on your monitor"));
+            auto *note = new QLabel(tr7("The new text settings apply to programs opened after you click Finish."));
             note->setWordWrap(true);
             m_bodyLayout->addWidget(note);
         }
@@ -379,13 +379,12 @@ private:
             }
         }
         if (current.isEmpty()) {
-            return QStringLiteral("Не вдалося визначити роздільну здатність монітора.");
+            return tr7("The resolution of the monitor could not be determined.");
         }
         if (preferred.isEmpty() || preferred == current) {
-            return QStringLiteral("Для монітора %1 встановлено основну роздільну здатність (%2).").arg(monitor, current);
+            return tr7("Your monitor %1 is set to its native resolution (%2).").arg(monitor, current);
         }
-        return QStringLiteral("Для монітора %1 не встановлено основну роздільну здатність.\nПоточна: %2, основна: %3. "
-                              "Змінити її можна на сторінці «Роздільна здатність екрана».")
+        return tr7("Your monitor %1 is not set to its native resolution.\nCurrent: %2, native: %3. You can change it on the Screen Resolution page.")
             .arg(monitor, current, preferred);
     }
 

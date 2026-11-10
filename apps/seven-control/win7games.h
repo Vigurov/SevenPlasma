@@ -12,6 +12,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7devices.h"
 #include "win7perf.h"
@@ -204,17 +205,17 @@ protected:
         p.drawPixmap(tab.left() + 15, tab.top() + 5, QIcon::fromTheme(QStringLiteral("seven-games-perf")).pixmap(16, 16));
         // its text
         const double score = baseScore();
-        const QLocale uk(QLocale::Ukrainian);
+        const QLocale uk;
         QFont f = font();
         p.setFont(f);
         const QRect text = box.adjusted(12, 12, -12, -12);
         p.setPen(Qt::black);
         if (score <= 0) {
             p.drawText(text, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
-                       QStringLiteral("Відомості про продуктивність цього комп'ютера ще не створено."));
+                       tr7("Performance information about this computer has not been generated yet."));
             m_rateLink = QRect(text.left(), text.top() + 48, text.width(), 18);
             p.setPen(QColor(0x00, 0x66, 0xcc));
-            p.drawText(m_rateLink, Qt::AlignHCenter, QStringLiteral("Оцінити цей комп'ютер"));
+            p.drawText(m_rateLink, Qt::AlignHCenter, tr7("Rate this computer"));
             return;
         }
         m_rateLink = QRect();
@@ -225,25 +226,25 @@ protected:
         if (m_game && m_game->recRating > 0) {
             const bool ok = score >= m_game->recRating;
             p.drawText(QRect(text.left(), y, text.width() - 40, 40), Qt::TextWordWrap,
-                       ok ? QStringLiteral("Цей комп'ютер відповідає рекомендованим вимогам гри.")
-                          : score >= m_game->minRating ? QStringLiteral("Цей комп'ютер відповідає мінімальним вимогам гри.")
-                                                        : QStringLiteral("Цей комп'ютер не відповідає мінімальним вимогам гри."));
+                       ok ? tr7("This computer meets the recommended requirements of the game.")
+                          : score >= m_game->minRating ? tr7("This computer meets the minimum requirements of the game.")
+                                                        : tr7("This computer does not meet the minimum requirements of the game."));
             y += 50;
-            for (const auto &[label, v] : {std::pair{QStringLiteral("Необхідна оцінка:"), m_game->minRating},
-                                           std::pair{QStringLiteral("Рекомендована оцінка:"), m_game->recRating},
-                                           std::pair{QStringLiteral("Оцінка вашої системи:"), score}}) {
+            for (const auto &[label, v] : {std::pair{tr7("Required rating:"), m_game->minRating},
+                                           std::pair{tr7("Recommended rating:"), m_game->recRating},
+                                           std::pair{tr7("Your system's rating:"), score}}) {
                 p.drawText(QRect(text.left(), y, text.width() - 40, 20), Qt::AlignLeft | Qt::AlignVCenter, label);
                 badge(y, v);
                 y += 30;
             }
         } else {
-            p.drawText(QRect(text.left(), y, text.width() - 40, 40), Qt::TextWordWrap, QStringLiteral("Індекс продуктивності Windows цього комп'ютера:"));
+            p.drawText(QRect(text.left(), y, text.width() - 40, 40), Qt::TextWordWrap, tr7("Windows Experience Index of this computer:"));
             badge(y + 4, score);
             y += 50;
             if (m_game) {
                 p.setPen(QColor(0x6d, 0x6d, 0x6d));
                 p.drawText(QRect(text.left(), y, text.width(), 60), Qt::TextWordWrap,
-                           QStringLiteral("Гра не повідомляє своїх вимог до продуктивності."));
+                           tr7("The game does not report its performance requirements."));
             }
         }
     }
@@ -291,7 +292,7 @@ protected:
         const QFontMetrics fm(font());
         p.setPen(Qt::black);
         if (!m_game) {
-            p.drawText(QRect(68, 0, width() - 80, height()), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Елементів: %1").arg(m_count));
+            p.drawText(QRect(68, 0, width() - 80, height()), Qt::AlignLeft | Qt::AlignVCenter, tr7("%1 items").arg(m_count));
             return;
         }
         QFont b = font();
@@ -299,9 +300,9 @@ protected:
         p.setFont(b);
         p.drawText(QRect(68, 6, 300, 22), Qt::AlignLeft | Qt::AlignVCenter, m_game->name);
         p.setFont(font());
-        const QList<std::pair<QString, QString>> rows{{QStringLiteral("Видавець:"), m_game->publisher},
-                                                       {QStringLiteral("Розробник:"), m_game->developer},
-                                                       {QStringLiteral("Жанр:"), m_game->genre}};
+        const QList<std::pair<QString, QString>> rows{{tr7("Publisher:"), m_game->publisher},
+                                                       {tr7("Developer:"), m_game->developer},
+                                                       {tr7("Genre:"), m_game->genre}};
         int x = 68, y = 30;
         for (const auto &[label, value] : rows) {
             if (value.isEmpty()) {
@@ -341,7 +342,7 @@ inline QWidget *buildGamesPage()
     auto *lv = new QVBoxLayout(left);
     lv->setContentsMargins(12, 10, 12, 10);
     lv->setSpacing(4);
-    auto *header = new Win7Dev::GroupHeader(QStringLiteral("Ігри (%1)").arg(list.size()), left);
+    auto *header = new Win7Dev::GroupHeader(tr7("Games (%1)").arg(list.size()), left);
     lv->addWidget(header);
     auto *gridHost = new QWidget;
     auto *grid = new QGridLayout(gridHost);

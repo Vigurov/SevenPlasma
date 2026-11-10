@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * "Windows Task Manager" in the style of Windows 7, showing the real state of this Linux machine:
  * Applications (open windows), Processes, Services (systemd), Performance, Networking, Users.
@@ -109,7 +110,7 @@ QString userName(uint uid)
 
 QString kbText(qint64 kb)
 {
-    return QLocale(QLocale::Ukrainian).toString(kb) + QStringLiteral(" КБ");
+    return QLocale{}.toString(kb) + tr7(" K");
 }
 
 QIcon shieldIcon()
@@ -344,7 +345,7 @@ class TaskManager : public QMainWindow
 public:
     TaskManager()
     {
-        setWindowTitle(QStringLiteral("Диспетчер задач Windows"));
+        setWindowTitle(tr7("Windows Task Manager"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("utilities-system-monitor")));
 
         m_tabs = new QTabWidget(this);
@@ -380,8 +381,8 @@ public:
         m_stMem = new QLabel;
         // Fixed sections separated by thin lines, like the Windows 7 status bar
         const QFontMetrics fm(font());
-        m_stProcs->setFixedWidth(fm.horizontalAdvance(QStringLiteral("Процесів: 9999")) + 16);
-        m_stCpu->setFixedWidth(fm.horizontalAdvance(QStringLiteral("Завантаження ЦП: 100%")) + 16);
+        m_stProcs->setFixedWidth(fm.horizontalAdvance(tr7("Processes: 9999")) + 16);
+        m_stCpu->setFixedWidth(fm.horizontalAdvance(tr7("CPU Usage: 100%")) + 16);
         for (QLabel *l : {m_stProcs, m_stCpu, m_stMem}) {
             l->setContentsMargins(4, 0, 4, 0);
         }
@@ -411,7 +412,7 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         m_appModel = new QStandardItemModel(0, 2, this);
-        m_appModel->setHorizontalHeaderLabels({QStringLiteral("Задача"), QStringLiteral("Стан")});
+        m_appModel->setHorizontalHeaderLabels({tr7("Task"), tr7("Status")});
         m_appView = makeList(page);
         m_appView->setModel(m_appModel);
         m_appView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -419,9 +420,9 @@ private:
         v->addWidget(m_appView);
         auto *buttons = new QHBoxLayout;
         buttons->addStretch(1);
-        auto *end = new QPushButton(QStringLiteral("Зняти задачу"));
-        auto *sw = new QPushButton(QStringLiteral("Переключитися"));
-        auto *task = new QPushButton(QStringLiteral("Нова задача..."));
+        auto *end = new QPushButton(tr7("End Task"));
+        auto *sw = new QPushButton(tr7("Switch To"));
+        auto *task = new QPushButton(tr7("New Task..."));
         for (QPushButton *b : {end, sw, task}) {
             buttons->addWidget(b);
         }
@@ -435,21 +436,21 @@ private:
                 return;
             }
             QMenu menu(this);
-            QAction *s = menu.addAction(QStringLiteral("Переключитися"), this, &TaskManager::switchTo);
+            QAction *s = menu.addAction(tr7("Switch To"), this, &TaskManager::switchTo);
             QFont f = s->font();
             f.setBold(true);
             s->setFont(f);
-            menu.addAction(QStringLiteral("На передній план"), this, &TaskManager::switchTo);
+            menu.addAction(tr7("Bring To Front"), this, &TaskManager::switchTo);
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Згорнути"), this, [this] {
+            menu.addAction(tr7("Minimize"), this, [this] {
                 if (const WId w = currentWindow()) {
                     KX11Extras::minimizeWindow(w);
                 }
             });
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Зняти задачу"), end, &QPushButton::click);
+            menu.addAction(tr7("End Task"), end, &QPushButton::click);
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Перейти до процесу"), this, [this] {
+            menu.addAction(tr7("Go To Process"), this, [this] {
                 const WId w = currentWindow();
                 const int pid = w ? KWindowInfo(w, NET::WMPid).pid() : 0;
                 if (pid > 0) {
@@ -460,7 +461,7 @@ private:
             });
             menu.exec(m_appView->viewport()->mapToGlobal(pos));
         });
-        m_tabs->addTab(page, QStringLiteral("Програми"));
+        m_tabs->addTab(page, tr7("Applications"));
     }
 
     WId currentWindow() const
@@ -482,7 +483,7 @@ private:
             }
             auto *name = new QStandardItem(KX11Extras::icon(w, 16, 16, true), info.name());
             name->setData(QString::number(w), Qt::UserRole);
-            auto *state = new QStandardItem(QStringLiteral("Працює"));
+            auto *state = new QStandardItem(tr7("Running"));
             m_appModel->insertRow(0, {name, state});
         }
         reselect(m_appView, m_appModel, 0, key);
@@ -517,23 +518,23 @@ private:
     void newTask()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Створити нову задачу"));
+        dlg.setWindowTitle(tr7("Create New Task"));
         auto *v = new QVBoxLayout(&dlg);
         auto *top = new QHBoxLayout;
         auto *icon = new QLabel;
         icon->setPixmap(QIcon::fromTheme(QStringLiteral("system-run")).pixmap(32, 32));
         top->addWidget(icon, 0, Qt::AlignTop);
-        top->addWidget(new QLabel(QStringLiteral("Введіть ім'я програми, папки, документа або ресурсу\nІнтернету, які потрібно відкрити.")), 1);
+        top->addWidget(new QLabel(tr7("Type the name of a program, folder, document, or Internet\nresource, and Windows will open it for you.")), 1);
         v->addLayout(top);
         auto *row = new QHBoxLayout;
-        row->addWidget(new QLabel(QStringLiteral("Відкрити:")));
+        row->addWidget(new QLabel(tr7("Open:")));
         auto *edit = new QLineEdit;
         row->addWidget(edit, 1);
         v->addLayout(row);
         auto *buttons = new QDialogButtonBox;
         buttons->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        buttons->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
-        auto *browse = buttons->addButton(QStringLiteral("Огляд..."), QDialogButtonBox::ActionRole);
+        buttons->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
+        auto *browse = buttons->addButton(tr7("Browse..."), QDialogButtonBox::ActionRole);
         connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
         connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
         connect(browse, &QPushButton::clicked, &dlg, [edit] {
@@ -559,8 +560,8 @@ private:
         m_procPage = new QWidget;
         auto *v = new QVBoxLayout(m_procPage);
         m_procModel = new QStandardItemModel(0, 5, this);
-        m_procModel->setHorizontalHeaderLabels({QStringLiteral("Ім'я образу"), QStringLiteral("Користувач"), QStringLiteral("ЦП"),
-                                                QStringLiteral("Пам'ять (приватний робочий набір)"), QStringLiteral("Опис")});
+        m_procModel->setHorizontalHeaderLabels({tr7("Image Name"), tr7("User Name"), tr7("CPU"),
+                                                tr7("Memory (Private Working Set)"), tr7("Description")});
         m_procProxy = new QSortFilterProxyModel(this);
         m_procProxy->setSourceModel(m_procModel);
         m_procProxy->setSortRole(Qt::UserRole + 1);
@@ -575,8 +576,8 @@ private:
         v->addWidget(m_procView);
         auto *buttons = new QHBoxLayout;
         // a check box, as Windows 7 shows it to administrators: Linux lists everyone's processes without elevation
-        auto *all = new QCheckBox(QStringLiteral("Відображати процеси всіх користувачів"));
-        auto *end = new QPushButton(QStringLiteral("Завершити процес"));
+        auto *all = new QCheckBox(tr7("Show processes from all users"));
+        auto *end = new QPushButton(tr7("End Process"));
         buttons->addWidget(all);
         buttons->addStretch(1);
         buttons->addWidget(end);
@@ -593,41 +594,41 @@ private:
                 return;
             }
             QMenu menu(this);
-            menu.addAction(QStringLiteral("Відкрити місце зберігання файлу"), this, [this] {
+            menu.addAction(tr7("Open File Location"), this, [this] {
                 const QString exe = QFileInfo(QStringLiteral("/proc/%1/exe").arg(currentPid())).symLinkTarget();
                 if (!exe.isEmpty()) {
                     QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("--select"), exe});
                 }
             });
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Завершити процес"), this, [this] {
+            menu.addAction(tr7("End Process"), this, [this] {
                 endProcess(false);
             });
-            menu.addAction(QStringLiteral("Завершити дерево процесів"), this, [this] {
+            menu.addAction(tr7("End Process Tree"), this, [this] {
                 endProcess(true);
             });
             menu.addSeparator();
-            QMenu *prio = menu.addMenu(QStringLiteral("Пріоритет"));
-            const QList<QPair<QString, int>> levels{{QStringLiteral("Реального часу"), -20}, {QStringLiteral("Високий"), -10},
-                                                    {QStringLiteral("Вище середнього"), -5},  {QStringLiteral("Звичайний"), 0},
-                                                    {QStringLiteral("Нижче середнього"), 5},  {QStringLiteral("Низький"), 19}};
+            QMenu *prio = menu.addMenu(tr7("Set Priority"));
+            const QList<QPair<QString, int>> levels{{tr7("Realtime"), -20}, {tr7("High"), -10},
+                                                    {tr7("AboveNormal"), -5},  {tr7("Normal"), 0},
+                                                    {tr7("BelowNormal"), 5},  {tr7("Low"), 19}};
             for (const auto &[text, nice] : levels) {
                 prio->addAction(text, this, [this, nice] {
                     QProcess::startDetached(QStringLiteral("renice"), {QString::number(nice), QStringLiteral("-p"), QString::number(currentPid())});
                 });
             }
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Властивості"), this, [this] {
+            menu.addAction(tr7("Properties"), this, [this] {
                 const QString exe = QFileInfo(QStringLiteral("/proc/%1/exe").arg(currentPid())).symLinkTarget();
-                QMessageBox::information(this, QStringLiteral("Властивості"),
-                                         QStringLiteral("PID: %1\nФайл: %2\nКоманда: %3")
+                QMessageBox::information(this, tr7("Properties"),
+                                         tr7("PID: %1\nFile: %2\nCommand: %3")
                                              .arg(currentPid())
-                                             .arg(exe.isEmpty() ? QStringLiteral("(немає доступу)") : exe,
+                                             .arg(exe.isEmpty() ? tr7("(access denied)") : exe,
                                                   readFile(QStringLiteral("/proc/%1/cmdline").arg(currentPid())).replace(QLatin1Char('\0'), QLatin1Char(' '))));
             });
             menu.exec(m_procView->viewport()->mapToGlobal(pos));
         });
-        m_tabs->addTab(m_procPage, QStringLiteral("Процеси"));
+        m_tabs->addTab(m_procPage, tr7("Processes"));
     }
 
     int currentPid() const
@@ -644,13 +645,12 @@ private:
         }
         const QString name = m_procView->currentIndex().siblingAtColumn(0).data().toString();
         QMessageBox box(this);
-        box.setWindowTitle(QStringLiteral("Диспетчер задач Windows"));
+        box.setWindowTitle(tr7("Windows Task Manager"));
         box.setIcon(QMessageBox::Warning);
-        box.setText(tree ? QStringLiteral("Завершити дерево процесів \"%1\"?").arg(name) : QStringLiteral("Завершити процес \"%1\"?").arg(name));
-        box.setInformativeText(QStringLiteral("Якщо відкриту програму пов'язано з цим процесом, її буде закрито, а всі незбережені дані буде втрачено. "
-                                              "Завершення системного процесу може спричинити нестабільну роботу системи."));
-        QPushButton *yes = box.addButton(tree ? QStringLiteral("Завершити дерево процесів") : QStringLiteral("Завершити процес"), QMessageBox::AcceptRole);
-        box.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+        box.setText(tree ? tr7("Do you want to end the process tree of \"%1\"?").arg(name) : tr7("Do you want to end \"%1\"?").arg(name));
+        box.setInformativeText(tr7("If an open program is associated with this process, it will close and you will lose any unsaved data. If you end a system process, it might result in system instability."));
+        QPushButton *yes = box.addButton(tree ? tr7("End Process Tree") : tr7("End Process"), QMessageBox::AcceptRole);
+        box.addButton(tr7("Cancel"), QMessageBox::RejectRole);
         box.exec();
         if (box.clickedButton() != yes) {
             return;
@@ -668,8 +668,8 @@ private:
         }
         for (int p : pids) {
             if (::kill(p, SIGTERM) != 0) {
-                QMessageBox::warning(this, QStringLiteral("Не вдалося завершити процес"),
-                                     QStringLiteral("Операцію не вдалося завершити.\n\nВідмовлено в доступі."));
+                QMessageBox::warning(this, tr7("Unable to Terminate Process"),
+                                     tr7("The operation could not be completed.\n\nAccess is denied."));
                 break;
             }
         }
@@ -757,7 +757,7 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         m_svcModel = new QStandardItemModel(0, 5, this);
-        m_svcModel->setHorizontalHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("ІД процесу"), QStringLiteral("Опис"), QStringLiteral("Стан"), QStringLiteral("Група")});
+        m_svcModel->setHorizontalHeaderLabels({tr7("Name"), tr7("PID"), tr7("Description"), tr7("Status"), tr7("Group")});
         m_svcProxy = new QSortFilterProxyModel(this);
         m_svcProxy->setSourceModel(m_svcModel);
         m_svcProxy->setSortRole(Qt::UserRole + 1);
@@ -771,7 +771,7 @@ private:
         v->addWidget(m_svcView);
         auto *buttons = new QHBoxLayout;
         buttons->addStretch(1);
-        auto *services = new QPushButton(shieldIcon(), QStringLiteral("Служби..."));
+        auto *services = new QPushButton(shieldIcon(), tr7("Services..."));
         buttons->addWidget(services);
         v->addLayout(buttons);
         connect(services, &QPushButton::clicked, this, [] {
@@ -784,7 +784,7 @@ private:
                 return;
             }
             const QString unit = idx.siblingAtColumn(0).data(Qt::UserRole).toString();
-            const bool running = idx.siblingAtColumn(3).data().toString() == QStringLiteral("Працює");
+            const bool running = idx.siblingAtColumn(3).data().toString() == tr7("Running");
             auto systemctl = [this, unit](const QString &verb) {
                 // pkexec asks for the password like the UAC prompt in Windows
                 QProcess::startDetached(QStringLiteral("pkexec"), {QStringLiteral("systemctl"), verb, unit});
@@ -793,14 +793,14 @@ private:
                 });
             };
             QMenu menu(this);
-            menu.addAction(QStringLiteral("Запустити службу"), this, [systemctl] {
+            menu.addAction(tr7("Start Service"), this, [systemctl] {
                 systemctl(QStringLiteral("start"));
             })->setEnabled(!running);
-            menu.addAction(QStringLiteral("Зупинити службу"), this, [systemctl] {
+            menu.addAction(tr7("Stop Service"), this, [systemctl] {
                 systemctl(QStringLiteral("stop"));
             })->setEnabled(running);
             menu.addSeparator();
-            menu.addAction(QStringLiteral("Перейти до процесу"), this, [this, idx] {
+            menu.addAction(tr7("Go To Process"), this, [this, idx] {
                 const QString pid = idx.siblingAtColumn(1).data().toString();
                 if (!pid.isEmpty()) {
                     m_tabs->setCurrentWidget(m_procPage);
@@ -811,7 +811,7 @@ private:
             })->setEnabled(!idx.siblingAtColumn(1).data().toString().isEmpty());
             menu.exec(m_svcView->viewport()->mapToGlobal(pos));
         });
-        m_tabs->addTab(page, QStringLiteral("Служби"));
+        m_tabs->addTab(page, tr7("Services"));
     }
 
     void refreshServices()
@@ -851,7 +851,7 @@ private:
             auto *pidItem = new NumItem(pid, pid.toDouble());
             auto *desc = new QStandardItem(o.value(QStringLiteral("description")).toString());
             desc->setData(desc->text().toLower(), Qt::UserRole + 1);
-            auto *state = new QStandardItem(running ? QStringLiteral("Працює") : QStringLiteral("Зупинено"));
+            auto *state = new QStandardItem(running ? tr7("Running") : tr7("Stopped"));
             state->setData(state->text(), Qt::UserRole + 1);
             auto *group = new QStandardItem(extra.value(unit).second);
             group->setData(group->text(), Qt::UserRole + 1);
@@ -882,7 +882,7 @@ private:
         auto *cmw = new QHBoxLayout(cpuMeterWrap);
         cmw->setContentsMargins(0, 0, 0, 0);
         cmw->addWidget(m_cpuMeter, 0, Qt::AlignCenter);
-        g->addWidget(box(QStringLiteral("Завантаження ЦП"), cpuMeterWrap), 0, 0);
+        g->addWidget(box(tr7("CPU Usage"), cpuMeterWrap), 0, 0);
 
         // one small graph per logical processor, like Windows 7
         m_cpuCount = readCpuTimes().size() - 1;
@@ -897,16 +897,16 @@ private:
             m_coreGraphs.append(graph);
             cg->addWidget(graph, i / qMax(1, perRow), i % qMax(1, perRow));
         }
-        g->addWidget(box(QStringLiteral("Хронологія завантаження ЦП"), cores), 0, 1);
+        g->addWidget(box(tr7("CPU Usage History"), cores), 0, 1);
 
         m_memMeter = new Meter;
         auto *memMeterWrap = new QWidget;
         auto *mmw = new QHBoxLayout(memMeterWrap);
         mmw->setContentsMargins(0, 0, 0, 0);
         mmw->addWidget(m_memMeter, 0, Qt::AlignCenter);
-        g->addWidget(box(QStringLiteral("Пам'ять"), memMeterWrap), 1, 0);
+        g->addWidget(box(tr7("Memory"), memMeterWrap), 1, 0);
         m_memGraph = new Graph(QColor(0x00, 0xb4, 0xff));
-        g->addWidget(box(QStringLiteral("Хронологія використання фізичної пам'яті"), m_memGraph), 1, 1);
+        g->addWidget(box(tr7("Physical Memory Usage History"), m_memGraph), 1, 1);
 
         auto table = [](const QList<QPair<QString, QLabel **>> &rows) {
             auto *w = new QWidget;
@@ -924,17 +924,17 @@ private:
             return w;
         };
         auto *left = new QVBoxLayout;
-        left->addWidget(box(QStringLiteral("Фізична пам'ять (МБ)"),
-                            table({{QStringLiteral("Всього"), &m_lTotal}, {QStringLiteral("Кешовано"), &m_lCached}, {QStringLiteral("Доступно"), &m_lAvail}, {QStringLiteral("Вільно"), &m_lFree}})));
-        left->addWidget(box(QStringLiteral("Пам'ять ядра (МБ)"), table({{QStringLiteral("Вивантажувана"), &m_lPaged}, {QStringLiteral("Невивантажувана"), &m_lNonPaged}})));
+        left->addWidget(box(tr7("Physical Memory (MB)"),
+                            table({{tr7("Total"), &m_lTotal}, {tr7("Cached"), &m_lCached}, {tr7("Available"), &m_lAvail}, {tr7("Free"), &m_lFree}})));
+        left->addWidget(box(tr7("Kernel Memory (MB)"), table({{tr7("Paged"), &m_lPaged}, {tr7("Nonpaged"), &m_lNonPaged}})));
         auto *right = new QVBoxLayout;
-        right->addWidget(box(QStringLiteral("Система"),
-                             table({{QStringLiteral("Дескриптори"), &m_lHandles},
-                                    {QStringLiteral("Потоки"), &m_lThreads},
-                                    {QStringLiteral("Процеси"), &m_lProcs},
-                                    {QStringLiteral("Час роботи"), &m_lUptime},
-                                    {QStringLiteral("Виділено (МБ)"), &m_lCommit}})));
-        auto *monitor = new QPushButton(QStringLiteral("Монітор ресурсів..."));
+        right->addWidget(box(tr7("System"),
+                             table({{tr7("Handles"), &m_lHandles},
+                                    {tr7("Threads"), &m_lThreads},
+                                    {tr7("Processes"), &m_lProcs},
+                                    {tr7("Up Time"), &m_lUptime},
+                                    {tr7("Commit (MB)"), &m_lCommit}})));
+        auto *monitor = new QPushButton(tr7("Resource Monitor..."));
         connect(monitor, &QPushButton::clicked, this, [] {
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--resmon")});
         });
@@ -947,7 +947,7 @@ private:
         g->setColumnStretch(1, 1);
         g->setRowStretch(0, 1);
         g->setRowStretch(1, 1);
-        m_tabs->addTab(page, QStringLiteral("Швидкодія"));
+        m_tabs->addTab(page, tr7("Performance"));
     }
 
     void refreshPerformance(const QList<CpuTimes> &cpu)
@@ -975,7 +975,7 @@ private:
         m_memUsage = memUsed;
         m_cpuMeter->setValue(overall, QStringLiteral("%1 %").arg(qRound(overall * 100)));
         m_memGraph->addValue(memUsed);
-        m_memMeter->setValue(memUsed, QLocale(QLocale::Ukrainian).toString((total - avail) / 1048576.0, 'f', 2) + QStringLiteral(" ГБ"));
+        m_memMeter->setValue(memUsed, QLocale{}.toString((total - avail) / 1048576.0, 'f', 2) + tr7(" GB"));
 
         auto mb = [](qint64 kb) {
             return QString::number(kb / 1024);
@@ -1006,13 +1006,13 @@ private:
         m_netGraphs = new QVBoxLayout;
         v->addLayout(m_netGraphs, 1);
         m_netModel = new QStandardItemModel(0, 4, this);
-        m_netModel->setHorizontalHeaderLabels({QStringLiteral("Адаптер"), QStringLiteral("Використання мережі"), QStringLiteral("Швидкість лінії"), QStringLiteral("Стан")});
+        m_netModel->setHorizontalHeaderLabels({tr7("Adapter Name"), tr7("Network Utilization"), tr7("Link Speed"), tr7("Status")});
         m_netView = makeList(m_netPage);
         m_netView->setModel(m_netModel);
         m_netView->setMaximumHeight(90);
         m_netView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
         v->addWidget(m_netView);
-        m_tabs->addTab(m_netPage, QStringLiteral("Мережа"));
+        m_tabs->addTab(m_netPage, tr7("Networking"));
     }
 
     void refreshNetwork(bool updateView)
@@ -1039,7 +1039,7 @@ private:
             }
             if (!m_net.contains(ifname)) {
                 NetInfo n;
-                n.title = wireless ? QStringLiteral("Бездротове мережне з'єднання") : QStringLiteral("Підключення по локальній мережі");
+                n.title = wireless ? tr7("Wireless Network Connection") : tr7("Local Area Connection");
                 auto *box = new QGroupBox(n.title);
                 auto *l = new QVBoxLayout(box);
                 l->setContentsMargins(4, 4, 4, 4);
@@ -1062,7 +1062,7 @@ private:
             if (linkBps <= 0) {
                 linkBps = 1e9;
             } else {
-                speedText = linkBps >= 1e9 ? QStringLiteral("%1 Гбіт/с").arg(linkBps / 1e9) : QStringLiteral("%1 Мбіт/с").arg(qRound(linkBps / 1e6));
+                speedText = linkBps >= 1e9 ? tr7("%1 Gbps").arg(linkBps / 1e9) : tr7("%1 Mbps").arg(qRound(linkBps / 1e6));
             }
             double usage = 0;
             if (ms > 0 && n.lastBytes > 0) {
@@ -1077,7 +1077,7 @@ private:
             const double scale = n.peak > 0.1 ? 1.0 : n.peak > 0.01 ? 0.1 : 0.01;
             // "1 %", "0,50 %", "0 %" like Windows 7: two decimals below one per cent
             auto pct = [](double v) {
-                return QStringLiteral("%1 %").arg(QLocale(QLocale::Ukrainian).toString(v, 'f', v < 1 ? 2 : (v < 10 && v != std::floor(v) ? 1 : 0)));
+                return QStringLiteral("%1 %").arg(QLocale{}.toString(v, 'f', v < 1 ? 2 : (v < 10 && v != std::floor(v) ? 1 : 0)));
             };
             n.graph->m_topLabel = pct(scale * 100);
             n.graph->m_midLabel = pct(scale * 50);
@@ -1090,9 +1090,9 @@ private:
         for (auto it = m_net.cbegin(); it != m_net.cend(); ++it) {
             const NetInfo &n = it.value();
             m_netModel->appendRow({new QStandardItem(n.title),
-                                   new QStandardItem(QLocale(QLocale::Ukrainian).toString(n.usage * 100, 'f', 2) + QStringLiteral(" %")),
+                                   new QStandardItem(QLocale{}.toString(n.usage * 100, 'f', 2) + QStringLiteral(" %")),
                                    new QStandardItem(n.speed),
-                                   new QStandardItem(n.up ? QStringLiteral("Підключено") : QStringLiteral("Відключено"))});
+                                   new QStandardItem(n.up ? tr7("Connected") : tr7("Disconnected"))});
         }
     }
 
@@ -1102,7 +1102,7 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         m_userModel = new QStandardItemModel(0, 5, this);
-        m_userModel->setHorizontalHeaderLabels({QStringLiteral("Користувач"), QStringLiteral("Код"), QStringLiteral("Стан"), QStringLiteral("Ім'я клієнта"), QStringLiteral("Сеанс")});
+        m_userModel->setHorizontalHeaderLabels({tr7("User Name"), tr7("ID"), tr7("Status"), tr7("Client Name"), tr7("Session")});
         m_userView = makeList(page);
         m_userView->setModel(m_userModel);
         m_userView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -1115,9 +1115,9 @@ private:
         v->addWidget(m_userView);
         auto *buttons = new QHBoxLayout;
         buttons->addStretch(1);
-        auto *disconnect = new QPushButton(QStringLiteral("Відключити"));
-        auto *logout = new QPushButton(QStringLiteral("Вийти з системи"));
-        auto *message = new QPushButton(QStringLiteral("Надіслати повідомлення..."));
+        auto *disconnect = new QPushButton(tr7("Disconnect"));
+        auto *logout = new QPushButton(tr7("Logoff"));
+        auto *message = new QPushButton(tr7("Send Message..."));
         message->setEnabled(false);
         for (QPushButton *b : {disconnect, logout, message}) {
             buttons->addWidget(b);
@@ -1129,7 +1129,7 @@ private:
         connect(logout, &QPushButton::clicked, this, [] {
             QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.LogoutPrompt"), QStringLiteral("/LogoutPrompt"), QStringLiteral("promptLogout")});
         });
-        m_tabs->addTab(page, QStringLiteral("Користувачі"));
+        m_tabs->addTab(page, tr7("Users"));
     }
 
     void refreshUsers()
@@ -1143,7 +1143,7 @@ private:
             const QString sid = f.at(0);
             const QString state = run(QStringLiteral("loginctl"), {QStringLiteral("show-session"), sid, QStringLiteral("-p"), QStringLiteral("State"), QStringLiteral("--value")}).trimmed();
             auto *user = new QStandardItem(QIcon::fromTheme(QStringLiteral("system-users")), f.at(2));
-            m_userModel->appendRow({user, new QStandardItem(sid), new QStandardItem(state == QLatin1String("active") ? QStringLiteral("Активний") : QStringLiteral("Відключений")),
+            m_userModel->appendRow({user, new QStandardItem(sid), new QStandardItem(state == QLatin1String("active") ? tr7("Active") : tr7("Disconnected", "session")),
                                     new QStandardItem(QString()), new QStandardItem(f.value(6) != QLatin1String("-") ? QStringLiteral("Console") : f.value(6))});
         }
     }
@@ -1151,13 +1151,13 @@ private:
     /* ----- menus ----- */
     void buildMenus()
     {
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QStringLiteral("Нова задача (Виконати...)"), this, &TaskManager::newTask);
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(tr7("New Task (Run...)"), this, &TaskManager::newTask);
         file->addSeparator();
-        file->addAction(QStringLiteral("Вийти з диспетчера задач"), this, &QWidget::close);
+        file->addAction(tr7("Exit Task Manager"), this, &QWidget::close);
 
-        QMenu *options = menuBar()->addMenu(QStringLiteral("&Параметри"));
-        QAction *onTop = options->addAction(QStringLiteral("Поверх інших вікон"));
+        QMenu *options = menuBar()->addMenu(tr7("&Options"));
+        QAction *onTop = options->addAction(tr7("Always On Top"));
         onTop->setCheckable(true);
         onTop->setChecked(true);
         connect(onTop, &QAction::toggled, this, [this](bool on) {
@@ -1165,20 +1165,20 @@ private:
             show();
         });
         setWindowFlag(Qt::WindowStaysOnTopHint, true);
-        QAction *minimize = options->addAction(QStringLiteral("Згортати після використання"));
+        QAction *minimize = options->addAction(tr7("Minimize On Use"));
         minimize->setCheckable(true);
         minimize->setChecked(true);
         connect(minimize, &QAction::toggled, this, [this](bool on) {
             m_minimizeOnUse = on;
         });
 
-        QMenu *view = menuBar()->addMenu(QStringLiteral("&Вигляд"));
-        view->addAction(QStringLiteral("Оновити зараз"), this, [this] {
+        QMenu *view = menuBar()->addMenu(tr7("&View"));
+        view->addAction(tr7("Refresh Now"), this, [this] {
             refresh(true);
         });
-        QMenu *speed = view->addMenu(QStringLiteral("Швидкість оновлення"));
+        QMenu *speed = view->addMenu(tr7("Update Speed"));
         auto *group = new QActionGroup(speed);
-        const QList<QPair<QString, int>> speeds{{QStringLiteral("Висока"), 500}, {QStringLiteral("Звичайна"), 1000}, {QStringLiteral("Низька"), 4000}, {QStringLiteral("Призупинено"), 0}};
+        const QList<QPair<QString, int>> speeds{{tr7("High", "speed"), 500}, {tr7("Normal", "speed"), 1000}, {tr7("Low", "speed"), 4000}, {tr7("Paused"), 0}};
         for (const auto &[text, ms] : speeds) {
             QAction *a = speed->addAction(text, this, [this, ms] {
                 if (ms > 0) {
@@ -1192,9 +1192,9 @@ private:
             group->addAction(a);
         }
 
-        QMenu *help = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        help->addAction(QStringLiteral("Про диспетчер задач"), this, [this] {
-            QMessageBox::about(this, QStringLiteral("Диспетчер задач Windows"), QStringLiteral("Диспетчер задач у стилі Windows 7.\nПоказує програми, процеси, служби та швидкодію цього комп'ютера з Linux."));
+        QMenu *help = menuBar()->addMenu(tr7("&Help"));
+        help->addAction(tr7("About Task Manager"), this, [this] {
+            QMessageBox::about(this, tr7("Windows Task Manager"), tr7("Task Manager in the Windows 7 style.\nShows the programs, processes, services and performance of this Linux computer."));
         });
 
         menuBar()->setStyleSheet(QStringLiteral(
@@ -1220,9 +1220,9 @@ private:
         } else if (tab == 5 && (force || ++m_slowTick % 5 == 0)) {
             refreshUsers();
         }
-        m_stProcs->setText(QStringLiteral("Процесів: %1").arg(m_procCount));
-        m_stCpu->setText(QStringLiteral("Завантаження ЦП: %1%").arg(qRound(m_cpuUsage * 100)));
-        m_stMem->setText(QStringLiteral("Фізична пам'ять: %1%").arg(qRound(m_memUsage * 100)));
+        m_stProcs->setText(tr7("Processes: %1").arg(m_procCount));
+        m_stCpu->setText(tr7("CPU Usage: %1%").arg(qRound(m_cpuUsage * 100)));
+        m_stMem->setText(tr7("Physical Memory: %1%").arg(qRound(m_memUsage * 100)));
     }
 
     struct NetInfo {
@@ -1278,8 +1278,9 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-taskmgr"));
-    app.setApplicationDisplayName(QStringLiteral("Диспетчер задач Windows"));
+    app.setApplicationDisplayName(tr7("Windows Task Manager"));
     app.setDesktopFileName(QStringLiteral("seven-taskmgr"));
     QFont font = app.font();
     font.setPixelSize(12);

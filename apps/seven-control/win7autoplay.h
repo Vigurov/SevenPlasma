@@ -12,6 +12,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 #include "win7safelyremove.h"
 
 #include "win7chrome.h"
@@ -59,14 +60,14 @@ struct MediaType {
 inline const QList<MediaType> &mediaTypes()
 {
     static const QList<MediaType> t{
-        {QStringLiteral("audiocd"), QStringLiteral("Звуковий компакт-диск"), QStringLiteral("media-optical-audio"), {QStringLiteral("haruna-cd")}, QStringLiteral("звукових компакт-дисків")},
-        {QStringLiteral("dvd"), QStringLiteral("Фільм DVD"), QStringLiteral("media-optical-video"), {QStringLiteral("haruna-dvd")}, QStringLiteral("фільмів DVD")},
-        {QStringLiteral("programs"), QStringLiteral("Програми та ігри"), QStringLiteral("applications-games"), {}, QStringLiteral("програм та ігор")},
-        {QStringLiteral("pictures"), QStringLiteral("Зображення"), QStringLiteral("image-x-generic"), {QStringLiteral("import"), QStringLiteral("photoviewer")}, QStringLiteral("зображень")},
-        {QStringLiteral("video"), QStringLiteral("Відеофайли"), QStringLiteral("video-x-generic"), {QStringLiteral("wmp"), QStringLiteral("import")}, QStringLiteral("відеофайлів")},
-        {QStringLiteral("music"), QStringLiteral("Звукові файли"), QStringLiteral("audio-x-generic"), {QStringLiteral("wmp")}, QStringLiteral("звукових файлів")},
-        {QStringLiteral("mixed"), QStringLiteral("Змішаний вміст"), QStringLiteral("drive-removable-media-usb"), {QStringLiteral("wmp"), QStringLiteral("import")}, QStringLiteral("змішаного вмісту")},
-        {QStringLiteral("bluray"), QStringLiteral("Фільм на диску Blu-ray"), QStringLiteral("media-optical-blu-ray"), {QStringLiteral("haruna-bd")}, QStringLiteral("фільмів Blu-ray")},
+        {QStringLiteral("audiocd"), tr7("Audio CD"), QStringLiteral("media-optical-audio"), {QStringLiteral("haruna-cd")}, tr7("audio CDs")},
+        {QStringLiteral("dvd"), tr7("DVD movie"), QStringLiteral("media-optical-video"), {QStringLiteral("haruna-dvd")}, tr7("DVD movies")},
+        {QStringLiteral("programs"), tr7("Software and games"), QStringLiteral("applications-games"), {}, tr7("software and games")},
+        {QStringLiteral("pictures"), tr7("Pictures"), QStringLiteral("image-x-generic"), {QStringLiteral("import"), QStringLiteral("photoviewer")}, tr7("pictures")},
+        {QStringLiteral("video"), tr7("Video files"), QStringLiteral("video-x-generic"), {QStringLiteral("wmp"), QStringLiteral("import")}, tr7("video files")},
+        {QStringLiteral("music"), tr7("Audio files"), QStringLiteral("audio-x-generic"), {QStringLiteral("wmp")}, tr7("audio files")},
+        {QStringLiteral("mixed"), tr7("Mixed content"), QStringLiteral("drive-removable-media-usb"), {QStringLiteral("wmp"), QStringLiteral("import")}, tr7("mixed content")},
+        {QStringLiteral("bluray"), tr7("Blu-ray disc movie"), QStringLiteral("media-optical-blu-ray"), {QStringLiteral("haruna-bd")}, tr7("Blu-ray movies")},
         {QStringLiteral("vcd"), QStringLiteral("Video CD"), QStringLiteral("media-optical-video"), {QStringLiteral("haruna-vcd")}, QStringLiteral("Video CD")},
     };
     return t;
@@ -75,20 +76,20 @@ inline const QList<MediaType> &mediaTypes()
 inline Action action(const QString &key)
 {
     static const QHash<QString, Action> a{
-        {QStringLiteral("haruna-cd"), {QStringLiteral("haruna-cd"), QStringLiteral("Відтворити звуковий компакт-диск"), QStringLiteral("використовуючи Haruna"), QStringLiteral("haruna")}},
-        {QStringLiteral("haruna-dvd"), {QStringLiteral("haruna-dvd"), QStringLiteral("Відтворити фільм DVD"), QStringLiteral("використовуючи Haruna"), QStringLiteral("haruna")}},
-        {QStringLiteral("haruna-bd"), {QStringLiteral("haruna-bd"), QStringLiteral("Відтворити фільм Blu-ray"), QStringLiteral("використовуючи Haruna"), QStringLiteral("haruna")}},
-        {QStringLiteral("haruna-vcd"), {QStringLiteral("haruna-vcd"), QStringLiteral("Відтворити Video CD"), QStringLiteral("використовуючи Haruna"), QStringLiteral("haruna")}},
-        {QStringLiteral("haruna"), {QStringLiteral("haruna"), QStringLiteral("Відтворити відео"), QStringLiteral("використовуючи Haruna"), QStringLiteral("haruna")}},
-        {QStringLiteral("elisa"), {QStringLiteral("elisa"), QStringLiteral("Відтворити музику"), QStringLiteral("використовуючи Elisa"), QStringLiteral("elisa")}},
-        {QStringLiteral("gwenview"), {QStringLiteral("gwenview"), QStringLiteral("Переглянути зображення"), QStringLiteral("використовуючи Gwenview"), QStringLiteral("gwenview")}},
-        {QStringLiteral("import"), {QStringLiteral("import"), QStringLiteral("Імпортувати зображення та відео"), QStringLiteral("використовуючи Windows"), QStringLiteral("camera-photo")}},
-        {QStringLiteral("wmp"), {QStringLiteral("wmp"), QStringLiteral("Відтворити"), QStringLiteral("використовуючи Програвач Windows Media"), QStringLiteral("seven-wmp")}},
-        {QStringLiteral("photoviewer"), {QStringLiteral("photoviewer"), QStringLiteral("Переглянути зображення"), QStringLiteral("використовуючи Засіб перегляду фотографій Windows"), QStringLiteral("seven-photoviewer")}},
-        {QStringLiteral("open"), {QStringLiteral("open"), QStringLiteral("Відкрити папку для перегляду файлів"), QStringLiteral("використовуючи Провідник"), QStringLiteral("seven-bk-folder")}},
-        {QStringLiteral("backup"), {QStringLiteral("backup"), QStringLiteral("Використовувати цей диск для архівації"), QStringLiteral("використовуючи Архівацію даних"), QStringLiteral("seven-cpi-backup")}},
-        {QStringLiteral("nothing"), {QStringLiteral("nothing"), QStringLiteral("Не виконувати жодних дій"), QString(), QStringLiteral("dialog-cancel")}},
-        {QStringLiteral("ask"), {QStringLiteral("ask"), QStringLiteral("Запитувати щоразу"), QString(), QStringLiteral("dialog-question")}},
+        {QStringLiteral("haruna-cd"), {QStringLiteral("haruna-cd"), tr7("Play audio CD"), tr7("using Haruna"), QStringLiteral("haruna")}},
+        {QStringLiteral("haruna-dvd"), {QStringLiteral("haruna-dvd"), tr7("Play DVD movie"), tr7("using Haruna"), QStringLiteral("haruna")}},
+        {QStringLiteral("haruna-bd"), {QStringLiteral("haruna-bd"), tr7("Play Blu-ray movie"), tr7("using Haruna"), QStringLiteral("haruna")}},
+        {QStringLiteral("haruna-vcd"), {QStringLiteral("haruna-vcd"), tr7("Play Video CD"), tr7("using Haruna"), QStringLiteral("haruna")}},
+        {QStringLiteral("haruna"), {QStringLiteral("haruna"), tr7("Play video"), tr7("using Haruna"), QStringLiteral("haruna")}},
+        {QStringLiteral("elisa"), {QStringLiteral("elisa"), tr7("Play music"), tr7("using Elisa"), QStringLiteral("elisa")}},
+        {QStringLiteral("gwenview"), {QStringLiteral("gwenview"), tr7("View pictures"), tr7("using Gwenview"), QStringLiteral("gwenview")}},
+        {QStringLiteral("import"), {QStringLiteral("import"), tr7("Import pictures and videos"), tr7("using Windows"), QStringLiteral("camera-photo")}},
+        {QStringLiteral("wmp"), {QStringLiteral("wmp"), tr7("Play"), tr7("using Windows Media Player"), QStringLiteral("seven-wmp")}},
+        {QStringLiteral("photoviewer"), {QStringLiteral("photoviewer"), tr7("View pictures"), tr7("using Windows Photo Viewer"), QStringLiteral("seven-photoviewer")}},
+        {QStringLiteral("open"), {QStringLiteral("open"), tr7("Open folder to view files"), tr7("using Windows Explorer"), QStringLiteral("seven-bk-folder")}},
+        {QStringLiteral("backup"), {QStringLiteral("backup"), tr7("Use this drive for backup"), tr7("using Windows Backup"), QStringLiteral("seven-cpi-backup")}},
+        {QStringLiteral("nothing"), {QStringLiteral("nothing"), tr7("Take no action"), QString(), QStringLiteral("dialog-cancel")}},
+        {QStringLiteral("ask"), {QStringLiteral("ask"), tr7("Ask me every time"), QString(), QStringLiteral("dialog-question")}},
     };
     return a.value(key);
 }
@@ -127,18 +128,18 @@ inline QWidget *buildPage(const Nav &nav)
     auto *v = new QVBoxLayout(body);
     v->setContentsMargins(30, 14, 30, 14);
     v->setSpacing(6);
-    auto *title = new QLabel(QStringLiteral("Виберіть, що має відбуватися, коли ви вставляєте кожен тип носія або пристрою"));
+    auto *title = new QLabel(tr7("Choose what happens when you insert each type of media or device"));
     QFont tf = title->font();
     tf.setPixelSize(16);
     title->setFont(tf);
     title->setStyleSheet(QStringLiteral("color: #1e3287;"));
     title->setWordWrap(true);
     v->addWidget(title);
-    auto *use = new QCheckBox(QStringLiteral("Використовувати автозапуск для всіх носіїв і пристроїв"));
+    auto *use = new QCheckBox(tr7("Use AutoPlay for all media and devices"));
     use->setChecked(enabled());
     v->addWidget(use);
     v->addSpacing(8);
-    v->addWidget(new SectionHeader(QStringLiteral("Носії")));
+    v->addWidget(new SectionHeader(tr7("Media")));
     v->addSpacing(4);
     auto *grid = new QGridLayout;
     grid->setHorizontalSpacing(10);
@@ -157,7 +158,7 @@ inline QWidget *buildPage(const Nav &nav)
         auto *combo = new QComboBox;
         combo->setFixedWidth(370);
         combo->setIconSize(QSize(16, 16));
-        combo->setPlaceholderText(QStringLiteral("За замовчуванням"));
+        combo->setPlaceholderText(tr7("Default"));
         for (const QString &k : choicesFor(t)) {
             const Action a = action(k);
             combo->addItem(QIcon::fromTheme(a.icon), a.using_.isEmpty() ? a.title : a.title + QStringLiteral(", ") + a.using_, k);
@@ -174,7 +175,7 @@ inline QWidget *buildPage(const Nav &nav)
     grid->setColumnStretch(3, 1);
     v->addWidget(rows);
     v->addSpacing(10);
-    auto *reset = new QPushButton(QStringLiteral("Відновити всі значення за замовчуванням"));
+    auto *reset = new QPushButton(tr7("Reset all defaults"));
     v->addWidget(reset, 0, Qt::AlignLeft);
     v->addStretch(1);
     auto setEnabled = [rows](bool on) {
@@ -204,8 +205,8 @@ inline QWidget *buildPage(const Nav &nav)
     auto *bh = new QHBoxLayout(bar);
     bh->setContentsMargins(10, 8, 14, 8);
     bh->addStretch(1);
-    auto *save = new QPushButton(QStringLiteral("Зберегти"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *save = new QPushButton(tr7("Save"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     save->setMinimumWidth(75);
     cancel->setMinimumWidth(75);
     bh->addWidget(save);
@@ -412,7 +413,7 @@ inline void askDialog(const Media &m)
     }
     auto *dlg = new QDialog;
     dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setWindowTitle(QStringLiteral("Автозапуск"));
+    dlg->setWindowTitle(tr7("AutoPlay"));
     dlg->setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-autoplay")));
     dlg->setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint);
     dlg->setFixedWidth(380);
@@ -430,7 +431,7 @@ inline void askDialog(const Media &m)
     icon->setPixmap(QIcon::fromTheme(m.optical ? t.icon : QStringLiteral("drive-removable-media-usb")).pixmap(48, 48));
     head->addWidget(icon);
     head->addSpacing(8);
-    QString name = m.label.isEmpty() ? (m.optical ? QStringLiteral("Дисковод DVD") : QStringLiteral("Знімний диск")) : m.label;
+    QString name = m.label.isEmpty() ? (m.optical ? tr7("DVD RW Drive") : tr7("Removable Disk")) : m.label;
     auto *title = new QLabel(QStringLiteral("%1 (%2)").arg(name, m.device.section(QLatin1Char('/'), -1)));
     QFont f = title->font();
     f.setPixelSize(15);
@@ -438,7 +439,7 @@ inline void askDialog(const Media &m)
     head->addWidget(title, 1);
     wv->addLayout(head);
     wv->addSpacing(8);
-    auto *always = new QCheckBox(QStringLiteral("Завжди виконувати для %1:").arg(t.always));
+    auto *always = new QCheckBox(tr7("Always do this for %1:").arg(t.always));
     wv->addWidget(always);
     // Windows 7 has no "always do this" for drives with mixed content
     always->setVisible(m.type != QLatin1String("mixed"));
@@ -453,7 +454,7 @@ inline void askDialog(const Media &m)
     };
     QStringList apps = t.actions;
     if (!apps.isEmpty()) {
-        auto *sh = new SectionHeader(QStringLiteral("Параметри для %1").arg(t.always));
+        auto *sh = new SectionHeader(tr7("%1 settings").arg(t.always));
         sh->setBlue(true);
         wv->addWidget(sh);
         for (const QString &k : apps) {
@@ -464,7 +465,7 @@ inline void askDialog(const Media &m)
     }
     if (m.type != QLatin1String("audiocd")) {
         wv->addSpacing(4);
-        auto *gh = new SectionHeader(QStringLiteral("Загальні параметри"));
+        auto *gh = new SectionHeader(tr7("General options"));
         gh->setBlue(true);
         wv->addWidget(gh);
         wv->addWidget(new OptionRow(action(QStringLiteral("open")), [choose] {
@@ -479,7 +480,7 @@ inline void askDialog(const Media &m)
         }
     }
     wv->addSpacing(10);
-    wv->addWidget(new Link(QStringLiteral("Переглянути інші параметри автозапуску на панелі керування"), [dlg] {
+    wv->addWidget(new Link(tr7("View more AutoPlay options in Control Panel"), [dlg] {
         dlg->close();
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--autoplay")});
     }));

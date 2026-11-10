@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 #include "win7header.h"
@@ -64,13 +65,13 @@ T *place(QWidget *parent, T *w, const QRect &r)
 /** "73,3 КБ (75 123 байт)": three significant digits, then the exact count, like Explorer */
 inline QString sizeText(qint64 bytes, bool exact = true)
 {
-    const QLocale uk(QLocale::Ukrainian);
+    const QLocale uk;
     QString shortText;
     if (bytes < 1024) {
-        shortText = QStringLiteral("%1 байт").arg(bytes);
+        shortText = tr7("%1 bytes").arg(bytes);
         return shortText;
     }
-    static const char *units[] = {"КБ", "МБ", "ГБ", "ТБ"};
+    static const char *units[] = {"KB", "MB", "GB", "TB"};
     double v = bytes / 1024.0;
     int u = 0;
     while (v >= 1000 && u < 3) {
@@ -81,19 +82,19 @@ inline QString sizeText(qint64 bytes, bool exact = true)
     // Explorer truncates instead of rounding
     const double p = std::pow(10.0, decimals);
     v = std::floor(v * p) / p;
-    shortText = uk.toString(v, 'f', decimals) + QLatin1Char(' ') + QString::fromUtf8(units[u]);
-    return exact ? QStringLiteral("%1 (%2 байт)").arg(shortText, uk.toString(bytes)) : shortText;
+    shortText = uk.toString(v, 'f', decimals) + QLatin1Char(' ') + tr7(units[u]);
+    return exact ? tr7("%1 (%2 bytes)").arg(shortText, uk.toString(bytes)) : shortText;
 }
 
 /** "4 жовтня 2026 р., 13:33:12" */
 inline QString dateText(const QDateTime &t)
 {
     if (!t.isValid()) {
-        return QStringLiteral("Невідомо");
+        return tr7("Unknown");
     }
-    static const char *months[] = {"січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"};
+    static const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     const QDate d = t.date();
-    return QStringLiteral("%1 %2 %3 р., %4").arg(d.day()).arg(QString::fromUtf8(months[d.month() - 1])).arg(d.year()).arg(t.toString(QStringLiteral("HH:mm:ss")));
+    return tr7("%2 %1, %3, %4").arg(d.day()).arg(tr7(months[d.month() - 1])).arg(d.year()).arg(t.toString(QStringLiteral("HH:mm:ss")));
 }
 
 inline QString userName(uid_t uid)
@@ -117,10 +118,10 @@ inline QString typeText(const QString &path)
 {
     const QFileInfo fi(path);
     if (fi.isDir()) {
-        return QStringLiteral("Папка з файлами");
+        return tr7("File folder");
     }
     if (isShortcut(path)) {
-        return QStringLiteral("Ярлик (.desktop)");
+        return tr7("Shortcut (.desktop)");
     }
     const QMimeType mt = QMimeDatabase().mimeTypeForFile(path);
     const QString suffix = fi.suffix();
@@ -246,34 +247,34 @@ public:
         const bool single = paths.size() == 1;
         const QString first = paths.value(0);
         const QFileInfo fi(first);
-        setWindowTitle(QStringLiteral("Властивості: %1").arg(single ? displayName(first) : fi.fileName() + QStringLiteral(", ...")));
+        setWindowTitle(tr7("%1 Properties").arg(single ? displayName(first) : fi.fileName() + QStringLiteral(", ...")));
         setWindowIcon(single ? fileIcon(first) : QIcon::fromTheme(QStringLiteral("document-multiple")));
 
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         m_tabs = new QTabWidget;
         if (!single) {
-            m_tabs->addTab(multiPage(), QStringLiteral("Загальні"));
+            m_tabs->addTab(multiPage(), tr7("General"));
         } else if (isShortcut(first)) {
-            m_tabs->addTab(filePage(), QStringLiteral("Загальні"));
-            m_tabs->addTab(shortcutPage(), QStringLiteral("Ярлик"));
-            m_tabs->addTab(securityPage(), QStringLiteral("Безпека"));
-            m_tabs->addTab(detailsPage(), QStringLiteral("Докладно"));
+            m_tabs->addTab(filePage(), tr7("General"));
+            m_tabs->addTab(shortcutPage(), tr7("Shortcut"));
+            m_tabs->addTab(securityPage(), tr7("Security"));
+            m_tabs->addTab(detailsPage(), tr7("Verbose"));
             m_tabs->setCurrentIndex(1); // Windows opens a shortcut on its Shortcut tab
         } else if (fi.isDir()) {
-            m_tabs->addTab(folderPage(), QStringLiteral("Загальні"));
-            m_tabs->addTab(securityPage(), QStringLiteral("Безпека"));
+            m_tabs->addTab(folderPage(), tr7("General"));
+            m_tabs->addTab(securityPage(), tr7("Security"));
         } else {
-            m_tabs->addTab(filePage(), QStringLiteral("Загальні"));
-            m_tabs->addTab(securityPage(), QStringLiteral("Безпека"));
-            m_tabs->addTab(detailsPage(), QStringLiteral("Докладно"));
+            m_tabs->addTab(filePage(), tr7("General"));
+            m_tabs->addTab(securityPage(), tr7("Security"));
+            m_tabs->addTab(detailsPage(), tr7("Verbose"));
         }
         v->addWidget(m_tabs);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -384,35 +385,35 @@ private:
         m_name = place(p, new QLineEdit(displayName(path)), dlu(56, 11, 164, 14));
         connect(m_name, &QLineEdit::textEdited, this, [this] { changed(); });
         rule(p, 32);
-        place(p, new QLabel(QStringLiteral("Тип файлу:")), dlu(7, 40, 48, 9));
+        place(p, new QLabel(tr7("Type of file:")), dlu(7, 40, 48, 9));
         value(p, typeText(path), dlu(56, 39, 164, 12));
         int y = 56;
         if (!isShortcut(path)) {
-            place(p, new QLabel(QStringLiteral("Програма:")), dlu(7, y, 48, 9));
+            place(p, new QLabel(tr7("Program:")), dlu(7, y, 48, 9));
             m_appIcon = place(p, new QLabel, dlu(56, y, 11, 10));
             m_appName = value(p, QString(), dlu(70, y - 1, 78, 12));
-            auto *change = place(p, new QPushButton(QStringLiteral("Змінити...")), dlu(149, y - 2, 70, 14));
+            auto *change = place(p, new QPushButton(tr7("Edit...")), dlu(149, y - 2, 70, 14));
             connect(change, &QPushButton::clicked, this, [this, path] { changeProgram(path); });
             showProgram(path);
         } else {
-            place(p, new QLabel(QStringLiteral("Опис:")), dlu(7, y, 48, 9));
+            place(p, new QLabel(tr7("Description:")), dlu(7, y, 48, 9));
             value(p, KDesktopFile(path).readComment(), dlu(56, y - 1, 164, 12));
         }
         rule(p, 72);
-        place(p, new QLabel(QStringLiteral("Розташування:")), dlu(7, 80, 48, 9));
+        place(p, new QLabel(tr7("Location:")), dlu(7, 80, 48, 9));
         value(p, fi.absolutePath(), dlu(56, 79, 164, 12));
-        place(p, new QLabel(QStringLiteral("Розмір:")), dlu(7, 96, 48, 9));
+        place(p, new QLabel(tr7("Size:")), dlu(7, 96, 48, 9));
         struct stat st;
         const bool ok = ::stat(QFile::encodeName(path).constData(), &st) == 0;
         value(p, ok ? sizeText(st.st_size) : QString(), dlu(56, 95, 164, 12));
-        place(p, new QLabel(QStringLiteral("На диску:")), dlu(7, 112, 48, 9));
+        place(p, new QLabel(tr7("Size on disk:")), dlu(7, 112, 48, 9));
         value(p, ok ? sizeText(qint64(st.st_blocks) * 512) : QString(), dlu(56, 111, 164, 12));
         rule(p, 128);
-        place(p, new QLabel(QStringLiteral("Створено:")), dlu(7, 136, 48, 9));
+        place(p, new QLabel(tr7("Created:")), dlu(7, 136, 48, 9));
         value(p, dateText(fi.birthTime().isValid() ? fi.birthTime() : fi.metadataChangeTime()), dlu(56, 135, 164, 12));
-        place(p, new QLabel(QStringLiteral("Змінено:")), dlu(7, 152, 48, 9));
+        place(p, new QLabel(tr7("Modified:")), dlu(7, 152, 48, 9));
         value(p, dateText(fi.lastModified()), dlu(56, 151, 164, 12));
-        place(p, new QLabel(QStringLiteral("Відкрито:")), dlu(7, 168, 48, 9));
+        place(p, new QLabel(tr7("Accessed:", "file")), dlu(7, 168, 48, 9));
         value(p, dateText(fi.lastRead()), dlu(56, 167, 164, 12));
         rule(p, 184);
         attributes(p, 192, false);
@@ -422,20 +423,20 @@ private:
     /** Read-only, Hidden and Advanced... (the Archive box Windows shows only on FAT) */
     void attributes(QWidget *p, int y, bool folder)
     {
-        place(p, new QLabel(QStringLiteral("Атрибути:")), dlu(7, y, 48, 9));
+        place(p, new QLabel(tr7("Attributes:")), dlu(7, y, 48, 9));
         const QString path = m_paths.first();
         if (folder) {
-            m_readOnly = check(p, QStringLiteral("Лише читання (тільки для файлів у папці)"), dlu(56, y, 163, 10));
+            m_readOnly = check(p, tr7("Read-only (Only applies to files in folder)"), dlu(56, y, 163, 10));
             m_readOnly->setTristate(true);
             m_readOnly->setCheckState(Qt::PartiallyChecked);
-            m_hidden = check(p, QStringLiteral("Прихований"), dlu(56, y + 14, 80, 10));
-            auto *adv = place(p, new QPushButton(QStringLiteral("Інші...")), dlu(149, y + 12, 70, 14));
+            m_hidden = check(p, tr7("Hidden"), dlu(56, y + 14, 80, 10));
+            auto *adv = place(p, new QPushButton(tr7("More...")), dlu(149, y + 12, 70, 14));
             connect(adv, &QPushButton::clicked, this, [this] { advancedAttributes(); });
         } else {
-            m_readOnly = check(p, QStringLiteral("Лише читання"), dlu(56, y, 64, 10));
+            m_readOnly = check(p, tr7("Read-only"), dlu(56, y, 64, 10));
             m_readOnly->setChecked(isReadOnly(path));
-            m_hidden = check(p, QStringLiteral("Прихований"), dlu(121, y, 58, 10));
-            auto *adv = place(p, new QPushButton(QStringLiteral("Інші...")), dlu(180, y - 2, 40, 14));
+            m_hidden = check(p, tr7("Hidden"), dlu(121, y, 58, 10));
+            auto *adv = place(p, new QPushButton(tr7("More...")), dlu(180, y - 2, 40, 14));
             connect(adv, &QPushButton::clicked, this, [this] { advancedAttributes(); });
         }
         m_hidden->setChecked(fileHidden(path));
@@ -454,25 +455,25 @@ private:
         m_name->setReadOnly(path == QDir::homePath() || path == QLatin1String("/"));
         connect(m_name, &QLineEdit::textEdited, this, [this] { changed(); });
         rule(p, 32);
-        place(p, new QLabel(QStringLiteral("Тип:")), dlu(7, 40, 48, 9));
+        place(p, new QLabel(tr7("Type:")), dlu(7, 40, 48, 9));
         value(p, typeText(path), dlu(56, 39, 164, 12));
-        place(p, new QLabel(QStringLiteral("Розташування:")), dlu(7, 56, 48, 9));
+        place(p, new QLabel(tr7("Location:")), dlu(7, 56, 48, 9));
         value(p, fi.absolutePath(), dlu(56, 55, 164, 12));
-        place(p, new QLabel(QStringLiteral("Розмір:")), dlu(7, 72, 48, 9));
-        auto *size = value(p, QStringLiteral("Обчислення..."), dlu(56, 71, 164, 12));
-        place(p, new QLabel(QStringLiteral("На диску:")), dlu(7, 88, 48, 9));
-        auto *disk = value(p, QStringLiteral("Обчислення..."), dlu(56, 87, 164, 12));
-        place(p, new QLabel(QStringLiteral("Вміст:")), dlu(7, 104, 48, 9));
-        auto *contains = value(p, QStringLiteral("Обчислення..."), dlu(56, 103, 164, 12));
+        place(p, new QLabel(tr7("Size:")), dlu(7, 72, 48, 9));
+        auto *size = value(p, tr7("Calculating...", "properties"), dlu(56, 71, 164, 12));
+        place(p, new QLabel(tr7("Size on disk:")), dlu(7, 88, 48, 9));
+        auto *disk = value(p, tr7("Calculating...", "properties"), dlu(56, 87, 164, 12));
+        place(p, new QLabel(tr7("Contents:")), dlu(7, 104, 48, 9));
+        auto *contains = value(p, tr7("Calculating...", "properties"), dlu(56, 103, 164, 12));
         rule(p, 120);
-        place(p, new QLabel(QStringLiteral("Створено:")), dlu(7, 128, 48, 9));
+        place(p, new QLabel(tr7("Created:")), dlu(7, 128, 48, 9));
         value(p, dateText(fi.birthTime().isValid() ? fi.birthTime() : fi.metadataChangeTime()), dlu(56, 127, 164, 12));
         rule(p, 144);
         attributes(p, 152, true);
         startCounting({path}, [size, disk, contains](const Totals &t, bool) {
             size->setText(sizeText(t.size));
             disk->setText(sizeText(t.onDisk));
-            contains->setText(QStringLiteral("Файлів: %1; папок: %2").arg(QLocale(QLocale::Ukrainian).toString(t.files), QLocale(QLocale::Ukrainian).toString(t.folders)));
+            contains->setText(tr7("%1 Files, %2 Folders").arg(QLocale{}.toString(t.files), QLocale{}.toString(t.folders)));
         });
         return p;
     }
@@ -491,20 +492,20 @@ private:
             types << typeText(path);
             dirs << fi.absolutePath();
         }
-        place(p, new QLabel(QStringLiteral("Файлів: %1; папок: %2").arg(files).arg(folders)), dlu(56, 11, 164, 10));
+        place(p, new QLabel(tr7("%1 Files, %2 Folders").arg(files).arg(folders)), dlu(56, 11, 164, 10));
         rule(p, 32);
-        place(p, new QLabel(QStringLiteral("Тип:")), dlu(7, 40, 48, 9));
-        value(p, types.size() == 1 ? QStringLiteral("Усі типу «%1»").arg(*types.begin()) : QStringLiteral("Кілька типів"), dlu(56, 39, 164, 12));
-        place(p, new QLabel(QStringLiteral("Розташування:")), dlu(7, 56, 48, 9));
-        value(p, dirs.size() == 1 ? QStringLiteral("Усі в %1").arg(*dirs.begin()) : QStringLiteral("Різні папки"), dlu(56, 55, 164, 12));
-        place(p, new QLabel(QStringLiteral("Розмір:")), dlu(7, 72, 48, 9));
-        auto *size = value(p, QStringLiteral("Обчислення..."), dlu(56, 71, 164, 12));
-        place(p, new QLabel(QStringLiteral("На диску:")), dlu(7, 88, 48, 9));
-        auto *disk = value(p, QStringLiteral("Обчислення..."), dlu(56, 87, 164, 12));
+        place(p, new QLabel(tr7("Type:")), dlu(7, 40, 48, 9));
+        value(p, types.size() == 1 ? tr7("All of type %1").arg(*types.begin()) : tr7("Multiple types"), dlu(56, 39, 164, 12));
+        place(p, new QLabel(tr7("Location:")), dlu(7, 56, 48, 9));
+        value(p, dirs.size() == 1 ? tr7("All in %1").arg(*dirs.begin()) : tr7("Various folders"), dlu(56, 55, 164, 12));
+        place(p, new QLabel(tr7("Size:")), dlu(7, 72, 48, 9));
+        auto *size = value(p, tr7("Calculating...", "properties"), dlu(56, 71, 164, 12));
+        place(p, new QLabel(tr7("Size on disk:")), dlu(7, 88, 48, 9));
+        auto *disk = value(p, tr7("Calculating...", "properties"), dlu(56, 87, 164, 12));
         rule(p, 104);
-        place(p, new QLabel(QStringLiteral("Атрибути:")), dlu(7, 112, 48, 9));
-        m_readOnly = check(p, QStringLiteral("Лише читання"), dlu(56, 112, 100, 10));
-        m_hidden = check(p, QStringLiteral("Прихований"), dlu(56, 126, 100, 10));
+        place(p, new QLabel(tr7("Attributes:")), dlu(7, 112, 48, 9));
+        m_readOnly = check(p, tr7("Read-only"), dlu(56, 112, 100, 10));
+        m_hidden = check(p, tr7("Hidden"), dlu(56, 126, 100, 10));
         int ro = 0, hid = 0;
         for (const QString &path : std::as_const(m_paths)) {
             ro += isReadOnly(path) ? 1 : 0;
@@ -530,7 +531,7 @@ private:
         const QString mime = QMimeDatabase().mimeTypeForFile(path).name();
         const KService::Ptr service = KApplicationTrader::preferredService(mime);
         m_appIcon->setPixmap(QIcon::fromTheme(service ? service->icon() : QStringLiteral("unknown")).pixmap(16, 16));
-        m_appName->setText(service ? service->name() : QStringLiteral("Невідома програма"));
+        m_appName->setText(service ? service->name() : tr7("Unknown application"));
         m_appName->setCursorPosition(0);
     }
 
@@ -538,7 +539,7 @@ private:
     void changeProgram(const QString &path)
     {
         KOpenWithDialog dlg({QUrl::fromLocalFile(path)}, this);
-        dlg.setWindowTitle(QStringLiteral("Відкрити за допомогою"));
+        dlg.setWindowTitle(tr7("Open with"));
         dlg.hideRunInTerminal();
         dlg.hideNoCloseOnExit();
         if (dlg.exec() != QDialog::Accepted) {
@@ -555,27 +556,27 @@ private:
     void advancedAttributes()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Додаткові атрибути"));
+        d.setWindowTitle(tr7("Advanced Attributes"));
         auto *v = new QVBoxLayout(&d);
         v->setContentsMargins(12, 12, 12, 10);
         auto *top = new QHBoxLayout;
         auto *ic = new QLabel;
         ic->setPixmap(fileIcon(m_paths.first()).pixmap(32, 32));
         top->addWidget(ic, 0, Qt::AlignTop);
-        top->addWidget(Win7Programs::wrapped(QStringLiteral("Виберіть потрібні параметри для цієї папки.")), 1);
+        top->addWidget(Win7Programs::wrapped(tr7("Choose the settings you want for this folder.")), 1);
         v->addLayout(top);
-        auto *g1 = new QGroupBox(QStringLiteral("Атрибути архівування й індексування"));
+        auto *g1 = new QGroupBox(tr7("Archive and Index attributes"));
         auto *g1v = new QVBoxLayout(g1);
-        auto *archive = new QCheckBox(QStringLiteral("Файл готовий до архівування"));
+        auto *archive = new QCheckBox(tr7("File is ready for archiving"));
         archive->setChecked(true);
         archive->setEnabled(false);
-        auto *index = new QCheckBox(QStringLiteral("Дозволити індексування вмісту, на додачу до властивостей"));
+        auto *index = new QCheckBox(tr7("Allow this file to have contents indexed in addition to file properties"));
         g1v->addWidget(archive);
         g1v->addWidget(index);
         v->addWidget(g1);
-        auto *g2 = new QGroupBox(QStringLiteral("Атрибути стиснення й шифрування"));
+        auto *g2 = new QGroupBox(tr7("Compress or Encrypt attributes"));
         auto *g2v = new QVBoxLayout(g2);
-        for (const QString &t : {QStringLiteral("Стискати вміст для економії місця на диску"), QStringLiteral("Шифрувати вміст для захисту даних")}) {
+        for (const QString &t : {tr7("Compress contents to save disk space"), tr7("Encrypt contents to secure data")}) {
             auto *c = new QCheckBox(t);
             c->setEnabled(false);
             g2v->addWidget(c);
@@ -584,7 +585,7 @@ private:
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         bar->addWidget(ok);
         bar->addWidget(cancel);
         v->addLayout(bar);
@@ -627,32 +628,32 @@ private:
         const QString exec = g.readEntry("Exec");
         QString program = exec.section(QLatin1Char(' '), 0, 0);
         const QString found = QStandardPaths::findExecutable(program);
-        place(p, new QLabel(QStringLiteral("Тип об'єкта:")), dlu(7, 39, 57, 10));
-        place(p, new QLabel(link ? QStringLiteral("Посилання") : QStringLiteral("Програма")), dlu(64, 39, 156, 10));
-        place(p, new QLabel(QStringLiteral("Розташування:")), dlu(7, 55, 57, 10));
+        place(p, new QLabel(tr7("Target type:")), dlu(7, 39, 57, 10));
+        place(p, new QLabel(link ? tr7("Link") : tr7("Application")), dlu(64, 39, 156, 10));
+        place(p, new QLabel(tr7("Location:")), dlu(7, 55, 57, 10));
         value(p, link ? QString() : QFileInfo(found.isEmpty() ? program : found).absolutePath().section(QLatin1Char('/'), -1), dlu(64, 54, 156, 12));
-        place(p, new QLabel(QStringLiteral("Об'єкт:")), dlu(7, 71, 57, 10));
+        place(p, new QLabel(tr7("Target:")), dlu(7, 71, 57, 10));
         m_target = place(p, new QLineEdit(link ? df.readUrl() : exec), dlu(64, 69, 156, 14));
         rule(p, 88);
-        place(p, new QLabel(QStringLiteral("Робоча папка:")), dlu(7, 98, 57, 10));
+        place(p, new QLabel(tr7("Start in:")), dlu(7, 98, 57, 10));
         m_workDir = place(p, new QLineEdit(g.readEntry("Path")), dlu(64, 96, 156, 14));
         m_workDir->setEnabled(!link);
-        place(p, new QLabel(QStringLiteral("Швидкий виклик:")), dlu(7, 117, 57, 10));
-        auto *key = place(p, new QLineEdit(QStringLiteral("Немає")), dlu(64, 115, 156, 14));
+        place(p, new QLabel(tr7("Shortcut key:")), dlu(7, 117, 57, 10));
+        auto *key = place(p, new QLineEdit(tr7("None")), dlu(64, 115, 156, 14));
         key->setEnabled(false);
-        place(p, new QLabel(QStringLiteral("Вікно:")), dlu(7, 136, 57, 10));
+        place(p, new QLabel(tr7("Run:")), dlu(7, 136, 57, 10));
         auto *run = place(p, new QComboBox, dlu(64, 134, 156, 14));
-        run->addItems({QStringLiteral("Звичайний розмір вікна"), QStringLiteral("Згорнуте у значок"), QStringLiteral("Розгорнуте на весь екран")});
+        run->addItems({tr7("Normal window"), tr7("Minimized"), tr7("Maximized")});
         run->setEnabled(false);
-        place(p, new QLabel(QStringLiteral("Коментар:")), dlu(7, 154, 57, 10));
+        place(p, new QLabel(tr7("Comment:", "shortcut")), dlu(7, 154, 57, 10));
         m_comment = place(p, new QLineEdit(df.readComment()), dlu(64, 152, 156, 14));
         for (QLineEdit *e : {m_target, m_workDir, m_comment}) {
             connect(e, &QLineEdit::textEdited, this, [this] { changed(); });
         }
-        auto *where = place(p, new QPushButton(QStringLiteral("Розташування файлу")), dlu(9, 170, 80, 14));
+        auto *where = place(p, new QPushButton(tr7("Open File Location")), dlu(9, 170, 80, 14));
         where->setEnabled(!link && !found.isEmpty());
         connect(where, &QPushButton::clicked, this, [found] { QProcess::startDetached(QStringLiteral("dolphin"), {QStringLiteral("--select"), found}); });
-        auto *icon = place(p, new QPushButton(QStringLiteral("Змінити значок...")), dlu(93, 170, 62, 14));
+        auto *icon = place(p, new QPushButton(tr7("Change Icon...")), dlu(93, 170, 62, 14));
         connect(icon, &QPushButton::clicked, this, [this] {
             const QString name = KIconDialog::getIcon(KIconLoader::Desktop, KIconLoader::Application, false, 32, false, this);
             if (!name.isEmpty()) {
@@ -661,7 +662,7 @@ private:
                 changed();
             }
         });
-        auto *adv = place(p, new QPushButton(QStringLiteral("Додатково...")), dlu(159, 170, 61, 14));
+        auto *adv = place(p, new QPushButton(tr7("Advanced...")), dlu(159, 170, 61, 14));
         adv->setEnabled(false);
         return p;
     }
@@ -675,9 +676,9 @@ private:
         ::stat(QFile::encodeName(path).constData(), &st);
         m_mode = st.st_mode & 07777;
         m_uid = st.st_uid;
-        place(p, new QLabel(QStringLiteral("Ім'я об'єкта:")), dlu(7, 7, 50, 8));
+        place(p, new QLabel(tr7("Object name:")), dlu(7, 7, 50, 8));
         value(p, path, dlu(60, 6, 160, 10));
-        place(p, new QLabel(QStringLiteral("Групи або користувачі:")), dlu(7, 25, 213, 8));
+        place(p, new QLabel(tr7("Group or user names:")), dlu(7, 25, 213, 8));
         m_principals = place(p, new QTreeWidget, dlu(7, 35, 213, 43));
         m_principals->setHeaderHidden(true);
         m_principals->setRootIsDecorated(false);
@@ -688,13 +689,13 @@ private:
         };
         add(QStringLiteral("user-identity"), QStringLiteral("%1 (%2\\%1)").arg(userName(st.st_uid), host));
         add(QStringLiteral("system-users"), QStringLiteral("%1 (%2\\%1)").arg(groupName(st.st_gid), host));
-        add(QStringLiteral("system-users"), QStringLiteral("Усі"));
-        place(p, new QLabel(QStringLiteral("Щоб змінити дозволи, натисніть «Змінити».")), dlu(7, 84, 150, 8));
-        auto *edit = place(p, new QPushButton(QStringLiteral("Змінити...")), dlu(160, 82, 60, 14));
+        add(QStringLiteral("system-users"), tr7("All"));
+        place(p, new QLabel(tr7("To change permissions, click Edit.")), dlu(7, 84, 150, 8));
+        auto *edit = place(p, new QPushButton(tr7("Edit...")), dlu(160, 82, 60, 14));
         edit->setEnabled(st.st_uid == getuid());
         m_permsFor = place(p, new QLabel, dlu(7, 104, 125, 8));
-        place(p, new QLabel(QStringLiteral("Дозволити")), dlu(130, 104, 42, 8))->setAlignment(Qt::AlignHCenter);
-        place(p, new QLabel(QStringLiteral("Заборонити")), dlu(172, 104, 46, 8))->setAlignment(Qt::AlignHCenter);
+        place(p, new QLabel(tr7("Allow")), dlu(130, 104, 42, 8))->setAlignment(Qt::AlignHCenter);
+        place(p, new QLabel(tr7("Deny")), dlu(172, 104, 46, 8))->setAlignment(Qt::AlignHCenter);
         m_perms = place(p, new QTreeWidget, dlu(7, 114, 213, 61));
         m_perms->setHeaderHidden(true);
         m_perms->setRootIsDecorated(false);
@@ -707,8 +708,8 @@ private:
         m_perms->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         m_perms->setStyleSheet(QStringLiteral("QTreeView::item { height: 16px; padding: 0; }"));
         m_perms->header()->setStretchLastSection(true);
-        place(p, new QLabel(QStringLiteral("Щоб установити особливі дозволи або параметри, натисніть «Додатково».")), dlu(7, 179, 148, 24))->setWordWrap(true);
-        place(p, new QPushButton(QStringLiteral("Додатково")), dlu(160, 179, 60, 14))->setEnabled(false);
+        place(p, new QLabel(tr7("For special permissions or advanced settings, click Advanced.")), dlu(7, 179, 148, 24))->setWordWrap(true);
+        place(p, new QPushButton(tr7("Advanced")), dlu(160, 179, 60, 14))->setEnabled(false);
         connect(m_principals, &QTreeWidget::currentItemChanged, this, [this] { showPermissions(); });
         m_principals->setCurrentItem(m_principals->topLevelItem(0));
         connect(edit, &QPushButton::clicked, this, [this] { editPermissions(); });
@@ -717,8 +718,8 @@ private:
 
     static QStringList permissionNames()
     {
-        return {QStringLiteral("Повний доступ"), QStringLiteral("Змінення"), QStringLiteral("Читання та виконання"), QStringLiteral("Читання"), QStringLiteral("Запис"),
-                QStringLiteral("Особливі дозволи")};
+        return {tr7("Full control"), tr7("Modify", "permission"), tr7("Read & execute"), tr7("Read"), tr7("Write"),
+                tr7("Special permissions")};
     }
 
     /** rwx of one principal (0 owner, 1 group, 2 everyone) -> Windows' Allow rows */
@@ -736,7 +737,7 @@ private:
     void showPermissions()
     {
         const int who = principal();
-        m_permsFor->setText(QStringLiteral("Дозволи для %1").arg(m_principals->currentItem() ? m_principals->currentItem()->text(0).section(QLatin1Char(' '), 0, 0) : QString()));
+        m_permsFor->setText(tr7("Permissions for %1").arg(m_principals->currentItem() ? m_principals->currentItem()->text(0).section(QLatin1Char(' '), 0, 0) : QString()));
         const QList<bool> allow = allowRows((m_mode >> (6 - 3 * who)) & 7);
         m_perms->clear();
         const QStringList names = permissionNames();
@@ -751,9 +752,9 @@ private:
     void editPermissions()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Дозволи для %1").arg(QFileInfo(m_paths.first()).fileName()));
+        d.setWindowTitle(tr7("Permissions for %1").arg(QFileInfo(m_paths.first()).fileName()));
         auto *v = new QVBoxLayout(&d);
-        v->addWidget(new QLabel(QStringLiteral("Групи або користувачі:")));
+        v->addWidget(new QLabel(tr7("Group or user names:")));
         auto *who = new QTreeWidget;
         who->setHeaderHidden(true);
         who->setRootIsDecorated(false);
@@ -767,8 +768,8 @@ private:
         auto *label = new QLabel;
         v->addWidget(label);
         auto *grid = new QGridLayout;
-        grid->addWidget(new QLabel(QStringLiteral("Дозволити")), 0, 1);
-        const QStringList names{QStringLiteral("Читання"), QStringLiteral("Запис"), QStringLiteral("Виконання / перегляд папки")};
+        grid->addWidget(new QLabel(tr7("Allow")), 0, 1);
+        const QStringList names{tr7("Read"), tr7("Write"), tr7("Traverse folder / execute file")};
         QList<QCheckBox *> boxes;
         for (int i = 0; i < 3; ++i) {
             grid->addWidget(new QLabel(names.at(i)), i + 1, 0);
@@ -782,7 +783,7 @@ private:
         auto load = [&] {
             loading = true;
             const int w = qMax(0, who->indexOfTopLevelItem(who->currentItem()));
-            label->setText(QStringLiteral("Дозволи для %1").arg(who->currentItem() ? who->currentItem()->text(0).section(QLatin1Char(' '), 0, 0) : QString()));
+            label->setText(tr7("Permissions for %1").arg(who->currentItem() ? who->currentItem()->text(0).section(QLatin1Char(' '), 0, 0) : QString()));
             const int bits = (mode >> (6 - 3 * w)) & 7;
             boxes[0]->setChecked(bits & 4);
             boxes[1]->setChecked(bits & 2);
@@ -804,7 +805,7 @@ private:
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         bar->addWidget(ok);
         bar->addWidget(cancel);
         v->addLayout(bar);
@@ -816,7 +817,7 @@ private:
                 m_mode = mode;
                 showPermissions();
             } else {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося змінити дозволи."));
+                QMessageBox::warning(this, windowTitle(), tr7("The permissions could not be changed."));
             }
         }
     }
@@ -828,7 +829,7 @@ private:
         const QString path = m_paths.first();
         auto *tree = place(p, new QTreeWidget, dlu(7, 7, 213, 186));
         tree->setRootIsDecorated(false);
-        tree->setHeaderLabels({QStringLiteral("Властивість"), QStringLiteral("Значення")});
+        tree->setHeaderLabels({tr7("Property"), tr7("Value")});
         Win7HeaderView::install(tree);
         tree->setColumnWidth(0, dlu(0, 0, 80, 0).width());
         auto section = [tree](const QString &title) {
@@ -851,7 +852,7 @@ private:
         }
         const auto props = result.properties();
         if (!props.isEmpty()) {
-            section(QStringLiteral("Опис"));
+            section(tr7("Description"));
             QList<KFileMetaData::Property::Property> keys = props.uniqueKeys();
             for (KFileMetaData::Property::Property k : keys) {
                 const KFileMetaData::PropertyInfo info(k);
@@ -865,13 +866,13 @@ private:
         const QFileInfo fi(path);
         struct stat st;
         ::stat(QFile::encodeName(path).constData(), &st);
-        section(QStringLiteral("Файл"));
-        row(QStringLiteral("Ім'я"), fi.fileName());
-        row(QStringLiteral("Тип елемента"), typeText(path));
-        row(QStringLiteral("Шлях до папки"), fi.absolutePath());
-        row(QStringLiteral("Дата створення"), dateText(fi.birthTime().isValid() ? fi.birthTime() : fi.metadataChangeTime()));
-        row(QStringLiteral("Дата змінення"), dateText(fi.lastModified()));
-        row(QStringLiteral("Розмір"), sizeText(st.st_size, false));
+        section(tr7("File"));
+        row(tr7("Name"), fi.fileName());
+        row(tr7("Item type"), typeText(path));
+        row(tr7("Folder Path"), fi.absolutePath());
+        row(tr7("Date created"), dateText(fi.birthTime().isValid() ? fi.birthTime() : fi.metadataChangeTime()));
+        row(tr7("Date modified", "properties"), dateText(fi.lastModified()));
+        row(tr7("Size"), sizeText(st.st_size, false));
         QStringList attrs;
         if (isReadOnly(path)) {
             attrs << QStringLiteral("R");
@@ -879,9 +880,9 @@ private:
         if (fileHidden(path)) {
             attrs << QStringLiteral("H");
         }
-        row(QStringLiteral("Атрибути"), attrs.join(QString()));
-        row(QStringLiteral("Власник"), QStringLiteral("%1\\%2").arg(QHostInfo::localHostName(), userName(st.st_uid)));
-        row(QStringLiteral("Комп'ютер"), QStringLiteral("%1 (цей комп'ютер)").arg(QHostInfo::localHostName()));
+        row(tr7("Attributes"), attrs.join(QString()));
+        row(tr7("Owner"), QStringLiteral("%1\\%2").arg(QHostInfo::localHostName(), userName(st.st_uid)));
+        row(tr7("Computer"), tr7("%1 (This computer)").arg(QHostInfo::localHostName()));
         return p;
     }
 
@@ -952,20 +953,20 @@ private:
             const QString newName = m_name->text().trimmed();
             if (!newName.isEmpty() && newName != fi.fileName()) {
                 if (newName.contains(QLatin1Char('/'))) {
-                    QMessageBox::warning(this, windowTitle(), QStringLiteral("Ім'я файлу не може містити символ «/»."));
+                    QMessageBox::warning(this, windowTitle(), tr7("A file name can't contain the character \"/\"."));
                     return false;
                 }
                 const QString target = fi.absolutePath() + QLatin1Char('/') + newName;
                 if (QFileInfo::exists(target)) {
-                    QMessageBox::warning(this, windowTitle(), QStringLiteral("Файл або папка з іменем «%1» уже існує.").arg(newName));
+                    QMessageBox::warning(this, windowTitle(), tr7("A file or folder named \"%1\" already exists.").arg(newName));
                     return false;
                 }
                 if (!QFile::rename(path, target)) {
-                    QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося перейменувати «%1».").arg(fi.fileName()));
+                    QMessageBox::warning(this, windowTitle(), tr7("Could not rename \"%1\".").arg(fi.fileName()));
                     return false;
                 }
                 m_paths[0] = target;
-                setWindowTitle(QStringLiteral("Властивості: %1").arg(newName));
+                setWindowTitle(tr7("%1 Properties").arg(newName));
             }
         }
         return true;

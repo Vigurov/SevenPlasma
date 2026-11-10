@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 
@@ -133,28 +134,28 @@ public:
     explicit LanDialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Настроювання параметрів локальної мережі"));
+        setWindowTitle(tr7("Local Area Network (LAN) Settings"));
         setFixedSize(dlu(0, 0, 262, 192).size());
         m_p = readProxy();
-        place(this, new QGroupBox(QStringLiteral("Автоматичне настроювання")), dlu(7, 7, 248, 74));
-        place(this, new QLabel(QStringLiteral("Автоматичне настроювання може замінити параметри, установлені вручну. Щоб використовувати параметри, установлені вручну, вимкніть автоматичне настроювання.")),
+        place(this, new QGroupBox(tr7("Automatic configuration")), dlu(7, 7, 248, 74));
+        place(this, new QLabel(tr7("Automatic configuration may override manual settings. To ensure the use of manual settings, disable automatic configuration.")),
               dlu(14, 17, 234, 26))
             ->setWordWrap(true);
-        m_detect = place(this, new QCheckBox(QStringLiteral("Автоматичне визначення параметрів")), dlu(14, 44, 230, 10));
-        m_useScript = place(this, new QCheckBox(QStringLiteral("Використовувати сценарій автоматичного настроювання")), dlu(14, 56, 230, 10));
-        place(this, new QLabel(QStringLiteral("Адреса")), dlu(26, 68, 30, 8));
+        m_detect = place(this, new QCheckBox(tr7("Automatically detect settings")), dlu(14, 44, 230, 10));
+        m_useScript = place(this, new QCheckBox(tr7("Use automatic configuration script")), dlu(14, 56, 230, 10));
+        place(this, new QLabel(tr7("Address")), dlu(26, 68, 30, 8));
         m_script = place(this, new QLineEdit(m_p.script), dlu(58, 66, 190, 12));
-        place(this, new QGroupBox(QStringLiteral("Проксі-сервер")), dlu(7, 86, 248, 78));
-        m_useProxy = place(this, new QCheckBox(QStringLiteral("Використовувати проксі-сервер для локальної мережі (ці параметри не застосовуються до віддалених або VPN-підключень).")),
+        place(this, new QGroupBox(tr7("Proxy server")), dlu(7, 86, 248, 78));
+        m_useProxy = place(this, new QCheckBox(tr7("Use a proxy server for your LAN (These settings will not apply to dial-up or VPN connections).")),
                            dlu(14, 96, 234, 18));
-        place(this, new QLabel(QStringLiteral("Адреса:")), dlu(26, 120, 28, 8));
+        place(this, new QLabel(tr7("Address:")), dlu(26, 120, 28, 8));
         m_host = place(this, new QLineEdit, dlu(56, 118, 92, 12));
-        place(this, new QLabel(QStringLiteral("Порт:")), dlu(154, 120, 20, 8));
+        place(this, new QLabel(tr7("Port:")), dlu(154, 120, 20, 8));
         m_port = place(this, new QLineEdit, dlu(176, 118, 28, 12));
-        m_advanced = place(this, new QPushButton(QStringLiteral("Додатково")), dlu(208, 117, 42, 14));
-        m_bypass = place(this, new QCheckBox(QStringLiteral("Не використовувати проксі-сервер для локальних адрес")), dlu(26, 140, 224, 10));
+        m_advanced = place(this, new QPushButton(tr7("Advanced")), dlu(208, 117, 42, 14));
+        m_bypass = place(this, new QCheckBox(tr7("Bypass proxy server for local addresses")), dlu(26, 140, 224, 10));
         auto *ok = place(this, new QPushButton(QStringLiteral("OK")), dlu(151, 172, 50, 14));
-        auto *cancel = place(this, new QPushButton(QStringLiteral("Скасувати")), dlu(205, 172, 50, 14));
+        auto *cancel = place(this, new QPushButton(tr7("Cancel")), dlu(205, 172, 50, 14));
         ok->setDefault(true);
         m_detect->setChecked(m_p.type == 3);
         m_useScript->setChecked(m_p.type == 2);
@@ -216,16 +217,16 @@ private:
     void advanced()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Параметри проксі-сервера"));
+        d.setWindowTitle(tr7("Proxy Settings"));
         auto *v = new QVBoxLayout(&d);
-        auto *g = new QGroupBox(QStringLiteral("Сервери"));
+        auto *g = new QGroupBox(tr7("Servers"));
         auto *grid = new QGridLayout(g);
-        grid->addWidget(new QLabel(QStringLiteral("Тип")), 0, 0);
-        grid->addWidget(new QLabel(QStringLiteral("Адреса проксі-сервера")), 0, 1);
-        grid->addWidget(new QLabel(QStringLiteral("Порт")), 0, 2);
+        grid->addWidget(new QLabel(tr7("Type")), 0, 0);
+        grid->addWidget(new QLabel(tr7("Proxy address to use")), 0, 1);
+        grid->addWidget(new QLabel(tr7("Port")), 0, 2);
         const QString http = m_host->text().trimmed() + (m_port->text().isEmpty() ? QString() : QLatin1Char(':') + m_port->text().trimmed());
         QList<QPair<QLineEdit *, QLineEdit *>> rows;
-        const QStringList names{QStringLiteral("HTTP:"), QStringLiteral("Безпечний:"), QStringLiteral("FTP:"), QStringLiteral("Socks:")};
+        const QStringList names{QStringLiteral("HTTP:"), tr7("Secure:"), QStringLiteral("FTP:"), QStringLiteral("Socks:")};
         const QStringList values{http, m_p.https, m_p.ftp, m_p.socks};
         for (int i = 0; i < 4; ++i) {
             grid->addWidget(new QLabel(names.at(i)), i + 1, 0);
@@ -237,14 +238,14 @@ private:
             grid->addWidget(pt, i + 1, 2);
             rows.append(qMakePair(h, pt));
         }
-        auto *same = new QCheckBox(QStringLiteral("Використовувати один проксі-сервер для всіх протоколів"));
+        auto *same = new QCheckBox(tr7("Use the same proxy server for all protocols"));
         same->setChecked(m_sameForAll);
         grid->addWidget(same, 5, 1, 1, 2);
         v->addWidget(g);
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         bar->addWidget(ok);
         bar->addWidget(cancel);
         v->addLayout(bar);
@@ -334,7 +335,7 @@ inline bool setHomePages(QWidget *parent, const QStringList &pages)
     p.waitForFinished(-1);
     if (p.exitCode() != 0) {
         if (p.exitCode() != 126 && p.exitCode() != 127) {
-            QMessageBox::warning(parent, QStringLiteral("Властивості оглядача"), QStringLiteral("Не вдалося зберегти домашню сторінку."));
+            QMessageBox::warning(parent, tr7("Internet Options"), tr7("The home page could not be saved."));
         }
         return false;
     }
@@ -348,21 +349,21 @@ class InternetOptions : public QDialog
 public:
     InternetOptions()
     {
-        setWindowTitle(QStringLiteral("Властивості оглядача"));
+        setWindowTitle(tr7("Internet Options"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-inetopts")));
         setAttribute(Qt::WA_DeleteOnClose);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         auto *tabs = new QTabWidget;
-        tabs->addTab(generalPage(), QStringLiteral("Загальні"));
-        tabs->addTab(connectionsPage(), QStringLiteral("Підключення"));
-        tabs->addTab(programsPage(), QStringLiteral("Програми"));
+        tabs->addTab(generalPage(), tr7("General"));
+        tabs->addTab(connectionsPage(), tr7("Connections"));
+        tabs->addTab(programsPage(), tr7("Programs"));
         v->addWidget(tabs);
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             bar->addWidget(b);
@@ -395,20 +396,20 @@ private:
     QWidget *generalPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Домашня сторінка")), dlu(7, 7, 238, 84));
+        place(p, new QGroupBox(tr7("Home page")), dlu(7, 7, 238, 84));
         auto *ic = place(p, new QLabel, dlu(14, 20, 21, 20));
         ic->setPixmap(QIcon::fromTheme(QStringLiteral("go-home")).pixmap(32, 32));
-        place(p, new QLabel(QStringLiteral("Щоб створити вкладки домашньої сторінки, введіть кожну адресу в окремому рядку.")), dlu(42, 18, 196, 18))->setWordWrap(true);
+        place(p, new QLabel(tr7("To create home page tabs, type each address on its own line.")), dlu(42, 18, 196, 18))->setWordWrap(true);
         m_home = place(p, new QPlainTextEdit(homePages().join(QLatin1Char('\n'))), dlu(42, 38, 196, 28));
         connect(m_home, &QPlainTextEdit::textChanged, this, [this] {
             m_homeChanged = true;
             m_apply->setEnabled(true);
         });
-        auto *def = place(p, new QPushButton(QStringLiteral("За замовчуванням")), dlu(104, 70, 68, 14));
-        auto *blank = place(p, new QPushButton(QStringLiteral("Пуста")), dlu(176, 70, 62, 14));
+        auto *def = place(p, new QPushButton(tr7("Default")), dlu(104, 70, 68, 14));
+        auto *blank = place(p, new QPushButton(tr7("Use blank")), dlu(176, 70, 62, 14));
         connect(def, &QPushButton::clicked, this, [this] { m_home->setPlainText(QStringLiteral("https://www.google.com/")); });
         connect(blank, &QPushButton::clicked, this, [this] { m_home->setPlainText(QStringLiteral("about:blank")); });
-        auto *note = place(p, new QLabel(QStringLiteral("Домашня сторінка застосовується в Google Chrome.")), dlu(14, 98, 230, 10));
+        auto *note = place(p, new QLabel(tr7("The home page applies to Google Chrome.")), dlu(14, 98, 230, 10));
         note->setStyleSheet(QStringLiteral("color: #5a6779;"));
         return p;
     }
@@ -418,12 +419,12 @@ private:
         QWidget *p = page();
         auto *ic = place(p, new QLabel, dlu(7, 9, 21, 20));
         ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-center"), QIcon::fromTheme(QStringLiteral("network-wired"))).pixmap(32, 32));
-        place(p, new QLabel(QStringLiteral("Щоб установити підключення до Інтернету, натисніть кнопку «Установити».")), dlu(36, 10, 140, 20))->setWordWrap(true);
-        auto *setup = place(p, new QPushButton(QStringLiteral("Установити")), dlu(185, 10, 60, 14));
+        place(p, new QLabel(tr7("To set up an Internet connection, click Setup.")), dlu(36, 10, 140, 20))->setWordWrap(true);
+        auto *setup = place(p, new QPushButton(tr7("Install")), dlu(185, 10, 60, 14));
         connect(setup, &QPushButton::clicked, this, [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--net-connect")}); });
-        place(p, new QGroupBox(QStringLiteral("Параметри локальної мережі (LAN)")), dlu(7, 150, 238, 42));
-        place(p, new QLabel(QStringLiteral("Параметри локальної мережі не застосовуються до віддалених підключень.")), dlu(14, 162, 146, 20))->setWordWrap(true);
-        auto *lan = place(p, new QPushButton(QStringLiteral("Параметри мережі")), dlu(164, 166, 76, 14));
+        place(p, new QGroupBox(tr7("Local Area Network (LAN) settings")), dlu(7, 150, 238, 42));
+        place(p, new QLabel(tr7("LAN Settings do not apply to dial-up connections.")), dlu(14, 162, 146, 20))->setWordWrap(true);
+        auto *lan = place(p, new QPushButton(tr7("LAN settings")), dlu(164, 166, 76, 14));
         connect(lan, &QPushButton::clicked, this, [this] {
             LanDialog d(this);
             d.exec();
@@ -434,21 +435,21 @@ private:
     QWidget *programsPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Веб-браузер за замовчуванням")), dlu(7, 7, 238, 58));
+        place(p, new QGroupBox(tr7("Default web browser")), dlu(7, 7, 238, 58));
         m_browser = place(p, new QComboBox, dlu(14, 22, 130, 14));
         const QString current = run(QStringLiteral("xdg-settings"), {QStringLiteral("get"), QStringLiteral("default-web-browser")});
         for (const App &a : handlers(QStringLiteral("x-scheme-handler/http"))) {
             m_browser->addItem(QIcon::fromTheme(a.icon), a.name, a.desktop);
         }
         m_browser->setCurrentIndex(qMax(0, m_browser->findData(current)));
-        auto *makeDefault = place(p, new QPushButton(QStringLiteral("Зробити за замовчуванням")), dlu(148, 21, 92, 14));
+        auto *makeDefault = place(p, new QPushButton(tr7("Make default")), dlu(148, 21, 92, 14));
         m_browserState = place(p, new QLabel, dlu(14, 42, 226, 18));
         m_browserState->setWordWrap(true);
         auto showState = [this] {
             const QString cur = run(QStringLiteral("xdg-settings"), {QStringLiteral("get"), QStringLiteral("default-web-browser")});
             const bool isDefault = cur == m_browser->currentData().toString();
-            m_browserState->setText(isDefault ? QStringLiteral("%1 — веб-браузер за замовчуванням.").arg(m_browser->currentText())
-                                              : QStringLiteral("%1 не є веб-браузером за замовчуванням.").arg(m_browser->currentText()));
+            m_browserState->setText(isDefault ? tr7("%1 is the default web browser.").arg(m_browser->currentText())
+                                              : tr7("%1 is not your default web browser.").arg(m_browser->currentText()));
         };
         showState();
         connect(m_browser, &QComboBox::currentIndexChanged, this, showState);
@@ -457,12 +458,12 @@ private:
             showState();
         });
 
-        place(p, new QGroupBox(QStringLiteral("Програми Інтернету")), dlu(7, 72, 238, 64));
-        place(p, new QLabel(QStringLiteral("Виберіть програми, які використовуватимуться для інших служб Інтернету, наприклад для електронної пошти.")), dlu(14, 84, 134, 44))
+        place(p, new QGroupBox(tr7("Internet programs")), dlu(7, 72, 238, 64));
+        place(p, new QLabel(tr7("Choose the programs you want to use for other Internet services, such as e-mail.")), dlu(14, 84, 134, 44))
             ->setWordWrap(true);
-        auto *programs = place(p, new QPushButton(QStringLiteral("Установити програми")), dlu(152, 86, 88, 14));
+        auto *programs = place(p, new QPushButton(tr7("Set programs")), dlu(152, 86, 88, 14));
         connect(programs, &QPushButton::clicked, this, [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--default-programs")}); });
-        place(p, new QLabel(QStringLiteral("Електронна пошта:")), dlu(14, 146, 60, 10));
+        place(p, new QLabel(tr7("E-mail:")), dlu(14, 146, 60, 10));
         m_mail = place(p, new QComboBox, dlu(80, 144, 160, 14));
         const QString mailNow = run(QStringLiteral("xdg-mime"), {QStringLiteral("query"), QStringLiteral("default"), QStringLiteral("x-scheme-handler/mailto")});
         for (const App &a : handlers(QStringLiteral("x-scheme-handler/mailto"))) {

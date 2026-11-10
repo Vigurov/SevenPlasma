@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Tools > Options... (WMP 12 "Параметри") and the library locations dialog ("Розташування бібліотеки ...").
  */
@@ -36,21 +37,20 @@ public:
         : QDialog(parent)
         , m_kind(kind)
     {
-        const QString name = kind == MediaItem::Audio ? QStringLiteral("Музика") : kind == MediaItem::Video ? QStringLiteral("Відео") : QStringLiteral("Зображення");
-        setWindowTitle(QStringLiteral("Розташування бібліотеки \"%1\"").arg(name));
+        const QString name = kind == MediaItem::Audio ? tr7("Music") : kind == MediaItem::Video ? tr7("Videos") : tr7("Pictures");
+        setWindowTitle(tr7("%1 Library Locations").arg(name));
         auto *l = new QVBoxLayout(this);
-        auto *head = new QLabel(QStringLiteral("<b>Змінення способу збирання вмісту бібліотеки \"%1\"</b><br>"
-                                               "Після додавання папки до бібліотеки її файли відображатимуться в програвачі Windows Media.")
+        auto *head = new QLabel(tr7("<b>Change how this library gathers its contents: \"%1\"</b><br>When you include a folder in the library, its files appear in Windows Media Player.")
                                     .arg(name),
                                 this);
         head->setWordWrap(true);
         l->addWidget(head);
         auto *row = new QHBoxLayout;
-        auto *lbl = new QLabel(QStringLiteral("Розташування бібліотеки"), this);
+        auto *lbl = new QLabel(tr7("Library locations"), this);
         row->addWidget(lbl);
         row->addStretch(1);
-        auto *add = new QPushButton(QStringLiteral("Додати..."), this);
-        auto *remove = new QPushButton(QStringLiteral("Видалити"), this);
+        auto *add = new QPushButton(tr7("Add..."), this);
+        auto *remove = new QPushButton(tr7("Remove"), this);
         row->addWidget(add);
         row->addWidget(remove);
         l->addLayout(row);
@@ -62,12 +62,12 @@ public:
         l->addWidget(m_list, 1);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         l->addWidget(bb);
         connect(bb, &QDialogButtonBox::accepted, this, &QDialog::accept);
         connect(bb, &QDialogButtonBox::rejected, this, &QDialog::reject);
         connect(add, &QPushButton::clicked, this, [this] {
-            const QString d = QFileDialog::getExistingDirectory(this, QStringLiteral("Додати папку до бібліотеки"), QDir::homePath());
+            const QString d = QFileDialog::getExistingDirectory(this, tr7("Include Folder in Library"), QDir::homePath());
             if (!d.isEmpty()) {
                 addFolder(d);
             }
@@ -103,36 +103,36 @@ public:
     explicit OptionsDialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Параметри"));
+        setWindowTitle(tr7("Options"));
         auto *l = new QVBoxLayout(this);
         auto *tabs = new QTabWidget(this);
         l->addWidget(tabs);
-        tabs->addTab(playerTab(), QStringLiteral("Програвач"));
-        tabs->addTab(simpleTab(QStringLiteral("Укажіть, де зберігати скопійовану музику, і змініть параметри копіювання."),
-                               {QStringLiteral("Копіювати музику до цього розташування: ") + QStandardPaths::writableLocation(QStandardPaths::MusicLocation),
-                                QStringLiteral("Формат: MP3"), QStringLiteral("Якість звуку: 192 кбіт/с")},
+        tabs->addTab(playerTab(), tr7("Player"));
+        tabs->addTab(simpleTab(tr7("Specify where music is stored and change rip settings."),
+                               {tr7("Rip music to this location: ") + QStandardPaths::writableLocation(QStandardPaths::MusicLocation),
+                                tr7("Format: MP3"), tr7("Audio quality: 192 Kbps")},
                                true),
-                     QStringLiteral("Копіювання музики"));
-        tabs->addTab(simpleTab(QStringLiteral("Укажіть параметри для пристроїв і динаміків."), {QStringLiteral("Пристрої: динаміки, дисплей")}, true), QStringLiteral("Пристрої"));
-        tabs->addTab(simpleTab(QStringLiteral("Ці параметри визначають спосіб записування аудіо-компакт-дисків і дисків з даними."),
-                               {QStringLiteral("Швидкість записування: найвища"), QStringLiteral("Застосовувати вирівнювання гучності для доріжок")}, true),
-                     QStringLiteral("Записування"));
-        tabs->addTab(performanceTab(), QStringLiteral("Продуктивність"));
-        tabs->addTab(libraryTab(), QStringLiteral("Бібліотека"));
-        tabs->addTab(simpleTab(QStringLiteral("Модулі розширюють можливості програвача Windows Media."), {QStringLiteral("Категорія: Візуалізація"), QStringLiteral("Обкладинка альбому, Смуги та хвилі")}, true),
-                     QStringLiteral("Модулі"));
-        tabs->addTab(privacyTab(), QStringLiteral("Конфіденційність"));
-        tabs->addTab(simpleTab(QStringLiteral("Виберіть, чи може вміст використовувати сценарії та чи дозволено запускати елементи керування ActiveX."),
-                               {QStringLiteral("Запускати команди сценаріїв, якщо вони присутні"), QStringLiteral("Відтворювати розширений вміст, що використовує веб-сторінки, без запиту")}, false),
-                     QStringLiteral("Безпека"));
-        tabs->addTab(simpleTab(QStringLiteral("Налаштуйте параметри протоколів для потокового мультимедіа."), {QStringLiteral("Протоколи: RTSP/UDP, RTSP/TCP, HTTP"), QStringLiteral("Проксі-сервер: використовувати параметри браузера")}, true),
-                     QStringLiteral("Мережа"));
+                     tr7("Rip Music"));
+        tabs->addTab(simpleTab(tr7("Specify settings for devices and speakers."), {tr7("Devices: speakers, display")}, true), tr7("Devices"));
+        tabs->addTab(simpleTab(tr7("These settings determine how audio CDs and data discs are burned."),
+                               {tr7("Burn speed: fastest"), tr7("Apply volume leveling across tracks")}, true),
+                     tr7("Burn", "options"));
+        tabs->addTab(performanceTab(), tr7("Performance"));
+        tabs->addTab(libraryTab(), tr7("Library"));
+        tabs->addTab(simpleTab(tr7("Plug-ins extend the capabilities of Windows Media Player."), {tr7("Category: Visualization"), tr7("Album Art, Bars and Waves")}, true),
+                     tr7("Plug-ins"));
+        tabs->addTab(privacyTab(), tr7("Privacy"));
+        tabs->addTab(simpleTab(tr7("Choose whether content can use scripts and whether ActiveX controls are allowed to run."),
+                               {tr7("Run script commands when present"), tr7("Play enhanced content that uses Web pages without prompting")}, false),
+                     tr7("Security"));
+        tabs->addTab(simpleTab(tr7("Configure protocol settings for streaming media."), {tr7("Protocols: RTSP/UDP, RTSP/TCP, HTTP"), tr7("Proxy: use browser settings")}, true),
+                     tr7("Network"));
 
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply | QDialogButtonBox::Help, this);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
-        bb->button(QDialogButtonBox::Apply)->setText(QStringLiteral("Застосувати"));
-        bb->button(QDialogButtonBox::Help)->setText(QStringLiteral("Довідка"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
+        bb->button(QDialogButtonBox::Apply)->setText(tr7("Apply"));
+        bb->button(QDialogButtonBox::Help)->setText(tr7("Help"));
         l->addWidget(bb);
         connect(bb, &QDialogButtonBox::accepted, this, [this] {
             apply();
@@ -171,13 +171,13 @@ private:
     {
         auto *w = new QWidget;
         auto *l = new QVBoxLayout(w);
-        l->addWidget(header(w, 102, QStringLiteral("Укажіть параметри оновлення програвача та інші параметри.")));
-        auto *upd = new QGroupBox(QStringLiteral("Автоматичні оновлення"), w);
+        l->addWidget(header(w, 102, tr7("Customize updates and other Player settings.")));
+        auto *upd = new QGroupBox(tr7("Automatic updates"), w);
         auto *ul = new QVBoxLayout(upd);
-        ul->addWidget(new QLabel(QStringLiteral("Перевіряти наявність оновлень:"), upd));
+        ul->addWidget(new QLabel(tr7("Check for updates:"), upd));
         auto *grp = new QButtonGroup(w);
         const int freq = QSettings().value(QStringLiteral("options/updates"), 1).toInt();
-        const QStringList names{QStringLiteral("Раз на день"), QStringLiteral("Раз на тиждень"), QStringLiteral("Раз на місяць")};
+        const QStringList names{tr7("Once a day"), tr7("Once a week"), tr7("Once a month")};
         for (int i = 0; i < 3; ++i) {
             auto *r = new QRadioButton(names[i], upd);
             r->setChecked(i == freq);
@@ -186,16 +186,16 @@ private:
         }
         m_updates = grp;
         l->addWidget(upd);
-        auto *set = new QGroupBox(QStringLiteral("Параметри програвача"), w);
+        auto *set = new QGroupBox(tr7("Player settings"), w);
         auto *sl = new QVBoxLayout(set);
-        check(set, sl, QStringLiteral("Зберігати режим поточного відтворення поверх інших вікон"), QStringLiteral("onTop"), false);
-        check(set, sl, QStringLiteral("Дозволити заставку під час відтворення"), QStringLiteral("screensaver"), false);
-        check(set, sl, QStringLiteral("Додавати до бібліотеки локальні файли мультимедіа під час відтворення"), QStringLiteral("addPlayed"), true);
-        check(set, sl, QStringLiteral("Додавати до бібліотеки віддалені файли мультимедіа під час відтворення"), QStringLiteral("addRemote"), false);
-        check(set, sl, QStringLiteral("Підключатися до Інтернету (перевизначає інші команди)"), QStringLiteral("internet"), false);
-        check(set, sl, QStringLiteral("Зупиняти відтворення під час перемикання користувачів"), QStringLiteral("stopOnSwitch"), true);
-        check(set, sl, QStringLiteral("Дозволити автоматичне приховування елементів керування відтворенням"), QStringLiteral("autoHide"), true);
-        check(set, sl, QStringLiteral("Зберігати оцінки у файлах мультимедіа"), QStringLiteral("ratingsInFiles"), false);
+        check(set, sl, tr7("Keep Now Playing on top of other windows"), QStringLiteral("onTop"), false);
+        check(set, sl, tr7("Allow screen saver during playback"), QStringLiteral("screensaver"), false);
+        check(set, sl, tr7("Add local media files to library when played"), QStringLiteral("addPlayed"), true);
+        check(set, sl, tr7("Add remote media files to library when played"), QStringLiteral("addRemote"), false);
+        check(set, sl, tr7("Connect to the Internet (overrides other commands)"), QStringLiteral("internet"), false);
+        check(set, sl, tr7("Stop playback when switching to a different user"), QStringLiteral("stopOnSwitch"), true);
+        check(set, sl, tr7("Allow autohide of playback controls"), QStringLiteral("autoHide"), true);
+        check(set, sl, tr7("Save ratings in media files"), QStringLiteral("ratingsInFiles"), false);
         l->addWidget(set);
         l->addStretch(1);
         return w;
@@ -204,30 +204,30 @@ private:
     {
         auto *w = new QWidget;
         auto *l = new QVBoxLayout(w);
-        l->addWidget(header(w, 466, QStringLiteral("Ці параметри дають змогу налаштувати продуктивність програвача.")));
-        auto *buf = new QGroupBox(QStringLiteral("Буферизація мережі"), w);
+        l->addWidget(header(w, 466, tr7("These settings allow you to adjust the Player's performance.")));
+        auto *buf = new QGroupBox(tr7("Network buffering"), w);
         auto *bl = new QVBoxLayout(buf);
-        auto *r1 = new QRadioButton(QStringLiteral("Стандартна буферизація (рекомендовано)"), buf);
+        auto *r1 = new QRadioButton(tr7("Use default buffering (recommended)"), buf);
         r1->setChecked(true);
         bl->addWidget(r1);
-        bl->addWidget(new QRadioButton(QStringLiteral("Буферизувати 5 с вмісту"), buf));
+        bl->addWidget(new QRadioButton(tr7("Buffer 5 seconds of content"), buf));
         l->addWidget(buf);
-        auto *v = new QGroupBox(QStringLiteral("Прискорення відео"), w);
+        auto *v = new QGroupBox(tr7("Video acceleration"), w);
         auto *vl = new QVBoxLayout(v);
         auto *slider = new QSlider(Qt::Horizontal, v);
         slider->setRange(0, 2);
         slider->setValue(2);
         slider->setTickPosition(QSlider::TicksBelow);
         auto *sr = new QHBoxLayout;
-        sr->addWidget(new QLabel(QStringLiteral("Немає"), v));
+        sr->addWidget(new QLabel(tr7("None"), v));
         sr->addWidget(slider, 1);
-        sr->addWidget(new QLabel(QStringLiteral("Повне"), v));
+        sr->addWidget(new QLabel(tr7("Full"), v));
         vl->addLayout(sr);
         l->addWidget(v);
-        auto *g = new QGroupBox(QStringLiteral("Видимість відео"), w);
+        auto *g = new QGroupBox(tr7("Video visibility"), w);
         auto *gl = new QVBoxLayout(g);
-        check(g, gl, QStringLiteral("Вмикати показ субтитрів для DVD-дисків і відео, якщо доступні"), QStringLiteral("subtitles"), false);
-        check(g, gl, QStringLiteral("Підганяти відео до розміру програвача, якщо відео більше"), QStringLiteral("fitVideo"), true);
+        check(g, gl, tr7("Turn on DVD and video captions when available"), QStringLiteral("subtitles"), false);
+        check(g, gl, tr7("Fit video to Player if video is larger"), QStringLiteral("fitVideo"), true);
         l->addWidget(g);
         l->addStretch(1);
         return w;
@@ -236,10 +236,10 @@ private:
     {
         auto *w = new QWidget;
         auto *l = new QVBoxLayout(w);
-        l->addWidget(header(w, 29513, QStringLiteral("Укажіть параметри для бібліотеки мультимедіа.")));
+        l->addWidget(header(w, 29513, tr7("Specify settings for the media library.")));
         auto *row = new QHBoxLayout;
-        auto *music = new QPushButton(QStringLiteral("Керування бібліотекою музики..."), w);
-        auto *video = new QPushButton(QStringLiteral("Керування бібліотекою відео..."), w);
+        auto *music = new QPushButton(tr7("Manage Music Library..."), w);
+        auto *video = new QPushButton(tr7("Manage Video Library..."), w);
         row->addWidget(music);
         row->addWidget(video);
         l->addLayout(row);
@@ -253,12 +253,12 @@ private:
                 manageLibrary(MediaItem::Video);
             }
         });
-        auto *g = new QGroupBox(QStringLiteral("Параметри бібліотеки"), w);
+        auto *g = new QGroupBox(tr7("Library settings"), w);
         auto *gl = new QVBoxLayout(g);
-        check(g, gl, QStringLiteral("Видаляти файли з комп'ютера під час видалення з бібліотеки"), QStringLiteral("deleteFiles"), false);
-        check(g, gl, QStringLiteral("Автоматично знаходити обкладинки альбомів"), QStringLiteral("findArt"), true);
-        check(g, gl, QStringLiteral("Отримувати додаткові відомості з Інтернету"), QStringLiteral("internetInfo"), false);
-        check(g, gl, QStringLiteral("Зберігати оцінки у файлах мультимедіа"), QStringLiteral("ratingsInFiles2"), false);
+        check(g, gl, tr7("Delete files from computer when deleted from library"), QStringLiteral("deleteFiles"), false);
+        check(g, gl, tr7("Automatically retrieve album art"), QStringLiteral("findArt"), true);
+        check(g, gl, tr7("Retrieve additional information from the Internet"), QStringLiteral("internetInfo"), false);
+        check(g, gl, tr7("Save ratings in media files"), QStringLiteral("ratingsInFiles2"), false);
         l->addWidget(g);
         l->addStretch(1);
         return w;
@@ -267,16 +267,16 @@ private:
     {
         auto *w = new QWidget;
         auto *l = new QVBoxLayout(w);
-        l->addWidget(header(w, 1151, QStringLiteral("Укажіть параметри конфіденційності.")));
-        auto *g = new QGroupBox(QStringLiteral("Покращені можливості відтворення та пристроїв"), w);
+        l->addWidget(header(w, 1151, tr7("Specify privacy settings.")));
+        auto *g = new QGroupBox(tr7("Enhanced Playback and Device Experience"), w);
         auto *gl = new QVBoxLayout(g);
-        check(g, gl, QStringLiteral("Показувати відомості про мультимедіа з Інтернету"), QStringLiteral("mediaInfo"), false);
-        check(g, gl, QStringLiteral("Оновлювати музичні файли, отримуючи відомості про мультимедіа з Інтернету"), QStringLiteral("updateMusic"), false);
+        check(g, gl, tr7("Display media information from the Internet"), QStringLiteral("mediaInfo"), false);
+        check(g, gl, tr7("Update music files by retrieving media info from the Internet"), QStringLiteral("updateMusic"), false);
         l->addWidget(g);
-        auto *h = new QGroupBox(QStringLiteral("Журнал"), w);
+        auto *h = new QGroupBox(tr7("History"), w);
         auto *hl = new QVBoxLayout(h);
-        check(h, hl, QStringLiteral("Зберігати й відображати список нещодавно відкритих файлів"), QStringLiteral("history"), true);
-        auto *clear = new QPushButton(QStringLiteral("Очистити журнал"), h);
+        check(h, hl, tr7("Store and display a list of recently opened files"), QStringLiteral("history"), true);
+        auto *clear = new QPushButton(tr7("Clear History"), h);
         hl->addWidget(clear, 0, Qt::AlignLeft);
         connect(clear, &QPushButton::clicked, this, [] {
             QSettings().remove(QStringLiteral("recent"));
@@ -299,7 +299,7 @@ private:
             gl->addWidget(c);
         }
         l->addWidget(g);
-        auto *note = new QLabel(QStringLiteral("<i>Ці параметри недоступні на цьому комп'ютері.</i>"), w);
+        auto *note = new QLabel(tr7("<i>These settings are not available on this computer.</i>"), w);
         note->setVisible(disabled);
         l->addWidget(note);
         l->addStretch(1);

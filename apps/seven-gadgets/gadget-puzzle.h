@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Picture Puzzle: PicturePuzzle.Gadget (picturePuzzle.js / picturePuzzle.css) — the 4x4 sliding puzzle
  * on the wooden board with the timer, "show picture" and shuffle / solve buttons. Included inside main.cpp's namespace.
@@ -32,9 +33,9 @@ class PuzzleSettings : public GadgetDialog
 {
 public:
     explicit PuzzleSettings(int image)
-        : GadgetDialog(QStringLiteral("Головоломка"))
+        : GadgetDialog(tr7("Picture Puzzle"))
     {
-        body->addWidget(new QLabel(QStringLiteral("Виберіть зображення:")));
+        body->addWidget(new QLabel(tr7("Choose a picture:")));
         m_preview = new PuzzlePicturePreview;
         m_preview->image = image;
         body->addWidget(m_preview, 0, Qt::AlignHCenter);
@@ -44,8 +45,8 @@ public:
         auto *next = new QToolButton;
         prev->setArrowType(Qt::LeftArrow);
         next->setArrowType(Qt::RightArrow);
-        prev->setToolTip(QStringLiteral("Попереднє"));
-        next->setToolTip(QStringLiteral("Далі"));
+        prev->setToolTip(tr7("Previous"));
+        next->setToolTip(tr7("Next"));
         m_count = new QLabel;
         nav->addWidget(prev);
         nav->addSpacing(8);
@@ -74,7 +75,7 @@ public:
 private:
     void updateCount()
     {
-        m_count->setText(QStringLiteral("%1 з %2").arg(m_preview->image).arg(kPuzzlePictures));
+        m_count->setText(tr7("%1 of %2").arg(m_preview->image).arg(kPuzzlePictures));
         m_preview->update();
     }
 
@@ -224,7 +225,7 @@ protected:
             p.drawRect(box.adjusted(0, 0, -1, -1));
             p.setFont(gadgetFont(12, true));
             p.setPen(QColor(255, 255, 255, int(255 * a)));
-            p.drawText(box.adjusted(4, 30, -4, -4), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, QStringLiteral("Вітаємо!\nВи виграли!"));
+            p.drawText(box.adjusted(4, 30, -4, -4), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, tr7("Congratulations!\nYou won!"));
         }
     }
 
@@ -234,9 +235,9 @@ protected:
         const PuzzleButton hot = puzzleButtonAt(e->position());
         if (hot != m_hotButton) {
             m_hotButton = hot;
-            setToolTip(hot == Timer ? QStringLiteral("Призупинити таймер")
-                                    : hot == Hint ? QStringLiteral("Показати зображення")
-                                                  : hot == Shuffle ? (m_solving ? QStringLiteral("Розв'язати") : QStringLiteral("Перемішати")) : QString());
+            setToolTip(hot == Timer ? tr7("Pause timer")
+                                    : hot == Hint ? tr7("Show picture")
+                                                  : hot == Shuffle ? (m_solving ? tr7("Solve") : tr7("Shuffle")) : QString());
             update();
         }
     }

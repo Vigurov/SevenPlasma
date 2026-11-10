@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7programs.h"
@@ -227,7 +228,7 @@ inline QList<Driver> disksDrivers(const QString &where)
 inline QString haveDisk(QWidget *parent)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Встановлення з диска"));
+    dlg.setWindowTitle(tr7("Install From Disk"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedSize(470, 230);
     auto *g = new QGridLayout(&dlg);
@@ -236,10 +237,10 @@ inline QString haveDisk(QWidget *parent)
     auto *ic = new QLabel;
     ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-printer-disk")).pixmap(32, 32));
     g->addWidget(ic, 0, 0, Qt::AlignTop);
-    g->addWidget(wrapped(QStringLiteral("Вставте інсталяційний диск виробника, а потім переконайтеся, що вибрано правильний дисковод.")), 0, 1, Qt::AlignTop);
+    g->addWidget(wrapped(tr7("Insert the manufacturer's installation disk, and then make sure that the correct drive is selected below.")), 0, 1, Qt::AlignTop);
     auto *buttons = new QVBoxLayout;
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     for (QPushButton *b : {ok, cancel}) {
         b->setMinimumWidth(85);
@@ -248,7 +249,7 @@ inline QString haveDisk(QWidget *parent)
     buttons->addStretch(1);
     g->addLayout(buttons, 0, 2, 2, 1);
     g->setRowStretch(1, 1);
-    g->addWidget(new QLabel(QStringLiteral("Копіювати файли виробника з:")), 2, 1);
+    g->addWidget(new QLabel(tr7("Copy manufacturer's files from:")), 2, 1);
     auto *path = new QComboBox;
     path->setEditable(true);
     const QString media = QStringLiteral("/media/") + qEnvironmentVariable("USER");
@@ -257,12 +258,12 @@ inline QString haveDisk(QWidget *parent)
     }
     path->addItem(QDir::homePath() + QStringLiteral("/Downloads"));
     g->addWidget(path, 3, 1);
-    auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+    auto *browse = new QPushButton(tr7("Browse..."));
     browse->setMinimumWidth(85);
     g->addWidget(browse, 3, 2);
     QObject::connect(browse, &QPushButton::clicked, &dlg, [&dlg, path] {
-        const QString f = QFileDialog::getOpenFileName(&dlg, QStringLiteral("Пошук файлу"), path->currentText(),
-                                                       QStringLiteral("Відомості для встановлення (*.ppd *.PPD *.ppd.gz);;Усі файли (*)"));
+        const QString f = QFileDialog::getOpenFileName(&dlg, tr7("Locate File"), path->currentText(),
+                                                       tr7("Setup Information (*.ppd *.PPD *.ppd.gz);;All files (*)"));
         if (!f.isEmpty()) {
             path->setEditText(f);
         }
@@ -282,7 +283,7 @@ public:
         , m_changed(std::move(changed))
     {
         setAttribute(Qt::WA_DeleteOnClose);
-        setWindowTitle(QStringLiteral("Установка принтера"));
+        setWindowTitle(tr7("Add a printer"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-printer-add")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         resize(640, 500);
@@ -304,7 +305,7 @@ public:
         auto *hicon = new QLabel;
         hicon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-printer-add")).pixmap(16, 16));
         head->addWidget(hicon);
-        head->addWidget(new QLabel(QStringLiteral("Установка принтера")), 1);
+        head->addWidget(new QLabel(tr7("Add a printer")), 1);
         wv->addLayout(head);
         m_stack = new QStackedWidget;
         m_stack->setContentsMargins(30, 14, 0, 0);
@@ -317,8 +318,8 @@ public:
         auto *btnRow = new QHBoxLayout;
         btnRow->setContentsMargins(10, 10, 10, 10);
         btnRow->addStretch(1);
-        m_next = new QPushButton(QStringLiteral("Далі"));
-        m_cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_next = new QPushButton(tr7("Next"));
+        m_cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_next, m_cancel}) {
             b->setMinimumWidth(75);
             btnRow->addWidget(b);
@@ -353,17 +354,16 @@ private:
         QVBoxLayout *v = nullptr;
         switch (p) {
         case TypePage: {
-            QWidget *w = page(v, QStringLiteral("Виберіть тип принтера, який потрібно встановити"));
-            v->addWidget(new ArrowLink(QStringLiteral("Додати локальний принтер"),
-                                       QStringLiteral("Використовуйте цей параметр, лише якщо у вас немає принтера USB. (Принтери USB встановлюються в системі Windows "
-                                                      "автоматично під час підключення.)"),
+            QWidget *w = page(v, tr7("What type of printer do you want to install?"));
+            v->addWidget(new ArrowLink(tr7("Add a local printer"),
+                                       tr7("Use this option only if you don't have a USB printer. (Windows automatically installs USB printers when you plug them in.)"),
                                        [this] {
                                            m_network = false;
                                            go(PortPage);
                                        }));
             v->addSpacing(8);
-            v->addWidget(new ArrowLink(QStringLiteral("Додати мережний, бездротовий або Bluetooth-принтер"),
-                                       QStringLiteral("Переконайтеся, що комп'ютер підключено до мережі або що ввімкнуто принтер Bluetooth або бездротовий принтер."),
+            v->addWidget(new ArrowLink(tr7("Add a network, wireless or Bluetooth printer"),
+                                       tr7("Make sure that your computer is connected to the network, or that your Bluetooth or wireless printer is turned on."),
                                        [this] {
                                            m_network = true;
                                            go(SearchPage);
@@ -372,24 +372,24 @@ private:
             return w;
         }
         case PortPage: {
-            QWidget *w = page(v, QStringLiteral("Виберіть порт принтера"));
-            v->addWidget(wrapped(QStringLiteral("Порт принтера — це тип з'єднання, яке дає змогу комп'ютеру обмінюватися даними з принтером.")));
+            QWidget *w = page(v, tr7("Choose a printer port"));
+            v->addWidget(wrapped(tr7("A printer port is a type of connection that allows your computer to exchange information with a printer.")));
             auto *g = new QGridLayout;
             g->setHorizontalSpacing(12);
             g->setVerticalSpacing(12);
-            m_useExisting = new QRadioButton(QStringLiteral("Використовувати наявний порт:"));
+            m_useExisting = new QRadioButton(tr7("Use an existing port:"));
             m_useExisting->setChecked(true);
-            m_createPort = new QRadioButton(QStringLiteral("Створити новий порт:"));
+            m_createPort = new QRadioButton(tr7("Create a new port:"));
             m_ports = new QComboBox;
             m_portType = new QComboBox;
-            m_portType->addItem(QStringLiteral("Стандартний порт TCP/IP"), QStringLiteral("socket"));
-            m_portType->addItem(QStringLiteral("Порт IPP (друк через Інтернет)"), QStringLiteral("ipp"));
-            m_portType->addItem(QStringLiteral("Порт LPD"), QStringLiteral("lpd"));
+            m_portType->addItem(tr7("Standard TCP/IP Port"), QStringLiteral("socket"));
+            m_portType->addItem(tr7("IPP Port (Internet Printing)"), QStringLiteral("ipp"));
+            m_portType->addItem(tr7("LPD Port"), QStringLiteral("lpd"));
             m_portType->setEnabled(false);
             g->addWidget(m_useExisting, 0, 0);
             g->addWidget(m_ports, 0, 1);
             g->addWidget(m_createPort, 1, 0);
-            auto *typeLabel = new QLabel(QStringLiteral("Тип порту:"));
+            auto *typeLabel = new QLabel(tr7("Type of port:"));
             typeLabel->setContentsMargins(40, 0, 0, 0);
             typeLabel->setEnabled(false);
             g->addWidget(typeLabel, 2, 0);
@@ -406,24 +406,24 @@ private:
             return w;
         }
         case TcpPage: {
-            QWidget *w = page(v, QStringLiteral("Введіть ім'я вузла або IP-адресу принтера"));
+            QWidget *w = page(v, tr7("Type a printer hostname or IP address"));
             auto *g = new QGridLayout;
             g->setHorizontalSpacing(12);
             g->setVerticalSpacing(10);
             m_deviceType = new QComboBox;
-            m_deviceType->addItem(QStringLiteral("Автовибір"), QStringLiteral("auto"));
-            m_deviceType->addItem(QStringLiteral("Пристрій TCP/IP"), QStringLiteral("socket"));
-            m_deviceType->addItem(QStringLiteral("Пристрій веб-служб (IPP)"), QStringLiteral("ipp"));
-            m_deviceType->addItem(QStringLiteral("Пристрій LPD"), QStringLiteral("lpd"));
+            m_deviceType->addItem(tr7("Autodetect"), QStringLiteral("auto"));
+            m_deviceType->addItem(tr7("TCP/IP Device"), QStringLiteral("socket"));
+            m_deviceType->addItem(tr7("Web Services Device (IPP)"), QStringLiteral("ipp"));
+            m_deviceType->addItem(tr7("LPD Device"), QStringLiteral("lpd"));
             m_host = new QLineEdit;
             m_portName = new QLineEdit;
-            m_query = new QCheckBox(QStringLiteral("Опитати принтер і автоматично вибрати драйвер"));
+            m_query = new QCheckBox(tr7("Query the printer and automatically select the driver to use"));
             m_query->setChecked(true);
-            g->addWidget(new QLabel(QStringLiteral("Тип пристрою:")), 0, 0);
+            g->addWidget(new QLabel(tr7("Device type:")), 0, 0);
             g->addWidget(m_deviceType, 0, 1);
-            g->addWidget(new QLabel(QStringLiteral("Ім'я вузла або IP-адреса:")), 1, 0);
+            g->addWidget(new QLabel(tr7("Hostname or IP address:")), 1, 0);
             g->addWidget(m_host, 1, 1);
-            g->addWidget(new QLabel(QStringLiteral("Ім'я порту:")), 2, 0);
+            g->addWidget(new QLabel(tr7("Port name:")), 2, 0);
             g->addWidget(m_portName, 2, 1);
             g->setColumnStretch(1, 1);
             v->addLayout(g);
@@ -439,10 +439,10 @@ private:
             return w;
         }
         case SearchPage: {
-            QWidget *w = page(v, QStringLiteral("Пошук доступних принтерів..."));
+            QWidget *w = page(v, tr7("Searching for available printers..."));
             m_searchTitle = qobject_cast<QLabel *>(v->itemAt(0)->widget());
             m_found = new QTreeWidget;
-            m_found->setHeaderLabels({QStringLiteral("Ім'я принтера"), QStringLiteral("Адреса")});
+            m_found->setHeaderLabels({tr7("Printer Name"), tr7("Address")});
             m_found->setRootIsDecorated(false);
             m_found->setColumnWidth(0, 260);
             m_found->setIconSize(QSize(32, 32));
@@ -455,11 +455,11 @@ private:
             m_searchBar->setTextVisible(false);
             m_searchBar->setFixedHeight(14);
             row->addWidget(m_searchBar, 1);
-            m_stop = new QPushButton(QStringLiteral("Зупинити"));
+            m_stop = new QPushButton(tr7("Stop"));
             row->addWidget(m_stop);
             v->addWidget(m_searchRow);
             v->addSpacing(6);
-            v->addWidget(new Link(QStringLiteral("Потрібного принтера немає у списку"), [this] {
+            v->addWidget(new Link(tr7("The printer that I want isn't listed"), [this] {
                 stopSearch();
                 go(ByNamePage);
             }));
@@ -469,19 +469,19 @@ private:
             return w;
         }
         case ByNamePage: {
-            QWidget *w = page(v, QStringLiteral("Знайти принтер за іменем або TCP/IP-адресою"));
-            m_byShare = new QRadioButton(QStringLiteral("Вибрати спільний принтер за іменем"));
+            QWidget *w = page(v, tr7("Find a printer by name or TCP/IP address"));
+            m_byShare = new QRadioButton(tr7("Select a shared printer by name"));
             m_byShare->setChecked(true);
             v->addWidget(m_byShare);
             m_share = new QLineEdit;
             m_share->setContentsMargins(22, 0, 0, 0);
             v->addWidget(m_share);
-            auto *ex = new QLabel(QStringLiteral("Приклад: \\\\комп'ютер\\принтер або\nhttp://комп'ютер/printers/принтер/.printer"));
+            auto *ex = new QLabel(tr7("Example: \\\\computername\\printername or\nhttp://computername/printers/printername/.printer"));
             ex->setContentsMargins(22, 0, 0, 0);
             ex->setStyleSheet(QStringLiteral("color: #555555;"));
             v->addWidget(ex);
             v->addSpacing(6);
-            m_byAddress = new QRadioButton(QStringLiteral("Додати принтер за TCP/IP-адресою або ім'ям вузла"));
+            m_byAddress = new QRadioButton(tr7("Add a printer using a TCP/IP address or hostname"));
             v->addWidget(m_byAddress);
             connect(m_byShare, &QRadioButton::toggled, this, [this](bool on) {
                 m_share->setEnabled(on);
@@ -492,22 +492,21 @@ private:
             return w;
         }
         case DriverPage: {
-            QWidget *w = page(v, QStringLiteral("Установка драйвера принтера"));
+            QWidget *w = page(v, tr7("Install the printer driver"));
             auto *intro = new QHBoxLayout;
             auto *ic = new QLabel;
             ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-printer-driver")).pixmap(32, 32));
             intro->addWidget(ic, 0, Qt::AlignTop);
-            intro->addWidget(wrapped(QStringLiteral("Виберіть принтер у списку. Натисніть кнопку «Центр оновлення Windows», щоб переглянути інші моделі.\n\n"
-                                                    "Щоб установити драйвер з інсталяційного компакт-диска, натисніть кнопку «Установити з диска».")),
+            intro->addWidget(wrapped(tr7("Choose your printer from the list. Click Windows Update to see more models.\n\nTo install the driver from an installation CD, click Have Disk.")),
                              1);
             v->addLayout(intro);
             auto *lists = new QHBoxLayout;
             m_makes = new QTreeWidget;
-            m_makes->setHeaderLabels({QStringLiteral("Виробник")});
+            m_makes->setHeaderLabels({tr7("Manufacturer")});
             m_makes->setRootIsDecorated(false);
             m_makes->setFixedWidth(200);
             m_models = new QTreeWidget;
-            m_models->setHeaderLabels({QStringLiteral("Принтери")});
+            m_models->setHeaderLabels({tr7("Printers")});
             m_models->setRootIsDecorated(false);
             m_models->setUniformRowHeights(true);
             lists->addWidget(m_makes);
@@ -519,19 +518,17 @@ private:
             m_sigIcon = new QLabel;
             m_sigIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-driver-signed")).pixmap(16, 16));
             sigRow->addWidget(m_sigIcon);
-            m_sigText = new QLabel(QStringLiteral("Драйвер має цифровий підпис."));
+            m_sigText = new QLabel(tr7("This driver is digitally signed."));
             sigRow->addWidget(m_sigText, 1);
             sig->addLayout(sigRow);
-            sig->addWidget(new Link(QStringLiteral("Відомості про підписування драйверів"), [this] {
-                QMessageBox::information(this, QStringLiteral("Підписування драйверів"),
-                                         QStringLiteral("Драйвери зі списку входять до складу системи або встановлюються з її сховища пакетів, тому їх перевірено.\n\n"
-                                                        "Драйвери, установлені з диска виробника (файли .ppd), система не перевіряє — установлюйте їх лише "
-                                                        "з довірених джерел."));
+            sig->addWidget(new Link(tr7("Tell me why driver signing is important"), [this] {
+                QMessageBox::information(this, tr7("Driver signing"),
+                                         tr7("The drivers in the list come with the system or are installed from its package store, so they are verified.\n\nDrivers installed from a manufacturer's disk (.ppd files) are not checked by the system - install them only from trusted sources."));
             }));
             bottom->addLayout(sig, 1);
             auto *buttons = new QVBoxLayout;
-            m_update = new QPushButton(QStringLiteral("Центр оновлення Windows"));
-            auto *disk = new QPushButton(QStringLiteral("Установити з диска..."));
+            m_update = new QPushButton(tr7("Windows Update"));
+            auto *disk = new QPushButton(tr7("Have Disk..."));
             for (QPushButton *b : {m_update, disk}) {
                 b->setMinimumWidth(200);
                 buttons->addWidget(b);
@@ -549,8 +546,8 @@ private:
                 }
                 const QList<Driver> found = disksDrivers(where);
                 if (found.isEmpty()) {
-                    QMessageBox::warning(this, QStringLiteral("Встановлення з диска"),
-                                         QStringLiteral("У вказаному розташуванні немає відомостей про принтер (файлів .ppd)."));
+                    QMessageBox::warning(this, tr7("Install From Disk"),
+                                         tr7("The specified location does not contain information about your printer (.ppd files)."));
                     return;
                 }
                 m_diskDrivers = found;
@@ -559,9 +556,9 @@ private:
             return w;
         }
         case NamePage: {
-            QWidget *w = page(v, QStringLiteral("Введіть ім'я принтера"));
+            QWidget *w = page(v, tr7("Type a printer name"));
             auto *row = new QHBoxLayout;
-            row->addWidget(new QLabel(QStringLiteral("Ім'я принтера:")));
+            row->addWidget(new QLabel(tr7("Printer name:")));
             m_name = new QLineEdit;
             row->addWidget(m_name, 1);
             v->addLayout(row);
@@ -573,7 +570,7 @@ private:
             return w;
         }
         case InstallPage: {
-            QWidget *w = page(v, QStringLiteral("Установка принтера..."));
+            QWidget *w = page(v, tr7("Installing printer..."));
             m_installText = wrapped(QString());
             v->addWidget(m_installText);
             m_installBar = new QProgressBar;
@@ -584,11 +581,10 @@ private:
             return w;
         }
         case SharePage: {
-            QWidget *w = page(v, QStringLiteral("Спільний доступ до принтера"));
-            v->addWidget(wrapped(QStringLiteral("Якщо надати спільний доступ до цього принтера, для його використання потрібно буде ввести ім'я спільного "
-                                                "ресурсу. Можна використати запропоноване ім'я або ввести нове. Інші користувачі мережі бачитимуть це ім'я.")));
-            m_noShare = new QRadioButton(QStringLiteral("Немає спільного доступу до цього принтера"));
-            m_doShare = new QRadioButton(QStringLiteral("Надати спільний доступ до цього принтера, щоб інші користувачі мережі могли знайти й використовувати його"));
+            QWidget *w = page(v, tr7("Printer Sharing"));
+            v->addWidget(wrapped(tr7("If you want to share this printer, you must provide a share name. You can use the suggested name or type a new one. The share name will be visible to other network users.")));
+            m_noShare = new QRadioButton(tr7("Do not share this printer"));
+            m_doShare = new QRadioButton(tr7("Share this printer so that others on your network can find and use it"));
             m_noShare->setChecked(true);
             v->addWidget(m_noShare);
             v->addWidget(m_doShare);
@@ -597,11 +593,11 @@ private:
             m_shareName = new QLineEdit;
             m_location = new QLineEdit;
             m_comment = new QLineEdit;
-            g->addWidget(new QLabel(QStringLiteral("Ім'я спільного ресурсу:")), 0, 0);
+            g->addWidget(new QLabel(tr7("Share name:")), 0, 0);
             g->addWidget(m_shareName, 0, 1);
-            g->addWidget(new QLabel(QStringLiteral("Розташування:")), 1, 0);
+            g->addWidget(new QLabel(tr7("Location:")), 1, 0);
             g->addWidget(m_location, 1, 1);
-            g->addWidget(new QLabel(QStringLiteral("Примітка:")), 2, 0);
+            g->addWidget(new QLabel(tr7("Comment:")), 2, 0);
             g->addWidget(m_comment, 2, 1);
             auto *fields = new QWidget;
             fields->setLayout(g);
@@ -614,20 +610,18 @@ private:
         case DonePage: {
             QWidget *w = page(v, QString());
             m_doneTitle = qobject_cast<QLabel *>(v->itemAt(0)->widget());
-            m_default = new QCheckBox(QStringLiteral("Використовувати за замовчуванням"));
+            m_default = new QCheckBox(tr7("Set as the default printer"));
             v->addWidget(m_default);
             v->addSpacing(10);
-            v->addWidget(wrapped(QStringLiteral("Щоб перевірити правильність роботи принтера або переглянути відомості про усунення неполадок, "
-                                                "надрукуйте пробну сторінку.")));
-            auto *test = new QPushButton(QStringLiteral("Надрукувати пробну сторінку"));
+            v->addWidget(wrapped(tr7("To check if your printer is working properly, or to see troubleshooting information for the printer, print a test page.")));
+            auto *test = new QPushButton(tr7("Print a test page"));
             v->addWidget(test, 0, Qt::AlignLeft);
             connect(test, &QPushButton::clicked, this, [this] {
                 const QString page = QFile::exists(QStringLiteral("/usr/share/cups/data/testprint")) ? QStringLiteral("/usr/share/cups/data/testprint")
                                                                                                       : QStringLiteral("/usr/share/cups/data/default-testpage.pdf");
-                QProcess::startDetached(QStringLiteral("lp"), {QStringLiteral("-d"), m_queue, QStringLiteral("-t"), QStringLiteral("Пробна сторінка"), page});
+                QProcess::startDetached(QStringLiteral("lp"), {QStringLiteral("-d"), m_queue, QStringLiteral("-t"), tr7("Test page"), page});
                 QMessageBox::information(this, m_name->text(),
-                                         QStringLiteral("Пробну сторінку надіслано на принтер «%1».\n\nПробна сторінка коротко демонструє можливості принтера "
-                                                        "з друку графіки й тексту, а також містить технічні відомості про принтер.")
+                                         tr7("A test page has been sent to the printer \"%1\".\n\nThis test page briefly demonstrates the printer's ability to print graphics and text, and it provides technical information about the printer.")
                                              .arg(m_name->text()));
             });
             v->addStretch(1);
@@ -646,7 +640,7 @@ private:
         }
         m_stack->setCurrentIndex(p);
         m_back->setEnabled(!m_history.isEmpty() && p != InstallPage && p != SharePage && p != DonePage);
-        m_next->setText(p == DonePage ? QStringLiteral("Готово") : QStringLiteral("Далі"));
+        m_next->setText(p == DonePage ? tr7("Done") : tr7("Next"));
         m_next->setVisible(p != TypePage);
         m_cancel->setVisible(p != DonePage);
         m_cancel->setEnabled(p != InstallPage);
@@ -663,7 +657,7 @@ private:
             }
             m_name->selectAll();
             m_name->setFocus();
-            m_nameNote->setText(QStringLiteral("Цей принтер буде встановлено з драйвером %1.").arg(m_driver.model));
+            m_nameNote->setText(tr7("This printer will be installed with the %1 driver.").arg(m_driver.model));
         } else if (p == SharePage) {
             m_shareName->setText(m_name->text());
         }
@@ -776,7 +770,7 @@ private:
                                                      u.port() > 0 ? QStringLiteral(":%1").arg(u.port()) : QString(), path);
             }
             if (!s.contains(QLatin1String("://"))) {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося знайти принтер «%1». Перевірте ім'я й повторіть спробу.").arg(m_share->text()));
+                QMessageBox::warning(this, windowTitle(), tr7("Windows couldn't find the printer \"%1\". Check the name and try again.").arg(m_share->text()));
                 return;
             }
             m_uri = s;
@@ -805,7 +799,7 @@ private:
         case SharePage:
             applySharing();
             go(DonePage);
-            m_doneTitle->setText(QStringLiteral("Ви успішно додали принтер «%1»").arg(m_name->text()));
+            m_doneTitle->setText(tr7("You've successfully added %1").arg(m_name->text()));
             m_default->setChecked(!Win7Programs::run(QStringLiteral("lpstat"), {QStringLiteral("-d")}).contains(QLatin1Char(':')));
             return;
         case DonePage:
@@ -826,7 +820,7 @@ private:
     void useDriverless()
     {
         m_direct = false;
-        m_driver = Driver{QString(), QStringLiteral("IPP Everywhere™ (без окремого драйвера)"), QStringLiteral("everywhere"), false};
+        m_driver = Driver{QString(), tr7("IPP Everywhere™ (no separate driver)"), QStringLiteral("everywhere"), false};
         go(NamePage);
     }
 
@@ -836,13 +830,13 @@ private:
     {
         m_ports->clear();
         for (int i = 0; i < 3; ++i) {
-            m_ports->addItem(QStringLiteral("LPT%1: (Порт принтера)").arg(i + 1), QStringLiteral("parallel:/dev/lp%1").arg(i));
+            m_ports->addItem(tr7("LPT%1: (Printer Port)").arg(i + 1), QStringLiteral("parallel:/dev/lp%1").arg(i));
         }
         for (int i = 0; i < 4; ++i) {
-            m_ports->addItem(QStringLiteral("COM%1: (Послідовний порт)").arg(i + 1), QStringLiteral("serial:/dev/ttyS%1?baud=9600").arg(i));
+            m_ports->addItem(tr7("COM%1: (Serial Port)").arg(i + 1), QStringLiteral("serial:/dev/ttyS%1?baud=9600").arg(i));
         }
         if (QFile::exists(QStringLiteral("/usr/lib/cups/backend/cups-pdf"))) {
-            m_ports->addItem(QStringLiteral("PDF: (Друк у файл PDF)"), QStringLiteral("cups-pdf:/"));
+            m_ports->addItem(tr7("PDF: (Print to PDF file)"), QStringLiteral("cups-pdf:/"));
         }
         // USB printers lpinfo sees right now come as "USB001 (Virtual printer port for USB)"
         auto *proc = new QProcess(this);
@@ -856,7 +850,7 @@ private:
                     continue;
                 }
                 const QString name = f.makeModel.isEmpty() || f.makeModel == QLatin1String("Unknown") ? f.info : f.makeModel;
-                m_ports->addItem(QStringLiteral("USB%1 (Віртуальний порт принтера для USB) — %2").arg(n++, 3, 10, QLatin1Char('0')).arg(name), f.uri);
+                m_ports->addItem(tr7("USB%1 (Virtual printer port for USB) - %2").arg(n++, 3, 10, QLatin1Char('0')).arg(name), f.uri);
                 m_ports->setItemData(m_ports->count() - 1, name, Qt::UserRole + 1);
             }
             proc->deleteLater();
@@ -869,7 +863,7 @@ private:
     void startSearch()
     {
         m_found->clear();
-        m_searchTitle->setText(QStringLiteral("Пошук доступних принтерів..."));
+        m_searchTitle->setText(tr7("Searching for available printers..."));
         m_searchRow->show();
         m_stop->setEnabled(true);
         if (m_search) {
@@ -897,7 +891,7 @@ private:
                 if (f.uri.startsWith(QLatin1String("dnssd:"))) {
                     address = QUrl::fromPercentEncoding(f.uri.mid(8).section(QLatin1Char('/'), 0, 0).toUtf8());
                 }
-                auto *it = new QTreeWidgetItem(m_found, {name + (known ? QStringLiteral(" (уже встановлено)") : QString()), address});
+                auto *it = new QTreeWidgetItem(m_found, {name + (known ? tr7(" (already installed)") : QString()), address});
                 it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-dev-printer")));
                 it->setData(0, Qt::UserRole, f.uri);
                 it->setData(0, Qt::UserRole + 1, f.makeModel);
@@ -925,7 +919,7 @@ private:
     {
         m_searchRow->hide();
         m_stop->setEnabled(false);
-        m_searchTitle->setText(m_found->topLevelItemCount() ? QStringLiteral("Виберіть принтер") : QStringLiteral("Принтери не знайдено"));
+        m_searchTitle->setText(m_found->topLevelItemCount() ? tr7("Select a printer") : tr7("No printers were found"));
     }
 
     /* ---------- drivers ---------- */
@@ -964,7 +958,7 @@ private:
         m_makes->clear();
         m_models->clear();
         if (shownDrivers().isEmpty()) {
-            m_makes->addTopLevelItem(new QTreeWidgetItem({QStringLiteral("Зачекайте...")}));
+            m_makes->addTopLevelItem(new QTreeWidgetItem({tr7("Please wait...")}));
             m_makes->topLevelItem(0)->setFlags(Qt::NoItemFlags);
             return;
         }
@@ -986,7 +980,7 @@ private:
         }
         const bool disk = !m_diskDrivers.isEmpty();
         m_sigIcon->setPixmap(QIcon::fromTheme(disk ? QStringLiteral("seven-driver-unsigned") : QStringLiteral("seven-driver-signed")).pixmap(16, 16));
-        m_sigText->setText(disk ? QStringLiteral("Драйвер не має цифрового підпису!") : QStringLiteral("Драйвер має цифровий підпис."));
+        m_sigText->setText(disk ? tr7("This driver is not digitally signed!") : tr7("This driver is digitally signed."));
         const auto match = m_makes->findItems(keep, Qt::MatchExactly);
         m_makes->setCurrentItem(match.isEmpty() ? m_makes->topLevelItem(0) : match.first());
     }
@@ -1091,12 +1085,12 @@ private:
             reload();
             return;
         }
-        Win7Programs::runTask(this, QStringLiteral("Установка принтера"), QStringLiteral("seven-printer-add"),
-                              QStringLiteral("Зачекайте, доки Windows оновить список принтерів. Це може тривати кілька хвилин."), QStringLiteral("pkexec"),
+        Win7Programs::runTask(this, tr7("Add a printer"), QStringLiteral("seven-printer-add"),
+                              tr7("Please wait while Windows updates the list of printers. This might take several minutes."), QStringLiteral("pkexec"),
                               {QStringLiteral("/bin/sh"), QStringLiteral("-c"), Win7Programs::aptScript(missing, {})},
                               [this, reload](bool ok, bool cancelled, const QString &out) {
                                   if (!ok && !cancelled) {
-                                      Win7Programs::showFailure(this, windowTitle(), QStringLiteral("Не вдалося оновити список принтерів."), out);
+                                      Win7Programs::showFailure(this, windowTitle(), tr7("Could not update the list of printers."), out);
                                   }
                                   reload();
                               });
@@ -1108,7 +1102,7 @@ private:
     {
         m_queue = queueName(m_name->text().trimmed());
         go(InstallPage);
-        m_installText->setText(QStringLiteral("Зачекайте, триває встановлення принтера «%1».").arg(m_name->text()));
+        m_installText->setText(tr7("Please wait while the printer \"%1\" is installed.").arg(m_name->text()));
         QStringList args{QStringLiteral("-p"), m_queue, QStringLiteral("-E"), QStringLiteral("-v"), m_uri, QStringLiteral("-D"), m_name->text().trimmed()};
         if (m_driver.file) {
             args << QStringLiteral("-P") << m_driver.ppd;
@@ -1128,12 +1122,12 @@ private:
             // driverless needs a printer that answers; otherwise the driver is picked by hand
             if (m_driver.ppd == QLatin1String("everywhere")) {
                 QMessageBox::information(this, windowTitle(),
-                                         QStringLiteral("Не вдалося автоматично визначити драйвер для цього принтера. Виберіть драйвер у списку."));
+                                         tr7("Windows could not detect the driver for this printer automatically. Select the driver from the list."));
                 m_stack->setCurrentIndex(NamePage);
                 go(DriverPage);
                 return;
             }
-            Win7Programs::showFailure(this, windowTitle(), QStringLiteral("Не вдалося встановити принтер."), out);
+            Win7Programs::showFailure(this, windowTitle(), tr7("The printer could not be installed."), out);
             m_stack->setCurrentIndex(NamePage);
             go(NamePage, false);
         });

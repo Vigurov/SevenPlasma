@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Windows Media Player 12 ("Програвач Windows Media") of Windows 7 for KDE: library mode and Now Playing mode,
  * pictures from the original wmploc.dll (~/.local/share/seven-wmp), playback with Qt Multimedia (FFmpeg).
@@ -44,7 +45,7 @@
 
 namespace
 {
-const QString APP_TITLE = QStringLiteral("Програвач Windows Media");
+const QString APP_TITLE = tr7("Windows Media Player");
 
 QString playlistsDir()
 {
@@ -267,7 +268,7 @@ public:
         m_action->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         m_action->setAutoRaise(true);
         m_clear = new QToolButton(bar);
-        m_clear->setText(QStringLiteral("Очистити список"));
+        m_clear->setText(tr7("Clear list"));
         m_clear->setAutoRaise(true);
         bl->addWidget(m_action);
         bl->addWidget(m_clear);
@@ -276,19 +277,19 @@ public:
         m_burnOpts = new QToolButton(bar);
         m_burnOpts->setAutoRaise(true);
         m_burnOpts->setIcon(Res::icon(7702));
-        m_burnOpts->setToolTip(QStringLiteral("Параметри записування"));
+        m_burnOpts->setToolTip(tr7("Burn options"));
         m_burnOpts->setPopupMode(QToolButton::InstantPopup);
         auto *bm = new QMenu(m_burnOpts);
         auto *grp = new QActionGroup(bm);
-        auto *aAudio = bm->addAction(QStringLiteral("Звуковий компакт-диск"));
-        auto *aData = bm->addAction(QStringLiteral("Компакт-диск або DVD-диск з даними"));
+        auto *aAudio = bm->addAction(tr7("Audio CD"));
+        auto *aData = bm->addAction(tr7("Data CD or DVD"));
         for (auto *x : {aAudio, aData}) {
             x->setCheckable(true);
             grp->addAction(x);
         }
         aAudio->setChecked(true);
         bm->addSeparator();
-        auto *aEject = bm->addAction(QStringLiteral("Виймати диск після записування"));
+        auto *aEject = bm->addAction(tr7("Eject disc after burning"));
         aEject->setCheckable(true);
         aEject->setChecked(true);
         m_burnOpts->setMenu(bm);
@@ -439,7 +440,7 @@ public:
     void setMode(Mode m)
     {
         m_mode = m;
-        m_action->setText(m == PlayMode ? QStringLiteral("Зберегти список") : m == BurnMode ? QStringLiteral("Почати записування") : QStringLiteral("Почати синхронізацію"));
+        m_action->setText(m == PlayMode ? tr7("Save list") : m == BurnMode ? tr7("Start burn") : tr7("Start sync"));
         m_action->setIcon(m == PlayMode ? Res::icon(29605) : m == BurnMode ? Res::icon(29610) : Res::icon(29607));
         m_burnOpts->setVisible(m == BurnMode);
         m_list->setDragDropMode(m == PlayMode ? QAbstractItemView::DragDrop : QAbstractItemView::DragDrop);
@@ -476,7 +477,7 @@ protected:
                 // the big "playlist" page icon, the list name as a link, and ◀ name ▶ under a line
                 p.drawPixmap(16, 12, Res::icon(613).pixmap(48, 48));
                 p.setPen(QColor(0x33, 0x66, 0xcc));
-                p.drawText(QRect(82, 10, w - 86, 18), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Незбережений список"));
+                p.drawText(QRect(82, 10, w - 86, 18), Qt::AlignLeft | Qt::AlignVCenter, tr7("Unsaved list"));
             } else {
                 // the drive / device picture with its state
                 const QPixmap pic = m_mode == BurnMode ? Res::px(5265).scaled(56, 56, Qt::KeepAspectRatio, Qt::SmoothTransformation)
@@ -489,26 +490,26 @@ protected:
                 QString title, sub;
                 if (m_mode == BurnMode) {
                     if (m_burnerName.isEmpty()) {
-                        title = QStringLiteral("Записувач не знайдено");
-                        sub = QStringLiteral("Підключіть записувальний дисковод.");
+                        title = tr7("No burner found");
+                        sub = tr7("Connect a burner drive.");
                     } else if (m_audioBurn) {
-                        title = QStringLiteral("Звуковий компакт-диск");
+                        title = tr7("Audio CD");
                         const qint64 left = 80 * 60 * 1000 - burnLength();
                         auto mmss = [](qint64 ms) {
                             const qint64 sec = (ms + 500) / 1000;
                             return QStringLiteral("%1:%2").arg(sec / 60).arg(sec % 60, 2, 10, QLatin1Char('0'));
                         };
-                        sub = left >= 0 ? QStringLiteral("Залишилося %1 з 80:00\n%2").arg(mmss(left), m_burnerName)
-                                        : QStringLiteral("Перевищено на %1\n%2").arg(mmss(-left), m_burnerName);
+                        sub = left >= 0 ? tr7("%1 remaining of 80:00\n%2").arg(mmss(left), m_burnerName)
+                                        : tr7("%1 over\n%2").arg(mmss(-left), m_burnerName);
                     } else {
-                        title = QStringLiteral("Диск з даними");
-                        sub = QStringLiteral("Вставте записуваний диск\n") + m_burnerName;
+                        title = tr7("Data disc");
+                        sub = tr7("Insert a writable disc\n") + m_burnerName;
                     }
                 } else {
-                    title = m_target.name.isEmpty() ? QStringLiteral("Пристрій не підключено") : m_target.name;
-                    sub = m_target.name.isEmpty() ? QStringLiteral("Підключіть пристрій.")
-                        : m_target.free >= 0 ? QStringLiteral("Вільно %1 з %2").arg(formatSize(m_target.free), formatSize(m_target.total))
-                                              : QStringLiteral("Готовий до синхронізації");
+                    title = m_target.name.isEmpty() ? tr7("No device connected") : m_target.name;
+                    sub = m_target.name.isEmpty() ? tr7("Connect a device.")
+                        : m_target.free >= 0 ? tr7("%1 free of %2").arg(formatSize(m_target.free), formatSize(m_target.total))
+                                              : tr7("Ready to sync");
                 }
                 if (!m_status.isEmpty()) {
                     sub = m_status;
@@ -529,7 +530,7 @@ protected:
                 p.drawPixmap(w - 22, 82, Res::icon(29654).pixmap(16, 16));
             }
             p.drawText(QRect(24, 80, w - 48, 20), Qt::AlignCenter,
-                       m_mode == PlayMode ? QStringLiteral("Незбережений список") : m_mode == BurnMode ? QStringLiteral("Список записування") : QStringLiteral("Список синхронізації"));
+                       m_mode == PlayMode ? tr7("Unsaved list") : m_mode == BurnMode ? tr7("Burn list") : tr7("Sync list"));
             return true;
         }
         return QWidget::eventFilter(o, e);
@@ -545,10 +546,10 @@ protected:
             f.setBold(true);
             p.setFont(f);
             p.setPen(Wmp::TEXT);
-            p.drawText(QRect(0, 200, width(), 20), Qt::AlignCenter, QStringLiteral("Перетягніть елементи сюди"));
+            p.drawText(QRect(0, 200, width(), 20), Qt::AlignCenter, tr7("Drag items here"));
             p.setFont(font());
             p.drawText(QRect(10, 218, width() - 20, 40), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap,
-                       m_mode == PlayMode ? QStringLiteral("щоб створити список відтворення.") : m_mode == BurnMode ? QStringLiteral("щоб створити список записування.") : QStringLiteral("щоб створити список синхронізації."));
+                       m_mode == PlayMode ? tr7("to create a playlist.") : m_mode == BurnMode ? tr7("to create a burn list.") : tr7("to create a sync list."));
         }
     }
 
@@ -556,7 +557,7 @@ private:
     void startBurn()
     {
         if (m_burnerDev.isEmpty()) {
-            QMessageBox::warning(this, APP_TITLE, QStringLiteral("Програвач Windows Media не знайшов записувального дисковода компакт-дисків або DVD-дисків."));
+            QMessageBox::warning(this, APP_TITLE, tr7("Windows Media Player could not find a CD or DVD burner."));
             return;
         }
         m_audioBurn ? burnAudio() : burnData();
@@ -579,7 +580,7 @@ private:
     }
     void burnData()
     {
-        if (QMessageBox::question(this, APP_TITLE, QStringLiteral("Записати %1 елем. на диск з даними в дисководі %2?").arg(m_burn.size()).arg(m_burnerName),
+        if (QMessageBox::question(this, APP_TITLE, tr7("Burn %1 items to a data disc in drive %2?").arg(m_burn.size()).arg(m_burnerName),
                                   QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
             return;
         }
@@ -599,14 +600,14 @@ private:
             static const QRegularExpression re(QStringLiteral("(\\d+(\\.\\d+)?)% done"));
             const auto m = re.match(QString::fromUtf8(proc->readAll()));
             if (m.hasMatch()) {
-                setBurnStatus(QStringLiteral("Записування: %1%").arg(qRound(m.captured(1).toDouble())));
+                setBurnStatus(tr7("Burning: %1%").arg(qRound(m.captured(1).toDouble())));
             }
         });
         connect(proc, &QProcess::finished, this, [this, proc](int code) {
-            setBurnStatus(code == 0 ? QStringLiteral("Записування завершено") : QStringLiteral("Помилка записування. Перевірте, чи вставлено записуваний диск."));
+            setBurnStatus(code == 0 ? tr7("Burn complete") : tr7("Burn error. Check that a writable disc is inserted."));
             proc->deleteLater();
         });
-        setBurnStatus(QStringLiteral("Підготовка до записування..."));
+        setBurnStatus(tr7("Preparing to burn..."));
         proc->start(QStringLiteral("xorriso"), args);
     }
     /** audio CD: every track converted to CD audio (WAV 44.1 kHz/16 bit/stereo) with ffmpeg, then cdrskin -dao */
@@ -622,10 +623,10 @@ private:
             return;
         }
         if (burnLength() > 80 * 60 * 1000) {
-            QMessageBox::warning(this, APP_TITLE, QStringLiteral("Список записування не вміщується на один звуковий компакт-диск (80 хвилин). Видаліть деякі елементи зі списку."));
+            QMessageBox::warning(this, APP_TITLE, tr7("The burn list does not fit on one audio CD (80 minutes). Remove some items from the list."));
             return;
         }
-        if (QMessageBox::question(this, APP_TITLE, QStringLiteral("Записати %1 композицій на звуковий компакт-диск у дисководі %2?").arg(tracks.size()).arg(m_burnerName),
+        if (QMessageBox::question(this, APP_TITLE, tr7("Burn %1 songs to an audio CD in drive %2?").arg(tracks.size()).arg(m_burnerName),
                                   QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
             return;
         }
@@ -634,13 +635,13 @@ private:
         auto step = std::make_shared<std::function<void(int)>>();
         *step = [this, tracks, tmp, wavs, step](int i) {
             if (i < tracks.size()) {
-                setBurnStatus(QStringLiteral("Підготовка композиції %1 з %2...").arg(i + 1).arg(tracks.size()));
+                setBurnStatus(tr7("Preparing track %1 of %2...").arg(i + 1).arg(tracks.size()));
                 const QString wav = tmp->filePath(QStringLiteral("%1.wav").arg(i + 1, 2, 10, QLatin1Char('0')));
                 auto *ff = new QProcess(this);
                 connect(ff, &QProcess::finished, this, [this, ff, wav, wavs, step, i](int code) {
                     ff->deleteLater();
                     if (code != 0) {
-                        setBurnStatus(QStringLiteral("Не вдалося підготувати композицію %1").arg(i + 1));
+                        setBurnStatus(tr7("Could not prepare track %1").arg(i + 1));
                         return;
                     }
                     *wavs << wav;
@@ -667,15 +668,15 @@ private:
                 while (it.hasNext()) {
                     const auto m = it.next();
                     const int pct = m.captured(3).toInt() ? m.captured(2).toInt() * 100 / m.captured(3).toInt() : 0;
-                    setBurnStatus(QStringLiteral("Записування композиції %1: %2%").arg(m.captured(1).toInt()).arg(pct));
+                    setBurnStatus(tr7("Burning track %1: %2%").arg(m.captured(1).toInt()).arg(pct));
                 }
             });
             connect(proc, &QProcess::finished, this, [this, proc, tmp](int code) {
-                setBurnStatus(code == 0 ? QStringLiteral("Записування завершено") : QStringLiteral("Помилка записування. Перевірте, чи вставлено чистий диск CD-R."));
+                setBurnStatus(code == 0 ? tr7("Burn complete") : tr7("Burn error. Check that a blank CD-R is inserted."));
                 proc->deleteLater();
                 delete tmp;
             });
-            setBurnStatus(QStringLiteral("Початок записування..."));
+            setBurnStatus(tr7("Starting burn..."));
             proc->start(QStringLiteral("cdrskin"), args);
         };
         (*step)(0);
@@ -683,7 +684,7 @@ private:
     void startSync()
     {
         if (m_target.name.isEmpty()) {
-            QMessageBox::information(this, APP_TITLE, QStringLiteral("Підключіть пристрій, щоб розпочати синхронізацію."));
+            QMessageBox::information(this, APP_TITLE, tr7("Connect a device to start syncing."));
             return;
         }
         const QList<QUrl> urls = m_sync;
@@ -693,14 +694,14 @@ private:
             auto *job = KIO::copy(urls, dest);
             KJobWidgets::setWindow(job, window());
             job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, window()));
-            m_status = QStringLiteral("Синхронізація...");
+            m_status = tr7("Syncing...");
             m_head->update();
             connect(job, &KJob::percentChanged, this, [this](KJob *, unsigned long pct) {
-                m_status = QStringLiteral("Синхронізація: %1%").arg(pct);
+                m_status = tr7("Syncing: %1%").arg(pct);
                 m_head->update();
             });
             connect(job, &KJob::result, this, [this](KJob *j) {
-                m_status = j->error() ? QStringLiteral("Синхронізацію не завершено") : QStringLiteral("Синхронізацію завершено");
+                m_status = j->error() ? tr7("Sync did not complete") : tr7("Sync complete");
                 m_head->update();
             });
         });
@@ -724,7 +725,7 @@ private:
         }
         m_list->setVisible(!urls.isEmpty());
         const int n = urls.size();
-        QString items = n == 1 ? QStringLiteral("1 елемент") : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? QStringLiteral("%1 елементи").arg(n) : QStringLiteral("%1 елементів").arg(n);
+        QString items = n == 1 ? tr7("1 item") : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? tr7("%1 items").arg(n) : tr7("%1 items", "many").arg(n);
         m_count->setText(total > 0 ? items + QStringLiteral(", ") + formatLength(total) : items);
         m_clear->setEnabled(n > 0);
         m_action->setEnabled(n > 0);
@@ -739,7 +740,7 @@ public:
             return;
         }
         bool ok = false;
-        const QString name = QInputDialog::getText(this, APP_TITLE, QStringLiteral("Назва списку відтворення:"), QLineEdit::Normal, QStringLiteral("Список відтворення"), &ok);
+        const QString name = QInputDialog::getText(this, APP_TITLE, tr7("Playlist name:"), QLineEdit::Normal, tr7("Playlist"), &ok);
         if (!ok || name.trimmed().isEmpty()) {
             return;
         }
@@ -918,7 +919,7 @@ public:
         connect(m_cmd, &CommandBar::viewMenuRequested, this, [this](const QPoint &g) {
             QMenu m(this);
             auto *grp = new QActionGroup(&m);
-            for (auto [name, mode] : {std::pair{QStringLiteral("Значок"), 0}, std::pair{QStringLiteral("Плитка"), 1}, std::pair{QStringLiteral("Подробиці"), 2}}) {
+            for (auto [name, mode] : {std::pair{tr7("Icon"), 0}, std::pair{tr7("Tile"), 1}, std::pair{tr7("Details"), 2}}) {
                 auto *a = m.addAction(name);
                 a->setCheckable(true);
                 a->setChecked(mode == 2);
@@ -928,7 +929,7 @@ public:
         });
         connect(lib, &Library::changed, this, &LibraryPage::refreshView);
         connect(lib, &Library::scanning, this, [this](const QString &folder) {
-            m_transport->setStatus(QStringLiteral("Оновлення бібліотеки мультимедіа: ") + folder);
+            m_transport->setStatus(tr7("Updating media library: ") + folder);
         });
         connect(lib, &Library::busyChanged, this, [this] {
             if (!m_lib->busy()) {
@@ -1023,7 +1024,7 @@ private:
             a->setData(c);
         }
         m.addSeparator();
-        auto *choose = m.addAction(QStringLiteral("Вибрати стовпці..."));
+        auto *choose = m.addAction(tr7("Choose columns..."));
         QAction *a = m.exec(global);
         if (a == choose) {
             chooseColumns();
@@ -1050,20 +1051,20 @@ private:
             it->setData(0, Qt::UserRole, node);
             return it;
         };
-        add(nullptr, QStringLiteral("Бібліотека"), 29513, NodeLibrary);
-        m_playlists = add(nullptr, QStringLiteral("Списки відтворення"), 29522, NodePlaylists);
-        auto *music = add(nullptr, QStringLiteral("Музика"), 29520, NodeMusic);
+        add(nullptr, tr7("Library"), 29513, NodeLibrary);
+        m_playlists = add(nullptr, tr7("Playlists"), 29522, NodePlaylists);
+        auto *music = add(nullptr, tr7("Music"), 29520, NodeMusic);
         m_music_ = music;
         for (const auto &n : navMusicNodes()) {
             add(music, n.name, n.icon, n.node)->setHidden(!navShown(n.key, n.def));
         }
         music->setExpanded(true);
-        add(nullptr, QStringLiteral("Відео"), 29538, NodeVideos);
-        add(nullptr, QStringLiteral("Зображення"), 29531, NodePictures);
+        add(nullptr, tr7("Videos"), 29538, NodeVideos);
+        add(nullptr, tr7("Pictures"), 29531, NodePictures);
         auto *spacer = new QTreeWidgetItem(m_nav);
         spacer->setFlags(Qt::NoItemFlags);
         spacer->setSizeHint(0, QSize(10, 12));
-        add(nullptr, QStringLiteral("Інші бібліотеки"), 29546, NodeOther);
+        add(nullptr, tr7("Other Libraries"), 29546, NodeOther);
         refreshPlaylists();
     }
 public:
@@ -1076,13 +1077,13 @@ public:
     };
     static QList<NavNode> navMusicNodes()
     {
-        return {{QStringLiteral("artist"), QStringLiteral("Виконавець"), 29512, NodeArtist, true},
-                {QStringLiteral("album"), QStringLiteral("Альбом"), 29510, NodeAlbum, true},
-                {QStringLiteral("genre"), QStringLiteral("Жанр"), 29515, NodeGenre, true},
-                {QStringLiteral("year"), QStringLiteral("Рік"), 29530, NodeYear, false},
-                {QStringLiteral("rating"), QStringLiteral("Оцінка"), 29526, NodeRating, false},
-                {QStringLiteral("contrib"), QStringLiteral("Учасник"), 29537, NodeContrib, false},
-                {QStringLiteral("composer"), QStringLiteral("Композитор"), 29546, NodeComposer, false}};
+        return {{QStringLiteral("artist"), tr7("Artist"), 29512, NodeArtist, true},
+                {QStringLiteral("album"), tr7("Album"), 29510, NodeAlbum, true},
+                {QStringLiteral("genre"), tr7("Genre"), 29515, NodeGenre, true},
+                {QStringLiteral("year"), tr7("Year"), 29530, NodeYear, false},
+                {QStringLiteral("rating"), tr7("Rating"), 29526, NodeRating, false},
+                {QStringLiteral("contrib"), tr7("Contributing Artist"), 29537, NodeContrib, false},
+                {QStringLiteral("composer"), tr7("Composer"), 29546, NodeComposer, false}};
     }
     static bool navShown(const QString &key, bool def)
     {
@@ -1092,15 +1093,15 @@ public:
     void customizeNav()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Настроювання області переходів"));
+        d.setWindowTitle(tr7("Customize Navigation Pane"));
         auto *l = new QVBoxLayout(&d);
-        auto *head = new QLabel(QStringLiteral("Виберіть категорії, які відображатимуться в області переходів для кожної бібліотеки."), &d);
+        auto *head = new QLabel(tr7("Select the categories that appear in the navigation pane for each library."), &d);
         head->setWordWrap(true);
         l->addWidget(head);
         auto *lib = new QComboBox(&d);
-        lib->addItem(QStringLiteral("Бібліотека"));
+        lib->addItem(tr7("Library"));
         l->addWidget(lib);
-        auto *g = new QGroupBox(QStringLiteral("Музика"), &d);
+        auto *g = new QGroupBox(tr7("Music"), &d);
         auto *gl = new QVBoxLayout(g);
         QList<QPair<QString, QCheckBox *>> boxes;
         for (const auto &n : navMusicNodes()) {
@@ -1112,8 +1113,8 @@ public:
         l->addWidget(g);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &d);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
-        auto *restore = bb->addButton(QStringLiteral("Відновити типові"), QDialogButtonBox::ResetRole);
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
+        auto *restore = bb->addButton(tr7("Restore Defaults"), QDialogButtonBox::ResetRole);
         connect(restore, &QPushButton::clicked, &d, [&] {
             for (int i = 0; i < boxes.size(); ++i) {
                 boxes[i].second->setChecked(navMusicNodes()[i].def);
@@ -1143,9 +1144,9 @@ public:
     {
         auto *hdr = m_music->header();
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Вибір стовпців"));
+        d.setWindowTitle(tr7("Choose Columns"));
         auto *l = new QVBoxLayout(&d);
-        l->addWidget(new QLabel(QStringLiteral("Виберіть стовпці, які потрібно відображати в бібліотеці."), &d));
+        l->addWidget(new QLabel(tr7("Select the columns you want to display in the library."), &d));
         auto *row = new QHBoxLayout;
         auto *list = new QListWidget(&d);
         for (int v = 0; v < hdr->count(); ++v) {
@@ -1160,8 +1161,8 @@ public:
         }
         row->addWidget(list, 1);
         auto *btns = new QVBoxLayout;
-        auto *up = new QPushButton(QStringLiteral("Вгору"), &d);
-        auto *down = new QPushButton(QStringLiteral("Вниз"), &d);
+        auto *up = new QPushButton(tr7("Move Up"), &d);
+        auto *down = new QPushButton(tr7("Move Down"), &d);
         btns->addWidget(up);
         btns->addWidget(down);
         btns->addStretch(1);
@@ -1183,7 +1184,7 @@ public:
         });
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &d);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         l->addWidget(bb);
         connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
         connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
@@ -1277,46 +1278,46 @@ private:
     {
         m_node = node;
         m_arg = arg;
-        QStringList crumbs{QStringLiteral("Бібліотека")};
+        QStringList crumbs{tr7("Library")};
         switch (node) {
         case NodeLibrary:
-            crumbs << QStringLiteral("Музика") << QStringLiteral("Усі композиції");
+            crumbs << tr7("Music") << tr7("All music");
             break;
         case NodePlaylists:
-            crumbs << QStringLiteral("Списки відтворення") << (arg.isEmpty() ? QStringLiteral("Усі списки відтворення") : QFileInfo(arg).completeBaseName());
+            crumbs << tr7("Playlists") << (arg.isEmpty() ? tr7("All playlists") : QFileInfo(arg).completeBaseName());
             break;
         case NodeMusic:
-            crumbs << QStringLiteral("Музика") << QStringLiteral("Усі композиції");
+            crumbs << tr7("Music") << tr7("All music");
             break;
         case NodeArtist:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Виконавець") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Artist") : arg);
             break;
         case NodeAlbum:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Альбом") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Album") : arg);
             break;
         case NodeGenre:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Жанр") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Genre") : arg);
             break;
         case NodeYear:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Рік випуску") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Release Year") : arg);
             break;
         case NodeRating:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Оцінка") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Rating") : arg);
             break;
         case NodeComposer:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Композитор") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Composer") : arg);
             break;
         case NodeContrib:
-            crumbs << QStringLiteral("Музика") << (arg.isEmpty() ? QStringLiteral("Учасник") : arg);
+            crumbs << tr7("Music") << (arg.isEmpty() ? tr7("Contributing Artist") : arg);
             break;
         case NodeVideos:
-            crumbs << QStringLiteral("Відео") << QStringLiteral("Усі відео");
+            crumbs << tr7("Videos") << tr7("All video");
             break;
         case NodePictures:
-            crumbs << QStringLiteral("Зображення") << QStringLiteral("Усі зображення");
+            crumbs << tr7("Pictures") << tr7("All pictures");
             break;
         default:
-            crumbs = QStringList{QStringLiteral("Інші бібліотеки")};
+            crumbs = QStringList{tr7("Other Libraries")};
         }
         m_band->setCrumbs(crumbs);
         m_band->setNav(!m_back.isEmpty(), !m_forward.isEmpty());
@@ -1339,11 +1340,11 @@ private:
         case NodeGenre:
             return m.displayGenre();
         case NodeYear:
-            return m.year ? QString::number(m.year) : QStringLiteral("Невідомий рік");
+            return m.year ? QString::number(m.year) : tr7("Unknown Year");
         case NodeRating:
-            return m.rating ? QStringLiteral("%1 ★").arg(m.rating) : QStringLiteral("Без оцінки");
+            return m.rating ? QStringLiteral("%1 ★").arg(m.rating) : tr7("Unrated");
         case NodeComposer:
-            return m.composer.isEmpty() ? QStringLiteral("Невідомий композитор") : m.composer;
+            return m.composer.isEmpty() ? tr7("Unknown Composer") : m.composer;
         case NodeContrib:
             return m.displayArtist();
         default:
@@ -1433,8 +1434,8 @@ private:
     {
         m_stack->setCurrentWidget(m_music);
         m_musicModel->clear();
-        const QStringList cols{QStringLiteral("Альбом"), QStringLiteral("№"), QStringLiteral("Назва"), QStringLiteral("Тривалість"), QStringLiteral("Оцінка"),
-                               QStringLiteral("Учасник"), QStringLiteral("Композитор"), QStringLiteral("Розмір"), QStringLiteral("Батьківська оцінка")};
+        const QStringList cols{tr7("Album"), QStringLiteral("№"), tr7("Title"), tr7("Length"), tr7("Rating"),
+                               tr7("Contributing Artist"), tr7("Composer"), tr7("Size"), tr7("Parental Rating")};
         m_musicModel->setHorizontalHeaderLabels(cols);
         QList<MediaItem> tracks = currentTracks();
         const bool keepOrder = m_node == NodePlaylists;
@@ -1591,7 +1592,7 @@ private:
     {
         const qint64 s = (ms + 500) / 1000;
         if (s < 60) {
-            return QStringLiteral("%1 с").arg(s);
+            return tr7("%1 s").arg(s);
         }
         return formatLength(ms);
     }
@@ -1625,7 +1626,7 @@ private:
         for (auto it = groups.cbegin(); it != groups.cend(); ++it) {
             auto *item = new QListWidgetItem(it.key(), m_icons);
             item->setData(Qt::UserRole + 1, it->first);
-            item->setData(Qt::UserRole + 2, m_node == NodeAlbum ? it->second : QStringLiteral("%1 %2").arg(it->count).arg(it->count == 1 ? QStringLiteral("композиція") : (it->count % 10 >= 2 && it->count % 10 <= 4 && (it->count % 100 < 10 || it->count % 100 >= 20)) ? QStringLiteral("композиції") : QStringLiteral("композицій")));
+            item->setData(Qt::UserRole + 2, m_node == NodeAlbum ? it->second : QStringLiteral("%1 %2").arg(it->count).arg(it->count == 1 ? tr7("song") : (it->count % 10 >= 2 && it->count % 10 <= 4 && (it->count % 100 < 10 || it->count % 100 >= 20)) ? tr7("songs") : tr7("songs", "many")));
             item->setData(Qt::UserRole + 3, m_node == NodeAlbum ? QString() : formatLength(it->length));
             item->setData(Qt::UserRole + 4, m_node != NodeAlbum);
             item->setData(Qt::UserRole + 5, it.key());
@@ -1643,7 +1644,7 @@ private:
             const auto urls = readPlaylist(file);
             auto *item = new QListWidgetItem(QFileInfo(file).completeBaseName(), m_icons);
             item->setData(Qt::UserRole + 1, urls.isEmpty() ? QString() : urls.first().toLocalFile());
-            item->setData(Qt::UserRole + 2, QStringLiteral("%1 елем.").arg(urls.size()));
+            item->setData(Qt::UserRole + 2, tr7("%1 items", "short").arg(urls.size()));
             item->setData(Qt::UserRole + 6, file);
         }
     }
@@ -1743,22 +1744,22 @@ private:
         QMenu m(this);
         QFont bold = m.font();
         bold.setBold(true);
-        auto *play = m.addAction(QStringLiteral("Відтворити"));
+        auto *play = m.addAction(tr7("Play"));
         play->setFont(bold);
-        auto *playAll = m.addAction(QStringLiteral("Відтворити все"));
-        auto *addTo = m.addAction(m_listPane->isVisible() && m_listPane->mode() == ListPane::BurnMode ? QStringLiteral("Додати до списку записування")
-                                  : m_listPane->isVisible() && m_listPane->mode() == ListPane::SyncMode ? QStringLiteral("Додати до списку синхронізації")
-                                                                                                         : QStringLiteral("Додати до списку відтворення"));
+        auto *playAll = m.addAction(tr7("Play all"));
+        auto *addTo = m.addAction(m_listPane->isVisible() && m_listPane->mode() == ListPane::BurnMode ? tr7("Add to burn list")
+                                  : m_listPane->isVisible() && m_listPane->mode() == ListPane::SyncMode ? tr7("Add to sync list")
+                                                                                                         : tr7("Add to playlist"));
         m.addSeparator();
-        QMenu *rate = m.addMenu(QStringLiteral("Оцінка"));
+        QMenu *rate = m.addMenu(tr7("Rating"));
         for (int i = 5; i >= 0; --i) {
-            auto *a = rate->addAction(i ? QStringLiteral("%1 %2").arg(i).arg(i == 1 ? QStringLiteral("зірка") : i < 5 ? QStringLiteral("зірки") : QStringLiteral("зірок")) : QStringLiteral("Видалити оцінку"));
+            auto *a = rate->addAction(i ? QStringLiteral("%1 %2").arg(i).arg(i == 1 ? tr7("star") : i < 5 ? tr7("stars") : tr7("stars", "many")) : tr7("Delete rating"));
             a->setData(i);
         }
         m.addSeparator();
-        auto *open = m.addAction(QStringLiteral("Відкрити розташування файлу"));
+        auto *open = m.addAction(tr7("Open file location"));
         m.addSeparator();
-        auto *props = m.addAction(QStringLiteral("Властивості"));
+        auto *props = m.addAction(tr7("Properties"));
         QAction *chosen = m.exec(global);
         if (!chosen) {
             return;
@@ -1796,15 +1797,15 @@ private:
     {
         QMenu m(this);
         if (index == 0) {
-            QMenu *manage = m.addMenu(QStringLiteral("Керування бібліотеками"));
-            auto *music = manage->addAction(QStringLiteral("Музика"));
-            auto *videos = manage->addAction(QStringLiteral("Відео"));
-            auto *pictures = manage->addAction(QStringLiteral("Зображення"));
-            auto *apply = m.addAction(QStringLiteral("Застосувати зміни відомостей про мультимедіа"));
+            QMenu *manage = m.addMenu(tr7("Manage libraries"));
+            auto *music = manage->addAction(tr7("Music"));
+            auto *videos = manage->addAction(tr7("Videos"));
+            auto *pictures = manage->addAction(tr7("Pictures"));
+            auto *apply = m.addAction(tr7("Apply media information changes"));
             m.addSeparator();
-            QMenu *sort = m.addMenu(QStringLiteral("Сортувати за"));
-            const QStringList sorts{QStringLiteral("Назва"), QStringLiteral("Виконавець"), QStringLiteral("Альбом"), QStringLiteral("Дата випуску"),
-                                    QStringLiteral("Дата додавання"), QStringLiteral("Оцінка"), QStringLiteral("Тривалість")};
+            QMenu *sort = m.addMenu(tr7("Sort by"));
+            const QStringList sorts{tr7("Title"), tr7("Artist"), tr7("Album"), tr7("Release date"),
+                                    tr7("Date added"), tr7("Rating"), tr7("Length")};
             const int cur = QSettings().value(QStringLiteral("sortBy"), 0).toInt();
             for (int i = 0; i < sorts.size(); ++i) {
                 auto *sa = sort->addAction(sorts[i]);
@@ -1812,19 +1813,19 @@ private:
                 sa->setChecked(i == cur);
                 sa->setData(i);
             }
-            auto *custNav = m.addAction(QStringLiteral("Настроїти область переходів..."));
+            auto *custNav = m.addAction(tr7("Customize navigation pane..."));
             m.addSeparator();
-            QMenu *layout = m.addMenu(QStringLiteral("Макет"));
-            auto *showList = layout->addAction(QStringLiteral("Показати область списку"));
+            QMenu *layout = m.addMenu(tr7("Layout"));
+            auto *showList = layout->addAction(tr7("Show list"));
             showList->setCheckable(true);
             showList->setChecked(m_listPane->isVisible());
-            auto *showNav = layout->addAction(QStringLiteral("Показати область переходів"));
+            auto *showNav = layout->addAction(tr7("Show navigation pane"));
             showNav->setCheckable(true);
             showNav->setChecked(m_nav->isVisible());
-            auto *showMenu = layout->addAction(QStringLiteral("Показати рядок меню"));
+            auto *showMenu = layout->addAction(tr7("Show menu bar"));
             showMenu->setCheckable(true);
             showMenu->setChecked(window()->findChild<QMenuBar *>() && window()->findChild<QMenuBar *>()->isVisible());
-            auto *opts = m.addAction(QStringLiteral("Параметри..."));
+            auto *opts = m.addAction(tr7("Options..."));
             QAction *a = m.exec(global);
             if (a && a->parent() == sort) {
                 QSettings().setValue(QStringLiteral("sortBy"), a->data().toInt());
@@ -1846,18 +1847,18 @@ private:
                 Q_EMIT optionsWanted();
             }
         } else if (index == 1) {
-            auto *a1 = m.addAction(QStringLiteral("Дозволити доступ до Інтернету до домашніх мультимедіа..."));
-            auto *a2 = m.addAction(QStringLiteral("Дозволити віддалене керування програвачем..."));
-            auto *a3 = m.addAction(QStringLiteral("Автоматично дозволяти пристроям відтворювати мої мультимедіа..."));
+            auto *a1 = m.addAction(tr7("Allow Internet access to home media..."));
+            auto *a2 = m.addAction(tr7("Allow remote control of Player..."));
+            auto *a3 = m.addAction(tr7("Automatically allow devices to play my media..."));
             m.addSeparator();
-            auto *a4 = m.addAction(QStringLiteral("Інші параметри потокового передавання..."));
+            auto *a4 = m.addAction(tr7("More streaming options..."));
             for (auto *a : {a1, a2, a3, a4}) {
                 a->setEnabled(false);
             }
             m.exec(global);
         } else {
-            auto *pl = m.addAction(QStringLiteral("Створити список відтворення"));
-            auto *auto_ = m.addAction(QStringLiteral("Створити автоматичний список відтворення"));
+            auto *pl = m.addAction(tr7("Create playlist"));
+            auto *auto_ = m.addAction(tr7("Create auto playlist"));
             QAction *chosen = m.exec(global);
             if (chosen == pl) {
                 createPlaylist();
@@ -1877,7 +1878,7 @@ public:
     void createPlaylist()
     {
         bool ok = false;
-        const QString name = QInputDialog::getText(this, APP_TITLE, QStringLiteral("Назва списку відтворення:"), QLineEdit::Normal, QStringLiteral("Список відтворення"), &ok);
+        const QString name = QInputDialog::getText(this, APP_TITLE, tr7("Playlist name:"), QLineEdit::Normal, tr7("Playlist"), &ok);
         if (ok && !name.trimmed().isEmpty()) {
             QDir().mkpath(playlistsDir());
             QFile f(playlistsDir() + QLatin1Char('/') + name.trimmed() + QStringLiteral(".m3u"));
@@ -2122,64 +2123,64 @@ private:
     void nowPlayingMenu(const QPoint &global)
     {
         QMenu m(this);
-        auto *showList = m.addAction(m_np->listShown() ? QStringLiteral("Приховати список") : QStringLiteral("Показати список"));
+        auto *showList = m.addAction(m_np->listShown() ? tr7("Hide list") : tr7("Show list", "button"));
         m.addSeparator();
-        auto *full = m.addAction(isFullScreen() ? QStringLiteral("Вийти з повноекранного режиму") : QStringLiteral("На весь екран"));
+        auto *full = m.addAction(isFullScreen() ? tr7("Exit full-screen mode") : tr7("Full screen"));
         full->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Return));
         m.addSeparator();
-        auto *shuffle = m.addAction(QStringLiteral("Перемішати"));
+        auto *shuffle = m.addAction(tr7("Shuffle"));
         shuffle->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
         shuffle->setCheckable(true);
         shuffle->setChecked(m_engine->shuffle());
-        auto *repeat = m.addAction(QStringLiteral("Повторити"));
+        auto *repeat = m.addAction(tr7("Repeat"));
         repeat->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
         repeat->setCheckable(true);
         repeat->setChecked(m_engine->repeat());
         m.addSeparator();
-        QMenu *viz = m.addMenu(QStringLiteral("Візуалізації"));
+        QMenu *viz = m.addMenu(tr7("Visualizations"));
         viz->setEnabled(!m_engine->player()->hasVideo());
-        auto *vArt = viz->addAction(QStringLiteral("Обкладинка альбому"));
-        QMenu *bw = viz->addMenu(QStringLiteral("Смуги та хвилі"));
-        auto *vBars = bw->addAction(QStringLiteral("Смуги"));
-        auto *vScope = bw->addAction(QStringLiteral("Хвиля"));
+        auto *vArt = viz->addAction(tr7("Album Art"));
+        QMenu *bw = viz->addMenu(tr7("Bars and Waves"));
+        auto *vBars = bw->addAction(tr7("Bars"));
+        auto *vScope = bw->addAction(tr7("Wave"));
         for (auto *a : {vArt, vBars, vScope}) {
             a->setCheckable(true);
         }
         vArt->setChecked(m_np->art()->viz() == ArtView::Art);
         vBars->setChecked(m_np->art()->viz() == ArtView::Bars);
         vScope->setChecked(m_np->art()->viz() == ArtView::Scope);
-        QMenu *video = m.addMenu(QStringLiteral("Відео"));
-        auto *fit = video->addAction(QStringLiteral("Підганяти відео до розміру програвача"));
+        QMenu *video = m.addMenu(tr7("Videos"));
+        auto *fit = video->addAction(tr7("Fit video to player on resize"));
         fit->setCheckable(true);
         fit->setChecked(true);
-        auto *x100 = video->addAction(QStringLiteral("Масштаб 100%"));
+        auto *x100 = video->addAction(tr7("Zoom 100%"));
         video->addSeparator();
         auto *x50 = video->addAction(QStringLiteral("50%"));
         auto *x200 = video->addAction(QStringLiteral("200%"));
-        QMenu *enh = m.addMenu(QStringLiteral("Покращення"));
-        auto *eqAct = enh->addAction(QStringLiteral("Графічний еквалайзер"));
-        auto *speed = enh->addMenu(QStringLiteral("Параметри швидкості відтворення"));
+        QMenu *enh = m.addMenu(tr7("Enhancements"));
+        auto *eqAct = enh->addAction(tr7("Graphic equalizer"));
+        auto *speed = enh->addMenu(tr7("Play speed settings"));
         for (double r : {0.5, 1.0, 1.4, 2.0}) {
-            auto *a = speed->addAction(r == 1.0 ? QStringLiteral("Звичайна") : r < 1 ? QStringLiteral("Повільна (0,5x)") : QStringLiteral("Швидка (%1x)").arg(QString::number(r).replace(QLatin1Char('.'), QLatin1Char(','))));
+            auto *a = speed->addAction(r == 1.0 ? tr7("Normal") : r < 1 ? tr7("Slow (0.5x)") : tr7("Fast (%1x)").arg(QString::number(r).replace(QLatin1Char('.'), QLatin1Char(','))));
             a->setCheckable(true);
             a->setChecked(qFuzzyCompare(m_engine->player()->playbackRate(), r));
             a->setData(r);
         }
-        QMenu *subs = m.addMenu(QStringLiteral("Тексти пісень, підписи та субтитри"));
-        auto *subsOn = subs->addAction(QStringLiteral("Увімкнути, якщо доступно"));
+        QMenu *subs = m.addMenu(tr7("Lyrics, captions, and subtitles"));
+        auto *subsOn = subs->addAction(tr7("On if available"));
         subsOn->setCheckable(true);
         subsOn->setChecked(m_engine->player()->activeSubtitleTrack() >= 0);
-        auto *subsOff = subs->addAction(QStringLiteral("Вимкнути"));
+        auto *subsOff = subs->addAction(tr7("Turn off"));
         subsOff->setCheckable(true);
         subsOff->setChecked(m_engine->player()->activeSubtitleTrack() < 0);
         m.addSeparator();
-        auto *onTop = m.addAction(QStringLiteral("Завжди показувати поточне відтворення поверх інших вікон"));
+        auto *onTop = m.addAction(tr7("Always show Now Playing on top"));
         onTop->setCheckable(true);
         onTop->setChecked(windowFlags() & Qt::WindowStaysOnTopHint);
         m.addSeparator();
-        auto *more = m.addAction(QStringLiteral("Інші параметри..."));
+        auto *more = m.addAction(tr7("More options..."));
         m.addSeparator();
-        auto *help = m.addAction(QStringLiteral("Довідка з відтворення..."));
+        auto *help = m.addAction(tr7("Help with playback..."));
         Q_UNUSED(help)
         QAction *a = m.exec(global);
         if (!a) {
@@ -2222,8 +2223,8 @@ private:
     }
     void openFiles()
     {
-        const QStringList files = QFileDialog::getOpenFileNames(this, QStringLiteral("Відкрити"), QStandardPaths::writableLocation(QStandardPaths::MusicLocation),
-                                                                QStringLiteral("Файли мультимедіа (*.mp3 *.wma *.wav *.flac *.ogg *.m4a *.aac *.opus *.mp4 *.mkv *.avi *.wmv *.mov *.webm *.mpg *.mpeg *.m3u *.wpl);;Усі файли (*)"));
+        const QStringList files = QFileDialog::getOpenFileNames(this, tr7("Open"), QStandardPaths::writableLocation(QStandardPaths::MusicLocation),
+                                                                tr7("Media files (*.mp3 *.wma *.wav *.flac *.ogg *.m4a *.aac *.opus *.mp4 *.mkv *.avi *.wmv *.mov *.webm *.mpg *.mpeg *.m3u *.wpl);;All Files (*)"));
         if (!files.isEmpty()) {
             openArgs(files);
         }
@@ -2253,7 +2254,7 @@ private:
             && !Opt::value(QStringLiteral("screensaver"), false);
         QDBusInterface ss(QStringLiteral("org.freedesktop.ScreenSaver"), QStringLiteral("/org/freedesktop/ScreenSaver"), QStringLiteral("org.freedesktop.ScreenSaver"));
         if (want && !m_inhibit) {
-            QDBusReply<uint> r = ss.call(QStringLiteral("Inhibit"), QStringLiteral("seven-wmp"), QStringLiteral("Відтворення відео"));
+            QDBusReply<uint> r = ss.call(QStringLiteral("Inhibit"), QStringLiteral("seven-wmp"), tr7("Video playback"));
             if (r.isValid()) {
                 m_inhibit = r.value();
             }
@@ -2292,87 +2293,87 @@ private:
             connect(a, &QAction::triggered, this, fn);
             return a;
         };
-        QMenu *file = mb->addMenu(QStringLiteral("&Файл"));
-        act(file, QStringLiteral("&Відкрити..."), QKeySequence(Qt::CTRL | Qt::Key_O), [this] { openFiles(); });
-        act(file, QStringLiteral("Відкрити &URL-адресу..."), QKeySequence(Qt::CTRL | Qt::Key_U), [this] { openUrl(); });
-        act(file, QStringLiteral("&Зберегти як..."), {}, [] {})->setEnabled(false);
-        act(file, QStringLiteral("&Закрити"), QKeySequence(Qt::CTRL | Qt::Key_W), [this] { m_engine->clear(); });
+        QMenu *file = mb->addMenu(tr7("&File"));
+        act(file, tr7("&Open..."), QKeySequence(Qt::CTRL | Qt::Key_O), [this] { openFiles(); });
+        act(file, tr7("Open &URL..."), QKeySequence(Qt::CTRL | Qt::Key_U), [this] { openUrl(); });
+        act(file, tr7("&Save As..."), {}, [] {})->setEnabled(false);
+        act(file, tr7("&Close"), QKeySequence(Qt::CTRL | Qt::Key_W), [this] { m_engine->clear(); });
         file->addSeparator();
-        act(file, QStringLiteral("Створити список &відтворення"), QKeySequence(Qt::CTRL | Qt::Key_N), [this] { m_library->createPlaylist(); });
-        act(file, QStringLiteral("Створити &автоматичний список відтворення"), {}, [this] { m_library->createAutoPlaylist(); });
-        act(file, QStringLiteral("Зберегти список поточного &відтворення"), {}, [this] { m_library->saveNowPlaying(); });
+        act(file, tr7("Create &playlist"), QKeySequence(Qt::CTRL | Qt::Key_N), [this] { m_library->createPlaylist(); });
+        act(file, tr7("Create &auto playlist"), {}, [this] { m_library->createAutoPlaylist(); });
+        act(file, tr7("Save &now playing list"), {}, [this] { m_library->saveNowPlaying(); });
         file->addSeparator();
-        QMenu *manage = file->addMenu(QStringLiteral("&Керування бібліотеками"));
-        act(manage, QStringLiteral("&Музика"), {}, [this] { manageLibrary(MediaItem::Audio); });
-        act(manage, QStringLiteral("&Відео"), {}, [this] { manageLibrary(MediaItem::Video); });
-        act(manage, QStringLiteral("&Зображення"), {}, [this] { manageLibrary(MediaItem::Picture); });
-        act(file, QStringLiteral("&Застосувати зміни відомостей про мультимедіа"), {}, [this] { m_lib->rescan(); });
-        act(file, QStringLiteral("&Додати до бібліотеки..."), {}, [this] { manageLibrary(MediaItem::Audio); });
+        QMenu *manage = file->addMenu(tr7("&Manage libraries"));
+        act(manage, tr7("&Music"), {}, [this] { manageLibrary(MediaItem::Audio); });
+        act(manage, tr7("&Videos"), {}, [this] { manageLibrary(MediaItem::Video); });
+        act(manage, tr7("&Pictures"), {}, [this] { manageLibrary(MediaItem::Picture); });
+        act(file, tr7("&Apply media information changes"), {}, [this] { m_lib->rescan(); });
+        act(file, tr7("&Add to library..."), {}, [this] { manageLibrary(MediaItem::Audio); });
         file->addSeparator();
-        act(file, QStringLiteral("Працювати &автономно"), {}, [] {})->setCheckable(true);
+        act(file, tr7("Work &Offline"), {}, [] {})->setCheckable(true);
         file->addSeparator();
-        act(file, QStringLiteral("Ви&йти"), {}, [this] { close(); });
+        act(file, tr7("E&xit"), {}, [this] { close(); });
 
-        QMenu *view = mb->addMenu(QStringLiteral("&Вигляд"));
-        act(view, QStringLiteral("&Бібліотека"), QKeySequence(Qt::CTRL | Qt::Key_1), [this] { showLibrary(); });
-        act(view, QStringLiteral("&Обкладинка"), QKeySequence(Qt::CTRL | Qt::Key_2), [this] { showSkin(); });
-        act(view, QStringLiteral("&Поточне відтворення"), QKeySequence(Qt::CTRL | Qt::Key_3), [this] { showNowPlaying(); });
-        act(view, QStringLiteral("&Вибір обкладинки"), {}, [this] { skinChooser(); });
+        QMenu *view = mb->addMenu(tr7("&View"));
+        act(view, tr7("&Library"), QKeySequence(Qt::CTRL | Qt::Key_1), [this] { showLibrary(); });
+        act(view, tr7("&Skin chooser"), QKeySequence(Qt::CTRL | Qt::Key_2), [this] { showSkin(); });
+        act(view, tr7("&Now Playing"), QKeySequence(Qt::CTRL | Qt::Key_3), [this] { showNowPlaying(); });
+        act(view, tr7("&Skin Chooser"), {}, [this] { skinChooser(); });
         view->addSeparator();
-        act(view, QStringLiteral("Область &переходів"), {}, [this] { m_library->toggleNavPane(); });
-        act(view, QStringLiteral("Область &списку"), {}, [this] { m_library->toggleListPane(); });
-        act(view, QStringLiteral("&Рядок меню"), QKeySequence(Qt::CTRL | Qt::Key_M), [this] { setMenuBarShown(!m_menuBarPinned); });
+        act(view, tr7("&Navigation pane"), {}, [this] { m_library->toggleNavPane(); });
+        act(view, tr7("&List pane"), {}, [this] { m_library->toggleListPane(); });
+        act(view, tr7("&Menu bar"), QKeySequence(Qt::CTRL | Qt::Key_M), [this] { setMenuBarShown(!m_menuBarPinned); });
         view->addSeparator();
-        act(view, QStringLiteral("&На весь екран"), QKeySequence(Qt::ALT | Qt::Key_Return), [this] { toggleFullScreen(); });
-        act(view, QStringLiteral("&Оновити"), QKeySequence(Qt::Key_F5), [this] { m_lib->rescan(); });
-        act(view, QStringLiteral("П&ошук"), QKeySequence(Qt::CTRL | Qt::Key_E), [this] {
+        act(view, tr7("&Full screen"), QKeySequence(Qt::ALT | Qt::Key_Return), [this] { toggleFullScreen(); });
+        act(view, tr7("&Refresh"), QKeySequence(Qt::Key_F5), [this] { m_lib->rescan(); });
+        act(view, tr7("S&earch"), QKeySequence(Qt::CTRL | Qt::Key_E), [this] {
             showLibrary();
             m_library->focusSearch();
         });
 
-        QMenu *play = mb->addMenu(QStringLiteral("&Відтворення"));
-        act(play, QStringLiteral("Відтворити/&призупинити"), QKeySequence(Qt::CTRL | Qt::Key_P), [this] { m_engine->playPause(); });
-        act(play, QStringLiteral("&Зупинити"), QKeySequence(Qt::CTRL | Qt::Key_S), [this] { m_engine->stop(); });
+        QMenu *play = mb->addMenu(tr7("&Play"));
+        act(play, tr7("&Play/Pause"), QKeySequence(Qt::CTRL | Qt::Key_P), [this] { m_engine->playPause(); });
+        act(play, tr7("&Stop"), QKeySequence(Qt::CTRL | Qt::Key_S), [this] { m_engine->stop(); });
         play->addSeparator();
-        QMenu *speed = play->addMenu(QStringLiteral("Шв&идкість відтворення"));
-        for (auto [name, rate] : {std::pair{QStringLiteral("&Повільна"), 0.5}, std::pair{QStringLiteral("&Звичайна"), 1.0}, std::pair{QStringLiteral("&Швидка"), 1.4}}) {
+        QMenu *speed = play->addMenu(tr7("Play &speed"));
+        for (auto [name, rate] : {std::pair{tr7("&Slow"), 0.5}, std::pair{tr7("&Normal"), 1.0}, std::pair{tr7("&Fast"), 1.4}}) {
             act(speed, name, {}, [this, rate] { m_engine->player()->setPlaybackRate(rate); });
         }
         play->addSeparator();
-        act(play, QStringLiteral("П&опередня"), QKeySequence(Qt::CTRL | Qt::Key_B), [this] { m_engine->previous(); });
-        act(play, QStringLiteral("&Наступна"), QKeySequence(Qt::CTRL | Qt::Key_F), [this] { m_engine->next(); });
-        act(play, QStringLiteral("Перемотати &назад"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B), [this] { seek(-10000); });
-        act(play, QStringLiteral("Перемотати &вперед"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F), [this] { seek(+10000); });
+        act(play, tr7("P&revious"), QKeySequence(Qt::CTRL | Qt::Key_B), [this] { m_engine->previous(); });
+        act(play, tr7("&Next"), QKeySequence(Qt::CTRL | Qt::Key_F), [this] { m_engine->next(); });
+        act(play, tr7("Re&wind"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B), [this] { seek(-10000); });
+        act(play, tr7("Fast &Forward"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F), [this] { seek(+10000); });
         play->addSeparator();
-        m_shuffleAct = act(play, QStringLiteral("П&еремішати"), QKeySequence(Qt::CTRL | Qt::Key_H), [this] { m_engine->setShuffle(!m_engine->shuffle()); });
-        m_repeatAct = act(play, QStringLiteral("П&овторити"), QKeySequence(Qt::CTRL | Qt::Key_T), [this] { m_engine->setRepeat(!m_engine->repeat()); });
+        m_shuffleAct = act(play, tr7("S&huffle"), QKeySequence(Qt::CTRL | Qt::Key_H), [this] { m_engine->setShuffle(!m_engine->shuffle()); });
+        m_repeatAct = act(play, tr7("R&epeat"), QKeySequence(Qt::CTRL | Qt::Key_T), [this] { m_engine->setRepeat(!m_engine->repeat()); });
         m_shuffleAct->setCheckable(true);
         m_repeatAct->setCheckable(true);
         play->addSeparator();
-        QMenu *vol = play->addMenu(QStringLiteral("&Гучність"));
-        act(vol, QStringLiteral("&Збільшити"), QKeySequence(Qt::Key_F9), [this] { changeVolume(+0.05); });
-        act(vol, QStringLiteral("З&меншити"), QKeySequence(Qt::Key_F8), [this] { changeVolume(-0.05); });
-        act(vol, QStringLiteral("&Вимкнути звук"), QKeySequence(Qt::Key_F7), [this] { m_engine->audio()->setMuted(!m_engine->audio()->isMuted()); });
-        act(play, QStringLiteral("&Вийняти"), QKeySequence(Qt::CTRL | Qt::Key_J), [] {})->setEnabled(false);
+        QMenu *vol = play->addMenu(tr7("&Volume"));
+        act(vol, tr7("&Up"), QKeySequence(Qt::Key_F9), [this] { changeVolume(+0.05); });
+        act(vol, tr7("&Down"), QKeySequence(Qt::Key_F8), [this] { changeVolume(-0.05); });
+        act(vol, tr7("&Mute"), QKeySequence(Qt::Key_F7), [this] { m_engine->audio()->setMuted(!m_engine->audio()->isMuted()); });
+        act(play, tr7("&Eject"), QKeySequence(Qt::CTRL | Qt::Key_J), [] {})->setEnabled(false);
         connect(play, &QMenu::aboutToShow, this, [this] {
             m_shuffleAct->setChecked(m_engine->shuffle());
             m_repeatAct->setChecked(m_engine->repeat());
         });
 
-        QMenu *tools = mb->addMenu(QStringLiteral("&Знаряддя"));
-        QMenu *dl = tools->addMenu(QStringLiteral("&Завантаження"));
+        QMenu *tools = mb->addMenu(tr7("&Tools"));
+        QMenu *dl = tools->addMenu(tr7("&Download"));
         dl->setEnabled(false);
-        QMenu *plug = tools->addMenu(QStringLiteral("&Модулі"));
+        QMenu *plug = tools->addMenu(tr7("&Plug-ins"));
         plug->setEnabled(false);
         tools->addSeparator();
-        act(tools, QStringLiteral("&Параметри..."), {}, [this] { options(); });
-        QMenu *adv = tools->addMenu(QStringLiteral("&Додатково"));
-        act(adv, QStringLiteral("&Відновити бібліотеку мультимедіа"), {}, [this] { m_lib->rescan(); });
+        act(tools, tr7("&Options..."), {}, [this] { options(); });
+        QMenu *adv = tools->addMenu(tr7("&Advanced"));
+        act(adv, tr7("&Restore media library"), {}, [this] { m_lib->rescan(); });
 
-        QMenu *help = mb->addMenu(QStringLiteral("&Довідка"));
-        act(help, QStringLiteral("&Довідка програвача Windows Media"), QKeySequence(Qt::Key_F1), [] {})->setEnabled(false);
+        QMenu *help = mb->addMenu(tr7("&Help"));
+        act(help, tr7("Windows Media Player &Help"), QKeySequence(Qt::Key_F1), [] {})->setEnabled(false);
         help->addSeparator();
-        act(help, QStringLiteral("&Про програвач Windows Media"), {}, [this] { about(); });
+        act(help, tr7("&About Windows Media Player"), {}, [this] { about(); });
 
         // shortcuts that are not in the menus
         auto sc = [this](const QKeySequence &k, auto fn) {
@@ -2411,7 +2412,7 @@ private:
                         pop.addAction(a);
                     }
                     pop.addSeparator();
-                    QAction *show = pop.addAction(QStringLiteral("Показати рядок меню"));
+                    QAction *show = pop.addAction(tr7("Show menu bar"));
                     show->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_M));
                     if (pop.exec(mapToGlobal(QPoint(16, 34))) == show) {
                         setMenuBarShown(true);
@@ -2502,7 +2503,7 @@ private:
     void skinChooser()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Вибір обкладинки"));
+        d.setWindowTitle(tr7("Skin Chooser"));
         auto *l = new QHBoxLayout(&d);
         auto *list = new QListWidget(&d);
         list->setFixedWidth(150);
@@ -2520,8 +2521,8 @@ private:
         right->addWidget(preview, 1);
         right->addWidget(info);
         auto *bb = new QDialogButtonBox(&d);
-        auto *apply = bb->addButton(QStringLiteral("Застосувати обкладинку"), QDialogButtonBox::AcceptRole);
-        bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+        auto *apply = bb->addButton(tr7("Apply Skin"), QDialogButtonBox::AcceptRole);
+        bb->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
         Q_UNUSED(apply)
         right->addWidget(bb);
         l->addLayout(right, 1);
@@ -2546,7 +2547,7 @@ private:
                 pm = QPixmap(QDir::homePath() + QStringLiteral("/.local/share/seven-wmp/skins/revert/player_up.png"));
             }
             preview->setPixmap(pm);
-            info->setText(QStringLiteral("Назва: %1\nАвтор: Microsoft Corporation\n© Корпорація Майкрософт. Усі права захищено.").arg(corp ? QStringLiteral("Corporate") : QStringLiteral("Revert")));
+            info->setText(tr7("Name: %1\nAuthor: Microsoft Corporation\n© Microsoft Corporation. All rights reserved.").arg(corp ? QStringLiteral("Corporate") : QStringLiteral("Revert")));
         };
         connect(list, &QListWidget::currentRowChanged, &d, update);
         connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
@@ -2581,7 +2582,7 @@ private:
     void openUrl()
     {
         bool ok = false;
-        const QString u = QInputDialog::getText(this, QStringLiteral("Відкрити URL-адресу"), QStringLiteral("Введіть URL-адресу або шлях до файлу мультимедіа в Інтернеті, мережі або на комп'ютері, який потрібно відтворити."),
+        const QString u = QInputDialog::getText(this, tr7("Open URL"), tr7("Enter the URL or path to a media file on the Internet, your network, or your computer that you want to play."),
                                                 QLineEdit::Normal, QStringLiteral("http://"), &ok);
         if (ok && !u.trimmed().isEmpty()) {
             openArgs({u.trimmed()});
@@ -2590,10 +2591,10 @@ private:
     void about()
     {
         QMessageBox box(this);
-        box.setWindowTitle(QStringLiteral("Про програвач Windows Media"));
+        box.setWindowTitle(tr7("About Windows Media Player"));
         box.setIconPixmap(QIcon::fromTheme(QStringLiteral("seven-wmp")).pixmap(48, 48));
-        box.setText(QStringLiteral("<b>Програвач Windows Media</b><br>Версія 12.0.7601.17514"));
-        box.setInformativeText(QStringLiteral("© Корпорація Майкрософт, 2009. Усі права захищено.<br><br>Відтворення: Qt Multimedia (FFmpeg)."));
+        box.setText(tr7("<b>Windows Media Player</b><br>Version 12.0.7601.17514"));
+        box.setInformativeText(tr7("© 2009 Microsoft Corporation. All rights reserved.<br><br>Playback: Qt Multimedia (FFmpeg)."));
         box.exec();
     }
 
@@ -2623,8 +2624,9 @@ int main(int argc, char **argv)
         qputenv("QT_AUDIO_BACKEND", "pulseaudio");
     }
     // name and icon of our stream in the volume mixer
-    qputenv("PULSE_PROP", "application.name='Програвач Windows Media' application.icon_name='seven-wmp' media.role='music'");
+    qputenv("PULSE_PROP", "application.name='Windows Media Player' application.icon_name='seven-wmp' media.role='music'");
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setOrganizationName(QStringLiteral("win7"));
     app.setApplicationName(QStringLiteral("seven-wmp"));
     app.setApplicationDisplayName(APP_TITLE);

@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * The WMP 12 playback controls: the grey pill with shuffle, repeat, stop, the blue Play orb between
  * Previous/Next, mute and volume, plus the seek bar above it. Two looks: Library (light) and Now Playing (black).
@@ -379,27 +380,27 @@ protected:
         const bool playing = m_engine->player()->playbackState() == QMediaPlayer::PlayingState;
         switch (part) {
         case Seek:
-            return QStringLiteral("Пошук");
+            return tr7("Search");
         case Shuffle:
-            return m_engine->shuffle() ? QStringLiteral("Вимкнути перемішування (Ctrl+H)") : QStringLiteral("Увімкнути перемішування (Ctrl+H)");
+            return m_engine->shuffle() ? tr7("Turn shuffle off (Ctrl+H)") : tr7("Turn shuffle on (Ctrl+H)");
         case Repeat:
-            return m_engine->repeat() ? QStringLiteral("Вимкнути повторення (Ctrl+T)") : QStringLiteral("Увімкнути повторення (Ctrl+T)");
+            return m_engine->repeat() ? tr7("Turn repeat off (Ctrl+T)") : tr7("Turn repeat on (Ctrl+T)");
         case Stop:
-            return QStringLiteral("Зупинити (Ctrl+S)");
+            return tr7("Stop (Ctrl+S)");
         case Prev:
-            return m_mode == Library ? QStringLiteral("Попередня (Ctrl+B)") : QStringLiteral("Попередня (натисніть і утримуйте для перемотування назад)");
+            return m_mode == Library ? tr7("Previous (Ctrl+B)") : tr7("Previous (press and hold to rewind)");
         case Play:
-            return playing ? QStringLiteral("Призупинити (Ctrl+P)") : QStringLiteral("Відтворити (Ctrl+P)");
+            return playing ? tr7("Pause (Ctrl+P)") : tr7("Play (Ctrl+P)");
         case Next:
-            return m_mode == Library ? QStringLiteral("Наступна (Ctrl+F)") : QStringLiteral("Наступна (натисніть і утримуйте для перемотування вперед)");
+            return m_mode == Library ? tr7("Next (Ctrl+F)") : tr7("Next (press and hold to fast-forward)");
         case Mute:
-            return m_engine->audio()->isMuted() ? QStringLiteral("Увімкнути звук (F7)") : QStringLiteral("Вимкнути звук (F7)");
+            return m_engine->audio()->isMuted() ? tr7("Unmute (F7)") : tr7("Mute (F7)");
         case Volume:
-            return QStringLiteral("Гучність");
+            return tr7("Volume");
         case Switch:
-            return QStringLiteral("Перейти до режиму поточного відтворення");
+            return tr7("Switch to Now Playing");
         case FullScreen:
-            return QStringLiteral("Перегляд у повноекранному режимі");
+            return tr7("View full screen");
         default:
             return {};
         }

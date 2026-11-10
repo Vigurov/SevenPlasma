@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7devices.h"
@@ -69,7 +70,7 @@ inline int installFonts(QWidget *parent, const QStringList &files)
                                     QStringLiteral("pfa"), QStringLiteral("woff"), QStringLiteral("woff2")};
         if (!fi.isFile() || !ok.contains(fi.suffix().toLower()) || !SfntFile(file).valid()) {
             QApplication::restoreOverrideCursor();
-            QMessageBox::warning(parent, QStringLiteral("Установлення шрифту"), QStringLiteral("Файл «%1» не схожий на припустимий шрифт.").arg(fi.fileName()));
+            QMessageBox::warning(parent, tr7("Install Font"), tr7("The file \"%1\" does not appear to be a valid font.").arg(fi.fileName()));
             QApplication::setOverrideCursor(Qt::WaitCursor);
             continue;
         }
@@ -79,8 +80,8 @@ inline int installFonts(QWidget *parent, const QStringList &files)
         }
         if (QFileInfo::exists(target) || QFileInfo(target).isSymLink()) {
             QApplication::restoreOverrideCursor();
-            const auto answer = QMessageBox::question(parent, QStringLiteral("Установлення шрифту"),
-                                                      QStringLiteral("Шрифт «%1» уже встановлено. Замінити його?").arg(fi.completeBaseName()));
+            const auto answer = QMessageBox::question(parent, tr7("Install Font"),
+                                                      tr7("The font \"%1\" is already installed. Do you want to replace it?").arg(fi.completeBaseName()));
             QApplication::setOverrideCursor(Qt::WaitCursor);
             if (answer != QMessageBox::Yes) {
                 continue;
@@ -117,18 +118,18 @@ inline bool deleteFaces(QWidget *parent, const QList<Face> &faces)
     }
     for (const QString &file : std::as_const(files)) {
         if (!isUserFont(file)) {
-            QMessageBox::information(parent, QStringLiteral("Видалення шрифту"),
-                                     QStringLiteral("Шрифт «%1» неможливо видалити, оскільки це захищений системний шрифт.").arg(QFileInfo(file).completeBaseName()));
+            QMessageBox::information(parent, tr7("Delete Font"),
+                                     tr7("The font \"%1\" cannot be deleted because it is a protected system font.").arg(QFileInfo(file).completeBaseName()));
             return false;
         }
     }
-    QMessageBox box(QMessageBox::Warning, files.size() == 1 ? QStringLiteral("Видалення шрифту") : QStringLiteral("Видалення шрифтів"),
-                    files.size() == 1 ? QStringLiteral("Видалити цей шрифт назавжди?") : QStringLiteral("Видалити ці шрифти (%1) назавжди?").arg(files.size()),
+    QMessageBox box(QMessageBox::Warning, files.size() == 1 ? tr7("Delete Font") : tr7("Delete Fonts"),
+                    files.size() == 1 ? tr7("Are you sure you want to permanently delete this font?") : tr7("Are you sure you want to permanently delete these %1 fonts?").arg(files.size()),
                     QMessageBox::Yes | QMessageBox::No, parent);
-    box.setInformativeText(files.size() == 1 ? QStringLiteral("%1\n\nЯкщо видалити цей шрифт, деякий текст може відображатися не так, як очікувалося.").arg(first)
-                                             : QStringLiteral("Якщо видалити ці шрифти, деякий текст може відображатися не так, як очікувалося."));
-    box.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-    box.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+    box.setInformativeText(files.size() == 1 ? tr7("%1\n\nIf you delete this font, some text might not appear as intended.").arg(first)
+                                             : tr7("If you delete these fonts, some text might not appear as intended."));
+    box.button(QMessageBox::Yes)->setText(tr7("Yes"));
+    box.button(QMessageBox::No)->setText(tr7("No"));
     if (box.exec() != QMessageBox::Yes) {
         return false;
     }
@@ -456,14 +457,14 @@ public:
     {
         auto *side = Win7Display::sidePane(
             m_nav.home,
-            {{QStringLiteral("Параметри шрифту"), [this] { m_nav.open(SettingsView); }},
-             {QStringLiteral("Отримати в Інтернеті додаткові відомості про шрифти"),
+            {{tr7("Font settings"), [this] { m_nav.open(SettingsView); }},
+             {tr7("Get more font information online"),
               [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://learn.microsoft.com/typography/"))); }},
-             {QStringLiteral("Настроювання тексту ClearType"), [this] { m_nav.spawn({QStringLiteral("--cttune")}); }},
-             {QStringLiteral("Пошук символу"), [this] { m_nav.spawn({QStringLiteral("--charmap")}); }},
-             {QStringLiteral("Змінення розміру шрифту"), [this] { m_nav.open(Win7Display::DisplayView); }}},
-            {{QStringLiteral("Служби тексту та мови вводу"), [this] { m_nav.spawn({QStringLiteral("--text-services")}); }},
-             {QStringLiteral("Персоналізація"), [this] { m_nav.open(Win7Display::PersonalizeView); }}});
+             {tr7("Adjust ClearType text"), [this] { m_nav.spawn({QStringLiteral("--cttune")}); }},
+             {tr7("Find a character"), [this] { m_nav.spawn({QStringLiteral("--charmap")}); }},
+             {tr7("Change font size"), [this] { m_nav.open(Win7Display::DisplayView); }}},
+            {{tr7("Text Services and Input Language"), [this] { m_nav.spawn({QStringLiteral("--text-services")}); }},
+             {tr7("Personalization"), [this] { m_nav.open(Win7Display::PersonalizeView); }}});
 
         auto *content = new QWidget;
         auto *v = new QVBoxLayout(content);
@@ -472,37 +473,37 @@ public:
         auto *head = new QWidget;
         auto *hv = new QVBoxLayout(head);
         hv->setContentsMargins(32, 18, 30, 12);
-        hv->addWidget(Win7Programs::pageTitle(m_familyView ? QStringLiteral("Перегляд, видалення, показ або приховування окремих шрифтів цього сімейства.")
-                                                           : QStringLiteral("Перегляд, видалення, показ або приховування шрифтів")));
+        hv->addWidget(Win7Programs::pageTitle(m_familyView ? tr7("Preview, delete, or show and hide the fonts in this family.")
+                                                           : tr7("Preview, delete, or show and hide fonts")));
         v->addWidget(head);
 
         m_bar = Win7Programs::commandBar();
         auto *organize = new QMenu(this);
-        organize->addAction(QStringLiteral("Копіювати"), this, [this] { copySelected(); });
-        m_paste = organize->addAction(QStringLiteral("Вставити"), this, [this] { paste(); });
+        organize->addAction(tr7("Copy"), this, [this] { copySelected(); });
+        m_paste = organize->addAction(tr7("Paste"), this, [this] { paste(); });
         organize->addSeparator();
-        organize->addAction(QStringLiteral("Виділити все"), this, [this] { selectAll(); });
+        organize->addAction(tr7("Select all", "edit"), this, [this] { selectAll(); });
         organize->addSeparator();
-        auto *layoutMenu = organize->addMenu(QStringLiteral("Макет"));
-        m_detailsToggle = layoutMenu->addAction(QStringLiteral("Область відомостей"));
+        auto *layoutMenu = organize->addMenu(tr7("Layout"));
+        m_detailsToggle = layoutMenu->addAction(tr7("Details pane"));
         m_detailsToggle->setCheckable(true);
         m_detailsToggle->setChecked(true);
         connect(m_detailsToggle, &QAction::toggled, this, [this](bool on) { m_details->setVisible(on); });
         organize->addSeparator();
-        m_organizeDelete = organize->addAction(QStringLiteral("Видалити"), this, [this] { removeSelected(); });
+        m_organizeDelete = organize->addAction(tr7("Delete"), this, [this] { removeSelected(); });
         connect(organize, &QMenu::aboutToShow, this, [this] {
             m_paste->setEnabled(QApplication::clipboard()->mimeData() && QApplication::clipboard()->mimeData()->hasUrls());
             m_organizeDelete->setEnabled(!selectedFaces().isEmpty());
         });
-        m_bar->addWidget(Win7Programs::menuButton(QStringLiteral("Упорядкувати"), organize));
-        m_preview = m_bar->addAction(QIcon::fromTheme(QStringLiteral("seven-font-preview")), QStringLiteral("Попередній перегляд"), this, [this] { previewSelected(); });
-        m_preview->setToolTip(QStringLiteral("Відкрити вибрані файли в засобі перегляду шрифтів"));
-        m_delete = m_bar->addAction(QIcon::fromTheme(QStringLiteral("seven-font-delete")), QStringLiteral("Видалити"), this, [this] { removeSelected(); });
-        m_delete->setToolTip(QStringLiteral("Видалити вибрані шрифти"));
-        m_show = m_bar->addAction(QStringLiteral("Показати"), this, [this] { setSelectedHidden(false); });
-        m_show->setToolTip(QStringLiteral("Показувати вибрані шрифти в програмах"));
-        m_hide = m_bar->addAction(QStringLiteral("Приховати"), this, [this] { setSelectedHidden(true); });
-        m_hide->setToolTip(QStringLiteral("Приховати вибрані шрифти від програм"));
+        m_bar->addWidget(Win7Programs::menuButton(tr7("Organize"), organize));
+        m_preview = m_bar->addAction(QIcon::fromTheme(QStringLiteral("seven-font-preview")), tr7("Preview", "button"), this, [this] { previewSelected(); });
+        m_preview->setToolTip(tr7("Open the selected files in Font Viewer"));
+        m_delete = m_bar->addAction(QIcon::fromTheme(QStringLiteral("seven-font-delete")), tr7("Delete"), this, [this] { removeSelected(); });
+        m_delete->setToolTip(tr7("Delete the selected fonts"));
+        m_show = m_bar->addAction(tr7("Show"), this, [this] { setSelectedHidden(false); });
+        m_show->setToolTip(tr7("Show the selected fonts in programs"));
+        m_hide = m_bar->addAction(tr7("Hide"), this, [this] { setSelectedHidden(true); });
+        m_hide->setToolTip(tr7("Hide the selected fonts from programs"));
         if (auto *tb = qobject_cast<QToolButton *>(m_bar->widgetForAction(m_preview))) {
             tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         }
@@ -514,7 +515,7 @@ public:
         m_bar->addWidget(spacer);
         auto *viewMenu = new QMenu(this);
         auto *viewGroup = new QActionGroup(viewMenu);
-        const QList<QPair<QString, int>> views{{QStringLiteral("Великі значки"), 96}, {QStringLiteral("Звичайні значки"), 48}, {QStringLiteral("Таблиця"), 0}};
+        const QList<QPair<QString, int>> views{{tr7("Large icons"), 96}, {tr7("Medium Icons"), 48}, {tr7("Details"), 0}};
         const int saved = fontSettings().value(QStringLiteral("View/Icons"), 96).toInt();
         for (const auto &vw : views) {
             QAction *a = viewMenu->addAction(vw.first, this, [this, size = vw.second] { setIconMode(size); });
@@ -524,7 +525,7 @@ public:
         }
         auto *viewBtn = new QToolButton;
         viewBtn->setIcon(QIcon::fromTheme(QStringLiteral("view-list-icons")));
-        viewBtn->setToolTip(QStringLiteral("Змінення подання."));
+        viewBtn->setToolTip(tr7("Change your view."));
         viewBtn->setPopupMode(QToolButton::InstantPopup);
         viewBtn->setMenu(viewMenu);
         m_bar->addWidget(viewBtn);
@@ -542,8 +543,8 @@ public:
         m_stack->addWidget(m_scroll);
         m_tree = new Win7Programs::DetailsTree;
         m_tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
-        m_tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Стиль шрифту"), QStringLiteral("Показати/приховати"), QStringLiteral("Розроблено для"),
-                                 QStringLiteral("Категорія"), QStringLiteral("Розробник/постачальник"), QStringLiteral("Вбудовування шрифту")});
+        m_tree->setHeaderLabels({tr7("Name"), tr7("Font style"), tr7("Show/hide"), tr7("Designed for"),
+                                 tr7("Category"), tr7("Designer/foundry"), tr7("Font embeddability")});
         int col = 0;
         for (int w : {200, 150, 120, 170, 80, 170, 150}) {
             m_tree->setColumnWidth(col++, w);
@@ -699,7 +700,7 @@ private:
                 vendor = sf.name(9);
             }
             auto *it = new QTreeWidgetItem({e.isFace ? e.title() : e.family.name, styles.join(QStringLiteral("; ")), showHideText(e), f.scripts.join(QStringLiteral("; ")),
-                                            f.symbol ? QStringLiteral("Символ") : QStringLiteral("Текст"), vendor, embeddability(sf.fsType())});
+                                            f.symbol ? tr7("Symbol") : tr7("Text"), vendor, embeddability(sf.fsType())});
             it->setIcon(0, QIcon(tilePicture(f, e.stack(), e.hidden(), 32).scaled(16, 16, Qt::KeepAspectRatio, Qt::SmoothTransformation)));
             it->setData(0, Qt::UserRole, i);
             if (e.hidden()) {
@@ -714,7 +715,7 @@ private:
 
     static QString showHideText(const Entry &e)
     {
-        return e.family.mixed() ? QStringLiteral("Змішаний") : (e.hidden() ? QStringLiteral("Приховати") : QStringLiteral("Показати"));
+        return e.family.mixed() ? tr7("Mixed") : (e.hidden() ? tr7("Hide") : tr7("Show"));
     }
 
     void relayoutCanvas()
@@ -777,12 +778,12 @@ private:
         }
         if (sel.isEmpty()) {
             m_detailsIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-fonts-folder")).pixmap(48, 48));
-            m_detailsText->setText(QStringLiteral("Елементів: %1").arg(m_shown.size()));
+            m_detailsText->setText(tr7("%1 items").arg(m_shown.size()));
             return;
         }
         if (sel.size() > 1) {
             m_detailsIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-font-files")).pixmap(48, 48));
-            m_detailsText->setText(QStringLiteral("Вибрано елементів: %1").arg(sel.size()));
+            m_detailsText->setText(tr7("%1 items selected").arg(sel.size()));
             return;
         }
         const Entry &e = m_shown.at(sel.first());
@@ -802,11 +803,11 @@ private:
         };
         m_detailsText->setText(QStringLiteral("<table cellspacing='0' cellpadding='0'><tr><td rowspan='3' valign='top' style='padding-right:28px'>"
                                               "<span style='font-size:15px'>%1</span></td>%2%3</tr><tr>%4%5</tr><tr>%6%7</tr></table>")
-                                   .arg(e.title().toHtmlEscaped(), row(QStringLiteral("Стиль шрифту:"), styles.join(QStringLiteral("; "))),
-                                        row(QStringLiteral("Категорія:"), f.symbol ? QStringLiteral("Символ") : QStringLiteral("Текст")),
-                                        row(QStringLiteral("Показати/приховати:"), showHideText(e)), row(QStringLiteral("Розробник/постачальник:"), vendor),
-                                        row(QStringLiteral("Розроблено для:"), f.scripts.join(QStringLiteral("; "))),
-                                        row(QStringLiteral("Вбудовування шрифту:"), embeddability(sf.fsType()))));
+                                   .arg(e.title().toHtmlEscaped(), row(tr7("Font style:"), styles.join(QStringLiteral("; "))),
+                                        row(tr7("Category:"), f.symbol ? tr7("Symbol") : tr7("Text")),
+                                        row(tr7("Show/hide:"), showHideText(e)), row(tr7("Designer/foundry:"), vendor),
+                                        row(tr7("Designed for:"), f.scripts.join(QStringLiteral("; "))),
+                                        row(tr7("Font embeddability:"), embeddability(sf.fsType()))));
     }
 
     void activate(int i)
@@ -835,8 +836,8 @@ private:
             faces << m_shown.at(i).family.faces.first();
         }
         if (faces.size() > 3) {
-            const auto answer = QMessageBox::question(this, QStringLiteral("Попередній перегляд шрифтів"),
-                                                      QStringLiteral("Відкрити вікна шрифтів (%1)?\n\nКожен вибраний шрифт відкриється в окремому вікні.").arg(faces.size()));
+            const auto answer = QMessageBox::question(this, tr7("Font Preview"),
+                                                      tr7("Open %1 font windows?\n\nEach selected font opens in its own window.").arg(faces.size()));
             if (answer != QMessageBox::Yes) {
                 return;
             }
@@ -912,25 +913,25 @@ private:
     {
         QMenu menu;
         if (i < 0) {
-            QMenu *viewMenu = menu.addMenu(QStringLiteral("Вигляд"));
-            viewMenu->addAction(QStringLiteral("Великі значки"), this, [this] { setIconMode(96); });
-            viewMenu->addAction(QStringLiteral("Звичайні значки"), this, [this] { setIconMode(48); });
-            viewMenu->addAction(QStringLiteral("Таблиця"), this, [this] { setIconMode(0); });
-            menu.addAction(QStringLiteral("Оновити"), this, [this] { reload(); });
+            QMenu *viewMenu = menu.addMenu(tr7("View"));
+            viewMenu->addAction(tr7("Large icons"), this, [this] { setIconMode(96); });
+            viewMenu->addAction(tr7("Medium Icons"), this, [this] { setIconMode(48); });
+            viewMenu->addAction(tr7("Details"), this, [this] { setIconMode(0); });
+            menu.addAction(tr7("Refresh"), this, [this] { reload(); });
             menu.addSeparator();
-            QAction *paste = menu.addAction(QStringLiteral("Вставити"), this, [this] { this->paste(); });
+            QAction *paste = menu.addAction(tr7("Paste"), this, [this] { this->paste(); });
             paste->setEnabled(QApplication::clipboard()->mimeData() && QApplication::clipboard()->mimeData()->hasUrls());
             menu.exec(pos);
             return;
         }
-        QAction *open = menu.addAction(QStringLiteral("Попередній перегляд"), this, [this] { previewSelected(); });
+        QAction *open = menu.addAction(tr7("Preview", "button"), this, [this] { previewSelected(); });
         QFont bold = open->font();
         bold.setBold(true);
         open->setFont(bold);
         if (!m_shown.at(i).isFace && m_shown.at(i).family.faces.size() > 1) {
-            menu.addAction(QStringLiteral("Відкрити"), this, [this, i] { activate(i); });
+            menu.addAction(tr7("Open"), this, [this, i] { activate(i); });
         }
-        menu.addAction(QStringLiteral("Друк"), this, [this] {
+        menu.addAction(tr7("Print"), this, [this] {
             for (int k : selection()) {
                 const Face &f = m_shown.at(k).family.faces.first();
                 m_nav.spawn({QStringLiteral("--fontview"), f.file, QString::number(f.index), QStringLiteral("--print")});
@@ -941,11 +942,11 @@ private:
         for (const Face &f : selectedFaces()) {
             anyHidden |= f.hidden;
         }
-        menu.addAction(anyHidden ? QStringLiteral("Показати") : QStringLiteral("Приховати"), this, [this, anyHidden] { setSelectedHidden(!anyHidden); });
+        menu.addAction(anyHidden ? tr7("Show") : tr7("Hide"), this, [this, anyHidden] { setSelectedHidden(!anyHidden); });
         menu.addSeparator();
-        menu.addAction(QStringLiteral("Копіювати"), this, [this] { copySelected(); });
+        menu.addAction(tr7("Copy"), this, [this] { copySelected(); });
         menu.addSeparator();
-        menu.addAction(QStringLiteral("Видалити"), this, [this] { removeSelected(); });
+        menu.addAction(tr7("Delete"), this, [this] { removeSelected(); });
         menu.exec(pos);
     }
 
@@ -985,19 +986,18 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *v = new QVBoxLayout(page);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(10);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Змінення параметрів шрифту")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Change Font Settings")));
     v->addSpacing(6);
-    auto *section = new QLabel(QStringLiteral("Параметри установки"));
+    auto *section = new QLabel(tr7("Installation Settings"));
     QFont sf = section->font();
     sf.setPixelSize(13);
     section->setFont(sf);
     section->setStyleSheet(QStringLiteral("color: #1e3287;"));
     v->addWidget(section);
-    auto *text = Win7Programs::wrapped(QStringLiteral("Щоб заощадити місце на комп'ютері, замість самого файлу шрифту можна встановити ярлик до нього. "
-                                                      "Якщо файл шрифту стане недоступним, використовувати шрифт, можливо, не вдасться."));
+    auto *text = Win7Programs::wrapped(tr7("To save space on your computer, you can install a shortcut to a font instead of the font file itself. If the font file becomes unavailable, you might not be able to use the font."));
     text->setContentsMargins(16, 0, 0, 0);
     v->addWidget(text);
-    auto *shortcut = new QCheckBox(QStringLiteral("Дозволити встановлення шрифтів за допомогою ярлика (додатково)"));
+    auto *shortcut = new QCheckBox(tr7("Allow fonts to be installed using a shortcut (advanced)"));
     shortcut->setChecked(installAsShortcut());
     auto *row = new QHBoxLayout;
     row->setContentsMargins(16, 0, 0, 0);
@@ -1005,12 +1005,12 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     row->addStretch(1);
     v->addLayout(row);
     v->addSpacing(14);
-    auto *restore = new QPushButton(QStringLiteral("Відновити параметри шрифтів за замовчуванням"));
+    auto *restore = new QPushButton(tr7("Restore default font settings"));
     auto *rrow = new QHBoxLayout;
     rrow->addWidget(restore);
     rrow->addStretch(1);
     v->addLayout(rrow);
-    auto *note = Win7Programs::wrapped(QStringLiteral("Відновлення параметрів за замовчуванням знову покаже всі приховані шрифти."));
+    auto *note = Win7Programs::wrapped(tr7("Restoring the default settings shows all hidden fonts again."));
     note->setStyleSheet(QStringLiteral("color: #5a6779;"));
     v->addWidget(note);
     v->addStretch(1);
@@ -1021,7 +1021,7 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *btns = new QHBoxLayout;
     btns->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     for (QPushButton *b : {ok, cancel}) {
         b->setMinimumWidth(86);
         btns->addWidget(b);

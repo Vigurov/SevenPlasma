@@ -13,6 +13,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -293,21 +294,21 @@ struct Role {
 inline const QList<Role> &roles()
 {
     static const QList<Role> r{
-        {QStringLiteral("Основний режим"), {QStringLiteral("left_ptr"), QStringLiteral("default"), QStringLiteral("arrow")}},
-        {QStringLiteral("Вибір довідки"), {QStringLiteral("help"), QStringLiteral("question_arrow"), QStringLiteral("whats_this"), QStringLiteral("left_ptr_help")}},
-        {QStringLiteral("Робота у фоновому режимі"), {QStringLiteral("left_ptr_watch"), QStringLiteral("progress")}},
-        {QStringLiteral("Зайнятий"), {QStringLiteral("watch"), QStringLiteral("wait")}},
-        {QStringLiteral("Точний вибір"), {QStringLiteral("crosshair"), QStringLiteral("cross"), QStringLiteral("tcross")}},
-        {QStringLiteral("Виділення тексту"), {QStringLiteral("xterm"), QStringLiteral("text"), QStringLiteral("ibeam")}},
-        {QStringLiteral("Рукописне введення"), {QStringLiteral("pencil"), QStringLiteral("draft")}},
-        {QStringLiteral("Недоступний"), {QStringLiteral("not-allowed"), QStringLiteral("forbidden"), QStringLiteral("crossed_circle"), QStringLiteral("circle")}},
-        {QStringLiteral("Зміна вертикальних розмірів"), {QStringLiteral("sb_v_double_arrow"), QStringLiteral("ns-resize"), QStringLiteral("size_ver"), QStringLiteral("v_double_arrow")}},
-        {QStringLiteral("Зміна горизонтальних розмірів"), {QStringLiteral("sb_h_double_arrow"), QStringLiteral("ew-resize"), QStringLiteral("size_hor"), QStringLiteral("h_double_arrow")}},
-        {QStringLiteral("Зміна розмірів по діагоналі 1"), {QStringLiteral("size_fdiag"), QStringLiteral("nwse-resize"), QStringLiteral("bd_double_arrow")}},
-        {QStringLiteral("Зміна розмірів по діагоналі 2"), {QStringLiteral("size_bdiag"), QStringLiteral("nesw-resize"), QStringLiteral("fd_double_arrow")}},
-        {QStringLiteral("Переміщення"), {QStringLiteral("fleur"), QStringLiteral("size_all"), QStringLiteral("move"), QStringLiteral("all-scroll")}},
-        {QStringLiteral("Альтернативний вибір"), {QStringLiteral("up_arrow"), QStringLiteral("center_ptr")}},
-        {QStringLiteral("Вибір посилання"), {QStringLiteral("hand2"), QStringLiteral("pointer"), QStringLiteral("pointing_hand"), QStringLiteral("hand1")}},
+        {tr7("Normal Select"), {QStringLiteral("left_ptr"), QStringLiteral("default"), QStringLiteral("arrow")}},
+        {tr7("Help Select"), {QStringLiteral("help"), QStringLiteral("question_arrow"), QStringLiteral("whats_this"), QStringLiteral("left_ptr_help")}},
+        {tr7("Working In Background"), {QStringLiteral("left_ptr_watch"), QStringLiteral("progress")}},
+        {tr7("Busy"), {QStringLiteral("watch"), QStringLiteral("wait")}},
+        {tr7("Precision Select"), {QStringLiteral("crosshair"), QStringLiteral("cross"), QStringLiteral("tcross")}},
+        {tr7("Text Select"), {QStringLiteral("xterm"), QStringLiteral("text"), QStringLiteral("ibeam")}},
+        {tr7("Handwriting"), {QStringLiteral("pencil"), QStringLiteral("draft")}},
+        {tr7("Unavailable"), {QStringLiteral("not-allowed"), QStringLiteral("forbidden"), QStringLiteral("crossed_circle"), QStringLiteral("circle")}},
+        {tr7("Vertical Resize"), {QStringLiteral("sb_v_double_arrow"), QStringLiteral("ns-resize"), QStringLiteral("size_ver"), QStringLiteral("v_double_arrow")}},
+        {tr7("Horizontal Resize"), {QStringLiteral("sb_h_double_arrow"), QStringLiteral("ew-resize"), QStringLiteral("size_hor"), QStringLiteral("h_double_arrow")}},
+        {tr7("Diagonal Resize 1"), {QStringLiteral("size_fdiag"), QStringLiteral("nwse-resize"), QStringLiteral("bd_double_arrow")}},
+        {tr7("Diagonal Resize 2"), {QStringLiteral("size_bdiag"), QStringLiteral("nesw-resize"), QStringLiteral("fd_double_arrow")}},
+        {tr7("Move"), {QStringLiteral("fleur"), QStringLiteral("size_all"), QStringLiteral("move"), QStringLiteral("all-scroll")}},
+        {tr7("Alternate Select"), {QStringLiteral("up_arrow"), QStringLiteral("center_ptr")}},
+        {tr7("Link Select"), {QStringLiteral("hand2"), QStringLiteral("pointer"), QStringLiteral("pointing_hand"), QStringLiteral("hand1")}},
     };
     return r;
 }
@@ -406,18 +407,18 @@ public:
         , m_old(load())
         , m_s(m_old)
     {
-        setWindowTitle(QStringLiteral("Властивості: Миша"));
+        setWindowTitle(tr7("Mouse Properties"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-mouse")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(buttonsTab(), QStringLiteral("Кнопки миші"));
-        tabs->addTab(pointersTab(), QStringLiteral("Покажчики"));
-        tabs->addTab(optionsTab(), QStringLiteral("Параметри покажчика"));
-        tabs->addTab(wheelTab(), QStringLiteral("Коліщатко"));
-        tabs->addTab(hardwareTab(), QStringLiteral("Устаткування"));
+        tabs->addTab(buttonsTab(), tr7("Buttons"));
+        tabs->addTab(pointersTab(), tr7("Pointers"));
+        tabs->addTab(optionsTab(), tr7("Pointer Options"));
+        tabs->addTab(wheelTab(), tr7("Wheel"));
+        tabs->addTab(hardwareTab(), tr7("Hardware"));
         tabs->setCurrentIndex(tab);
         tabs->setUsesScrollButtons(false);
         tabs->tabBar()->setElideMode(Qt::ElideNone);
@@ -427,8 +428,8 @@ public:
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -493,14 +494,13 @@ private:
     {
         QVBoxLayout *v;
         QWidget *w = page(v);
-        auto *config = new QGroupBox(QStringLiteral("Конфігурація кнопок"));
+        auto *config = new QGroupBox(tr7("Button configuration"));
         auto *cg = new QHBoxLayout(config);
         auto *left = new QVBoxLayout;
-        auto *swap = new QCheckBox(QStringLiteral("Обмінювати призначення кнопок"));
+        auto *swap = new QCheckBox(tr7("Switch primary and secondary buttons"));
         swap->setChecked(m_s.leftHanded);
         left->addWidget(swap);
-        left->addWidget(wrapped(QStringLiteral("Призначає праву кнопку для виконання таких основних функцій, як вибір і перетягування. "
-                                               "Часто використовується тими, хто працює з мишею лівою рукою.")));
+        left->addWidget(wrapped(tr7("Select this check box to make the button on the right the one you use for primary functions such as selecting and dragging.")));
         left->addStretch(1);
         cg->addLayout(left, 1);
         auto *pic = new MousePicture;
@@ -514,19 +514,19 @@ private:
             changed();
         });
 
-        auto *dbl = new QGroupBox(QStringLiteral("Швидкість виконання подвійного клацання"));
+        auto *dbl = new QGroupBox(tr7("Double-click speed"));
         auto *dg = new QGridLayout(dbl);
-        dg->addWidget(wrapped(QStringLiteral("Двічі клацніть цю папку. Якщо папка не відкривається або не закривається, виберіть повільнішу швидкість.")), 0, 0, 1, 4);
+        dg->addWidget(wrapped(tr7("Double-click the folder to test your setting. If the folder does not open or close, try using a slower setting.")), 0, 0, 1, 4);
         auto *folder = new TestFolder;
         folder->interval = m_s.doubleClick;
         dg->addWidget(folder, 0, 4, 2, 1, Qt::AlignCenter);
-        dg->addWidget(new QLabel(QStringLiteral("Швидкість:")), 1, 0);
-        dg->addWidget(new QLabel(QStringLiteral("Нижче")), 1, 1);
+        dg->addWidget(new QLabel(tr7("Speed:")), 1, 0);
+        dg->addWidget(new QLabel(tr7("Slow", "repeat rate")), 1, 1);
         auto *speed = ticks(10);
         // Windows goes from 900 ms (slowest) to 200 ms (fastest)
         speed->setValue(qBound(0, qRound((900 - m_s.doubleClick) / 70.0), 10));
         dg->addWidget(speed, 1, 2);
-        dg->addWidget(new QLabel(QStringLiteral("Вище")), 1, 3);
+        dg->addWidget(new QLabel(tr7("Fast", "repeat rate")), 1, 3);
         dg->setColumnStretch(3, 1);
         v->addWidget(dbl);
         connect(speed, &QSlider::valueChanged, this, [this, folder](int val) {
@@ -536,18 +536,17 @@ private:
         });
 
         // ClickLock: no counterpart in Plasma, shown greyed out
-        auto *lock = new QGroupBox(QStringLiteral("Залипання кнопки миші"));
+        auto *lock = new QGroupBox(tr7("ClickLock"));
         auto *lg = new QGridLayout(lock);
-        auto *lockOn = new QCheckBox(QStringLiteral("Увімкнути залипання"));
+        auto *lockOn = new QCheckBox(tr7("Turn on ClickLock"));
         lockOn->setEnabled(false);
         lockOn->setToolTip(unavailable());
-        auto *lockSettings = new QPushButton(QStringLiteral("Параметри..."));
+        auto *lockSettings = new QPushButton(tr7("Options..."));
         lockSettings->setEnabled(false);
         lockSettings->setMinimumWidth(110);
         lg->addWidget(lockOn, 0, 0);
         lg->addWidget(lockSettings, 0, 1, Qt::AlignRight);
-        lg->addWidget(wrapped(QStringLiteral("Дає змогу виділяти або перетягувати об'єкти, не утримуючи кнопку миші. Щоб увімкнути, ненадовго "
-                                              "натисніть кнопку миші. Щоб вимкнути, знову натисніть кнопку миші.")),
+        lg->addWidget(wrapped(tr7("Enables you to highlight or drag without holding down the mouse button. To set, briefly press the mouse button. To release, click the mouse button again.")),
                       1, 0, 1, 2);
         lg->setColumnStretch(0, 1);
         v->addWidget(lock);
@@ -557,7 +556,7 @@ private:
 
     static QString unavailable()
     {
-        return QStringLiteral("У цій системі такого параметра немає.");
+        return tr7("This setting is not available on this system.");
     }
 
     /** icon of main.cpl at the left of a group row */
@@ -574,7 +573,7 @@ private:
     {
         QVBoxLayout *v;
         QWidget *w = page(v);
-        auto *scheme = new QGroupBox(QStringLiteral("Схема"));
+        auto *scheme = new QGroupBox(tr7("Scheme"));
         auto *sg = new QHBoxLayout(scheme);
         auto *combo = new QComboBox;
         const auto themes = cursorThemes();
@@ -593,7 +592,7 @@ private:
         top->addWidget(scheme, 1);
         top->addWidget(preview, 0, Qt::AlignBottom);
         v->addLayout(top);
-        v->addWidget(new QLabel(QStringLiteral("Налаштування:")));
+        v->addWidget(new QLabel(tr7("Customize:")));
         auto *list = new QTreeWidget;
         list->setRootIsDecorated(false);
         list->setHeaderHidden(true);
@@ -604,7 +603,7 @@ private:
         list->header()->setSectionResizeMode(1, QHeaderView::Fixed);
         list->setColumnWidth(1, 44);
         v->addWidget(list, 1);
-        auto *defaults = new QPushButton(QStringLiteral("За замовчуванням"));
+        auto *defaults = new QPushButton(tr7("Default"));
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         row->addWidget(defaults);
@@ -637,18 +636,18 @@ private:
     {
         QVBoxLayout *v;
         QWidget *w = page(v);
-        auto *motion = new QGroupBox(QStringLiteral("Переміщення"));
+        auto *motion = new QGroupBox(tr7("Move"));
         auto *mg = new QGridLayout(motion);
         mg->addWidget(groupIcon(QStringLiteral("seven-mouse-motion")), 0, 0, 2, 1, Qt::AlignTop);
-        mg->addWidget(new QLabel(QStringLiteral("Задайте швидкість руху покажчика:")), 0, 1, 1, 3);
-        auto *slow = new QLabel(QStringLiteral("Нижче"));
+        mg->addWidget(new QLabel(tr7("Select a pointer speed:")), 0, 1, 1, 3);
+        auto *slow = new QLabel(tr7("Slow", "repeat rate"));
         mg->addWidget(slow, 1, 1);
         auto *speed = ticks(10);
         speed->setFixedWidth(150);
         speed->setValue(qBound(0, qRound((m_s.speed + 1) * 5), 10));
         mg->addWidget(speed, 1, 2);
-        mg->addWidget(new QLabel(QStringLiteral("Вище")), 1, 3);
-        auto *precision = new QCheckBox(QStringLiteral("Підвищена точність установки покажчика"));
+        mg->addWidget(new QLabel(tr7("Fast", "repeat rate")), 1, 3);
+        auto *precision = new QCheckBox(tr7("Enhance pointer precision"));
         precision->setChecked(m_s.precision);
         mg->addWidget(precision, 2, 1, 1, 3);
         mg->setColumnStretch(3, 1);
@@ -662,29 +661,29 @@ private:
             changed();
         });
 
-        auto *snap = new QGroupBox(QStringLiteral("Початкове положення в діалоговому вікні"));
+        auto *snap = new QGroupBox(tr7("Snap To"));
         auto *sg = new QGridLayout(snap);
         sg->addWidget(groupIcon(QStringLiteral("seven-mouse-snapto")), 0, 0, Qt::AlignTop);
-        auto *snapOn = new QCheckBox(QStringLiteral("На кнопці, вибраній за замовчуванням"));
+        auto *snapOn = new QCheckBox(tr7("Automatically move pointer to the default button in a dialog box"));
         snapOn->setEnabled(false);
         snapOn->setToolTip(unavailable());
         sg->addWidget(snapOn, 0, 1, Qt::AlignTop);
         sg->setColumnStretch(1, 1);
         v->addWidget(snap);
 
-        auto *vis = new QGroupBox(QStringLiteral("Видимість"));
+        auto *vis = new QGroupBox(tr7("Visibility"));
         auto *vg = new QGridLayout(vis);
         vg->setVerticalSpacing(8);
         vg->addWidget(groupIcon(QStringLiteral("seven-mouse-trails")), 0, 0, 2, 1, Qt::AlignTop);
-        auto *trails = new QCheckBox(QStringLiteral("Відображати слід покажчика миші"));
+        auto *trails = new QCheckBox(tr7("Display pointer trails"));
         trails->setEnabled(false);
         trails->setToolTip(unavailable());
         vg->addWidget(trails, 0, 1, 1, 3);
-        auto *shortL = new QLabel(QStringLiteral("Коротший"));
+        auto *shortL = new QLabel(tr7("Short", "trails"));
         auto *trailLen = ticks(6);
         trailLen->setFixedWidth(120);
         trailLen->setValue(6);
-        auto *longL = new QLabel(QStringLiteral("Довший"));
+        auto *longL = new QLabel(tr7("Long", "trails"));
         for (QWidget *x : {static_cast<QWidget *>(shortL), static_cast<QWidget *>(trailLen), static_cast<QWidget *>(longL)}) {
             x->setEnabled(false);
         }
@@ -692,11 +691,11 @@ private:
         vg->addWidget(trailLen, 1, 2);
         vg->addWidget(longL, 1, 3);
         vg->addWidget(groupIcon(QStringLiteral("seven-mouse-hide")), 2, 0, Qt::AlignTop);
-        auto *hide = new QCheckBox(QStringLiteral("Приховувати покажчик під час введення з клавіатури"));
+        auto *hide = new QCheckBox(tr7("Hide pointer while typing"));
         hide->setChecked(m_s.hideTyping);
         vg->addWidget(hide, 2, 1, 1, 3, Qt::AlignTop);
         vg->addWidget(groupIcon(QStringLiteral("seven-mouse-ctrl")), 3, 0, Qt::AlignTop);
-        auto *ctrl = new QCheckBox(QStringLiteral("Позначати розташування покажчика\nпри натисканні CTRL"));
+        auto *ctrl = new QCheckBox(tr7("Show location of pointer when I\npress the CTRL key"));
         ctrl->setChecked(m_s.ctrlLocate);
         vg->addWidget(ctrl, 3, 1, 1, 3, Qt::AlignTop);
         vg->setColumnStretch(3, 1);
@@ -717,12 +716,12 @@ private:
     {
         QVBoxLayout *v;
         QWidget *w = page(v);
-        auto *vert = new QGroupBox(QStringLiteral("Вертикальне прокручування"));
+        auto *vert = new QGroupBox(tr7("Vertical Scrolling"));
         auto *vg = new QGridLayout(vert);
         vg->setVerticalSpacing(8);
         vg->addWidget(groupIcon(QStringLiteral("seven-mouse-wheel-v")), 0, 0, 4, 1, Qt::AlignTop);
-        vg->addWidget(wrapped(QStringLiteral("Поворот коліщатка на одну поділку служить для прокручування:")), 0, 1, 1, 2);
-        auto *byLines = new QRadioButton(QStringLiteral("на вказану кількість рядків:"));
+        vg->addWidget(wrapped(tr7("Roll the wheel one notch to scroll:")), 0, 1, 1, 2);
+        auto *byLines = new QRadioButton(tr7("The following number of lines at a time:"));
         byLines->setChecked(true);
         vg->addWidget(byLines, 1, 1, 1, 2);
         auto *lines = new QSpinBox;
@@ -734,7 +733,7 @@ private:
         row->addWidget(lines);
         row->addStretch(1);
         vg->addLayout(row, 2, 1, 1, 2);
-        auto *byScreen = new QRadioButton(QStringLiteral("на один екран"));
+        auto *byScreen = new QRadioButton(tr7("One screen at a time"));
         byScreen->setEnabled(false);
         byScreen->setToolTip(unavailable());
         vg->addWidget(byScreen, 3, 1, 1, 2);
@@ -745,11 +744,11 @@ private:
             changed();
         });
 
-        auto *hor = new QGroupBox(QStringLiteral("Горизонтальне прокручування"));
+        auto *hor = new QGroupBox(tr7("Horizontal Scrolling"));
         auto *hg = new QGridLayout(hor);
         hg->setVerticalSpacing(8);
         hg->addWidget(groupIcon(QStringLiteral("seven-mouse-wheel-h")), 0, 0, 2, 1, Qt::AlignTop);
-        hg->addWidget(wrapped(QStringLiteral("Нахил коліщатка служить для горизонтального прокручування на вказану кількість знаків:")), 0, 1);
+        hg->addWidget(wrapped(tr7("Tilt the wheel to scroll the following number of characters at a time:")), 0, 1);
         auto *chars = new QSpinBox;
         chars->setRange(1, 100);
         chars->setValue(3);
@@ -771,32 +770,32 @@ private:
     {
         QVBoxLayout *v;
         QWidget *w = page(v);
-        v->addWidget(new QLabel(QStringLiteral("Пристрої:")));
+        v->addWidget(new QLabel(tr7("Devices:")));
         auto *tree = new QTreeWidget;
         tree->setRootIsDecorated(false);
-        tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Тип")});
+        tree->setHeaderLabels({tr7("Name"), tr7("Type")});
         tree->setColumnWidth(0, 220);
         tree->setIconSize(QSize(16, 16));
         for (const auto &d : pointerDevices()) {
             const bool pad = d.second.contains(QLatin1String("Touchpad"), Qt::CaseInsensitive);
-            auto *it = new QTreeWidgetItem(tree, {d.second, QStringLiteral("Миші та інші вказівні пристрої")});
+            auto *it = new QTreeWidgetItem(tree, {d.second, tr7("Mice and other pointing devices")});
             Q_UNUSED(pad)
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-devmgr-mouse"))); // Windows 7 shows every pointing device as a mouse
         }
         v->addWidget(tree, 1);
-        auto *props = new QGroupBox(QStringLiteral("Властивості пристрою"));
+        auto *props = new QGroupBox(tr7("Device Properties"));
         auto *pg = new QGridLayout(props);
         pg->setHorizontalSpacing(16);
         auto *maker = new QLabel;
         auto *where = new QLabel;
-        pg->addWidget(new QLabel(QStringLiteral("Виробник:")), 0, 0);
+        pg->addWidget(new QLabel(tr7("Manufacturer:")), 0, 0);
         pg->addWidget(maker, 0, 1);
-        pg->addWidget(new QLabel(QStringLiteral("Розташування:")), 1, 0);
+        pg->addWidget(new QLabel(tr7("Location:")), 1, 0);
         pg->addWidget(where, 1, 1);
-        pg->addWidget(new QLabel(QStringLiteral("Стан пристрою:")), 2, 0);
-        pg->addWidget(new QLabel(QStringLiteral("Пристрій працює нормально.")), 2, 1);
+        pg->addWidget(new QLabel(tr7("Device status:")), 2, 0);
+        pg->addWidget(new QLabel(tr7("This device is working properly.")), 2, 1);
         pg->setColumnStretch(1, 1);
-        auto *btn = new QPushButton(QStringLiteral("Властивості"));
+        auto *btn = new QPushButton(tr7("Properties"));
         pg->addWidget(btn, 3, 1, Qt::AlignRight);
         v->addWidget(props);
         const QString devices = readFile(QStringLiteral("/proc/bus/input/devices"));
@@ -813,8 +812,8 @@ private:
                 const QString b = bus.match(block).captured(1);
                 const QString phys = physRe.match(block).captured(1).trimmed();
                 where->setText(b == QLatin1String("0005") ? QStringLiteral("Bluetooth") : b == QLatin1String("0003") ? QStringLiteral("USB")
-                                       : b == QLatin1String("0018")                                    ? QStringLiteral("Шина I2C")
-                                                                                                       : (phys.isEmpty() ? QStringLiteral("Невідомо") : phys));
+                                       : b == QLatin1String("0018")                                    ? tr7("I2C bus")
+                                                                                                       : (phys.isEmpty() ? tr7("Unknown") : phys));
             }
             maker->setText(it->text(0).section(QLatin1Char(' '), 0, 0).section(QLatin1Char(':'), 0, 0));
         });

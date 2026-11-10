@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7trayicons.h"
 
@@ -195,10 +196,10 @@ struct Toolbar {
     QString title() const
     {
         if (kind == QLatin1String("address")) {
-            return QStringLiteral("Адреса");
+            return tr7("Address");
         }
         if (kind == QLatin1String("desktop")) {
-            return QStringLiteral("Робочий стіл");
+            return tr7("Desktop");
         }
         const QString name = QString(folder).remove(QStringLiteral("file://")).section(QLatin1Char('/'), -1, -1, QString::SectionSkipEmpty);
         return name.isEmpty() ? QStringLiteral("/") : name;
@@ -251,7 +252,7 @@ inline void toggleToolbar(const QString &kind)
 /** "New toolbar..." : pick a folder */
 inline void newToolbar()
 {
-    const QString dir = QFileDialog::getExistingDirectory(nullptr, QStringLiteral("Створення панелі інструментів - Вибір папки"), QDir::homePath());
+    const QString dir = QFileDialog::getExistingDirectory(nullptr, tr7("New Toolbar - Choose a folder"), QDir::homePath());
     if (!dir.isEmpty()) {
         addToolbar(QStringLiteral("folder"), dir);
     }
@@ -266,14 +267,14 @@ public:
         : QDialog(parent)
         , m_state(st)
     {
-        setWindowTitle(QStringLiteral("Настроювання меню «Пуск»"));
+        setWindowTitle(tr7("Customize Start Menu"));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-taskbar-props")));
         resize(430, 520);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(11, 11, 11, 11);
         v->setSpacing(6);
-        auto *intro = new QLabel(QStringLiteral("Можна настроїти вигляд і поведінку посилань, значків і меню в меню «Пуск»."));
+        auto *intro = new QLabel(tr7("You can customize how links, icons, and menus look and behave on the Start menu."));
         intro->setWordWrap(true);
         v->addWidget(intro);
 
@@ -290,27 +291,27 @@ public:
         v->addWidget(scroll, 1);
 
         // name in the SevenStart config, text, icon, kind: 3 = hide/menu/link, 2 = hide/link, 0 = checkbox
-        addItem(QStringLiteral("__highlightNew"), QStringLiteral("Виділяти нещодавно встановлені програми"), QString(), 0);
-        addItem(QStringLiteral("Videos"), QStringLiteral("Відео"), QStringLiteral("folder-videos"), 3);
-        addItem(QStringLiteral("Help and Support"), QStringLiteral("Довідка"), QString(), 0);
-        addItem(QStringLiteral("Documents"), QStringLiteral("Документи"), QStringLiteral("folder-documents"), 3);
-        addItem(QStringLiteral("Downloads"), QStringLiteral("Завантаження"), QStringLiteral("folder-download"), 3);
-        addItem(QStringLiteral("Pictures"), QStringLiteral("Зображення"), QStringLiteral("folder-pictures"), 3);
-        addItem(QStringLiteral("Games"), QStringLiteral("Ігри"), QStringLiteral("applications-games"), 2);
-        addItem(QStringLiteral("Run"), QStringLiteral("Команда «Виконати»"), QString(), 0);
-        addItem(QStringLiteral("Computer"), QStringLiteral("Комп'ютер"), QStringLiteral("computer"), 2);
-        addItem(QStringLiteral("Network"), QStringLiteral("Мережа"), QString(), 0);
-        addItem(QStringLiteral("Music"), QStringLiteral("Музика"), QStringLiteral("folder-music"), 3);
-        addItem(QStringLiteral("Recent Items"), QStringLiteral("Недавні документи"), QString(), 0);
-        addItem(QStringLiteral("Home directory"), QStringLiteral("Особиста папка"), QStringLiteral("user-home"), 3);
-        addItem(QStringLiteral("Control Panel"), QStringLiteral("Панель керування"), QStringLiteral("preferences-system"), 2);
-        addItem(QStringLiteral("Devices and Printers"), QStringLiteral("Пристрої та принтери"), QString(), 0);
-        addItem(QStringLiteral("Default Programs"), QStringLiteral("Програми за замовчуванням"), QString(), 0);
+        addItem(QStringLiteral("__highlightNew"), tr7("Highlight newly installed programs"), QString(), 0);
+        addItem(QStringLiteral("Videos"), tr7("Videos"), QStringLiteral("folder-videos"), 3);
+        addItem(QStringLiteral("Help and Support"), tr7("Help"), QString(), 0);
+        addItem(QStringLiteral("Documents"), tr7("Documents"), QStringLiteral("folder-documents"), 3);
+        addItem(QStringLiteral("Downloads"), tr7("Downloads"), QStringLiteral("folder-download"), 3);
+        addItem(QStringLiteral("Pictures"), tr7("Pictures"), QStringLiteral("folder-pictures"), 3);
+        addItem(QStringLiteral("Games"), tr7("Games"), QStringLiteral("applications-games"), 2);
+        addItem(QStringLiteral("Run"), tr7("Run command"), QString(), 0);
+        addItem(QStringLiteral("Computer"), tr7("Computer"), QStringLiteral("computer"), 2);
+        addItem(QStringLiteral("Network"), tr7("Network"), QString(), 0);
+        addItem(QStringLiteral("Music"), tr7("Music"), QStringLiteral("folder-music"), 3);
+        addItem(QStringLiteral("Recent Items"), tr7("Recent Items"), QString(), 0);
+        addItem(QStringLiteral("Home directory"), tr7("Personal folder"), QStringLiteral("user-home"), 3);
+        addItem(QStringLiteral("Control Panel"), tr7("Control Panel"), QStringLiteral("preferences-system"), 2);
+        addItem(QStringLiteral("Devices and Printers"), tr7("Devices and Printers"), QString(), 0);
+        addItem(QStringLiteral("Default Programs"), tr7("Default Programs"), QString(), 0);
         m_list->addStretch(1);
 
-        auto *size = new QGroupBox(QStringLiteral("Розмір меню «Пуск»"));
+        auto *size = new QGroupBox(tr7("Start menu size"));
         auto *sg = new QGridLayout(size);
-        auto *rowsLabel = new QLabel(QStringLiteral("Кількість недавно використаних програм для відображення:"));
+        auto *rowsLabel = new QLabel(tr7("Number of recent programs to display:"));
         rowsLabel->setWordWrap(true);
         m_rows = new QSpinBox;
         m_rows->setRange(0, 30);
@@ -322,9 +323,9 @@ public:
         v->addWidget(size);
 
         auto *btns = new QHBoxLayout;
-        auto *defaults = new QPushButton(QStringLiteral("Параметри за замовчуванням"));
+        auto *defaults = new QPushButton(tr7("Use Default Settings"));
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setDefault(true);
         ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
@@ -399,11 +400,11 @@ private:
                 m_list->addLayout(row);
                 e.group->addButton(r, id);
             };
-            addRadio(QStringLiteral("Не відображати цей елемент"), 0);
+            addRadio(tr7("Don't display this item"), 0);
             if (kind == 3) {
-                addRadio(QStringLiteral("Відображати як меню"), 2);
+                addRadio(tr7("Display as a menu"), 2);
             }
-            addRadio(QStringLiteral("Відображати як посилання"), 1);
+            addRadio(tr7("Display as a link"), 1);
         }
         m_entries.append(e);
     }
@@ -442,7 +443,7 @@ public:
         , m_old(readState())
         , m_state(m_old)
     {
-        setWindowTitle(QStringLiteral("Властивості панелі завдань і меню «Пуск»"));
+        setWindowTitle(tr7("Taskbar and Start Menu Properties"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-taskbar-props")));
         setAttribute(Qt::WA_DeleteOnClose);
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
@@ -450,17 +451,17 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(taskbarTab(), QStringLiteral("Панель завдань"));
-        tabs->addTab(startTab(), QStringLiteral("Меню «Пуск»"));
-        tabs->addTab(toolbarsTab(), QStringLiteral("Панелі інструментів"));
+        tabs->addTab(taskbarTab(), tr7("Taskbar"));
+        tabs->addTab(startTab(), tr7("Start Menu"));
+        tabs->addTab(toolbarsTab(), tr7("Toolbars"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -556,7 +557,7 @@ private:
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
         v->setSpacing(4);
-        v->addWidget(text(QStringLiteral("Виберіть панелі інструментів, які мають відображатися на панелі завдань.")));
+        v->addWidget(text(tr7("Select which toolbars to add to the taskbar.")));
         m_toolbarList = new QListWidget;
         m_toolbarList->setMinimumHeight(330);
         v->addWidget(m_toolbarList, 1);
@@ -620,30 +621,30 @@ private:
         v->setContentsMargins(10, 10, 10, 10);
         v->setSpacing(8);
 
-        auto *look = new QGroupBox(QStringLiteral("Оформлення панелі завдань"));
+        auto *look = new QGroupBox(tr7("Taskbar appearance"));
         auto *lv = new QVBoxLayout(look);
         lv->setSpacing(6);
-        lv->addWidget(check(QStringLiteral("Закріпити панель завдань"), m_state.locked, [this](bool on) {
+        lv->addWidget(check(tr7("Lock the taskbar"), m_state.locked, [this](bool on) {
             m_state.locked = on;
         }));
-        lv->addWidget(check(QStringLiteral("Автоматично приховувати панель завдань"), m_state.autoHide, [this](bool on) {
+        lv->addWidget(check(tr7("Auto-hide the taskbar"), m_state.autoHide, [this](bool on) {
             m_state.autoHide = on;
         }));
-        lv->addWidget(check(QStringLiteral("Використовувати маленькі значки"), m_state.smallIcons, [this](bool on) {
+        lv->addWidget(check(tr7("Use small icons"), m_state.smallIcons, [this](bool on) {
             m_state.smallIcons = on;
         }));
         auto *grid = new QGridLayout;
         grid->setHorizontalSpacing(8);
         grid->setVerticalSpacing(8);
-        grid->addWidget(text(QStringLiteral("Розташування панелі завдань на екрані:")), 0, 0);
-        grid->addWidget(combo({QStringLiteral("Знизу"), QStringLiteral("Ліворуч"), QStringLiteral("Праворуч"), QStringLiteral("Згори")}, m_state.location,
+        grid->addWidget(text(tr7("Taskbar location on screen:")), 0, 0);
+        grid->addWidget(combo({tr7("Bottom"), tr7("Left"), tr7("Right"), tr7("Top")}, m_state.location,
                               [this](int i) {
                                   m_state.location = i;
                               }),
                         0, 1);
-        grid->addWidget(new QLabel(QStringLiteral("Кнопки панелі завдань:")), 1, 0);
-        grid->addWidget(combo({QStringLiteral("Завжди групувати, приховувати підписи"), QStringLiteral("Групувати, коли панель завдань заповнена"),
-                               QStringLiteral("Ніколи не групувати")},
+        grid->addWidget(new QLabel(tr7("Taskbar buttons:")), 1, 0);
+        grid->addWidget(combo({tr7("Always combine, hide labels"), tr7("Combine when taskbar is full"),
+                               tr7("Never combine")},
                               m_state.buttons,
                               [this](int i) {
                                   m_state.buttons = i;
@@ -654,20 +655,20 @@ private:
         lv->addLayout(grid);
         v->addWidget(look);
 
-        auto *tray = new QGroupBox(QStringLiteral("Область сповіщень"));
+        auto *tray = new QGroupBox(tr7("Notification area"));
         auto *th = new QHBoxLayout(tray);
-        th->addWidget(text(QStringLiteral("Настроювання значків і сповіщень, які відображатимуться в області сповіщень.")), 1);
-        auto *customize = new QPushButton(QStringLiteral("Настроїти..."));
+        th->addWidget(text(tr7("Customize which icons and notifications appear in the notification area.")), 1);
+        auto *customize = new QPushButton(tr7("Configure..."));
         th->addWidget(customize, 0, Qt::AlignVCenter);
         connect(customize, &QPushButton::clicked, this, [] {
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--tray-icons")});
         });
         v->addWidget(tray);
 
-        auto *peek = new QGroupBox(QStringLiteral("Попередній перегляд робочого столу за допомогою Aero Peek"));
+        auto *peek = new QGroupBox(tr7("Preview desktop with Aero Peek"));
         auto *pv = new QVBoxLayout(peek);
-        pv->addWidget(text(QStringLiteral("Тимчасово переглядати робочий стіл, навівши вказівник миші на кнопку «Показати робочий стіл» у кінці панелі завдань.")));
-        pv->addWidget(check(QStringLiteral("Використовувати Aero Peek для попереднього перегляду робочого столу"), m_state.peek, [this](bool on) {
+        pv->addWidget(text(tr7("Temporarily view the desktop when you move your mouse to the Show desktop button at end of the taskbar.")));
+        pv->addWidget(check(tr7("Use Aero Peek to preview the desktop"), m_state.peek, [this](bool on) {
             m_state.peek = on;
         }));
         v->addWidget(peek);
@@ -682,15 +683,15 @@ private:
         v->setContentsMargins(10, 10, 10, 10);
         v->setSpacing(10);
         auto *top = new QHBoxLayout;
-        top->addWidget(text(QStringLiteral("Щоб настроїти вигляд і поведінку посилань, значків і меню в меню «Пуск», натисніть кнопку «Настроїти».")), 1);
-        auto *customize = new QPushButton(QStringLiteral("Настроїти..."));
+        top->addWidget(text(tr7("To customize how links, icons, and menus look and behave in the Start menu, click Customize.")), 1);
+        auto *customize = new QPushButton(tr7("Configure..."));
         top->addWidget(customize, 0, Qt::AlignTop);
         v->addLayout(top);
         auto *powerRow = new QHBoxLayout;
-        auto *powerLabel = new QLabel(QStringLiteral("Дія кнопки живлення:"));
+        auto *powerLabel = new QLabel(tr7("Power button action:"));
         powerRow->addWidget(powerLabel);
-        auto *power = combo({QStringLiteral("Змінити користувача"), QStringLiteral("Вийти з системи"), QStringLiteral("Заблокувати"), QStringLiteral("Перезавантаження"),
-                             QStringLiteral("Сон"), QStringLiteral("Завершення роботи")},
+        auto *power = combo({tr7("Switch user"), tr7("Log off"), tr7("Lock"), tr7("Restart", "power button"),
+                             tr7("Sleep"), tr7("Shut down")},
                             m_state.power, [this](int i) {
                                 m_state.power = i;
                             });
@@ -699,18 +700,18 @@ private:
         powerRow->addStretch(1);
         v->addLayout(powerRow);
 
-        auto *privacy = new QGroupBox(QStringLiteral("Конфіденційність"));
+        auto *privacy = new QGroupBox(tr7("Privacy"));
         auto *pv = new QVBoxLayout(privacy);
         pv->setSpacing(6);
         const int savedRows = Win7Tray::cache().value(QStringLiteral("Start/RecentPrograms"), 10).toInt();
-        m_recent = check(QStringLiteral("Зберігати та відображати список нещодавно відкритих програм у меню «Пуск»"), m_state.recentPrograms > 0, [this, savedRows](bool on) {
+        m_recent = check(tr7("Store and display recently opened programs in the Start menu"), m_state.recentPrograms > 0, [this, savedRows](bool on) {
             if (!on && m_state.recentPrograms > 0) {
                 Win7Tray::cache().setValue(QStringLiteral("Start/RecentPrograms"), m_state.recentPrograms);
             }
             m_state.recentPrograms = on ? qMax(1, Win7Tray::cache().value(QStringLiteral("Start/RecentPrograms"), savedRows).toInt()) : 0;
         });
         pv->addWidget(m_recent);
-        pv->addWidget(check(QStringLiteral("Зберігати та відображати список нещодавно відкритих елементів у меню «Пуск» і на панелі завдань"), m_state.recentItems,
+        pv->addWidget(check(tr7("Store and display recently opened items in the Start menu and the taskbar"), m_state.recentItems,
                             [this](bool on) {
                                 m_state.recentItems = on;
                             }));

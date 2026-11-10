@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7sound.h"
 
@@ -241,7 +242,7 @@ public:
         m_name = name;
         label->setText(label->fontMetrics().elidedText(name, Qt::ElideRight, label->width() * 2 - 10));
         label->setToolTip(name);
-        mute->setToolTip(QStringLiteral("Вимкнути звук: %1").arg(name));
+        mute->setToolTip(tr7("Mute %1").arg(name));
     }
     void setState(int volume, bool muted)
     {
@@ -263,7 +264,7 @@ private:
     void setMuteIcon(bool muted)
     {
         mute->setIcon(QIcon::fromTheme(muted ? QStringLiteral("seven-sndvol-off") : QStringLiteral("seven-sndvol-on")));
-        mute->setToolTip(muted ? QStringLiteral("Увімкнути звук: %1").arg(m_name) : QStringLiteral("Вимкнути звук: %1").arg(m_name));
+        mute->setToolTip(muted ? tr7("Unmute %1").arg(m_name) : tr7("Mute %1").arg(m_name));
         meter->muted = muted;
     }
     QString m_name;
@@ -284,7 +285,7 @@ public:
         const QRect devGroup = dlu(6, 6, 64, 153);
         h->setContentsMargins(devGroup.x(), devGroup.y(), devGroup.x(), devGroup.y());
         h->setSpacing(dlu(0, 0, 1, 0).width() + 2);
-        m_devBox = new QGroupBox(QStringLiteral("Пристрій"));
+        m_devBox = new QGroupBox(tr7("Device"));
         m_devBox->setFixedWidth(devGroup.width());
         auto *dv = new QVBoxLayout(m_devBox);
         dv->setContentsMargins(3, dlu(0, 0, 0, 10).height() - 6, 3, 3);
@@ -292,7 +293,7 @@ public:
         dv->addWidget(m_device, 0, Qt::AlignHCenter);
         dv->addStretch(1);
         h->addWidget(m_devBox);
-        m_appBox = new QGroupBox(QStringLiteral("Програми"));
+        m_appBox = new QGroupBox(tr7("Programs"));
         auto *av = new QVBoxLayout(m_appBox);
         av->setContentsMargins(3, dlu(0, 0, 0, 10).height() - 6, 3, 3);
         m_scroll = new QScrollArea;
@@ -373,7 +374,7 @@ private:
                 continue;
             }
             const QString title = e.shownName() + QStringLiteral(" (") + e.deviceName + QLatin1Char(')');
-            setWindowTitle(QStringLiteral("Мікшер гучності — %1").arg(title));
+            setWindowTitle(tr7("Volume Mixer - %1").arg(title));
             m_device->setName(e.shownName());
             m_device->iconButton->setIcon(QIcon::fromTheme(e.shownIcon()));
             m_device->setState(e.volume(), e.mute);
@@ -388,7 +389,7 @@ private:
         QMap<QString, App> apps;
         App sys;
         sys.key = QStringLiteral("#system");
-        sys.name = QStringLiteral("Системні звуки");
+        sys.name = tr7("System Sounds");
         sys.icon = QStringLiteral("seven-sounds");
         sys.system = true;
         const auto ss = systemSounds();
@@ -409,7 +410,7 @@ private:
             }
             QString name = props.value(QStringLiteral("application.name"));
             if (name.isEmpty()) {
-                name = props.value(QStringLiteral("media.name"), QStringLiteral("Невідома програма"));
+                name = props.value(QStringLiteral("media.name"), tr7("Unknown application"));
             }
             App &a = apps[name.toLower()];
             if (a.key.isEmpty()) {

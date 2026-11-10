@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /* Windows 7 "Browse For Folder" (SHBrowseForFolder) dialog: prompt text, folder tree rooted at the Desktop
  * (Libraries, the user folder, Computer, Network, Control Panel, Recycle Bin, the Desktop's own folders),
  * a "Папка:" field and OK / Скасувати. Measured on the reference VM (refs/browsefolder_dlg.png, 340 x 384 with frame).
@@ -28,7 +29,7 @@ public:
     Dialog(QWidget *parent, const QString &prompt, const QString &start)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Огляд папок"));
+        setWindowTitle(tr7("Browse For Folder"));
         QFont f(QStringLiteral("Segoe UI"));
         f.setPointSize(9);
         setFont(f);
@@ -62,7 +63,7 @@ public:
             m_ok->setEnabled(it && !it->data(0, PathRole).toString().isEmpty());
         });
 
-        auto *lab = new QLabel(QStringLiteral("Папка:"), this);
+        auto *lab = new QLabel(tr7("Folder:"), this);
         lab->setGeometry(16, 282, 50, 16);
         m_edit = new QLineEdit(this);
         m_edit->setGeometry(70, 278, 244, 22);
@@ -70,7 +71,7 @@ public:
         m_ok = new QPushButton(QStringLiteral("OK"), this);
         m_ok->setGeometry(158, 314, 75, 23);
         m_ok->setDefault(true);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"), this);
+        auto *cancel = new QPushButton(tr7("Cancel"), this);
         cancel->setGeometry(239, 314, 75, 23);
         QObject::connect(m_ok, &QPushButton::clicked, this, &QDialog::accept);
         QObject::connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
@@ -118,32 +119,32 @@ private:
     void build(const QString &start)
     {
         const QString desk = xdg(QStandardPaths::DesktopLocation);
-        auto *root = node(nullptr, QStringLiteral("Робочий стіл"), QStringLiteral("seven-bf-desktop"), desk, true);
+        auto *root = node(nullptr, tr7("Desktop"), QStringLiteral("seven-bf-desktop"), desk, true);
         root->setData(0, FilledRole, true);
 
-        auto *libs = node(root, QStringLiteral("Бібліотеки"), QStringLiteral("folder-library"), QString(), true);
+        auto *libs = node(root, tr7("Libraries"), QStringLiteral("folder-library"), QString(), true);
         libs->setData(0, FilledRole, true);
         const struct { const char *name; const char *icon; QStandardPaths::StandardLocation loc; } L[] = {
-            {"Документи", "folder-documents", QStandardPaths::DocumentsLocation},
-            {"Зображення", "folder-pictures", QStandardPaths::PicturesLocation},
-            {"Музика", "folder-music", QStandardPaths::MusicLocation},
-            {"Відео", "folder-videos", QStandardPaths::MoviesLocation}};
-        for (const auto &l : L) node(libs, QString::fromUtf8(l.name), QString::fromLatin1(l.icon), xdg(l.loc), hasSubdirs(xdg(l.loc)));
+            {"Documents", "folder-documents", QStandardPaths::DocumentsLocation},
+            {"Pictures", "folder-pictures", QStandardPaths::PicturesLocation},
+            {"Music", "folder-music", QStandardPaths::MusicLocation},
+            {"Videos", "folder-videos", QStandardPaths::MoviesLocation}};
+        for (const auto &l : L) node(libs, tr7(l.name), QString::fromLatin1(l.icon), xdg(l.loc), hasSubdirs(xdg(l.loc)));
 
         node(root, qEnvironmentVariable("USER"), QStringLiteral("user-home"), QDir::homePath(), true);
 
-        auto *comp = node(root, QStringLiteral("Комп'ютер"), QStringLiteral("computer"), QString(), true);
+        auto *comp = node(root, tr7("Computer"), QStringLiteral("computer"), QString(), true);
         comp->setData(0, FilledRole, true);
-        node(comp, QStringLiteral("Локальний диск (/)"), QStringLiteral("drive-harddisk"), QStringLiteral("/"), true);
+        node(comp, tr7("Local Disk (/)"), QStringLiteral("drive-harddisk"), QStringLiteral("/"), true);
         for (const QStorageInfo &s : QStorageInfo::mountedVolumes()) {
             const QString r = s.rootPath();
             if (r == QLatin1String("/") || !(r.startsWith(QLatin1String("/media/")) || r.startsWith(QLatin1String("/mnt/")) || r.startsWith(QLatin1String("/run/media/"))))
                 continue;
             node(comp, s.displayName(), QStringLiteral("drive-harddisk"), r, true);
         }
-        node(root, QStringLiteral("Мережа"), QStringLiteral("seven-bf-network"), QString(), false);
-        node(root, QStringLiteral("Панель керування"), QStringLiteral("preferences-system"), QString(), false);
-        node(root, QStringLiteral("Кошик"), QStringLiteral("user-trash"), QString(), false);
+        node(root, tr7("Network"), QStringLiteral("seven-bf-network"), QString(), false);
+        node(root, tr7("Control Panel"), QStringLiteral("preferences-system"), QString(), false);
+        node(root, tr7("Recycle Bin"), QStringLiteral("user-trash"), QString(), false);
         const auto dd = QDir(desk).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::IgnoreCase | QDir::LocaleAware);
         for (const QFileInfo &d : dd) node(root, d.fileName(), QStringLiteral("folder"), d.absoluteFilePath(), hasSubdirs(d.absoluteFilePath()));
         root->setExpanded(true);

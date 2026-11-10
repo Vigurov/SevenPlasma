@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7display.h"
@@ -141,7 +142,7 @@ public:
         state = Checking;
         error.clear();
         percent = -1;
-        progressText = QStringLiteral("Пошук оновлень...");
+        progressText = tr7("Checking for updates...");
         notify();
         PackageKit::Transaction *t = PackageKit::Daemon::refreshCache(false);
         watchProgress(t);
@@ -151,7 +152,7 @@ public:
         connect(t, &PackageKit::Transaction::finished, this, [this](PackageKit::Transaction::Exit exit) {
             state = exit == PackageKit::Transaction::ExitSuccess ? Idle : Failed;
             if (state == Failed && error.isEmpty()) {
-                error = QStringLiteral("Помилка під час пошуку оновлень.");
+                error = tr7("An error occurred while checking for updates.");
             }
             store().setValue(QStringLiteral("State/LastCheck"), QDateTime::currentDateTime());
             notify();
@@ -170,7 +171,7 @@ public:
         error.clear();
         percent = 0;
         installedNow = 0;
-        progressText = QStringLiteral("Підготовка до встановлення...");
+        progressText = tr7("Preparing to install...");
         notify();
         PackageKit::Transaction *t = PackageKit::Daemon::updatePackages(ids);
         watchProgress(t);
@@ -178,10 +179,10 @@ public:
         connect(t, &PackageKit::Transaction::package, this, [this, total](PackageKit::Transaction::Info info, const QString &id, const QString &) {
             if (info == PackageKit::Transaction::InfoUpdating || info == PackageKit::Transaction::InfoInstalling) {
                 ++installedNow;
-                progressText = QStringLiteral("Встановлення оновлення %1 з %2... (%3)").arg(qMin(installedNow, total)).arg(total).arg(PackageKit::Transaction::packageName(id));
+                progressText = tr7("Installing update %1 of %2... (%3)").arg(qMin(installedNow, total)).arg(total).arg(PackageKit::Transaction::packageName(id));
                 notify();
             } else if (info == PackageKit::Transaction::InfoDownloading) {
-                progressText = QStringLiteral("Завантаження оновлень... (%1)").arg(PackageKit::Transaction::packageName(id));
+                progressText = tr7("Downloading updates... (%1)").arg(PackageKit::Transaction::packageName(id));
                 notify();
             }
         });
@@ -196,7 +197,7 @@ public:
         connect(t, &PackageKit::Transaction::finished, this, [this](PackageKit::Transaction::Exit exit) {
             state = exit == PackageKit::Transaction::ExitSuccess ? Done : (exit == PackageKit::Transaction::ExitCancelled ? Idle : Failed);
             if (state == Failed && error.isEmpty()) {
-                error = QStringLiteral("Не вдалося встановити оновлення.");
+                error = tr7("The updates could not be installed.");
             }
             if (QFile::exists(QStringLiteral("/var/run/reboot-required"))) {
                 restartNeeded = true;
@@ -324,38 +325,38 @@ private:
 inline QString sizeText(qulonglong bytes)
 {
     if (bytes >= 1024 * 1024) {
-        return QStringLiteral("%1 МБ").arg(QLocale(QLocale::Ukrainian).toString(bytes / 1048576.0, 'f', 1));
+        return tr7("%1 MB").arg(QLocale{}.toString(bytes / 1048576.0, 'f', 1));
     }
-    return QStringLiteral("%1 КБ").arg(qMax<qulonglong>(1, bytes / 1024));
+    return tr7("%1 KB").arg(qMax<qulonglong>(1, bytes / 1024));
 }
 
 inline QString whenText(const QDateTime &t)
 {
     if (!t.isValid()) {
-        return QStringLiteral("Ніколи");
+        return tr7("Never");
     }
     const QString time = t.toString(QStringLiteral("HH:mm"));
     const int days = t.date().daysTo(QDate::currentDate());
     if (days == 0) {
-        return QStringLiteral("Сьогодні о %1").arg(time);
+        return tr7("Today at %1").arg(time);
     }
     if (days == 1) {
-        return QStringLiteral("Учора о %1").arg(time);
+        return tr7("Yesterday at %1").arg(time);
     }
-    return QStringLiteral("%1 о %2").arg(t.toString(QStringLiteral("dd.MM.yyyy")), time);
+    return tr7("%1 at %2").arg(t.toString(QStringLiteral("dd.MM.yyyy")), time);
 }
 
 inline QString countText(int n, bool important)
 {
-    const QString kind = important ? QStringLiteral("важлив") : QStringLiteral("необов'язков");
+    const QString kind = important ? tr7("important") : tr7("optional");
     const int m10 = n % 10, m100 = n % 100;
     if (m10 == 1 && m100 != 11) {
-        return QStringLiteral("%1 %2е оновлення доступне").arg(n).arg(kind);
+        return tr7("%1 %2 update is available").arg(n).arg(kind);
     }
     if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) {
-        return QStringLiteral("%1 %2і оновлення доступні").arg(n).arg(kind);
+        return tr7("%1 %2 updates are available").arg(n).arg(kind);
     }
-    return QStringLiteral("%1 %2их оновлень доступно").arg(n).arg(kind);
+    return tr7("%1 %2 updates are available", "many").arg(n).arg(kind);
 }
 
 /* ---------------- update history (apt) ---------------- */
@@ -394,7 +395,7 @@ inline QList<HistoryRow> history()
                 auto it = re.globalMatch(line.mid(9));
                 while (it.hasNext()) {
                     const auto m = it.next();
-                    rows.append({QStringLiteral("Оновлення для %1 (%2)").arg(m.captured(1).section(QLatin1Char(':'), 0, 0), m.captured(3)), QStringLiteral("Успішно"), when});
+                    rows.append({tr7("Update for %1 (%2)").arg(m.captured(1).section(QLatin1Char(':'), 0, 0), m.captured(3)), tr7("Succeeded"), when});
                 }
             }
         }
@@ -538,15 +539,15 @@ inline QWidget *page(const QList<Win7Display::SideItem> &links, const QList<Win7
 
 inline QList<Win7Display::SideItem> sideLinks(const Nav &nav)
 {
-    return {{QStringLiteral("Перевірити наявність оновлень"), [] { Engine::self().check(); }},
-            {QStringLiteral("Змінити параметри"), [nav] { nav.open(SettingsView); }},
-            {QStringLiteral("Переглянути журнал оновлень"), [nav] { nav.open(HistoryView); }},
-            {QStringLiteral("Відновити приховані оновлення"), [nav] { nav.open(HiddenView); }}};
+    return {{tr7("Check for updates", "button"), [] { Engine::self().check(); }},
+            {tr7("Change settings"), [nav] { nav.open(SettingsView); }},
+            {tr7("View update history"), [nav] { nav.open(HistoryView); }},
+            {tr7("Restore hidden updates"), [nav] { nav.open(HiddenView); }}};
 }
 
 inline QList<Win7Display::SideItem> seeAlso(const Nav &nav)
 {
-    return {{QStringLiteral("Встановлені оновлення"), [nav] { nav.open(Win7Programs::UpdatesView); }}};
+    return {{tr7("Installed Updates"), [nav] { nav.open(Win7Programs::UpdatesView); }}};
 }
 
 /** "Windows Update": the status box and the three lines under it */
@@ -560,7 +561,7 @@ public:
         auto *v = new QVBoxLayout(content);
         v->setContentsMargins(32, 18, 30, 18);
         v->setSpacing(14);
-        v->addWidget(Win7Programs::pageTitle(QStringLiteral("Центр оновлення Windows")));
+        v->addWidget(Win7Programs::pageTitle(tr7("Windows Update")));
         m_box = new StatusBox;
         m_box->setMaximumWidth(640);
         auto *bh = new QHBoxLayout(m_box);
@@ -615,16 +616,16 @@ public:
         grid->setVerticalSpacing(6);
         m_lastCheck = new QLabel;
         m_lastInstall = new QLabel;
-        grid->addWidget(grey(QStringLiteral("Остання перевірка оновлень:")), 0, 0);
+        grid->addWidget(grey(tr7("Most recent check for updates:")), 0, 0);
         grid->addWidget(m_lastCheck, 0, 1);
-        grid->addWidget(grey(QStringLiteral("Оновлення встановлено:")), 1, 0);
+        grid->addWidget(grey(tr7("Updates were installed:")), 1, 0);
         auto *installedRow = new QHBoxLayout;
         installedRow->addWidget(m_lastInstall);
-        installedRow->addWidget(new Link(QStringLiteral("Переглянути журнал оновлень"), [this] { m_nav.open(HistoryView); }));
+        installedRow->addWidget(new Link(tr7("View update history"), [this] { m_nav.open(HistoryView); }));
         installedRow->addStretch(1);
         grid->addLayout(installedRow, 1, 1);
-        grid->addWidget(grey(QStringLiteral("Ви отримуєте оновлення:")), 2, 0);
-        grid->addWidget(new QLabel(QStringLiteral("Для системи та програм із репозиторіїв Ubuntu.")), 2, 1);
+        grid->addWidget(grey(tr7("You receive updates:")), 2, 0);
+        grid->addWidget(new QLabel(tr7("For the system and programs from the Ubuntu repositories.")), 2, 1);
         grid->setColumnStretch(2, 1);
         v->addLayout(grid);
         v->addStretch(1);
@@ -694,52 +695,52 @@ private:
         QString icon = QStringLiteral("seven-wu-app");
         if (e.state == Engine::Checking) {
             m_box->tone = StatusBox::Blue;
-            m_title->setText(QStringLiteral("Пошук оновлень..."));
-            m_text->setText(e.progressText == QStringLiteral("Пошук оновлень...") ? QString() : e.progressText);
+            m_title->setText(tr7("Checking for updates..."));
+            m_text->setText(e.progressText == tr7("Checking for updates...") ? QString() : e.progressText);
             m_button->setVisible(false);
         } else if (e.state == Engine::Installing) {
             m_box->tone = StatusBox::Blue;
-            m_title->setText(QStringLiteral("Встановлення оновлень..."));
+            m_title->setText(tr7("Installing updates..."));
             m_text->setText(e.progressText);
-            m_button->setText(QStringLiteral("Зупинити встановлення"));
+            m_button->setText(tr7("Stop installation"));
         } else if (e.state == Engine::Failed) {
             m_box->tone = StatusBox::Red;
             icon = QStringLiteral("seven-wu-shield");
-            m_title->setText(QStringLiteral("Windows не вдалося виконати пошук або встановлення оновлень"));
+            m_title->setText(tr7("Windows could not search for or install updates"));
             m_text->setText(e.error);
-            m_button->setText(QStringLiteral("Повторити спробу"));
+            m_button->setText(tr7("Try again"));
         } else if (e.restartNeeded) {
             m_box->tone = StatusBox::Yellow;
             icon = QStringLiteral("seven-wu-shield");
-            m_title->setText(QStringLiteral("Перезавантажте комп'ютер, щоб завершити встановлення оновлень"));
-            m_text->setText(QStringLiteral("Збережіть файли й закрийте всі програми перед перезавантаженням."));
-            m_button->setText(QStringLiteral("Перезавантажити зараз"));
+            m_title->setText(tr7("Restart your computer to finish installing updates"));
+            m_text->setText(tr7("Save your files and close all programs before restarting."));
+            m_button->setText(tr7("Restart now"));
         } else if (important > 0) {
             m_box->tone = StatusBox::Yellow;
             icon = QStringLiteral("seven-wu-shield");
-            m_title->setText(QStringLiteral("Завантажте й установіть оновлення для комп'ютера"));
-            m_text->setText(QStringLiteral("Без найновіших оновлень комп'ютер уразливіший до атак і проблем із продуктивністю."));
+            m_title->setText(tr7("Download and install updates for your computer"));
+            m_text->setText(tr7("Without the latest updates the computer is more vulnerable to attacks and performance problems."));
             m_importantLink->setText(countText(important, true));
             m_importantLink->setVisible(true);
             if (optional > 0) {
                 m_optionalLink->setText(countText(optional, false));
                 m_optionalLink->setVisible(true);
             }
-            m_selected->setText(selected ? QStringLiteral("Вибрано оновлень: %1%2").arg(selected).arg(size ? QStringLiteral(", ") + sizeText(size) : QString())
-                                         : QStringLiteral("Не вибрано жодного оновлення."));
+            m_selected->setText(selected ? tr7("%1 updates selected%2").arg(selected).arg(size ? QStringLiteral(", ") + sizeText(size) : QString())
+                                         : tr7("No updates are selected."));
             m_selected->setVisible(true);
-            m_button->setText(QStringLiteral("Установити оновлення"));
+            m_button->setText(tr7("Install updates"));
             m_button->setIcon(QIcon::fromTheme(QStringLiteral("seven-cp-shield")));
         } else {
             m_box->tone = StatusBox::Green;
             icon = QStringLiteral("seven-wu-ok");
-            m_title->setText(e.loaded ? QStringLiteral("Windows оновлено") : QStringLiteral("Перевірка стану оновлень..."));
-            m_text->setText(e.state == Engine::Done ? QStringLiteral("Оновлення успішно встановлено.") : QStringLiteral("Немає доступних оновлень для вашого комп'ютера."));
+            m_title->setText(e.loaded ? tr7("Windows is up to date") : tr7("Checking the status of updates..."));
+            m_text->setText(e.state == Engine::Done ? tr7("The updates were installed successfully.") : tr7("There are no updates available for your computer."));
             if (optional > 0) {
                 m_optionalLink->setText(countText(optional, false));
                 m_optionalLink->setVisible(true);
             }
-            m_button->setText(QStringLiteral("Перевірити наявність оновлень"));
+            m_button->setText(tr7("Check for updates", "button"));
         }
         m_icon->setPixmap(QIcon::fromTheme(icon).pixmap(48, 48));
         m_box->update();
@@ -775,7 +776,7 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(24, 18, 24, 14);
         v->setSpacing(10);
-        v->addWidget(Win7Programs::pageTitle(QStringLiteral("Виберіть оновлення, які потрібно встановити")));
+        v->addWidget(Win7Programs::pageTitle(tr7("Select the updates you want to install")));
         auto *h = new QHBoxLayout;
         h->setSpacing(0);
         // left column: the two kinds
@@ -796,7 +797,7 @@ public:
         m_list = new QTreeWidget;
         Win7HeaderView::install(m_list);
         m_list->setRootIsDecorated(false);
-        m_list->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Розмір")});
+        m_list->setHeaderLabels({tr7("Name"), tr7("Size")});
         m_list->setColumnWidth(0, 360);
         m_list->setContextMenuPolicy(Qt::CustomContextMenu);
         h->addWidget(m_list, 1);
@@ -813,7 +814,7 @@ public:
         m_total = new QLabel;
         bottom->addWidget(m_total, 1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(86);
             bottom->addWidget(b);
@@ -834,7 +835,7 @@ public:
                 return;
             }
             QMenu menu;
-            menu.addAction(QStringLiteral("Приховати оновлення"), this, [this, it] {
+            menu.addAction(tr7("Hide update"), this, [this, it] {
                 QStringList names = hiddenNames();
                 names << m_work.at(it->data(0, Qt::UserRole).toInt()).name;
                 names.removeDuplicates();
@@ -867,8 +868,8 @@ private:
         for (const Update &u : std::as_const(m_work)) {
             (u.important ? important : optional)++;
         }
-        m_importantBtn->setText(QStringLiteral("Важливі: %1").arg(important));
-        m_optionalBtn->setText(QStringLiteral("Необов'язкові: %1").arg(optional));
+        m_importantBtn->setText(tr7("Important: %1").arg(important));
+        m_optionalBtn->setText(tr7("Optional: %1").arg(optional));
         QFont b = m_importantBtn->font();
         b.setBold(m_tab == 0);
         m_importantBtn->setFont(b);
@@ -886,7 +887,7 @@ private:
             if (u.important != (m_tab == 0)) {
                 continue;
             }
-            auto *it = new QTreeWidgetItem(m_list, {QStringLiteral("Оновлення для %1 (%2)").arg(u.name, u.version), u.size ? sizeText(u.size) : QString()});
+            auto *it = new QTreeWidgetItem(m_list, {tr7("Update for %1 (%2)").arg(u.name, u.version), u.size ? sizeText(u.size) : QString()});
             it->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
             it->setCheckState(0, u.selected ? Qt::Checked : Qt::Unchecked);
             it->setData(0, Qt::UserRole, i);
@@ -900,13 +901,13 @@ private:
     void showDetails(QTreeWidgetItem *it)
     {
         if (!it || it->data(0, Qt::UserRole).isNull()) {
-            m_details->setText(QStringLiteral("<span style='color:#5a6779'>Виберіть оновлення, щоб переглянути відомості про нього.</span>"));
+            m_details->setText(tr7("<span style='color:#5a6779'>Select an update to see information about it.</span>"));
             return;
         }
         const Update &u = m_work.at(it->data(0, Qt::UserRole).toInt());
-        m_details->setText(QStringLiteral("<b>%1</b><br><br>%2<br><br><span style='color:#5a6779'>Версія: %3<br>%4</span>")
+        m_details->setText(tr7("<b>%1</b><br><br>%2<br><br><span style='color:#5a6779'>Version: %3<br>%4</span>")
                                .arg(u.name.toHtmlEscaped(), u.summary.toHtmlEscaped().left(600), u.version.toHtmlEscaped(),
-                                    u.important ? QStringLiteral("Важливе оновлення") : QStringLiteral("Необов'язкове оновлення")));
+                                    u.important ? tr7("Important update") : tr7("Optional update")));
     }
 
     void updateTotal()
@@ -919,8 +920,8 @@ private:
                 size += u.size;
             }
         }
-        m_total->setText(n ? QStringLiteral("Загалом вибрано: %1 оновлень%2").arg(n).arg(size ? QStringLiteral(", ") + sizeText(size) : QString())
-                           : QStringLiteral("Не вибрано жодного оновлення."));
+        m_total->setText(n ? tr7("Total selected: %1 updates%2").arg(n).arg(size ? QStringLiteral(", ") + sizeText(size) : QString())
+                           : tr7("No updates are selected."));
     }
 
     Nav m_nav;
@@ -943,10 +944,8 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *v = new QVBoxLayout(w);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(10);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Виберіть, як Windows може встановлювати оновлення")));
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Коли комп'ютер підключено до Інтернету, Windows може автоматично перевіряти наявність важливих оновлень "
-                                                      "і встановлювати їх за допомогою цих параметрів. Коли з'являтимуться нові оновлення, їх також можна встановити "
-                                                      "перед вимкненням комп'ютера.")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Choose how Windows can install updates")));
+    v->addWidget(Win7Programs::wrapped(tr7("When your computer is online, Windows can automatically check for important updates and install them using these settings. When new updates are available, you can also install them before shutting down the computer.")));
     const AutoSettings s = readAuto();
     auto section = [&](const QString &icon, const QString &title) {
         auto *t = new QLabel(title);
@@ -966,21 +965,21 @@ inline QWidget *buildSettingsPage(const Nav &nav)
         v->addLayout(row);
         return col;
     };
-    QVBoxLayout *imp = section(QStringLiteral("seven-wu-shield"), QStringLiteral("Важливі оновлення"));
+    QVBoxLayout *imp = section(QStringLiteral("seven-wu-shield"), tr7("Important updates"));
     auto *mode = new QComboBox;
-    mode->addItems({QStringLiteral("Встановлювати оновлення автоматично (рекомендовано)"), QStringLiteral("Завантажувати оновлення, але дозволяти мені вибирати, чи встановлювати їх"),
-                    QStringLiteral("Перевіряти наявність оновлень, але дозволяти мені вибирати, чи завантажувати й встановлювати їх"),
-                    QStringLiteral("Ніколи не перевіряти наявність оновлень (не рекомендовано)")});
+    mode->addItems({tr7("Install updates automatically (recommended)"), tr7("Download updates but let me choose whether to install them"),
+                    tr7("Check for updates but let me choose whether to download and install them"),
+                    tr7("Never check for updates (not recommended)")});
     mode->setCurrentIndex(s.mode);
     mode->setMaximumWidth(520);
     imp->addWidget(mode);
     auto *when = new QHBoxLayout;
-    auto *whenLabel = new QLabel(QStringLiteral("Встановлювати нові оновлення:"));
+    auto *whenLabel = new QLabel(tr7("Install new updates:"));
     auto *day = new QComboBox;
-    day->addItems({QStringLiteral("Щодня"), QStringLiteral("Щонеділі"), QStringLiteral("Щопонеділка"), QStringLiteral("Щовівторка"), QStringLiteral("Щосереди"),
-                   QStringLiteral("Щочетверга"), QStringLiteral("Щоп'ятниці"), QStringLiteral("Щосуботи")});
+    day->addItems({tr7("Daily"), tr7("Every Sunday"), tr7("Every Monday"), tr7("Every Tuesday"), tr7("Every Wednesday"),
+                   tr7("Every Thursday"), tr7("Every Friday"), tr7("Every Saturday")});
     day->setCurrentIndex(s.day);
-    auto *at = new QLabel(QStringLiteral("о"));
+    auto *at = new QLabel(tr7("at"));
     auto *hour = new QComboBox;
     for (int h = 0; h < 24; ++h) {
         hour->addItem(QStringLiteral("%1:00").arg(h), h);
@@ -999,11 +998,11 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     };
     syncWhen(s.mode);
     QObject::connect(mode, &QComboBox::currentIndexChanged, w, syncWhen);
-    QVBoxLayout *rec = section(QStringLiteral("seven-wu-recommended"), QStringLiteral("Рекомендовані оновлення"));
-    auto *recommended = new QCheckBox(QStringLiteral("Отримувати рекомендовані оновлення так само, як і важливі"));
+    QVBoxLayout *rec = section(QStringLiteral("seven-wu-recommended"), tr7("Recommended updates"));
+    auto *recommended = new QCheckBox(tr7("Give me recommended updates the same way I receive important updates"));
     recommended->setChecked(s.recommended);
     rec->addWidget(recommended);
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Примітка. Центр оновлення Windows може спочатку оновитися сам, перш ніж перевіряти наявність інших оновлень.")));
+    v->addWidget(Win7Programs::wrapped(tr7("Note: Windows Update might update itself automatically first when checking for other updates.")));
     v->addStretch(1);
     auto *line = new QFrame;
     line->setFixedHeight(1);
@@ -1012,7 +1011,7 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *btns = new QHBoxLayout;
     btns->addStretch(1);
     auto *ok = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     for (QPushButton *b : {ok, cancel}) {
         b->setMinimumWidth(86);
         btns->addWidget(b);
@@ -1042,19 +1041,19 @@ inline QWidget *buildHistoryPage(const Nav &nav)
     auto *v = new QVBoxLayout(w);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(10);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Перегляд журналу оновлень")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Review your update history")));
     auto *intro = new QHBoxLayout;
-    intro->addWidget(new QLabel(QStringLiteral("Перевірте стовпець «Стан», щоб переконатися, що всі важливі оновлення встановлено успішно.")));
+    intro->addWidget(new QLabel(tr7("Check the Status column to ensure all important updates were successful.")));
     intro->addStretch(1);
     v->addLayout(intro);
     auto *list = new Win7Programs::DetailsTree;
-    list->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Стан"), QStringLiteral("Важливість"), QStringLiteral("Дата встановлення")});
+    list->setHeaderLabels({tr7("Name"), tr7("Status"), tr7("Importance"), tr7("Date Installed")});
     list->setColumnWidth(0, 420);
     list->setColumnWidth(1, 90);
     list->setColumnWidth(2, 90);
     list->setColumnWidth(3, 120);
     for (const HistoryRow &r : history()) {
-        auto *it = new QTreeWidgetItem(list, {r.name, r.status, QStringLiteral("Важливе"), r.date.toString(QStringLiteral("dd.MM.yyyy"))});
+        auto *it = new QTreeWidgetItem(list, {r.name, r.status, tr7("Important"), r.date.toString(QStringLiteral("dd.MM.yyyy"))});
         it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-wu-important")));
     }
     v->addWidget(list, 1);
@@ -1078,10 +1077,10 @@ inline QWidget *buildHiddenPage(const Nav &nav)
     auto *v = new QVBoxLayout(w);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(10);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Відновлення прихованих оновлень")));
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Виберіть оновлення, які потрібно відновити. Windows знову пропонуватиме їх і встановлюватиме автоматично.")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Restore Hidden Updates")));
+    v->addWidget(Win7Programs::wrapped(tr7("Select the updates you want to restore. Windows will offer them again and install them automatically.")));
     auto *list = new Win7Programs::DetailsTree;
-    list->setHeaderLabels({QStringLiteral("Ім'я")});
+    list->setHeaderLabels({tr7("Name")});
     list->setColumnWidth(0, 520);
     const QStringList names = hiddenNames();
     for (const QString &n : names) {
@@ -1090,13 +1089,13 @@ inline QWidget *buildHiddenPage(const Nav &nav)
         it->setCheckState(0, Qt::Unchecked);
     }
     if (names.isEmpty()) {
-        new QTreeWidgetItem(list, {QStringLiteral("Немає прихованих оновлень.")});
+        new QTreeWidgetItem(list, {tr7("There are no hidden updates.")});
     }
     v->addWidget(list, 1);
     auto *btns = new QHBoxLayout;
     btns->addStretch(1);
-    auto *restore = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Відновити"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *restore = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), tr7("Restore"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     restore->setEnabled(!names.isEmpty());
     for (QPushButton *b : {restore, cancel}) {
         b->setMinimumWidth(86);
@@ -1126,15 +1125,15 @@ inline QString viewTitle(int v)
 {
     switch (v) {
     case SelectView:
-        return QStringLiteral("Вибір оновлень для встановлення");
+        return tr7("Select updates to install");
     case SettingsView:
-        return QStringLiteral("Змінення параметрів");
+        return tr7("Change settings", "update");
     case HistoryView:
-        return QStringLiteral("Перегляд журналу оновлень");
+        return tr7("Review your update history");
     case HiddenView:
-        return QStringLiteral("Відновлення прихованих оновлень");
+        return tr7("Restore Hidden Updates");
     default:
-        return QStringLiteral("Центр оновлення Windows");
+        return tr7("Windows Update");
     }
 }
 

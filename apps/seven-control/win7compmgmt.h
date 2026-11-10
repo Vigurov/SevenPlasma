@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "../seven-devmgr/devmgrview.h"
 #include "win7diskmgmt.h"
@@ -50,7 +51,7 @@ inline QTreeWidget *resultList(const QStringList &columns, const QList<int> &wid
 inline QString dateText(qint64 usec)
 {
     if (usec <= 0) {
-        return QStringLiteral("Ніколи");
+        return tr7("Never");
     }
     return QDateTime::fromMSecsSinceEpoch(usec / 1000).toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"));
 }
@@ -62,25 +63,25 @@ public:
     {
         m_ev = new Win7Event::EventViewer(true);
         m_ev->setAttribute(Qt::WA_DeleteOnClose);
-        m_ev->setWindowTitle(QStringLiteral("Керування комп'ютером"));
+        m_ev->setWindowTitle(tr7("Computer Management"));
         m_ev->setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-at-compmgmt")));
         m_ev->resize(1080, 700);
 
         // the console tree of compmgmt.msc
         QTreeWidget *tree = m_ev->tree();
-        m_root = m_ev->addHostNode(nullptr, QStringLiteral("Керування комп'ютером (локальний)"), QStringLiteral("seven-at-compmgmt"), Root);
-        auto *tools = m_ev->addHostNode(m_root, QStringLiteral("Службові програми"), QStringLiteral("seven-cmp-tools"), Tools);
-        m_ev->addHostNode(tools, QStringLiteral("Планувальник завдань"), QStringLiteral("seven-cmp-sched"), Scheduler);
-        m_ev->addHostNode(tools, QStringLiteral("Спільні папки"), QStringLiteral("seven-cmp-shares"), Shares);
-        auto *users = m_ev->addHostNode(tools, QStringLiteral("Локальні користувачі й групи"), QStringLiteral("seven-cmp-users"), Users);
-        m_ev->addHostNode(users, QStringLiteral("Користувачі"), QStringLiteral("seven-cmp-usersfolder"), UsersFolder);
-        m_ev->addHostNode(users, QStringLiteral("Групи"), QStringLiteral("seven-cmp-groupsfolder"), GroupsFolder);
-        m_ev->addHostNode(tools, QStringLiteral("Продуктивність"), QStringLiteral("seven-cmp-perf"), Perf);
-        m_ev->addHostNode(tools, QStringLiteral("Диспетчер пристроїв"), QStringLiteral("seven-cpi-devmgr"), DevMgr);
-        auto *storage = m_ev->addHostNode(m_root, QStringLiteral("Запам'ятовувальні пристрої"), QStringLiteral("seven-cmp-storage"), Storage);
-        m_ev->addHostNode(storage, QStringLiteral("Керування дисками"), QStringLiteral("seven-at-disks"), Disks);
-        auto *servApps = m_ev->addHostNode(m_root, QStringLiteral("Служби й програми"), QStringLiteral("seven-cmp-servapps"), ServApps);
-        m_ev->addHostNode(servApps, QStringLiteral("Служби"), QStringLiteral("seven-cmp-services"), Services);
+        m_root = m_ev->addHostNode(nullptr, tr7("Computer Management (Local)"), QStringLiteral("seven-at-compmgmt"), Root);
+        auto *tools = m_ev->addHostNode(m_root, tr7("System Tools"), QStringLiteral("seven-cmp-tools"), Tools);
+        m_ev->addHostNode(tools, tr7("Task Scheduler"), QStringLiteral("seven-cmp-sched"), Scheduler);
+        m_ev->addHostNode(tools, tr7("Shared Folders"), QStringLiteral("seven-cmp-shares"), Shares);
+        auto *users = m_ev->addHostNode(tools, tr7("Local Users and Groups"), QStringLiteral("seven-cmp-users"), Users);
+        m_ev->addHostNode(users, tr7("Users"), QStringLiteral("seven-cmp-usersfolder"), UsersFolder);
+        m_ev->addHostNode(users, tr7("Groups"), QStringLiteral("seven-cmp-groupsfolder"), GroupsFolder);
+        m_ev->addHostNode(tools, tr7("Performance"), QStringLiteral("seven-cmp-perf"), Perf);
+        m_ev->addHostNode(tools, tr7("Device Manager"), QStringLiteral("seven-cpi-devmgr"), DevMgr);
+        auto *storage = m_ev->addHostNode(m_root, tr7("Storage"), QStringLiteral("seven-cmp-storage"), Storage);
+        m_ev->addHostNode(storage, tr7("Disk Management"), QStringLiteral("seven-at-disks"), Disks);
+        auto *servApps = m_ev->addHostNode(m_root, tr7("Services and Applications"), QStringLiteral("seven-cmp-servapps"), ServApps);
+        m_ev->addHostNode(servApps, tr7("Services"), QStringLiteral("seven-cmp-services"), Services);
         // Event Viewer sits second under System Tools, as in Windows 7
         m_ev->attachEvents(tools, 1);
         m_ev->eventsRoot()->setExpanded(false);
@@ -89,7 +90,7 @@ public:
         storage->setExpanded(true);
 
         // result pages
-        m_children = resultList({QStringLiteral("Ім'я")}, {480});
+        m_children = resultList({tr7("Name")}, {480});
         m_children->setSortingEnabled(false);
         m_childrenPage = addPage(m_children);
         QObject::connect(m_children, &QTreeWidget::itemDoubleClicked, m_ev, [this](QTreeWidgetItem *it) {
@@ -98,22 +99,22 @@ public:
                 m_ev->tree()->setCurrentItem(target);
             }
         });
-        m_sched = resultList({QStringLiteral("Ім'я"), QStringLiteral("Стан"), QStringLiteral("Запускає"), QStringLiteral("Час наступного запуску"), QStringLiteral("Час останнього запуску")},
+        m_sched = resultList({tr7("Name"), tr7("Status"), tr7("Runs"), tr7("Next Run Time"), tr7("Last Run Time")},
                              {200, 70, 200, 150, 150});
         m_schedPage = addPage(m_sched);
-        m_shares = resultList({QStringLiteral("Спільний ресурс"), QStringLiteral("Шлях до папки"), QStringLiteral("Тип"), QStringLiteral("Опис")}, {140, 260, 80, 200});
+        m_shares = resultList({tr7("Share Name"), tr7("Folder Path"), tr7("Type"), tr7("Description")}, {140, 260, 80, 200});
         m_sharesPage = addPage(m_shares);
-        m_users = resultList({QStringLiteral("Ім'я"), QStringLiteral("Повне ім'я"), QStringLiteral("Опис")}, {140, 180, 300});
+        m_users = resultList({tr7("Name"), tr7("Full Name"), tr7("Description")}, {140, 180, 300});
         m_usersPage = addPage(m_users);
-        m_groups = resultList({QStringLiteral("Ім'я"), QStringLiteral("Опис")}, {160, 400});
+        m_groups = resultList({tr7("Name"), tr7("Description")}, {160, 400});
         m_groupsPage = addPage(m_groups);
-        m_services = resultList({QStringLiteral("Ім'я"), QStringLiteral("Опис"), QStringLiteral("Стан"), QStringLiteral("Тип запуску"), QStringLiteral("Вхід від імені")},
+        m_services = resultList({tr7("Name"), tr7("Description"), tr7("Status"), tr7("Startup Type"), tr7("Log On As")},
                                 {190, 260, 70, 100, 120});
         m_servicesPage = addPage(m_services);
         QObject::connect(m_services, &QTreeWidget::currentItemChanged, m_ev, [this] { m_ev->setActionGroups(actions(m_ev->tree()->currentItem())); });
-        m_perfPage = addPage(launcher(QStringLiteral("seven-cmp-perf"), QStringLiteral("Продуктивність"),
-                                      QStringLiteral("Монітор ресурсів показує, як програми використовують процесор, пам'ять, диск і мережу."),
-                                      QStringLiteral("Відкрити монітор ресурсів"), [] {
+        m_perfPage = addPage(launcher(QStringLiteral("seven-cmp-perf"), tr7("Performance"),
+                                      tr7("Resource Monitor shows how programs use the processor, memory, disk and network."),
+                                      tr7("Open Resource Monitor"), [] {
                                           QProcess::startDetached(QDir::homePath() + QStringLiteral("/.local/bin/seven-taskmgr"), {QStringLiteral("--tab"), QStringLiteral("3")});
                                       }));
         // Device Manager: the devmgr snap-in itself, as in Windows 7 (not a link to the separate window)
@@ -139,7 +140,7 @@ public:
         }
         QToolBar *bar = m_ev->toolBar();
         // "Up one level" sits after back/forward in Computer Management
-        auto *up = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-up")), QStringLiteral("Вгору на один рівень"), m_ev);
+        auto *up = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-up")), tr7("Up One Level"), m_ev);
         QObject::connect(up, &QAction::triggered, m_ev, [this] {
             QTreeWidgetItem *it = m_ev->tree()->currentItem();
             if (it && it->parent()) {
@@ -270,11 +271,11 @@ private:
         }
         if (id == Services) {
             QTreeWidgetItem *svc = m_services->currentItem();
-            QList<Win7Event::ActionItem> more{{QStringLiteral("Оновити"), QStringLiteral("seven-mmc-refresh"), [this] { fillServices(); }}};
-            QList<Win7Event::ActionGroup> groups{{QStringLiteral("Служби"), more}};
+            QList<Win7Event::ActionItem> more{{tr7("Refresh"), QStringLiteral("seven-mmc-refresh"), [this] { fillServices(); }}};
+            QList<Win7Event::ActionGroup> groups{{tr7("Services"), more}};
             if (svc) {
                 const QString unit = svc->data(0, Qt::UserRole).toString();
-                const bool running = svc->text(2) == QLatin1String("Працює");
+                const bool running = svc->text(2) == tr7("Started");
                 auto ctl = [this, unit](const QString &verb) {
                     return [this, unit, verb] {
                         QProcess::execute(QStringLiteral("pkexec"), {QStringLiteral("systemctl"), verb, unit});
@@ -282,25 +283,25 @@ private:
                     };
                 };
                 groups.append({svc->text(0),
-                               {{QStringLiteral("Запустити"), QString(), ctl(QStringLiteral("start")), !running},
-                                {QStringLiteral("Зупинити"), QString(), ctl(QStringLiteral("stop")), running},
-                                {QStringLiteral("Перезапустити"), QString(), ctl(QStringLiteral("restart")), running}}});
+                               {{tr7("Start"), QString(), ctl(QStringLiteral("start")), !running},
+                                {tr7("Stop"), QString(), ctl(QStringLiteral("stop")), running},
+                                {tr7("Restart"), QString(), ctl(QStringLiteral("restart")), running}}});
             }
             return groups;
         }
-        items.append({QStringLiteral("Оновити"), QStringLiteral("seven-mmc-refresh"), [this, it] { open(it); }});
+        items.append({tr7("Refresh"), QStringLiteral("seven-mmc-refresh"), [this, it] { open(it); }});
         // MMC's "More Actions ▶"
-        Win7Event::ActionItem more{QStringLiteral("Додаткові дії"), QString(), nullptr};
+        Win7Event::ActionItem more{tr7("More Actions"), QString(), nullptr};
         more.submenu = [this, it](QMenu *menu) {
-            menu->addAction(QStringLiteral("Оновити"), m_ev, [this, it] { open(it); });
+            menu->addAction(tr7("Refresh"), m_ev, [this, it] { open(it); });
             menu->addSeparator();
-            menu->addAction(QStringLiteral("Довідка"));
+            menu->addAction(tr7("Help"));
         };
         if (id == DevMgr) {
             more.submenu = [this](QMenu *menu) {
                 menu->addAction(m_devices->scanAction());
                 menu->addSeparator();
-                menu->addAction(QStringLiteral("Довідка"));
+                menu->addAction(tr7("Help"));
             };
         }
         if (id == Root || id == Tools || id == Storage || id == ServApps || id == Users || id == DevMgr) {
@@ -322,7 +323,7 @@ private:
                 QString name = o.value(QStringLiteral("unit")).toString();
                 name.chop(6); // ".timer"
                 const qint64 next = qint64(o.value(QStringLiteral("next")).toDouble());
-                auto *it = new QTreeWidgetItem(m_sched, {name, next > 0 ? QStringLiteral("Готово") : QStringLiteral("Вимкнуто"), o.value(QStringLiteral("activates")).toString(),
+                auto *it = new QTreeWidgetItem(m_sched, {name, next > 0 ? tr7("Done") : tr7("Off", "state"), o.value(QStringLiteral("activates")).toString(),
                                                          dateText(next), dateText(qint64(o.value(QStringLiteral("last")).toDouble()))});
                 it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-cmp-sched")));
             }
@@ -371,7 +372,7 @@ private:
                 continue;
             }
             const QString full = f.at(4).section(QLatin1Char(','), 0, 0);
-            const QString desc = uid == 0 ? QStringLiteral("Вбудований обліковий запис для адміністрування комп'ютера") : QString();
+            const QString desc = uid == 0 ? tr7("Built-in account for administering the computer") : QString();
             auto *it = new QTreeWidgetItem(m_users, {f.at(0), full, desc});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-cmp-user")));
         }
@@ -381,15 +382,15 @@ private:
     {
         m_groups->clear();
         static const QHash<QString, QString> known{
-            {QStringLiteral("sudo"), QStringLiteral("Адміністратори мають повний доступ до комп'ютера")},
-            {QStringLiteral("adm"), QStringLiteral("Читання системних журналів")},
-            {QStringLiteral("lpadmin"), QStringLiteral("Керування принтерами")},
-            {QStringLiteral("users"), QStringLiteral("Користувачі")},
-            {QStringLiteral("audio"), QStringLiteral("Доступ до звукових пристроїв")},
-            {QStringLiteral("video"), QStringLiteral("Доступ до відеопристроїв")},
-            {QStringLiteral("plugdev"), QStringLiteral("Підключення знімних пристроїв")},
-            {QStringLiteral("netdev"), QStringLiteral("Керування мережею")},
-            {QStringLiteral("sambashare"), QStringLiteral("Надання спільного доступу до папок")},
+            {QStringLiteral("sudo"), tr7("Administrators have complete and unrestricted access to the computer")},
+            {QStringLiteral("adm"), tr7("Reading system logs")},
+            {QStringLiteral("lpadmin"), tr7("Managing printers")},
+            {QStringLiteral("users"), tr7("Users")},
+            {QStringLiteral("audio"), tr7("Access to audio devices")},
+            {QStringLiteral("video"), tr7("Access to video devices")},
+            {QStringLiteral("plugdev"), tr7("Mounting removable devices")},
+            {QStringLiteral("netdev"), tr7("Managing the network")},
+            {QStringLiteral("sambashare"), tr7("Sharing folders")},
         };
         for (const QString &line : run(QStringLiteral("getent"), {QStringLiteral("group")}).split(QLatin1Char('\n'))) {
             const QStringList f = line.split(QLatin1Char(':'));
@@ -402,7 +403,7 @@ private:
             }
             QString desc = known.value(f.at(0));
             if (desc.isEmpty() && !f.at(3).isEmpty()) {
-                desc = QStringLiteral("Члени: ") + f.at(3);
+                desc = tr7("Members: ") + f.at(3);
             }
             auto *it = new QTreeWidgetItem(m_groups, {f.at(0), desc});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-cmp-group")));
@@ -435,12 +436,12 @@ private:
             QString name = unit;
             name.chop(8); // ".service"
             const QString state = startup.value(unit);
-            const QString type = state == QLatin1String("enabled") ? QStringLiteral("Автоматично")
-                : state == QLatin1String("masked")                 ? QStringLiteral("Вимкнуто")
-                                                                   : QStringLiteral("Вручну");
+            const QString type = state == QLatin1String("enabled") ? tr7("Automatic")
+                : state == QLatin1String("masked")                 ? tr7("Off", "state")
+                                                                   : tr7("Manual");
             const bool running = o.value(QStringLiteral("sub")).toString() == QLatin1String("running");
-            auto *it = new QTreeWidgetItem(m_services, {name, o.value(QStringLiteral("description")).toString(), running ? QStringLiteral("Працює") : QString(), type,
-                                                        QStringLiteral("Локальна система")});
+            auto *it = new QTreeWidgetItem(m_services, {name, o.value(QStringLiteral("description")).toString(), running ? tr7("Started") : QString(), type,
+                                                        tr7("Local System")});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-cmp-services")));
             it->setData(0, Qt::UserRole, unit);
             if (unit == keep) {

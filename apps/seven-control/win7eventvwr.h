@@ -15,6 +15,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7wrapmenubar.h"
 #include "win7states.h"
@@ -84,19 +85,19 @@ inline QString levelName(int l)
 {
     switch (l) {
     case Critical:
-        return QStringLiteral("Критичний");
+        return tr7("Critical");
     case Error:
-        return QStringLiteral("Помилка");
+        return tr7("Error");
     case Warning:
-        return QStringLiteral("Попередження");
+        return tr7("Warning");
     case Verbose:
-        return QStringLiteral("Докладно");
+        return tr7("Verbose");
     case AuditSuccess:
-        return QStringLiteral("Аудит успіху");
+        return tr7("Audit Success");
     case AuditFailure:
-        return QStringLiteral("Аудит відмови");
+        return tr7("Audit Failure");
     }
-    return QStringLiteral("Відомості");
+    return tr7("Information");
 }
 
 inline QString levelIcon(int l)
@@ -163,7 +164,7 @@ inline QString userName(const QString &uid)
 {
     static QHash<QString, QString> cache;
     if (uid.isEmpty()) {
-        return QStringLiteral("Н/Д");
+        return tr7("N/A");
     }
     if (!cache.contains(uid)) {
         const passwd *pw = getpwuid(uid_t(uid.toUInt()));
@@ -215,14 +216,14 @@ inline bool isKernelAudit(const QJsonObject &o)
 inline QList<LogDef> windowsLogs()
 {
     return {
-        {QStringLiteral("Application"), QStringLiteral("Програма"), QStringLiteral("Application"), {QStringLiteral("--user")}, {}},
-        {QStringLiteral("Security"), QStringLiteral("Безпека"), QStringLiteral("Security"), {QStringLiteral("--system"), QStringLiteral("--facility=auth,authpriv")}, {}, false, true},
-        {QStringLiteral("Setup"), QStringLiteral("Інсталяція"), QStringLiteral("Setup"), {}, {}, true},
-        {QStringLiteral("System"), QStringLiteral("Система"), QStringLiteral("System"), {QStringLiteral("--system")},
+        {QStringLiteral("Application"), tr7("Application"), QStringLiteral("Application"), {QStringLiteral("--user")}, {}},
+        {QStringLiteral("Security"), tr7("Security"), QStringLiteral("Security"), {QStringLiteral("--system"), QStringLiteral("--facility=auth,authpriv")}, {}, false, true},
+        {QStringLiteral("Setup"), tr7("Setup"), QStringLiteral("Setup"), {}, {}, true},
+        {QStringLiteral("System"), tr7("System"), QStringLiteral("System"), {QStringLiteral("--system")},
          [](const QJsonObject &o) {
              return !isAuth(o) && !isKernelAudit(o);
          }},
-        {QStringLiteral("ForwardedEvents"), QStringLiteral("Перенаправлені події"), QStringLiteral("ForwardedEvents"), {}, {}},
+        {QStringLiteral("ForwardedEvents"), tr7("Forwarded Events"), QStringLiteral("ForwardedEvents"), {}, {}},
     };
 }
 
@@ -236,15 +237,15 @@ inline QList<LogDef> serviceLogs()
         return a;
     };
     return {
-        {QStringLiteral("Hardware"), QStringLiteral("Події обладнання"), QStringLiteral("HardwareEvents"), {QStringLiteral("-k")},
+        {QStringLiteral("Hardware"), tr7("Hardware Events"), QStringLiteral("HardwareEvents"), {QStringLiteral("-k")},
          [](const QJsonObject &o) {
              return !isKernelAudit(o);
          }},
-        {QStringLiteral("Network"), QStringLiteral("Мережа"), QStringLiteral("Network"), ids({"NetworkManager", "wpa_supplicant", "dhclient", "systemd-resolved", "avahi-daemon"}), {}},
-        {QStringLiteral("Power"), QStringLiteral("Електроживлення"), QStringLiteral("Power"), ids({"org_kde_powerdevil", "upowerd", "systemd-logind", "systemd-sleep"}), {}},
+        {QStringLiteral("Network"), tr7("Network"), QStringLiteral("Network"), ids({"NetworkManager", "wpa_supplicant", "dhclient", "systemd-resolved", "avahi-daemon"}), {}},
+        {QStringLiteral("Power"), tr7("Power Options"), QStringLiteral("Power"), ids({"org_kde_powerdevil", "upowerd", "systemd-logind", "systemd-sleep"}), {}},
         {QStringLiteral("Bluetooth"), QStringLiteral("Bluetooth"), QStringLiteral("Bluetooth"), ids({"bluetoothd"}), {}},
-        {QStringLiteral("Print"), QStringLiteral("Служба друку"), QStringLiteral("PrintService"), ids({"cupsd", "cups-browsed"}), {}},
-        {QStringLiteral("Snap"), QStringLiteral("Служба програм Snap"), QStringLiteral("Snapd"), ids({"snapd"}), {}},
+        {QStringLiteral("Print"), tr7("Print Service"), QStringLiteral("PrintService"), ids({"cupsd", "cups-browsed"}), {}},
+        {QStringLiteral("Snap"), tr7("Snap Application Service"), QStringLiteral("Snapd"), ids({"snapd"}), {}},
         {QStringLiteral("AppArmor"), QStringLiteral("AppArmor"), QStringLiteral("AppArmor"), {QStringLiteral("-k"), QStringLiteral("--grep=apparmor")}, {}},
     };
 }
@@ -253,13 +254,13 @@ constexpr int kMaxEvents = 5000;
 
 inline QString sizeText(double bytes)
 {
-    const QStringList units{QStringLiteral("байт"), QStringLiteral("КБ"), QStringLiteral("МБ"), QStringLiteral("ГБ"), QStringLiteral("ТБ")};
+    const QStringList units{tr7("bytes"), tr7("KB"), tr7("MB"), tr7("GB"), tr7("TB")};
     int u = 0;
     while (bytes >= 1024 && u < units.size() - 1) {
         bytes /= 1024;
         ++u;
     }
-    return u ? QLocale(QLocale::Ukrainian).toString(bytes, 'f', 2) + QLatin1Char(' ') + units.at(u) : QStringLiteral("%1 байт").arg(qint64(bytes));
+    return u ? QLocale{}.toString(bytes, 'f', 2) + QLatin1Char(' ') + units.at(u) : tr7("%1 bytes").arg(qint64(bytes));
 }
 
 /** "Archived and active journals take up 730.1M in the file system." -> "730,10 МБ" */
@@ -267,7 +268,7 @@ inline QString diskUsage(const QByteArray &out)
 {
     QString v = QString::fromUtf8(out).section(QStringLiteral("take up "), 1).section(QLatin1Char(' '), 0, 0);
     if (v.isEmpty()) {
-        return QStringLiteral("Н/Д");
+        return tr7("N/A");
     }
     const QString suffixes = QStringLiteral("BKMGT");
     double mul = 1;
@@ -304,7 +305,7 @@ inline Event eventFromJson(const QJsonObject &o, const LogDef &def)
         e.source = o.value(QStringLiteral("_COMM")).toString();
     }
     if (e.source.isEmpty()) {
-        e.source = o.value(QStringLiteral("_TRANSPORT")).toString() == QLatin1String("kernel") ? QStringLiteral("kernel") : QStringLiteral("Невідоме джерело");
+        e.source = o.value(QStringLiteral("_TRANSPORT")).toString() == QLatin1String("kernel") ? QStringLiteral("kernel") : tr7("Unknown source");
     }
     const int prio = o.value(QStringLiteral("PRIORITY")).toString(QStringLiteral("6")).toInt();
     e.level = def.security ? auditLevel(e.message) : levelFromPriority(prio);
@@ -377,13 +378,13 @@ inline QList<Event> readLog(const LogDef &def, int max = kMaxEvents)
                 const QString pkg = QString::fromUtf8(c.at(3)).section(QLatin1Char(':'), 0, 0);
                 const QString from = QString::fromUtf8(c.at(4)), to = QString::fromUtf8(c.at(5));
                 if (act == "install") {
-                    e.message = QStringLiteral("Пакет «%1» версії %2 було успішно встановлено.").arg(pkg, to);
+                    e.message = tr7("The package \"%1\" version %2 was installed successfully.").arg(pkg, to);
                     e.code = 2;
                 } else if (act == "upgrade") {
-                    e.message = QStringLiteral("Пакет «%1» було успішно оновлено з версії %2 до версії %3.").arg(pkg, from, to);
+                    e.message = tr7("The package \"%1\" was updated successfully from version %2 to version %3.").arg(pkg, from, to);
                     e.code = 3;
                 } else {
-                    e.message = QStringLiteral("Пакет «%1» версії %2 було успішно видалено.").arg(pkg, from);
+                    e.message = tr7("The package \"%1\" version %2 was removed successfully.").arg(pkg, from);
                     e.code = 4;
                 }
                 e.source = QStringLiteral("dpkg");
@@ -506,7 +507,7 @@ struct Filter {
     }
     QString describe(const QString &log) const
     {
-        QStringList l{QStringLiteral("Журнал: %1").arg(log)};
+        QStringList l{tr7("Log: %1").arg(log)};
         if (!levels.isEmpty()) {
             QStringList n;
             for (int x : {Critical, Error, Warning, Information, Verbose}) {
@@ -514,13 +515,13 @@ struct Filter {
                     n << levelName(x);
                 }
             }
-            l << QStringLiteral("Рівень: %1").arg(n.join(QStringLiteral(", ")));
+            l << tr7("Level: %1").arg(n.join(QStringLiteral(", ")));
         }
-        l << QStringLiteral("Джерело: %1").arg(sources.join(QStringLiteral(", ")));
+        l << tr7("Source: %1").arg(sources.join(QStringLiteral(", ")));
         if (!codes.trimmed().isEmpty()) {
-            l << QStringLiteral("Код події: %1").arg(codes.trimmed());
+            l << tr7("Event ID: %1").arg(codes.trimmed());
         }
-        return QStringLiteral("Відфільтровано: ") + l.join(QStringLiteral("; ")) + QLatin1Char('.');
+        return tr7("Filtered: ") + l.join(QStringLiteral("; ")) + QLatin1Char('.');
     }
     QString xml(const QString &channel) const
     {
@@ -580,19 +581,19 @@ public:
         auto *g = new QGridLayout(page);
         g->setContentsMargins(10, 12, 10, 10);
         g->setVerticalSpacing(8);
-        g->addWidget(new QLabel(QStringLiteral("Записано:")), 0, 0);
+        g->addWidget(new QLabel(tr7("Logged:")), 0, 0);
         m_when = new QComboBox;
-        const QList<QPair<QString, int>> times{{QStringLiteral("Будь-коли"), 0},           {QStringLiteral("Остання година"), 1},       {QStringLiteral("Останні 12 годин"), 12},
-                                               {QStringLiteral("Останні 24 години"), 24}, {QStringLiteral("Останні 7 днів"), 24 * 7}, {QStringLiteral("Останні 30 днів"), 24 * 30}};
+        const QList<QPair<QString, int>> times{{tr7("Any time"), 0},           {tr7("Last hour"), 1},       {tr7("Last 12 hours"), 12},
+                                               {tr7("Last 24 hours"), 24}, {tr7("Last 7 days"), 24 * 7}, {tr7("Last 30 days"), 24 * 30}};
         for (const auto &[t, h] : times) {
             m_when->addItem(t, h);
         }
         m_when->setCurrentIndex(qMax(0, m_when->findData(f.hours)));
         g->addWidget(m_when, 0, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Рівень події:")), 1, 0, Qt::AlignTop);
+        g->addWidget(new QLabel(tr7("Event level:")), 1, 0, Qt::AlignTop);
         auto *lv = new QGridLayout;
-        const QList<QPair<int, QString>> levels{{Critical, QStringLiteral("Критичний")}, {Warning, QStringLiteral("Попередження")}, {Verbose, QStringLiteral("Докладно")},
-                                                {Error, QStringLiteral("Помилка")},       {Information, QStringLiteral("Відомості")}};
+        const QList<QPair<int, QString>> levels{{Critical, tr7("Critical")}, {Warning, tr7("Warning")}, {Verbose, tr7("Verbose")},
+                                                {Error, tr7("Error")},       {Information, tr7("Information")}};
         for (int i = 0; i < levels.size(); ++i) {
             auto *c = new QCheckBox(levels.at(i).second);
             c->setChecked(f.levels.contains(levels.at(i).first));
@@ -601,50 +602,49 @@ public:
             lv->addWidget(c, i / 3, i % 3);
         }
         g->addLayout(lv, 1, 1, 1, 3);
-        m_byLog = new QRadioButton(QStringLiteral("За журналом"));
-        m_bySource = new QRadioButton(QStringLiteral("За джерелом"));
+        m_byLog = new QRadioButton(tr7("By log"));
+        m_bySource = new QRadioButton(tr7("By source"));
         m_byLog->setChecked(true);
         g->addWidget(m_byLog, 2, 0);
         auto *logsBox = new QComboBox;
         logsBox->addItem(logs.join(QStringLiteral(", ")));
         logsBox->setEnabled(false);
-        g->addWidget(new QLabel(QStringLiteral("Журнали подій:")), 2, 1);
+        g->addWidget(new QLabel(tr7("Event logs:")), 2, 1);
         g->addWidget(logsBox, 2, 2, 1, 2);
         g->addWidget(m_bySource, 3, 0);
-        g->addWidget(new QLabel(QStringLiteral("Джерела подій:")), 3, 1);
+        g->addWidget(new QLabel(tr7("Event sources:")), 3, 1);
         m_sources = new QComboBox;
         m_sources->setEditable(true);
         m_sources->addItem(QString());
         m_sources->addItems(knownSources);
         m_sources->setEditText(f.sources.join(QStringLiteral(",")));
         g->addWidget(m_sources, 3, 2, 1, 2);
-        auto *codesHelp = new QLabel(QStringLiteral("Включає або виключає коди подій. Введіть коди та діапазони кодів, розділяючи їх комами. "
-                                                    "Щоб виключити умову, спочатку введіть знак мінус. Наприклад: 1,3,5-99,-76"));
+        auto *codesHelp = new QLabel(tr7("Includes/Excludes Event IDs: Enter ID numbers and/or ID ranges separated by commas. To exclude criteria, type a minus sign first. For example 1,3,5-99,-76"));
         codesHelp->setWordWrap(true);
         g->addWidget(codesHelp, 4, 0, 1, 4);
         m_codes = new QLineEdit(f.codes);
-        m_codes->setPlaceholderText(QStringLiteral("<Усі коди подій>"));
+        m_codes->setPlaceholderText(tr7("<All Event IDs>"));
         g->addWidget(m_codes, 5, 0, 1, 4);
-        g->addWidget(new QLabel(QStringLiteral("Категорія завдання:")), 6, 0);
+        g->addWidget(new QLabel(tr7("Task category:")), 6, 0);
         auto *cat = new QComboBox;
         cat->setEnabled(false);
         g->addWidget(cat, 6, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Ключові слова:")), 7, 0);
+        g->addWidget(new QLabel(tr7("Keywords:")), 7, 0);
         auto *kw = new QComboBox;
         kw->setEnabled(false);
         g->addWidget(kw, 7, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Користувач:")), 8, 0);
+        g->addWidget(new QLabel(tr7("Username:")), 8, 0);
         m_user = new QLineEdit(f.user);
-        m_user->setPlaceholderText(QStringLiteral("<Усі користувачі>"));
+        m_user->setPlaceholderText(tr7("<All Users>"));
         g->addWidget(m_user, 8, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Комп'ютери:")), 9, 0);
+        g->addWidget(new QLabel(tr7("Computer(s):")), 9, 0);
         m_computer = new QLineEdit(f.computer);
-        m_computer->setPlaceholderText(QStringLiteral("<Усі комп'ютери>"));
+        m_computer->setPlaceholderText(tr7("<All Computers>"));
         g->addWidget(m_computer, 9, 1, 1, 3);
-        auto *clear = new QPushButton(QStringLiteral("Очистити"));
+        auto *clear = new QPushButton(tr7("Clear"));
         g->addWidget(clear, 10, 3, Qt::AlignRight);
         g->setRowStretch(11, 1);
-        tabs->addTab(page, QStringLiteral("Фільтр"));
+        tabs->addTab(page, tr7("Filter"));
         m_xml = new QPlainTextEdit;
         m_xml->setReadOnly(true);
         tabs->addTab(m_xml, QStringLiteral("XML"));
@@ -652,7 +652,7 @@ public:
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setDefault(true);
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(80);
@@ -771,18 +771,18 @@ public:
             g->addWidget(v, row, col + 1);
             return v;
         };
-        m_log = field(1, 0, QStringLiteral("Ім'я журналу:"));
-        m_source = field(2, 0, QStringLiteral("Джерело:"));
-        m_date = field(2, 2, QStringLiteral("Дата:"));
-        m_code = field(3, 0, QStringLiteral("Код події:"));
-        m_category = field(3, 2, QStringLiteral("Категорія завдання:"));
-        m_level = field(4, 0, QStringLiteral("Рівень:"));
-        m_keywords = field(4, 2, QStringLiteral("Ключові слова:"));
-        m_user = field(5, 0, QStringLiteral("Користувач:"));
-        m_computer = field(5, 2, QStringLiteral("Комп'ютер:"));
-        m_opcode = field(6, 0, QStringLiteral("Код операції:"));
-        g->addWidget(new QLabel(QStringLiteral("Докладніше:")), 7, 0);
-        m_help = new Link(QStringLiteral("Довідка журналу подій в Інтернеті"), [this] {
+        m_log = field(1, 0, tr7("Log Name:"));
+        m_source = field(2, 0, tr7("Source:"));
+        m_date = field(2, 2, tr7("Date:"));
+        m_code = field(3, 0, tr7("Event ID:"));
+        m_category = field(3, 2, tr7("Task category:"));
+        m_level = field(4, 0, tr7("Level:"));
+        m_keywords = field(4, 2, tr7("Keywords:"));
+        m_user = field(5, 0, tr7("Username:"));
+        m_computer = field(5, 2, tr7("Computer:"));
+        m_opcode = field(6, 0, tr7("OpCode:"));
+        g->addWidget(new QLabel(tr7("More Information:")), 7, 0);
+        m_help = new Link(tr7("Event Log Online Help"), [this] {
             QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.google.com/search?q=") + QUrl::toPercentEncoding(m_current.source + QLatin1Char(' ') + m_current.message.left(80))));
         });
         m_help->setWordWrap(false);
@@ -790,14 +790,14 @@ public:
         g->setColumnStretch(1, 1);
         g->setColumnStretch(3, 1);
         g->setRowStretch(8, 1);
-        addTab(general, QStringLiteral("Загальні"));
+        addTab(general, tr7("General"));
 
         auto *details = new QWidget;
         auto *dv = new QVBoxLayout(details);
         dv->setContentsMargins(8, 6, 8, 8);
         auto *mode = new QHBoxLayout;
-        m_friendlyMode = new QRadioButton(QStringLiteral("Подання для зручного читання"));
-        m_xmlMode = new QRadioButton(QStringLiteral("Подання XML"));
+        m_friendlyMode = new QRadioButton(tr7("Friendly View"));
+        m_xmlMode = new QRadioButton(tr7("XML View"));
         m_friendlyMode->setChecked(true);
         mode->addWidget(m_friendlyMode);
         mode->addWidget(m_xmlMode);
@@ -818,7 +818,7 @@ public:
         m_detailStack->addWidget(m_friendly);
         m_detailStack->addWidget(m_xml);
         dv->addWidget(m_detailStack, 1);
-        addTab(details, QStringLiteral("Докладно"));
+        addTab(details, tr7("Verbose"));
         connect(m_xmlMode, &QRadioButton::toggled, m_detailStack, [this](bool on) { m_detailStack->setCurrentIndex(on ? 1 : 0); });
         connect(this, &QTabWidget::currentChanged, this, [this](int i) {
             if (i == 1) {
@@ -837,12 +837,12 @@ public:
         m_source->setText(e.source);
         m_date->setText(e.when().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss")));
         m_code->setText(QString::number(e.code));
-        m_category->setText(QStringLiteral("Відсутня"));
+        m_category->setText(tr7("None", "screen saver"));
         m_level->setText(levelName(e.level));
-        m_keywords->setText(e.level == AuditSuccess ? QStringLiteral("Аудит успіху") : e.level == AuditFailure ? QStringLiteral("Аудит відмови") : QStringLiteral("Класичний"));
+        m_keywords->setText(e.level == AuditSuccess ? tr7("Audit Success") : e.level == AuditFailure ? tr7("Audit Failure") : tr7("Classic"));
         m_user->setText(e.user);
         m_computer->setText(e.computer);
-        m_opcode->setText(QStringLiteral("Відомості"));
+        m_opcode->setText(tr7("Information"));
         if (currentIndex() == 1) {
             fillDetails();
         }
@@ -854,8 +854,7 @@ public:
         if (full.isEmpty()) {
             full = fullEntry(m_current, m_def);
         }
-        return QStringLiteral("Ім'я журналу: %1\nДжерело:      %2\nДата:         %3\nКод події:    %4\nКатегорія завдання: Відсутня\nРівень:       %5\n"
-                              "Ключові слова: %6\nКористувач:   %7\nКомп'ютер:    %8\nОпис:\n%9\nXML події:\n%10\n")
+        return tr7("Log Name:      %1\nSource:        %2\nDate:          %3\nEvent ID:      %4\nTask Category: None\nLevel:         %5\nKeywords:      %6\nUser:          %7\nComputer:      %8\nDescription:\n%9\nEvent Xml:\n%10\n")
             .arg(m_current.log, m_current.source, m_current.when().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss")), QString::number(m_current.code),
                  levelName(m_current.level), m_keywords->text(), m_current.user, m_current.computer, m_current.message)
             .arg(eventXml(m_current, full));
@@ -1155,7 +1154,7 @@ protected:
         f.setHintingPreference(QFont::PreferNoHinting);
         p.setFont(f);
         p.setPen(QColor(0xf7, 0xf7, 0xf7));
-        p.drawText(rect().adjusted(17, 2, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Огляд і зведення"));
+        p.drawText(rect().adjusted(17, 2, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, tr7("Overview and Summary"));
         p.setFont(font());
         p.setPen(QColor(0xf4, 0xf4, 0xf4));
         p.drawText(rect().adjusted(0, 0, -6, -3), Qt::AlignRight | Qt::AlignBottom, m_right);
@@ -1377,7 +1376,7 @@ public:
             }
             delete it;
         }
-        auto *head = new QLabel(QStringLiteral("Дії"));
+        auto *head = new QLabel(tr7("Actions"));
         QFont f = head->font();
         f.setBold(true);
         head->setFont(f);
@@ -1448,7 +1447,7 @@ public:
 
     explicit EventViewer(bool hosted = false)
     {
-        setWindowTitle(QStringLiteral("Перегляд подій"));
+        setWindowTitle(tr7("Event Viewer"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-ev-app")));
         resize(1040, 680);
         buildUi();
@@ -1511,13 +1510,13 @@ private:
     /* ----- layout ----- */
     void buildUi()
     {
-        m_back = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-back")), QStringLiteral("Назад"), this);
-        m_forward = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-forward")), QStringLiteral("Вперед"), this);
+        m_back = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-back")), tr7("Back"), this);
+        m_forward = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-forward")), tr7("Forward"), this);
         m_back->setEnabled(false);
         m_forward->setEnabled(false);
-        auto *console = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-console")), QStringLiteral("Показати або приховати дерево консолі"), this);
-        auto *help = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this);
-        auto *actionPane = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-actionpane")), QStringLiteral("Показати або приховати область дій"), this);
+        auto *console = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-console")), tr7("Show/Hide Console Tree"), this);
+        auto *help = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-help")), tr7("Help"), this);
+        auto *actionPane = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-actionpane")), tr7("Show/Hide Action Pane"), this);
         console->setCheckable(true);
         console->setChecked(true);
         actionPane->setCheckable(true);
@@ -1526,13 +1525,13 @@ private:
         connect(m_forward, &QAction::triggered, this, [this] { navigate(+1); });
         connect(help, &QAction::triggered, this, [this] { showHelp(); });
 
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-open")), QStringLiteral("Відкрити збережений журнал..."), this, [this] { openSavedLog(); });
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-open")), tr7("Open Saved Log..."), this, [this] { openSavedLog(); });
         file->addSeparator();
-        file->addAction(QStringLiteral("Параметри..."))->setEnabled(false);
+        file->addAction(tr7("Options..."))->setEnabled(false);
         file->addSeparator();
-        file->addAction(QStringLiteral("Вихід"), this, &QWidget::close);
-        m_actionMenu = menuBar()->addMenu(QStringLiteral("&Дія"));
+        file->addAction(tr7("Exit"), this, &QWidget::close);
+        m_actionMenu = menuBar()->addMenu(tr7("&Action"));
         connect(m_actionMenu, &QMenu::aboutToShow, this, [this] {
             m_actionMenu->clear();
             for (const ActionGroup &g : std::as_const(m_groups)) {
@@ -1557,20 +1556,20 @@ private:
                 m_actionMenu->addSeparator();
             }
         });
-        m_viewMenu = menuBar()->addMenu(QStringLiteral("&Вигляд"));
+        m_viewMenu = menuBar()->addMenu(tr7("&View"));
         connect(m_viewMenu, &QMenu::aboutToShow, this, [this] {
             m_viewMenu->clear();
             fillViewMenu(m_viewMenu);
         });
-        QMenu *helpMenu = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        helpMenu->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this, [this] { showHelp(); });
+        QMenu *helpMenu = menuBar()->addMenu(tr7("&Help"));
+        helpMenu->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), tr7("Help"), this, [this] { showHelp(); });
         helpMenu->addSeparator();
-        helpMenu->addAction(QStringLiteral("Про програму «Перегляд подій»"), this, [this] {
-            QMessageBox::about(this, QStringLiteral("Перегляд подій"),
-                               QStringLiteral("Перегляд подій у стилі Windows 7.\nПоказує журнал systemd (journald) і журнал встановлення пакетів."));
+        helpMenu->addAction(tr7("About Event Viewer"), this, [this] {
+            QMessageBox::about(this, tr7("Event Viewer"),
+                               tr7("Event Viewer in the Windows 7 style.\nShows the systemd journal (journald) and the package installation log."));
         });
 
-        QToolBar *bar = addToolBar(QStringLiteral("Стандартна"));
+        QToolBar *bar = addToolBar(tr7("Standard"));
         m_bar = bar;
         bar->setMovable(false);
         bar->setIconSize(QSize(16, 16));
@@ -1717,7 +1716,7 @@ private:
     {
         DarkHeader *h;
         QWidget *page = pageWithHeader(h);
-        h->setText(QStringLiteral("Перегляд подій (Локальний)"));
+        h->setText(tr7("Event Viewer (Local)"));
         m_title = new TitleBand;
         page->layout()->addWidget(m_title);
         auto *scroll = new QScrollArea;
@@ -1736,16 +1735,14 @@ private:
         auto *ic = new QLabel;
         ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-ev-app")).pixmap(32, 32));
         oh->addWidget(ic, 0, Qt::AlignTop);
-        auto *ot = new QLabel(QStringLiteral("Щоб переглянути події, що відбулися на комп'ютері, виберіть у дереві консолі відповідне джерело, журнал або вузол "
-                                             "настроюваного подання. Настроюване подання «Адміністративні події» містить усі адміністративні події незалежно "
-                                             "від джерела. Зведене подання всіх журналів наведено нижче."));
+        auto *ot = new QLabel(tr7("To view events that have occurred on your computer, select the appropriate source, log or custom view node in the console tree. The Administrative Events custom view contains all the administrative events, regardless of source. An aggregate view of all the logs is shown below."));
         ot->setWordWrap(true);
         oh->addWidget(ot, 1);
-        v->addWidget(new Section(QStringLiteral("Огляд"), overview));
+        v->addWidget(new Section(tr7("Overview"), overview));
         m_admin = new QTreeWidget;
         m_admin->setHeader(new VistaHeader(m_admin));
-        m_admin->setHeaderLabels({QStringLiteral("Тип події"), QStringLiteral("Код події"), QStringLiteral("Джерело"), QStringLiteral("Журнал"), QStringLiteral("Остання година"),
-                                  QStringLiteral("24 години"), QStringLiteral("7 днів")});
+        m_admin->setHeaderLabels({tr7("Event Type"), tr7("Event ID"), tr7("Source"), tr7("Log"), tr7("Last hour"),
+                                  tr7("24 hours"), tr7("7 days")});
         for (int i : {0, 1, 2, 3, 4, 5, 6}) {
             m_admin->setColumnWidth(i, QList<int>{130, 75, 120, 80, 85, 70, 70}.at(i));
         }
@@ -1758,17 +1755,17 @@ private:
                                               "QTreeView::branch:has-children:open { image: url(%2); }")
                                   .arg(boxPath(false), boxPath(true)));
         connect(m_admin, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *it) { openSummaryItem(it); });
-        v->addWidget(new Section(QStringLiteral("Зведення адміністративних подій"), m_admin));
-        m_recent = table({QStringLiteral("Ім'я"), QStringLiteral("Опис"), QStringLiteral("Змінено"), QStringLiteral("Створено")}, {220, 110, 150, 150});
+        v->addWidget(new Section(tr7("Summary of Administrative Events"), m_admin));
+        m_recent = table({tr7("Name"), tr7("Description"), tr7("Modified"), tr7("Created")}, {220, 110, 150, 150});
         m_recent->setMinimumHeight(130);
         connect(m_recent, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *it) { selectPath(it->data(0, Qt::UserRole).toString()); });
-        v->addWidget(new Section(QStringLiteral("Нещодавно переглянуті вузли"), m_recent));
-        m_logSummary = table({QStringLiteral("Ім'я журналу"), QStringLiteral("Розмір (поточний/максимальний)"), QStringLiteral("Змінено"), QStringLiteral("Увімкнуто"),
-                              QStringLiteral("Політика збереження")},
+        v->addWidget(new Section(tr7("Recently Viewed Nodes"), m_recent));
+        m_logSummary = table({tr7("Log Name"), tr7("Size (Current/Maximum)"), tr7("Modified"), tr7("Enabled"),
+                              tr7("Retention Policy")},
                              {170, 190, 150, 90, 260});
         m_logSummary->setMinimumHeight(170);
         connect(m_logSummary, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *it) { selectPath(it->data(0, Qt::UserRole).toString()); });
-        v->addWidget(new Section(QStringLiteral("Зведення журналу"), m_logSummary));
+        v->addWidget(new Section(tr7("Log Summary"), m_logSummary));
         v->addStretch(1);
         scroll->setWidget(inner);
         page->layout()->addWidget(scroll);
@@ -1786,7 +1783,7 @@ private:
         auto *split = new QSplitter(Qt::Vertical);
         m_list = new QTreeWidget;
         m_list->setHeader(new VistaHeader(m_list));
-        m_list->setHeaderLabels({QStringLiteral("Рівень"), QStringLiteral("Дата й час"), QStringLiteral("Джерело"), QStringLiteral("Код події"), QStringLiteral("Категорія завдання")});
+        m_list->setHeaderLabels({tr7("Level"), tr7("Date and Time"), tr7("Source"), tr7("Event ID"), tr7("Task Category")});
         for (int i : {0, 1, 2, 3, 4}) {
             m_list->setColumnWidth(i, QList<int>{115, 135, 140, 80, 130}.at(i));
         }
@@ -1830,7 +1827,7 @@ private:
                 return;
             }
             const Event &e = m_shown.at(it->data(0, Qt::UserRole).toInt());
-            m_previewTitle->setText(QStringLiteral("Подія %1, %2").arg(e.code).arg(e.source));
+            m_previewTitle->setText(tr7("Event %1, %2").arg(e.code).arg(e.source));
             m_view->show(e, defFor(e));
             refreshActions();
         });
@@ -1865,7 +1862,7 @@ private:
     QWidget *buildFolderPage()
     {
         QWidget *page = pageWithHeader(m_folderHeader);
-        m_folderList = table({QStringLiteral("Ім'я"), QStringLiteral("Тип"), QStringLiteral("Кількість подій"), QStringLiteral("Розмір")}, {220, 130, 120, 100});
+        m_folderList = table({tr7("Name"), tr7("Type"), tr7("Number of Events"), tr7("Size")}, {220, 130, 120, 100});
         m_folderList->setItemDelegate(new QStyledItemDelegate(m_folderList));
         m_folderList->setStyleSheet(QStringLiteral("QTreeView { background: white; border: none; } QTreeView::item { height: 19px; }"));
         connect(m_folderList, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *it) { selectPath(it->data(0, Qt::UserRole).toString()); });
@@ -1908,21 +1905,21 @@ private:
         root.kind = Node::Root;
         QTreeWidgetItem *r;
         if (m_hostParent) {
-            r = new QTreeWidgetItem({QStringLiteral("Перегляд подій")});
+            r = new QTreeWidgetItem({tr7("Event Viewer")});
             m_hostParent->insertChild(qMin(m_hostIndex, m_hostParent->childCount()), r);
             r->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-ev-app")));
             r->setData(0, Qt::UserRole, int(m_nodes.size()));
             m_nodes.append(root);
         } else {
-            r = addNode(nullptr, QStringLiteral("Перегляд подій (Локальний)"), QStringLiteral("seven-ev-app"), root);
+            r = addNode(nullptr, tr7("Event Viewer (Local)"), QStringLiteral("seven-ev-app"), root);
         }
         m_evRoot = r;
         Node folder;
         folder.kind = Node::Folder;
-        auto *custom = addNode(r, QStringLiteral("Настроювані подання"), QStringLiteral("seven-ev-connect"), folder);
+        auto *custom = addNode(r, tr7("Custom Views"), QStringLiteral("seven-ev-connect"), folder);
         Node admin;
         admin.kind = Node::AdminView;
-        admin.name = QStringLiteral("Адміністративні події");
+        admin.name = tr7("Administrative Events");
         admin.filter.levels = {Critical, Error, Warning};
         admin.logs = {windowsLogs().at(0), windowsLogs().at(1), windowsLogs().at(3)};
         addNode(custom, admin.name, QStringLiteral("seven-ev-filter"), admin);
@@ -1940,14 +1937,14 @@ private:
             }
             addNode(custom, name, QStringLiteral("seven-ev-filter"), cv);
         }
-        auto *win = addNode(r, QStringLiteral("Журнали Windows"), QStringLiteral("seven-ev-winlogs"), folder);
+        auto *win = addNode(r, tr7("Windows Logs"), QStringLiteral("seven-ev-winlogs"), folder);
         for (const LogDef &d : windowsLogs()) {
             Node n;
             n.kind = Node::Log;
             n.def = d;
             addNode(win, d.title, d.args.isEmpty() && !d.dpkg ? QStringLiteral("seven-ev-log") : QStringLiteral("seven-ev-lognode"), n);
         }
-        auto *apps = addNode(r, QStringLiteral("Журнали програм і служб"), QStringLiteral("seven-ev-view"), folder);
+        auto *apps = addNode(r, tr7("Applications and Services Logs"), QStringLiteral("seven-ev-view"), folder);
         for (const LogDef &d : serviceLogs()) {
             Node n;
             n.kind = Node::Log;
@@ -1957,9 +1954,9 @@ private:
         Node subs;
         subs.kind = Node::Folder;
         subs.name = QStringLiteral("subscriptions");
-        addNode(r, QStringLiteral("Підписки"), QStringLiteral("seven-ev-subscr"), subs);
+        addNode(r, tr7("Subscriptions"), QStringLiteral("seven-ev-subscr"), subs);
         if (!m_saved.isEmpty()) {
-            auto *saved = addNode(r, QStringLiteral("Збережені журнали"), QStringLiteral("seven-ev-folder"), folder);
+            auto *saved = addNode(r, tr7("Saved Logs"), QStringLiteral("seven-ev-folder"), folder);
             for (const LogDef &d : std::as_const(m_saved)) {
                 Node n;
                 n.kind = Node::SavedLog;
@@ -2037,9 +2034,9 @@ private:
             return;
         }
         m_summaryLoaded = true;
-        m_title->setRight(QStringLiteral("Читання даних. Зачекайте, будь ласка..."));
+        m_title->setRight(tr7("Reading data. Please wait..."));
         m_admin->clear();
-        new QTreeWidgetItem(m_admin, {QStringLiteral("Читання журналу «Система»...")});
+        new QTreeWidgetItem(m_admin, {tr7("Reading the System log...")});
         QPointer<EventViewer> self(this);
         QThread *t = QThread::create([self] {
             // counts per type, source and log for the last hour / 24 hours / 7 days
@@ -2049,7 +2046,7 @@ private:
             QMap<int, QMap<QPair<QString, QString>, Count>> data; // level -> (source, log) -> counts
             const QList<QPair<QString, int>> windows{{QStringLiteral("-1h"), 0}, {QStringLiteral("-24h"), 1}, {QStringLiteral("-7d"), 2}};
             const QList<QPair<QString, int>> prios{{QStringLiteral("0..2"), Critical}, {QStringLiteral("3"), Error}, {QStringLiteral("4"), Warning}, {QStringLiteral("5..6"), Information}};
-            const QList<QPair<QString, QString>> scopes{{QStringLiteral("--system"), QStringLiteral("Система")}, {QStringLiteral("--user"), QStringLiteral("Програма")}};
+            const QList<QPair<QString, QString>> scopes{{QStringLiteral("--system"), tr7("System")}, {QStringLiteral("--user"), tr7("Application")}};
             for (const auto &[scope, logName] : scopes) {
                 for (const auto &[prio, level] : prios) {
                     for (const auto &[since, idx] : windows) {
@@ -2081,7 +2078,7 @@ private:
                 }
                 const qint64 t = o.value(QStringLiteral("__REALTIME_TIMESTAMP")).toString().toLongLong();
                 const int lv = o.value(QStringLiteral("PRIORITY")).toString().toInt() <= 3 ? AuditFailure : auditLevel(jsonString(o.value(QStringLiteral("MESSAGE"))));
-                Count &c = data[lv][{o.value(QStringLiteral("SYSLOG_IDENTIFIER")).toString(), QStringLiteral("Безпека")}];
+                Count &c = data[lv][{o.value(QStringLiteral("SYSLOG_IDENTIFIER")).toString(), tr7("Security")}];
                 c.w++;
                 if (now - t < 24LL * 3600 * 1000000) {
                     c.d++;
@@ -2098,7 +2095,7 @@ private:
             static const QRegularExpression sz(QStringLiteral("([0-9.,]+[KMGT]?)B?"));
             const QString used = diskUsage(du.readAllStandardOutput());
             for (const LogDef &d : windowsLogs() + serviceLogs()) {
-                QString modified = QStringLiteral("Н/Д");
+                QString modified = tr7("N/A");
                 if (!d.args.isEmpty()) {
                     QProcess last;
                     last.start(QStringLiteral("journalctl"), QStringList{QStringLiteral("-q"), QStringLiteral("--no-pager"), QStringLiteral("-r"), QStringLiteral("-n"), QStringLiteral("1"),
@@ -2112,8 +2109,8 @@ private:
                 } else if (d.dpkg) {
                     modified = QFileInfo(QStringLiteral("/var/log/dpkg.log")).lastModified().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"));
                 }
-                logRows << QStringList{d.title, d.args.isEmpty() && !d.dpkg ? QStringLiteral("0 байт/20,00 МБ") : used + QStringLiteral("/4,00 ГБ"), modified,
-                                       QStringLiteral("Увімкнуто"), QStringLiteral("Перезаписувати події за потреби (спочатку найстаріші)"), d.key};
+                logRows << QStringList{d.title, d.args.isEmpty() && !d.dpkg ? tr7("0 Bytes/20.00 MB") : used + tr7("/4.00 GB"), modified,
+                                       tr7("Enabled"), tr7("Overwrite events as needed (oldest events first)"), d.key};
             }
             if (!self) {
                 return;
@@ -2181,10 +2178,10 @@ private:
         m_logSummary->clear();
         for (const QStringList &r : logRows) {
             auto *it = new QTreeWidgetItem(m_logSummary, r.mid(0, 5));
-            QString path = QStringLiteral("Перегляд подій (Локальний)\\") + (windowsLogsKeys().contains(r.at(5)) ? QStringLiteral("Журнали Windows\\") : QStringLiteral("Журнали програм і служб\\")) + r.at(0);
+            QString path = tr7("Event Viewer (Local)\\") + (windowsLogsKeys().contains(r.at(5)) ? tr7("Windows Logs\\") : tr7("Applications and Services Logs\\")) + r.at(0);
             it->setData(0, Qt::UserRole, path);
         }
-        m_title->setRight(QStringLiteral("Останнє оновлення: %1").arg(QDateTime::currentDateTime().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))));
+        m_title->setRight(tr7("Last refreshed: %1").arg(QDateTime::currentDateTime().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))));
     }
 
     static QStringList windowsLogsKeys()
@@ -2210,7 +2207,7 @@ private:
             if (d.title == log) {
                 Node n;
                 n.kind = Node::CustomView;
-                n.name = QStringLiteral("Події зведення");
+                n.name = tr7("Summary page events");
                 n.logs = {d};
                 n.filter.sources = {source};
                 if (level != AuditSuccess && level != AuditFailure) {
@@ -2229,7 +2226,7 @@ private:
         if (!m_summaryItem) {
             Node n;
             n.kind = Node::CustomView;
-            m_summaryItem = addNode(m_evRoot->child(0), QStringLiteral("Події зведення"), QStringLiteral("seven-ev-filter"), n);
+            m_summaryItem = addNode(m_evRoot->child(0), tr7("Summary page events"), QStringLiteral("seven-ev-filter"), n);
             m_summaryItem->setHidden(true);
         }
         return m_nodes[m_summaryItem->data(0, Qt::UserRole).toInt()];
@@ -2256,7 +2253,7 @@ private:
         KConfigGroup g(KSharedConfig::openConfig(QStringLiteral("seven-eventvwrrc")), QStringLiteral("Recent"));
         for (const QString &path : g.readEntry("Paths", QStringList())) {
             const QString rel = path.section(QLatin1Char('\\'), 1);
-            auto *it = new QTreeWidgetItem(m_recent, {rel, rel.startsWith(QLatin1String("Настроювані")) ? QStringLiteral("Події з усіх журналів") : QStringLiteral("Н/Д"),
+            auto *it = new QTreeWidgetItem(m_recent, {rel, rel.startsWith(tr7("Custom", "views")) ? tr7("Events from all logs") : tr7("N/A"),
                                                       QDateTime::fromString(g.readEntry(path, QString()), Qt::ISODate).toString(QStringLiteral("dd.MM.yyyy HH:mm:ss")),
                                                       QDateTime::fromString(g.readEntry(QStringLiteral("Created ") + path, QString()), Qt::ISODate).toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))});
             it->setData(0, Qt::UserRole, path);
@@ -2267,7 +2264,7 @@ private:
     void showFolder(QTreeWidgetItem *it)
     {
         m_middle->setCurrentIndex(2);
-        m_folderHeader->setText(it->text(0), QStringLiteral("Кількість журналів: %1").arg(it->childCount()));
+        m_folderHeader->setText(it->text(0), tr7("Number of logs: %1").arg(it->childCount()));
         m_folderList->clear();
         for (int i = 0; i < it->childCount(); ++i) {
             QTreeWidgetItem *c = it->child(i);
@@ -2275,7 +2272,7 @@ private:
                 continue;
             }
             const Node &n = m_nodes[c->data(0, Qt::UserRole).toInt()];
-            auto *row = new QTreeWidgetItem(m_folderList, {c->text(0), n.kind == Node::Log ? QStringLiteral("Журнал адміністрування") : n.kind == Node::Folder ? QStringLiteral("Папка") : QStringLiteral("Настроюване подання"), QString(), QString()});
+            auto *row = new QTreeWidgetItem(m_folderList, {c->text(0), n.kind == Node::Log ? tr7("Administrative log") : n.kind == Node::Folder ? tr7("Folder") : tr7("Custom View"), QString(), QString()});
             row->setIcon(0, c->icon(0));
             row->setData(0, Qt::UserRole, pathOf(c));
         }
@@ -2297,7 +2294,7 @@ private:
         m_middle->setCurrentIndex(1);
         m_current = it;
         const QString title = n.kind == Node::Log || n.kind == Node::SavedLog ? n.def.title : n.name;
-        m_logHeader->setText(title, QStringLiteral("Читання даних. Зачекайте, будь ласка..."),
+        m_logHeader->setText(title, tr7("Reading data. Please wait..."),
                              n.kind == Node::Log || n.kind == Node::SavedLog ? QStringLiteral("seven-ev-lognode") : QStringLiteral("seven-ev-filter"));
         m_list->clear();
         m_events.clear();
@@ -2369,24 +2366,24 @@ private:
             it->setText(3, QString::number(e.code));
             it->setData(3, Qt::UserRole + 5, e.code);
             it->setTextAlignment(3, Qt::AlignRight | Qt::AlignVCenter);
-            it->setText(4, QStringLiteral("Відсутня"));
+            it->setText(4, tr7("None", "screen saver"));
             it->setData(0, Qt::UserRole, i);
             items.append(it);
         }
         m_list->addTopLevelItems(items);
         m_list->setSortingEnabled(true);
         m_list->sortByColumn(1, Qt::DescendingOrder);
-        const QString count = QStringLiteral("Кількість подій: %1").arg(QLocale().toString(m_events.size()));
+        const QString count = tr7("Number of events: %1").arg(QLocale().toString(m_events.size()));
         const bool logNode = n->kind == Node::Log || n->kind == Node::SavedLog;
         const QString title = logNode ? n->def.title : n->name;
         if (f.active() && logNode) {
-            m_filterBar->setText(QStringLiteral("<img src=\"%1\" width=16 height=16>&nbsp;&nbsp;%2 Кількість подій: %3")
+            m_filterBar->setText(tr7("<img src=\"%1\" width=16 height=16>&nbsp;&nbsp;%2 Number of events: %3")
                                      .arg(filterIconPath(), f.describe(n->def.channel).toHtmlEscaped(), QLocale().toString(m_shown.size())));
             m_filterBar->show();
         } else {
             m_filterBar->hide();
         }
-        m_logHeader->setText(title, logNode ? count : QStringLiteral("Кількість подій: %1").arg(QLocale().toString(m_shown.size())),
+        m_logHeader->setText(title, logNode ? count : tr7("Number of events: %1").arg(QLocale().toString(m_shown.size())),
                              logNode ? QStringLiteral("seven-ev-lognode") : QStringLiteral("seven-ev-filter"));
         if (m_list->topLevelItemCount()) {
             m_list->setCurrentItem(m_list->topLevelItem(0));
@@ -2440,24 +2437,24 @@ private:
     void connectComputer()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Вибір комп'ютера"));
+        dlg.setWindowTitle(tr7("Select Computer"));
         dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         auto *v = new QVBoxLayout(&dlg);
-        auto *box = new QGroupBox(QStringLiteral("Виберіть комп'ютер, яким має керувати ця оснастка."));
+        auto *box = new QGroupBox(tr7("Select the computer you want this snap-in to manage."));
         auto *g = new QGridLayout(box);
-        g->addWidget(new QLabel(QStringLiteral("Ця оснастка завжди керуватиме:")), 0, 0, 1, 3);
-        auto *local = new QRadioButton(QStringLiteral("Локальний комп'ютер: (комп'ютер, на якому запущено консоль)"));
-        auto *other = new QRadioButton(QStringLiteral("Інший комп'ютер:"));
+        g->addWidget(new QLabel(tr7("This snap-in will always manage:")), 0, 0, 1, 3);
+        auto *local = new QRadioButton(tr7("Local computer: (the computer this console is running on)"));
+        auto *other = new QRadioButton(tr7("Another computer:"));
         local->setChecked(true);
         auto *name = new QLineEdit;
         name->setEnabled(false);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         browse->setEnabled(false);
         g->addWidget(local, 1, 0, 1, 3);
         g->addWidget(other, 2, 0);
         g->addWidget(name, 2, 1);
         g->addWidget(browse, 2, 2);
-        auto *note = new QLabel(QStringLiteral("Перегляд журналів іншого комп'ютера через мережу в цій системі не підтримується."));
+        auto *note = new QLabel(tr7("Viewing the logs of another computer over the network is not supported on this system."));
         note->setWordWrap(true);
         note->setStyleSheet(QStringLiteral("color: #6d6d6d;"));
         g->addWidget(note, 3, 0, 1, 3);
@@ -2466,7 +2463,7 @@ private:
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(80);
             row->addWidget(b);
@@ -2474,7 +2471,7 @@ private:
         v->addLayout(row);
         connect(ok, &QPushButton::clicked, &dlg, [&dlg, other] {
             if (other->isChecked()) {
-                QMessageBox::warning(&dlg, QStringLiteral("Перегляд подій"), QStringLiteral("Не вдалося підключитися до іншого комп'ютера: віддалений перегляд журналів не підтримується."));
+                QMessageBox::warning(&dlg, tr7("Event Viewer"), tr7("Could not connect to another computer: remote log viewing is not supported."));
                 return;
             }
             dlg.accept();
@@ -2508,13 +2505,13 @@ private:
     QList<ActionItem> commonTail()
     {
         return {
-            {QStringLiteral("Вигляд"), QString(), {}, true, true, [this](QMenu *m) { fillViewMenu(m); }},
-            {QStringLiteral("Оновити"), QStringLiteral("seven-mmc-refresh"), [this] { refreshNode(); }, true, true},
-            {QStringLiteral("Довідка"), QStringLiteral("seven-mmc-help"), {}, true, true,
+            {tr7("View"), QString(), {}, true, true, [this](QMenu *m) { fillViewMenu(m); }},
+            {tr7("Refresh"), QStringLiteral("seven-mmc-refresh"), [this] { refreshNode(); }, true, true},
+            {tr7("Help"), QStringLiteral("seven-mmc-help"), {}, true, true,
              [this](QMenu *m) {
-                 m->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this, [this] { showHelp(); });
-                 m->addAction(QStringLiteral("Про програму «Перегляд подій»"), this, [this] {
-                     QMessageBox::about(this, QStringLiteral("Перегляд подій"), QStringLiteral("Перегляд подій у стилі Windows 7.\nПоказує журнал systemd (journald)."));
+                 m->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), tr7("Help"), this, [this] { showHelp(); });
+                 m->addAction(tr7("About Event Viewer"), this, [this] {
+                     QMessageBox::about(this, tr7("Event Viewer"), tr7("Event Viewer in the Windows 7 style.\nShows the systemd journal (journald)."));
                  });
              }},
         };
@@ -2524,16 +2521,16 @@ private:
     {
         const bool has = m_list->currentItem();
         return {
-            {QStringLiteral("Властивості події"), QStringLiteral("seven-mmc-props"), [this] { eventProperties(); }, has},
-            {QStringLiteral("Прив'язати завдання до цієї події..."), QStringLiteral("seven-ev-attachtask"), {}, false},
-            {QStringLiteral("Копіювати"), QStringLiteral("seven-ev-copy"), {}, has, true,
+            {tr7("Event Properties"), QStringLiteral("seven-mmc-props"), [this] { eventProperties(); }, has},
+            {tr7("Attach Task To This Event..."), QStringLiteral("seven-ev-attachtask"), {}, false},
+            {tr7("Copy"), QStringLiteral("seven-ev-copy"), {}, has, true,
              [this](QMenu *m) {
-                 m->addAction(QStringLiteral("Копіювати відомості як текст"), this, [this] { QApplication::clipboard()->setText(m_view->plainText()); });
+                 m->addAction(tr7("Copy Details as Text"), this, [this] { QApplication::clipboard()->setText(m_view->plainText()); });
              }},
-            {QStringLiteral("Зберегти вибрані події..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(true); }, has},
-            {QStringLiteral("Оновити"), QStringLiteral("seven-mmc-refresh"), [this] { refreshNode(); }, true, true},
-            {QStringLiteral("Довідка"), QStringLiteral("seven-mmc-help"), {}, true, true, [this](QMenu *m) {
-                 m->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this, [this] { showHelp(); });
+            {tr7("Save Selected Events..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(true); }, has},
+            {tr7("Refresh"), QStringLiteral("seven-mmc-refresh"), [this] { refreshNode(); }, true, true},
+            {tr7("Help"), QStringLiteral("seven-mmc-help"), {}, true, true, [this](QMenu *m) {
+                 m->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), tr7("Help"), this, [this] { showHelp(); });
              }},
         };
     }
@@ -2545,47 +2542,47 @@ private:
         if (!n) {
             return;
         }
-        const QString name = m_current == m_summaryItem && m_middle->currentIndex() == 1 ? QStringLiteral("Події зведення") : m_tree->currentItem()->text(0);
+        const QString name = m_current == m_summaryItem && m_middle->currentIndex() == 1 ? tr7("Summary page events") : m_tree->currentItem()->text(0);
         QList<ActionItem> items{
-            {QStringLiteral("Відкрити збережений журнал..."), QStringLiteral("seven-mmc-open"), [this] { openSavedLog(); }},
-            {QStringLiteral("Створити настроюване подання..."), QStringLiteral("seven-ev-newview"), [this] { createCustomView(); }},
-            {QStringLiteral("Імпортувати настроюване подання..."), QString(), [this] { importCustomView(); }},
+            {tr7("Open Saved Log..."), QStringLiteral("seven-mmc-open"), [this] { openSavedLog(); }},
+            {tr7("Create Custom View..."), QStringLiteral("seven-ev-newview"), [this] { createCustomView(); }},
+            {tr7("Import Custom View..."), QString(), [this] { importCustomView(); }},
         };
         const bool onLog = m_middle->currentIndex() == 1;
         if (n->kind == Node::Root || n->kind == Node::Folder) {
-            items << ActionItem{QStringLiteral("Підключитися до іншого комп'ютера..."), QString(), [this] { connectComputer(); }, true, true};
+            items << ActionItem{tr7("Connect to Another Computer..."), QString(), [this] { connectComputer(); }, true, true};
         }
         if (onLog && (n->kind == Node::Log || n->kind == Node::SavedLog)) {
             const bool journal = !n->def.args.isEmpty() || !n->def.file.isEmpty();
             const bool filtered = m_logFilters.value(n->def.key + n->def.file).active();
-            items << ActionItem{QStringLiteral("Очистити журнал..."), QString(), [this] { clearLog(); }, journal && n->def.file.isEmpty(), true}
-                  << ActionItem{QStringLiteral("Фільтр поточного журналу..."), QStringLiteral("seven-ev-filter"), [this] { filterLog(); }}
-                  << ActionItem{QStringLiteral("Очистити фільтр"), QString(), [this] {
+            items << ActionItem{tr7("Clear Log..."), QString(), [this] { clearLog(); }, journal && n->def.file.isEmpty(), true}
+                  << ActionItem{tr7("Filter Current Log..."), QStringLiteral("seven-ev-filter"), [this] { filterLog(); }}
+                  << ActionItem{tr7("Clear Filter"), QString(), [this] {
                                     Node *c = currentNode();
                                     m_logFilters.remove(c->def.key + c->def.file);
                                     applyFilter();
                                 },
                                 filtered}
-                  << ActionItem{QStringLiteral("Властивості"), QStringLiteral("seven-mmc-props"), [this] { logProperties(); }}
-                  << ActionItem{QStringLiteral("Знайти..."), QStringLiteral("seven-ev-find"), [this] { find(); }}
-                  << ActionItem{QStringLiteral("Зберегти всі події як..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(false); }}
-                  << ActionItem{QStringLiteral("Прив'язати завдання до цього журналу..."), QStringLiteral("seven-ev-attachtask"), {}, false}
-                  << ActionItem{QStringLiteral("Зберегти фільтр у настроюване подання..."), QStringLiteral("seven-ev-savefilter"), [this] { saveFilterAsView(); }, filtered && n->kind == Node::Log};
+                  << ActionItem{tr7("Properties"), QStringLiteral("seven-mmc-props"), [this] { logProperties(); }}
+                  << ActionItem{tr7("Find..."), QStringLiteral("seven-ev-find"), [this] { find(); }}
+                  << ActionItem{tr7("Save All Events As..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(false); }}
+                  << ActionItem{tr7("Attach a Task To this Log..."), QStringLiteral("seven-ev-attachtask"), {}, false}
+                  << ActionItem{tr7("Save Filter to Custom View..."), QStringLiteral("seven-ev-savefilter"), [this] { saveFilterAsView(); }, filtered && n->kind == Node::Log};
         }
         if (onLog && (n->kind == Node::CustomView || n->kind == Node::AdminView)) {
-            items << ActionItem{QStringLiteral("Фільтр поточного настроюваного подання..."), QStringLiteral("seven-ev-filter"), [this] { filterView(); }, n->kind == Node::CustomView, true}
-                  << ActionItem{QStringLiteral("Властивості"), QStringLiteral("seven-mmc-props"), [this] { filterView(); }, n->kind == Node::CustomView}
-                  << ActionItem{QStringLiteral("Знайти..."), QStringLiteral("seven-ev-find"), [this] { find(); }}
-                  << ActionItem{QStringLiteral("Зберегти всі події в настроюваному поданні як..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(false); }}
-                  << ActionItem{QStringLiteral("Експортувати настроюване подання..."), QString(), [this] { exportCustomView(); }, n->kind == Node::CustomView}
-                  << ActionItem{QStringLiteral("Копіювати настроюване подання..."), QString(), {}, false}
-                  << ActionItem{QStringLiteral("Видалити"), QStringLiteral("seven-mmc-delete"), [this] { deleteCustomView(); }, n->kind == Node::CustomView, true};
+            items << ActionItem{tr7("Filter Current Custom View..."), QStringLiteral("seven-ev-filter"), [this] { filterView(); }, n->kind == Node::CustomView, true}
+                  << ActionItem{tr7("Properties"), QStringLiteral("seven-mmc-props"), [this] { filterView(); }, n->kind == Node::CustomView}
+                  << ActionItem{tr7("Find..."), QStringLiteral("seven-ev-find"), [this] { find(); }}
+                  << ActionItem{tr7("Save All Events in Custom View As..."), QStringLiteral("seven-ev-save"), [this] { saveEvents(false); }}
+                  << ActionItem{tr7("Export Custom View..."), QString(), [this] { exportCustomView(); }, n->kind == Node::CustomView}
+                  << ActionItem{tr7("Copy Custom View..."), QString(), {}, false}
+                  << ActionItem{tr7("Delete"), QStringLiteral("seven-mmc-delete"), [this] { deleteCustomView(); }, n->kind == Node::CustomView, true};
         }
         items += commonTail();
         groups << ActionGroup{name, items};
         if (onLog && m_list->currentItem()) {
             const Event &e = m_shown.at(m_list->currentItem()->data(0, Qt::UserRole).toInt());
-            groups << ActionGroup{QStringLiteral("Подія %1, %2").arg(e.code).arg(e.source), eventActions()};
+            groups << ActionGroup{tr7("Event %1, %2").arg(e.code).arg(e.source), eventActions()};
         }
         m_groups = groups;
         m_actions->setGroups(groups);
@@ -2593,20 +2590,20 @@ private:
 
     void fillViewMenu(QMenu *m)
     {
-        QAction *preview = m->addAction(QStringLiteral("Область попереднього перегляду"));
+        QAction *preview = m->addAction(tr7("Preview Pane"));
         preview->setCheckable(true);
         preview->setChecked(m_previewOn);
         connect(preview, &QAction::toggled, this, [this](bool on) {
             m_previewOn = on;
             m_preview->setVisible(on);
         });
-        QMenu *sort = m->addMenu(QStringLiteral("Сортувати за"));
-        const QStringList cols{QStringLiteral("Рівень"), QStringLiteral("Дата й час"), QStringLiteral("Джерело"), QStringLiteral("Код події"), QStringLiteral("Категорія завдання")};
+        QMenu *sort = m->addMenu(tr7("Sort By"));
+        const QStringList cols{tr7("Level"), tr7("Date and Time"), tr7("Source"), tr7("Event ID"), tr7("Task Category")};
         for (int i = 0; i < cols.size(); ++i) {
             sort->addAction(cols.at(i), this, [this, i] { m_list->sortByColumn(i, i == 1 ? Qt::DescendingOrder : Qt::AscendingOrder); });
         }
         m->addSeparator();
-        QMenu *columns = m->addMenu(QStringLiteral("Додати або видалити стовпці"));
+        QMenu *columns = m->addMenu(tr7("Add/Remove Columns"));
         for (int i = 0; i < cols.size(); ++i) {
             QAction *a = columns->addAction(cols.at(i));
             a->setCheckable(true);
@@ -2638,7 +2635,7 @@ private:
         QDialog dlg(this);
         const auto title = [this] {
             const Event &e = m_shown.at(m_list->currentItem()->data(0, Qt::UserRole).toInt());
-            return QStringLiteral("Властивості події - Подія %1, %2").arg(e.code).arg(e.source);
+            return tr7("Event Properties - Event %1, %2").arg(e.code).arg(e.source);
         };
         dlg.setWindowTitle(title());
         dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-ev-app")));
@@ -2653,19 +2650,19 @@ private:
         };
         show();
         auto *row = new QHBoxLayout;
-        auto *copy = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-ev-copyclip")), QStringLiteral("Копіювати"));
+        auto *copy = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-ev-copyclip")), tr7("Copy"));
         row->addWidget(copy);
         row->addStretch(1);
         auto *up = new QToolButton;
         up->setIcon(QIcon::fromTheme(QStringLiteral("seven-ev-up")));
-        up->setToolTip(QStringLiteral("Попередня подія"));
+        up->setToolTip(tr7("Previous Event"));
         auto *down = new QToolButton;
         down->setIcon(QIcon::fromTheme(QStringLiteral("seven-ev-down")));
-        down->setToolTip(QStringLiteral("Наступна подія"));
+        down->setToolTip(tr7("Next Event"));
         row->addWidget(up);
         row->addWidget(down);
         row->addSpacing(12);
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *close = new QPushButton(tr7("Close"));
         close->setDefault(true);
         close->setMinimumWidth(80);
         row->addWidget(close);
@@ -2689,7 +2686,7 @@ private:
     {
         Node *n = currentNode();
         const QString key = n->def.key + n->def.file;
-        FilterDialog dlg(this, QStringLiteral("Фільтр поточного журналу"), m_logFilters.value(key), {n->def.title}, knownSources(), n->def.channel);
+        FilterDialog dlg(this, tr7("Filter Current Log", "title"), m_logFilters.value(key), {n->def.title}, knownSources(), n->def.channel);
         if (dlg.exec() == QDialog::Accepted) {
             m_logFilters.insert(key, dlg.filter());
             applyFilter();
@@ -2713,13 +2710,13 @@ private:
         for (const LogDef &d : logs) {
             titles << d.title;
         }
-        FilterDialog dlg(this, QStringLiteral("Створення настроюваного подання"), Filter(), titles, knownSources(), logs.first().channel);
+        FilterDialog dlg(this, tr7("Create Custom View", "title"), Filter(), titles, knownSources(), logs.first().channel);
         if (dlg.exec() != QDialog::Accepted) {
             return;
         }
         bool ok = false;
-        const QString name = QInputDialog::getText(this, QStringLiteral("Збереження фільтра як настроюваного подання"), QStringLiteral("Ім'я:"), QLineEdit::Normal,
-                                                   QStringLiteral("Нове подання"), &ok)
+        const QString name = QInputDialog::getText(this, tr7("Save Filter to Custom View", "title"), tr7("Name:"), QLineEdit::Normal,
+                                                   tr7("New View"), &ok)
                                  .trimmed();
         if (!ok || name.isEmpty()) {
             return;
@@ -2735,15 +2732,15 @@ private:
         g.sync();
         m_summaryItem = nullptr;
         fillTree();
-        selectPath(QStringLiteral("Перегляд подій (Локальний)\\Настроювані подання\\") + name);
+        selectPath(tr7("Event Viewer (Local)\\Custom Views\\") + name);
     }
 
     void saveFilterAsView()
     {
         Node *n = currentNode();
         bool ok = false;
-        const QString name = QInputDialog::getText(this, QStringLiteral("Збереження фільтра як настроюваного подання"), QStringLiteral("Ім'я:"), QLineEdit::Normal,
-                                                   n->def.title + QStringLiteral(" (відфільтровано)"), &ok)
+        const QString name = QInputDialog::getText(this, tr7("Save Filter to Custom View", "title"), tr7("Name:"), QLineEdit::Normal,
+                                                   n->def.title + tr7(" (filtered)"), &ok)
                                  .trimmed();
         if (!ok || name.isEmpty()) {
             return;
@@ -2754,7 +2751,7 @@ private:
         g.sync();
         m_summaryItem = nullptr;
         fillTree();
-        selectPath(QStringLiteral("Перегляд подій (Локальний)\\Настроювані подання\\") + name);
+        selectPath(tr7("Event Viewer (Local)\\Custom Views\\") + name);
     }
 
     void filterView()
@@ -2767,7 +2764,7 @@ private:
         for (const LogDef &d : n->logs) {
             titles << d.title;
         }
-        FilterDialog dlg(this, QStringLiteral("Фільтр поточного настроюваного подання"), n->filter, titles, knownSources(), n->logs.value(0).channel);
+        FilterDialog dlg(this, tr7("Filter Current Custom View", "title"), n->filter, titles, knownSources(), n->logs.value(0).channel);
         if (dlg.exec() != QDialog::Accepted) {
             return;
         }
@@ -2784,7 +2781,7 @@ private:
         if (!n || n->kind != Node::CustomView) {
             return;
         }
-        if (QMessageBox::question(this, QStringLiteral("Перегляд подій"), QStringLiteral("Видалити настроюване подання «%1»?").arg(n->name)) != QMessageBox::Yes) {
+        if (QMessageBox::question(this, tr7("Event Viewer"), tr7("Delete the custom view \"%1\"?").arg(n->name)) != QMessageBox::Yes) {
             return;
         }
         KConfigGroup views(KSharedConfig::openConfig(QStringLiteral("seven-eventvwrrc")), QStringLiteral("CustomViews"));
@@ -2801,8 +2798,8 @@ private:
         if (!n || n->kind != Node::CustomView) {
             return;
         }
-        const QString f = QFileDialog::getSaveFileName(this, QStringLiteral("Експортувати настроюване подання"), QDir::homePath() + QLatin1Char('/') + n->name + QStringLiteral(".xml"),
-                                                       QStringLiteral("Файли настроюваних подань (*.xml)"));
+        const QString f = QFileDialog::getSaveFileName(this, tr7("Export Custom View", "title"), QDir::homePath() + QLatin1Char('/') + n->name + QStringLiteral(".xml"),
+                                                       tr7("Custom view files (*.xml)"));
         if (f.isEmpty()) {
             return;
         }
@@ -2827,7 +2824,7 @@ private:
 
     void importCustomView()
     {
-        const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Імпортувати настроюване подання"), QDir::homePath(), QStringLiteral("Файли настроюваних подань (*.xml)"));
+        const QString f = QFileDialog::getOpenFileName(this, tr7("Import Custom View", "title"), QDir::homePath(), tr7("Custom view files (*.xml)"));
         if (f.isEmpty()) {
             return;
         }
@@ -2864,14 +2861,14 @@ private:
 
     void openSavedLog()
     {
-        const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Відкрити збережений журнал"), QStringLiteral("/var/log/journal"),
-                                                       QStringLiteral("Файли журналів (*.journal *.journal~);;Усі файли (*)"));
+        const QString f = QFileDialog::getOpenFileName(this, tr7("Open Saved Log", "title"), QStringLiteral("/var/log/journal"),
+                                                       tr7("Log files (*.journal *.journal~);;All files (*)"));
         if (f.isEmpty()) {
             return;
         }
         bool ok = false;
-        const QString name = QInputDialog::getText(this, QStringLiteral("Відкрити збережений журнал"), QStringLiteral("Ім'я:"), QLineEdit::Normal,
-                                                   QStringLiteral("Збережено: %1").arg(QFileInfo(f).completeBaseName()), &ok);
+        const QString name = QInputDialog::getText(this, tr7("Open Saved Log", "title"), tr7("Name:"), QLineEdit::Normal,
+                                                   tr7("Saved: %1").arg(QFileInfo(f).completeBaseName()), &ok);
         if (!ok) {
             return;
         }
@@ -2883,20 +2880,19 @@ private:
         m_saved.append(d);
         m_summaryItem = nullptr;
         fillTree();
-        selectPath(QStringLiteral("Перегляд подій (Локальний)\\Збережені журнали\\") + name);
+        selectPath(tr7("Event Viewer (Local)\\Saved Logs\\") + name);
     }
 
     void clearLog()
     {
         Node *n = currentNode();
-        QMessageBox box(QMessageBox::Question, QStringLiteral("Перегляд подій"),
-                        QStringLiteral("Зберегти вміст журналу «%1» перед очищенням?\n\nУ цій системі всі журнали зберігаються в спільному журналі systemd, тому під "
-                                       "час очищення буде видалено архівні записи всіх журналів.")
+        QMessageBox box(QMessageBox::Question, tr7("Event Viewer"),
+                        tr7("Do you want to save the contents of %1 before clearing it?\n\nOn this system all logs are kept in the shared systemd journal, so clearing removes the archived entries of all logs.")
                             .arg(n->def.title),
                         QMessageBox::NoButton, this);
-        QPushButton *saveClear = box.addButton(QStringLiteral("Зберегти й очистити"), QMessageBox::AcceptRole);
-        QPushButton *clear = box.addButton(QStringLiteral("Очистити"), QMessageBox::DestructiveRole);
-        box.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+        QPushButton *saveClear = box.addButton(tr7("Save and Clear"), QMessageBox::AcceptRole);
+        QPushButton *clear = box.addButton(tr7("Clear"), QMessageBox::DestructiveRole);
+        box.addButton(tr7("Cancel"), QMessageBox::RejectRole);
         box.exec();
         if (box.clickedButton() == saveClear) {
             if (!saveEvents(false)) {
@@ -2909,7 +2905,7 @@ private:
         if (code == 0) {
             refreshNode();
         } else if (code != 126 && code != 127) {
-            QMessageBox::warning(this, QStringLiteral("Перегляд подій"), QStringLiteral("Не вдалося очистити журнал."));
+            QMessageBox::warning(this, tr7("Event Viewer"), tr7("The log could not be cleared."));
         }
     }
 
@@ -2917,7 +2913,7 @@ private:
     {
         Node *n = currentNode();
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Властивості журналу - %1 (Тип: Адміністрування)").arg(n->def.title));
+        dlg.setWindowTitle(tr7("Log Properties - %1 (Type: Administrative)").arg(n->def.title));
         dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         dlg.setFixedSize(480, 430);
         auto *v = new QVBoxLayout(&dlg);
@@ -2930,11 +2926,11 @@ private:
         du.waitForFinished(10000);
         const QString used = diskUsage(du.readAllStandardOutput());
         const QString path = n->def.dpkg ? QStringLiteral("/var/log/dpkg.log") : !n->def.file.isEmpty() ? n->def.file : QStringLiteral("/var/log/journal/");
-        const QList<QPair<QString, QString>> rows{{QStringLiteral("Повне ім'я:"), n->def.channel},
-                                                  {QStringLiteral("Шлях до журналу:"), path},
-                                                  {QStringLiteral("Розмір журналу:"), n->def.dpkg ? sizeText(QFileInfo(path).size()) : used},
-                                                  {QStringLiteral("Змінено:"), QFileInfo(path).lastModified().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))},
-                                                  {QStringLiteral("Доступ:"), QFileInfo(path).lastRead().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))}};
+        const QList<QPair<QString, QString>> rows{{tr7("Full Name:"), n->def.channel},
+                                                  {tr7("Log path:"), path},
+                                                  {tr7("Log size:"), n->def.dpkg ? sizeText(QFileInfo(path).size()) : used},
+                                                  {tr7("Modified:"), QFileInfo(path).lastModified().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))},
+                                                  {tr7("Accessed:"), QFileInfo(path).lastRead().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss"))}};
         int r = 0;
         for (const auto &[k, val] : rows) {
             g->addWidget(new QLabel(k), r, 0);
@@ -2942,31 +2938,31 @@ private:
             l->setTextInteractionFlags(Qt::TextSelectableByMouse);
             g->addWidget(l, r++, 1);
         }
-        auto *enabled = new QCheckBox(QStringLiteral("Увімкнути ведення журналу"));
+        auto *enabled = new QCheckBox(tr7("Enable logging"));
         enabled->setChecked(true);
         enabled->setEnabled(false);
         g->addWidget(enabled, r++, 0, 1, 2);
-        g->addWidget(new QLabel(QStringLiteral("Максимальний розмір журналу (КБ):")), r, 0);
+        g->addWidget(new QLabel(tr7("Maximum log size (KB):")), r, 0);
         auto *max = new QLineEdit(QStringLiteral("4194304"));
         max->setEnabled(false);
         g->addWidget(max, r++, 1);
-        g->addWidget(new QLabel(QStringLiteral("Після досягнення максимального розміру журналу подій:")), r++, 0, 1, 2);
-        auto *over = new QRadioButton(QStringLiteral("Перезаписувати події за потреби (спочатку найстаріші)"));
+        g->addWidget(new QLabel(tr7("When maximum event log size is reached:")), r++, 0, 1, 2);
+        auto *over = new QRadioButton(tr7("Overwrite events as needed (oldest events first)"));
         over->setChecked(true);
-        auto *archive = new QRadioButton(QStringLiteral("Архівувати журнал після заповнення, не перезаписувати події"));
-        auto *never = new QRadioButton(QStringLiteral("Не перезаписувати події (очистити журнал вручну)"));
+        auto *archive = new QRadioButton(tr7("Archive the log when full, do not overwrite events"));
+        auto *never = new QRadioButton(tr7("Do not overwrite events (Clear logs manually)"));
         for (QRadioButton *b : {over, archive, never}) {
             b->setEnabled(b == over);
             g->addWidget(b, r++, 0, 1, 2);
         }
         g->setRowStretch(r, 1);
         g->setColumnStretch(1, 1);
-        tabs->addTab(page, QStringLiteral("Загальні"));
+        tabs->addTab(page, tr7("General"));
         v->addWidget(tabs, 1);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(80);
             row->addWidget(b);
@@ -2980,7 +2976,7 @@ private:
     void find()
     {
         bool ok = false;
-        const QString what = QInputDialog::getText(this, QStringLiteral("Знайти"), QStringLiteral("Знайти:"), QLineEdit::Normal, m_lastFind, &ok);
+        const QString what = QInputDialog::getText(this, tr7("Detect"), tr7("Find what:"), QLineEdit::Normal, m_lastFind, &ok);
         if (!ok || what.isEmpty()) {
             return;
         }
@@ -2995,14 +2991,14 @@ private:
                 return;
             }
         }
-        QMessageBox::information(this, QStringLiteral("Перегляд подій"), QStringLiteral("Більше збігів для «%1» не знайдено.").arg(what));
+        QMessageBox::information(this, tr7("Event Viewer"), tr7("No more matches found for \"%1\".").arg(what));
     }
 
     bool saveEvents(bool selectedOnly)
     {
         QString filter;
-        const QString f = QFileDialog::getSaveFileName(this, QStringLiteral("Зберегти як"), QDir::homePath() + QStringLiteral("/Події.txt"),
-                                                       QStringLiteral("Текст (розділювач — табуляція) (*.txt);;CSV (розділювач — кома) (*.csv);;XML (*.xml)"), &filter);
+        const QString f = QFileDialog::getSaveFileName(this, tr7("Save As"), QDir::homePath() + tr7("/Events.txt"),
+                                                       tr7("Text (Tab delimited) (*.txt);;CSV (Comma Separated) (*.csv);;XML (*.xml)"), &filter);
         if (f.isEmpty()) {
             return false;
         }
@@ -3018,7 +3014,7 @@ private:
         }
         QFile file(f);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            QMessageBox::warning(this, QStringLiteral("Перегляд подій"), QStringLiteral("Не вдалося зберегти файл."));
+            QMessageBox::warning(this, tr7("Event Viewer"), tr7("The file could not be saved."));
             return false;
         }
         QTextStream out(&file);
@@ -3034,12 +3030,12 @@ private:
                 s.replace(QLatin1Char('\n'), QLatin1Char(' '));
                 return sep == QLatin1String(",") ? QLatin1Char('"') + s.replace(QLatin1Char('"'), QStringLiteral("\"\"")) + QLatin1Char('"') : s;
             };
-            out << QStringList{QStringLiteral("Рівень"), QStringLiteral("Дата й час"), QStringLiteral("Джерело"), QStringLiteral("Код події"), QStringLiteral("Категорія завдання"),
-                               QStringLiteral("Опис")}
+            out << QStringList{tr7("Level"), tr7("Date and Time"), tr7("Source"), tr7("Event ID"), tr7("Task Category"),
+                               tr7("Description")}
                        .join(sep)
                 << "\n";
             for (const Event &e : std::as_const(list)) {
-                out << QStringList{levelName(e.level), e.when().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss")), q(e.source), QString::number(e.code), QStringLiteral("Відсутня"), q(e.message)}.join(sep)
+                out << QStringList{levelName(e.level), e.when().toString(QStringLiteral("dd.MM.yyyy HH:mm:ss")), q(e.source), QString::number(e.code), tr7("None", "screen saver"), q(e.message)}.join(sep)
                     << "\n";
             }
         }
@@ -3048,13 +3044,8 @@ private:
 
     void showHelp()
     {
-        QMessageBox::information(this, QStringLiteral("Перегляд подій"),
-                                 QStringLiteral("«Перегляд подій» показує повідомлення системи та програм.\n\n"
-                                                "• Журнали Windows: «Програма» — події ваших програм, «Безпека» — входи в систему та підтвердження паролем, "
-                                                "«Інсталяція» — встановлення й видалення пакетів, «Система» — події системних служб і ядра.\n"
-                                                "• Двічі клацніть подію, щоб відкрити її властивості.\n"
-                                                "• «Фільтр поточного журналу» залишає лише потрібні рівні, джерела або коди подій.\n\n"
-                                                "Показуються останні %1 подій кожного журналу.")
+        QMessageBox::information(this, tr7("Event Viewer"),
+                                 tr7("Event Viewer shows messages of the system and programs.\n\n• Windows Logs: Application - events of your programs, Security - logons and password confirmations, Setup - installing and removing packages, System - events of system services and the kernel.\n• Double-click an event to open its properties.\n• Filter Current Log keeps only the levels, sources or event IDs you need.\n\nThe last %1 events of each log are shown.")
                                      .arg(kMaxEvents));
     }
 

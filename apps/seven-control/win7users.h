@@ -15,6 +15,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7display.h"
@@ -183,26 +184,26 @@ inline bool done(QWidget *parent, const QString &error)
         return true;
     }
     if (error != QLatin1String("cancelled")) {
-        QMessageBox::warning(parent, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Не вдалося внести зміни.\n\n%1").arg(error));
+        QMessageBox::warning(parent, tr7("User Accounts"), tr7("The changes could not be made.\n\n%1").arg(error));
     }
     return false;
 }
 
 inline QString typeText(const Account &a)
 {
-    return a.type == 1 ? QStringLiteral("Адміністратор") : QStringLiteral("Звичайний доступ");
+    return a.type == 1 ? tr7("Administrator") : tr7("Standard user");
 }
 
 inline QStringList statusLines(const Account &a)
 {
     if (a.isGuest()) {
-        return {a.locked ? QStringLiteral("Обліковий запис гостя вимкнено") : QStringLiteral("Обліковий запис гостя ввімкнено")};
+        return {a.locked ? tr7("Guest account is off") : tr7("Guest account is on")};
     }
     QStringList l{typeText(a)};
     if (a.locked) {
-        l.append(QStringLiteral("Обліковий запис вимкнено"));
+        l.append(tr7("Account is disabled"));
     } else if (a.hasPassword()) {
-        l.append(QStringLiteral("Захищено паролем"));
+        l.append(tr7("Password protected"));
     }
     return l;
 }
@@ -350,16 +351,16 @@ sys.exit(code)
         return QString();
     }
     if (out.contains(QLatin1String("authentication token manipulation")) || out.contains(QLatin1String("authentication failure"))) {
-        return QStringLiteral("Поточний пароль введено неправильно.");
+        return tr7("The current password is not correct.");
     }
     if (out.contains(QLatin1String("longer")) || out.contains(QLatin1String("short"))) {
-        return QStringLiteral("Пароль закороткий. Введіть щонайменше 6 символів.");
+        return tr7("The password is too short. Enter at least 6 characters.");
     }
     if (out.contains(QLatin1String("simple")) || out.contains(QLatin1String("similar")) || out.contains(QLatin1String("palindrome")) || out.contains(QLatin1String("case"))
         || out.contains(QLatin1String("unchanged")) || out.contains(QLatin1String("rotated"))) {
-        return QStringLiteral("Пароль надто простий або надто схожий на попередній. Виберіть інший пароль.");
+        return tr7("The password is too simple or too similar to the previous one. Choose another password.");
     }
-    return QStringLiteral("Не вдалося змінити пароль.");
+    return tr7("The password could not be changed.");
 }
 
 /** login name from what was typed: Latin letters, digits and "-" (Ukrainian letters are transliterated) */
@@ -566,7 +567,7 @@ inline bool setAutologin(QWidget *parent, const QString &user, bool implicit, co
         return false; // the password prompt was cancelled
     }
     if (code != 0) {
-        QMessageBox::warning(parent, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Не вдалося змінити параметри входу в систему."));
+        QMessageBox::warning(parent, tr7("User Accounts"), tr7("The logon settings could not be changed."));
         return false;
     }
     return true;
@@ -719,24 +720,20 @@ inline QLineEdit *field(const QString &placeholder, bool password = false)
 
 inline void strongPasswordHelp(QWidget *parent)
 {
-    info(parent, QStringLiteral("Надійний пароль"),
-         QStringLiteral("Надійний пароль:\n\n• має довжину щонайменше 8 символів;\n• не містить імені користувача, справжнього імені чи назви компанії;\n"
-                        "• не є повним словом;\n• значно відрізняється від попередніх паролів;\n• містить великі й малі літери, цифри та символи."));
+    info(parent, tr7("Strong password"),
+         tr7("A strong password:\n\n• is at least 8 characters long;\n• does not contain your user name, real name, or company name;\n• does not contain a complete word;\n• is significantly different from previous passwords;\n• contains uppercase and lowercase letters, numbers and symbols."));
 }
 
 inline void hintHelp(QWidget *parent)
 {
-    info(parent, QStringLiteral("Підказка для пароля"),
-         QStringLiteral("Підказка допомагає згадати пароль. Вона відображається на екрані привітання, якщо пароль введено неправильно.\n\n"
-                        "Підказку бачить кожен, хто користується цим комп'ютером, тому не записуйте в неї сам пароль."));
+    info(parent, tr7("Password hint"),
+         tr7("A hint helps you remember the password. It is shown on the Welcome screen if the password is typed incorrectly.\n\nThe hint is visible to everyone who uses this computer, so don't write the password itself in it."));
 }
 
 inline void typeHelp(QWidget *parent)
 {
-    info(parent, QStringLiteral("Звичайний обліковий запис"),
-         QStringLiteral("Звичайний обліковий запис допомагає захистити комп'ютер: програми й люди не зможуть змінити систему без пароля адміністратора.\n\n"
-                        "Для щоденної роботи рекомендується звичайний обліковий запис, а для встановлення програм і зміни параметрів системи "
-                        "достатньо ввести пароль адміністратора, коли його буде запитано."));
+    info(parent, tr7("Standard account"),
+         tr7("A standard account helps protect your computer: programs and people can't change the system without an administrator password.\n\nA standard account is recommended for everyday use; to install programs and change system settings, just type the administrator password when asked."));
 }
 
 /** "Standard user / Administrator" radio buttons with the Windows 7 explanations */
@@ -752,17 +749,15 @@ inline QButtonGroup *typeChoice(QVBoxLayout *v, int current)
         v->addWidget(d);
         return r;
     };
-    add(0, QStringLiteral("Звичайний доступ"),
-        QStringLiteral("Звичайні облікові записи дають змогу використовувати більшість програм і змінювати параметри системи, які не впливають "
-                       "на інших користувачів і безпеку комп'ютера."));
-    add(1, QStringLiteral("Адміністратор"),
-        QStringLiteral("Адміністратори мають повний доступ до комп'ютера й можуть вносити будь-які зміни. Для змін, які впливають на інших "
-                       "користувачів, у них може запитуватися пароль."));
+    add(0, tr7("Standard user"),
+        tr7("Standard account users can use most software and change system settings that do not affect other users or the security of the computer."));
+    add(1, tr7("Administrator"),
+        tr7("Administrators have complete access to the computer and can make any desired changes. Based on notification settings, administrators may be asked to provide their password before making changes that affect other users."));
     if (group->button(current)) {
         group->button(current)->setChecked(true);
     }
     v->addSpacing(4);
-    v->addWidget(text(QStringLiteral("Рекомендується захищати всі облікові записи надійними паролями.")));
+    v->addWidget(text(tr7("We recommend that you protect every account with a strong password.")));
     return group;
 }
 
@@ -817,14 +812,14 @@ inline bool editVariable(QWidget *parent, const QString &caption, QString &name,
     auto *n = new QLineEdit(name);
     auto *v = new QLineEdit(value);
     n->setMinimumWidth(280);
-    g->addWidget(new QLabel(QStringLiteral("Ім'я змінної:")), 0, 0);
+    g->addWidget(new QLabel(tr7("Variable name:")), 0, 0);
     g->addWidget(n, 0, 1);
-    g->addWidget(new QLabel(QStringLiteral("Значення змінної:")), 1, 0);
+    g->addWidget(new QLabel(tr7("Variable value:")), 1, 0);
     g->addWidget(v, 1, 1);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     row->addWidget(ok);
     row->addWidget(cancel);
@@ -851,7 +846,7 @@ public:
     explicit EnvironmentDialog(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Змінні середовища"));
+        setWindowTitle(tr7("Environment Variables"));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedSize(420, 470);
@@ -859,12 +854,12 @@ public:
         v->setContentsMargins(12, 12, 12, 10);
         m_user = readEnv(userEnvFile());
         m_system = readEnv(QStringLiteral("/etc/environment"));
-        m_userTree = group(v, QStringLiteral("Змінні середовища користувача для %1").arg(QString::fromLocal8Bit(qgetenv("USER"))), m_user, false);
-        m_systemTree = group(v, QStringLiteral("Системні змінні"), m_system, true);
+        m_userTree = group(v, tr7("User variables for %1", "env").arg(QString::fromLocal8Bit(qgetenv("USER"))), m_user, false);
+        m_systemTree = group(v, tr7("System variables"), m_system, true);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setDefault(true);
         row->addWidget(ok);
         row->addWidget(cancel);
@@ -883,15 +878,15 @@ private:
         auto *box = new QGroupBox(caption);
         auto *bv = new QVBoxLayout(box);
         auto *tree = new QTreeWidget;
-        tree->setHeaderLabels({QStringLiteral("Змінна"), QStringLiteral("Значення")});
+        tree->setHeaderLabels({tr7("Variable"), tr7("Value")});
         tree->setRootIsDecorated(false);
         tree->setColumnWidth(0, 120);
         bv->addWidget(tree);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
-        auto *add = new QPushButton(QStringLiteral("Створити..."));
-        auto *edit = new QPushButton(QStringLiteral("Змінити..."));
-        auto *del = new QPushButton(QStringLiteral("Видалити"));
+        auto *add = new QPushButton(tr7("New..."));
+        auto *edit = new QPushButton(tr7("Edit..."));
+        auto *del = new QPushButton(tr7("Delete"));
         for (QPushButton *b : {add, edit, del}) {
             row->addWidget(b);
         }
@@ -905,10 +900,10 @@ private:
         };
         fill();
         auto *flag = system ? &m_systemChanged : &m_userChanged;
-        const QString what = system ? QStringLiteral("системна") : QStringLiteral("користувацька");
+        const QString what = system ? tr7("System", "variable") : tr7("User");
         connect(add, &QPushButton::clicked, this, [this, &vars, fill, flag, what] {
             QString n, val;
-            if (editVariable(this, QStringLiteral("Нова %1 змінна").arg(what), n, val)) {
+            if (editVariable(this, tr7("New %1 Variable").arg(what), n, val)) {
                 vars.removeIf([&n](const QPair<QString, QString> &x) {
                     return x.first == n;
                 });
@@ -924,7 +919,7 @@ private:
             }
             const int i = tree->indexOfTopLevelItem(it);
             QString n = vars.at(i).first, val = vars.at(i).second;
-            if (editVariable(this, QStringLiteral("Зміна: %1 змінна").arg(what), n, val)) {
+            if (editVariable(this, tr7("Edit %1 Variable").arg(what), n, val)) {
                 vars[i] = {n, val};
                 *flag = true;
                 fill();
@@ -967,11 +962,11 @@ private:
                                                 QStringLiteral("cp /etc/environment /etc/environment.seven-backup && install -m 644 \"$1\" /etc/environment"), QStringLiteral("sh"),
                                                 tmp.fileName()});
             if (code != 0) {
-                return code == 126 || code == 127 ? false : (QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося змінити системні змінні.")), false);
+                return code == 126 || code == 127 ? false : (QMessageBox::warning(this, windowTitle(), tr7("The system variables could not be changed.")), false);
             }
         }
         if (m_userChanged || m_systemChanged) {
-            QMessageBox::information(this, windowTitle(), QStringLiteral("Зміни набудуть чинності після наступного входу в систему."));
+            QMessageBox::information(this, windowTitle(), tr7("The changes take effect at the next logon."));
         }
         return true;
     }
@@ -998,7 +993,7 @@ inline QWidget *buildAccountPage(const Nav &nav, bool own)
     auto *v = new QVBoxLayout(content);
     v->setContentsMargins(26, 22, 30, 20);
     v->setSpacing(14);
-    v->addWidget(title(own ? QStringLiteral("Внесення змін в обліковий запис користувача") : QStringLiteral("Внесення змін в обліковий запис %1").arg(a.name())));
+    v->addWidget(title(own ? tr7("Make changes to your user account") : tr7("Make changes to %1's account").arg(a.name())));
     auto *row = new QHBoxLayout;
     row->setSpacing(40);
     auto *links = new QVBoxLayout;
@@ -1011,33 +1006,33 @@ inline QWidget *buildAccountPage(const Nav &nav, bool own)
     };
     if (own) {
         if (a.hasPassword()) {
-            links->addWidget(shieldLink(QStringLiteral("Зміна свого пароля"), go(PasswordView), false));
-            links->addWidget(shieldLink(QStringLiteral("Видалення свого пароля"), go(RemovePasswordView), false));
+            links->addWidget(shieldLink(tr7("Change your password"), go(PasswordView), false));
+            links->addWidget(shieldLink(tr7("Remove your password"), go(RemovePasswordView), false));
         } else {
-            links->addWidget(shieldLink(QStringLiteral("Створення пароля свого облікового запису"), go(PasswordView), false));
+            links->addWidget(shieldLink(tr7("Create a password for your account"), go(PasswordView), false));
         }
-        links->addWidget(shieldLink(QStringLiteral("Зміна свого рисунка"), go(PictureView), false));
-        links->addWidget(shieldLink(QStringLiteral("Зміна імені свого облікового запису"), go(NameView)));
-        links->addWidget(shieldLink(QStringLiteral("Зміна типу свого облікового запису"), go(TypeView)));
+        links->addWidget(shieldLink(tr7("Change your picture"), go(PictureView), false));
+        links->addWidget(shieldLink(tr7("Change your account name"), go(NameView)));
+        links->addWidget(shieldLink(tr7("Change your account type"), go(TypeView)));
         links->addSpacing(14);
-        links->addWidget(shieldLink(QStringLiteral("Керування іншим обліковим записом"), [nav] { nav.open(ManageView); }));
+        links->addWidget(shieldLink(tr7("Manage another account"), [nav] { nav.open(ManageView); }));
         side = Win7Display::sidePane(nav.home,
-                                     {{QStringLiteral("Адміністрування облікових записів"), [nav] { nav.open(ManageView); }},
-                                      {QStringLiteral("Зміна змінних середовища"), [content] { (new EnvironmentDialog(content->window()))->show(); }}},
+                                     {{tr7("Manage another account", "user tasks"), [nav] { nav.open(ManageView); }},
+                                      {tr7("Change my environment variables"), [content] { (new EnvironmentDialog(content->window()))->show(); }}},
                                      {});
     } else {
-        links->addWidget(shieldLink(QStringLiteral("Зміна імені облікового запису"), go(NameView), false));
+        links->addWidget(shieldLink(tr7("Change the account name"), go(NameView), false));
         if (a.hasPassword()) {
-            links->addWidget(shieldLink(QStringLiteral("Зміна пароля"), go(PasswordView), false));
-            links->addWidget(shieldLink(QStringLiteral("Видалення пароля"), go(RemovePasswordView), false));
+            links->addWidget(shieldLink(tr7("Change the password"), go(PasswordView), false));
+            links->addWidget(shieldLink(tr7("Remove the password"), go(RemovePasswordView), false));
         } else {
-            links->addWidget(shieldLink(QStringLiteral("Створення пароля"), go(PasswordView), false));
+            links->addWidget(shieldLink(tr7("Create a password"), go(PasswordView), false));
         }
-        links->addWidget(shieldLink(QStringLiteral("Зміна рисунка"), go(PictureView), false));
-        links->addWidget(shieldLink(QStringLiteral("Зміна типу облікового запису"), go(TypeView), false));
-        links->addWidget(shieldLink(QStringLiteral("Видалення облікового запису"), go(DeleteView), false));
+        links->addWidget(shieldLink(tr7("Change the picture"), go(PictureView), false));
+        links->addWidget(shieldLink(tr7("Change the account type"), go(TypeView), false));
+        links->addWidget(shieldLink(tr7("Delete the account"), go(DeleteView), false));
         links->addSpacing(14);
-        links->addWidget(shieldLink(QStringLiteral("Керування іншим обліковим записом"), [nav] { nav.open(ManageView); }, false));
+        links->addWidget(shieldLink(tr7("Manage another account"), [nav] { nav.open(ManageView); }, false));
     }
     links->addStretch(1);
     row->addLayout(links);
@@ -1060,7 +1055,7 @@ inline QWidget *buildAccountPage(const Nav &nav, bool own)
 inline QWidget *buildManagePage(const Nav &nav)
 {
     auto t = taskPage(false);
-    t.body->addWidget(title(QStringLiteral("Виберіть обліковий запис для зміни")));
+    t.body->addWidget(title(tr7("Choose the account you would like to change")));
     t.body->addSpacing(8);
     auto *box = new QFrame;
     box->setObjectName(QStringLiteral("win7accbox"));
@@ -1076,10 +1071,10 @@ inline QWidget *buildManagePage(const Nav &nav)
         g = account(guest);
     } else {
         g.user = QStringLiteral("guest");
-        g.real = QStringLiteral("Гість");
+        g.real = tr7("Guest");
         g.locked = true;
     }
-    g.real = QStringLiteral("Гість");
+    g.real = tr7("Guest");
     list.append(g);
     for (int i = 0; i < list.size(); ++i) {
         const Account a = list.at(i);
@@ -1094,20 +1089,18 @@ inline QWidget *buildManagePage(const Nav &nav)
     grid->setColumnStretch(2, 1);
     t.body->addWidget(box);
     t.body->addSpacing(6);
-    t.body->addWidget(new Link(QStringLiteral("Створення облікового запису"), [nav] { nav.open(CreateView); }));
-    t.body->addWidget(new Link(QStringLiteral("Що таке обліковий запис користувача?"), [box] {
-        info(box->window(), QStringLiteral("Облікові записи користувачів"),
-             QStringLiteral("Обліковий запис користувача — це набір відомостей, які визначають, до яких файлів і папок має доступ людина, які зміни "
-                            "вона може вносити в комп'ютер і які в неї особисті параметри (фон робочого стола, заставка тощо).\n\n"
-                            "Завдяки обліковим записам кілька людей можуть користуватися одним комп'ютером, і кожен матиме власні файли й параметри."));
+    t.body->addWidget(new Link(tr7("Create an account"), [nav] { nav.open(CreateView); }));
+    t.body->addWidget(new Link(tr7("What is a user account?"), [box] {
+        info(box->window(), tr7("User Accounts"),
+             tr7("A user account is a collection of information that tells Windows which files and folders a person can access, what changes they can make to the computer, and their personal preferences (desktop background, screen saver and so on).\n\nThanks to user accounts several people can share one computer, and each has their own files and settings."));
     }));
     t.body->addSpacing(14);
-    auto *more = new QLabel(QStringLiteral("Інші можливі дії"));
+    auto *more = new QLabel(tr7("Additional things you can do"));
     QFont bf = more->font();
     bf.setBold(true);
     more->setFont(bf);
     t.body->addWidget(more);
-    t.body->addWidget(new Link(QStringLiteral("Перехід на початкову сторінку облікових записів"), [nav] { nav.open(HomeView); }));
+    t.body->addWidget(new Link(tr7("Go to the main User Accounts page"), [nav] { nav.open(HomeView); }));
     return t.root;
 }
 
@@ -1115,17 +1108,17 @@ inline QWidget *buildManagePage(const Nav &nav)
 inline QWidget *buildCreatePage(const Nav &nav)
 {
     auto t = taskPage();
-    t.body->addWidget(title(QStringLiteral("Введіть ім'я облікового запису й виберіть його тип")));
+    t.body->addWidget(title(tr7("Name the account and choose an account type")));
     t.body->addSpacing(6);
-    t.body->addWidget(text(QStringLiteral("Це ім'я відображатиметься на екрані привітання та в меню «Пуск».")));
-    auto *name = field(QStringLiteral("Нове ім'я облікового запису"));
+    t.body->addWidget(text(tr7("This name will appear on the Welcome screen and on the Start menu.")));
+    auto *name = field(tr7("New account name"));
     t.body->addWidget(name);
     t.body->addSpacing(8);
     QButtonGroup *type = typeChoice(t.body, 0);
     t.body->addSpacing(8);
-    t.body->addWidget(new Link(QStringLiteral("Чому рекомендується використовувати звичайний обліковий запис?"), [name] { typeHelp(name->window()); }));
-    auto *create = button(t.buttons, QStringLiteral("Створення облікового запису"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    t.body->addWidget(new Link(tr7("Why is a standard account recommended?"), [name] { typeHelp(name->window()); }));
+    auto *create = button(t.buttons, tr7("Create an account"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     create->setEnabled(false);
     QObject::connect(name, &QLineEdit::textChanged, create, [create](const QString &s) { create->setEnabled(!s.trimmed().isEmpty()); });
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
@@ -1159,53 +1152,52 @@ inline QWidget *buildPasswordPage(const Nav &nav)
     auto t = taskPage();
     QString heading;
     if (own) {
-        heading = change ? QStringLiteral("Зміна свого пароля") : QStringLiteral("Створення пароля свого облікового запису");
+        heading = change ? tr7("Change your password") : tr7("Create a password for your account");
     } else {
-        heading = change ? QStringLiteral("Зміна пароля для облікового запису %1").arg(a.name()) : QStringLiteral("Створення пароля для облікового запису %1").arg(a.name());
+        heading = change ? tr7("Change %1's password").arg(a.name()) : tr7("Create a password for %1's account").arg(a.name());
     }
     t.body->addWidget(title(heading));
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
     if (!own) {
-        auto *warn = text(QStringLiteral("Якщо зробити це, %1 втратить доступ до збережених паролів (KWallet) для веб-сайтів і мережевих ресурсів.\n\n"
-                                         "Щоб цього уникнути, попросіть користувача змінити пароль самостійно.")
+        auto *warn = text(tr7("If you do this, %1 will lose all saved passwords (KWallet) for websites and network resources.\n\nTo avoid this, ask the user to change the password themselves.")
                               .arg(a.name()));
         t.body->addWidget(warn);
         t.body->addSpacing(6);
     }
     QLineEdit *current = nullptr;
     if (own && change) {
-        current = field(QStringLiteral("Поточний пароль"), true);
+        current = field(tr7("Current password"), true);
         t.body->addWidget(current);
     }
-    auto *fresh = field(QStringLiteral("Новий пароль"), true);
-    auto *again = field(QStringLiteral("Підтвердження пароля"), true);
+    auto *fresh = field(tr7("New password"), true);
+    auto *again = field(tr7("Confirm new password"), true);
     t.body->addWidget(fresh);
     t.body->addWidget(again);
-    t.body->addWidget(text(QStringLiteral("Якщо пароль містить великі літери, їх слід вводити однаково під час кожного входу в систему.")));
-    t.body->addWidget(new Link(QStringLiteral("Як створити надійний пароль"), [fresh] { strongPasswordHelp(fresh->window()); }));
+    t.body->addWidget(text(tr7("If the password contains capital letters, they must be typed the same way every time you log on.")));
+    t.body->addWidget(new Link(tr7("How to create a strong password"), [fresh] { strongPasswordHelp(fresh->window()); }));
     t.body->addSpacing(10);
-    auto *hint = field(QStringLiteral("Введіть підказку для пароля"));
+    auto *hint = field(tr7("Type a password hint"));
     hint->setText(a.hint);
     t.body->addWidget(hint);
-    t.body->addWidget(text(QStringLiteral("Підказку для пароля бачитимуть усі, хто користується цим комп'ютером.")));
-    t.body->addWidget(new Link(QStringLiteral("Що таке підказка для пароля?"), [hint] { hintHelp(hint->window()); }));
-    auto *ok = button(t.buttons, change ? QStringLiteral("Змінити пароль") : QStringLiteral("Створити пароль"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    t.body->addWidget(text(tr7("The password hint will be visible to everyone who uses this computer.")));
+    t.body->addWidget(new Link(tr7("What is a password hint?"), [hint] { hintHelp(hint->window()); }));
+    auto *ok = button(t.buttons, change ? tr7("Change password") : tr7("Create password"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
     QObject::connect(ok, &QPushButton::clicked, t.root, [nav, a, own, current, fresh, again, hint] {
         QWidget *w = fresh->window();
         if (fresh->text() != again->text()) {
-            QMessageBox::warning(w, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Нові паролі не збігаються. Введіть їх ще раз."));
+            QMessageBox::warning(w, tr7("User Accounts"), tr7("The new passwords do not match. Type them again."));
             again->clear();
             again->setFocus();
             return;
         }
         if (fresh->text().isEmpty()) {
-            QMessageBox::warning(w, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Введіть новий пароль."));
+            QMessageBox::warning(w, tr7("User Accounts"), tr7("Type a new password."));
             return;
         }
         if (!hint->text().isEmpty() && hint->text().contains(fresh->text())) {
-            QMessageBox::warning(w, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Підказка для пароля не може містити сам пароль."));
+            QMessageBox::warning(w, tr7("User Accounts"), tr7("The password hint cannot contain the password."));
             return;
         }
         if (own) {
@@ -1213,7 +1205,7 @@ inline QWidget *buildPasswordPage(const Nav &nav)
             const QString err = changeOwnPassword(current ? current->text() : QString(), fresh->text());
             QApplication::restoreOverrideCursor();
             if (!err.isEmpty()) {
-                QMessageBox::warning(w, QStringLiteral("Облікові записи користувачів"), err);
+                QMessageBox::warning(w, tr7("User Accounts"), err);
                 return;
             }
             userCall(a, QStringLiteral("SetPasswordHint"), {hint->text()});
@@ -1232,27 +1224,27 @@ inline QWidget *buildRemovePasswordPage(const Nav &nav)
     const Account a = targetAccount();
     const bool own = isSelf(a);
     auto t = taskPage();
-    t.body->addWidget(title(own ? QStringLiteral("Видалення свого пароля") : QStringLiteral("Видалення пароля для облікового запису %1").arg(a.name())));
+    t.body->addWidget(title(own ? tr7("Remove your password") : tr7("Remove %1's password").arg(a.name())));
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
     t.body->addSpacing(6);
-    t.body->addWidget(text(own ? QStringLiteral("Ви дійсно хочете видалити пароль?") : QStringLiteral("Ви дійсно хочете видалити пароль облікового запису %1?").arg(a.name())));
-    auto *warn = text(QStringLiteral("Без пароля будь-хто зможе увійти в цей обліковий запис%1.")
-                          .arg(a.type == 1 ? QStringLiteral(" і підтверджувати зміни системи (встановлення програм тощо) без пароля") : QString()));
+    t.body->addWidget(text(own ? tr7("Are you sure you want to remove your password?") : tr7("Are you sure you want to remove %1's password?").arg(a.name())));
+    auto *warn = text(tr7("Without a password, anyone can log on to this account%1.")
+                          .arg(a.type == 1 ? tr7(" and approve system changes (installing programs and so on) without a password") : QString()));
     warn->setStyleSheet(QStringLiteral("color: #555555;"));
     t.body->addWidget(warn);
     QLineEdit *current = nullptr;
     if (own) {
         t.body->addSpacing(6);
-        current = field(QStringLiteral("Поточний пароль"), true);
+        current = field(tr7("Current password"), true);
         current->setFixedWidth(250);
         t.body->addWidget(current);
     }
-    auto *ok = button(t.buttons, QStringLiteral("Видалити пароль"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    auto *ok = button(t.buttons, tr7("Remove Password"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
     QObject::connect(ok, &QPushButton::clicked, t.root, [nav, a, current, ok] {
         if (current && !checkOwnPassword(current->text())) {
-            QMessageBox::warning(ok->window(), QStringLiteral("Облікові записи користувачів"), QStringLiteral("Поточний пароль введено неправильно."));
+            QMessageBox::warning(ok->window(), tr7("User Accounts"), tr7("The current password is not correct."));
             current->clear();
             return;
         }
@@ -1278,13 +1270,13 @@ inline QWidget *buildNamePage(const Nav &nav)
 {
     const Account a = targetAccount();
     auto t = taskPage();
-    t.body->addWidget(title(isSelf(a) ? QStringLiteral("Введіть нове ім'я облікового запису") : QStringLiteral("Введіть нове ім'я облікового запису %1").arg(a.name())));
+    t.body->addWidget(title(isSelf(a) ? tr7("Type a new account name") : tr7("Type a new account name for %1's account").arg(a.name())));
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
-    auto *name = field(QStringLiteral("Нове ім'я облікового запису"));
+    auto *name = field(tr7("New account name"));
     t.body->addWidget(name);
-    t.body->addWidget(text(QStringLiteral("Це ім'я відображатиметься на екрані привітання та в меню «Пуск».")));
-    auto *ok = button(t.buttons, QStringLiteral("Перейменувати"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    t.body->addWidget(text(tr7("This name will appear on the Welcome screen and on the Start menu.")));
+    auto *ok = button(t.buttons, tr7("Rename"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     ok->setEnabled(false);
     QObject::connect(name, &QLineEdit::textChanged, ok, [ok](const QString &s) { ok->setEnabled(!s.trimmed().isEmpty()); });
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
@@ -1302,13 +1294,12 @@ inline QWidget *buildTypePage(const Nav &nav)
     const Account a = targetAccount();
     const bool own = isSelf(a);
     auto t = taskPage();
-    t.body->addWidget(title(own ? QStringLiteral("Вибір нового типу облікового запису") : QStringLiteral("Виберіть новий тип облікового запису для %1").arg(a.name())));
+    t.body->addWidget(title(own ? tr7("Choose a new account type") : tr7("Choose a new account type for %1").arg(a.name())));
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
     t.body->addSpacing(6);
     const bool lastAdmin = a.type == 1 && adminCount() <= 1;
     if (lastAdmin) {
-        t.body->addWidget(text(QStringLiteral("Перш ніж змінити тип цього облікового запису, потрібно надати права адміністратора іншому користувачу "
-                                              "цього комп'ютера. Так на комп'ютері завжди буде хоча б один обліковий запис адміністратора.")));
+        t.body->addWidget(text(tr7("Before you change this account type, give another user of this computer administrator rights. This way the computer always has at least one administrator account.")));
         t.body->addSpacing(4);
     }
     QButtonGroup *type = typeChoice(t.body, a.type);
@@ -1316,9 +1307,9 @@ inline QWidget *buildTypePage(const Nav &nav)
         type->button(0)->setEnabled(false);
     }
     t.body->addSpacing(8);
-    t.body->addWidget(new Link(QStringLiteral("Чому рекомендується використовувати звичайний обліковий запис?"), [type] { typeHelp(type->button(0)->window()); }));
-    auto *ok = button(t.buttons, QStringLiteral("Зміна типу облікового запису"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    t.body->addWidget(new Link(tr7("Why is a standard account recommended?"), [type] { typeHelp(type->button(0)->window()); }));
+    auto *ok = button(t.buttons, tr7("Change the account type"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     ok->setEnabled(false);
     QObject::connect(type, &QButtonGroup::idClicked, ok, [ok, a](int id) { ok->setEnabled(id != a.type); });
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
@@ -1390,10 +1381,10 @@ inline QWidget *buildPicturePage(const Nav &nav)
 {
     const Account a = targetAccount();
     auto t = taskPage();
-    t.body->addWidget(title(isSelf(a) ? QStringLiteral("Виберіть новий рисунок для свого облікового запису")
-                                       : QStringLiteral("Виберіть новий рисунок для облікового запису %1").arg(a.name())));
+    t.body->addWidget(title(isSelf(a) ? tr7("Choose a new picture for your account")
+                                       : tr7("Choose a new picture for %1's account").arg(a.name())));
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
-    t.body->addWidget(text(QStringLiteral("Цей рисунок відображатиметься на екрані привітання та в меню «Пуск».")));
+    t.body->addWidget(text(tr7("The picture you choose will appear on the Welcome screen and on the Start menu.")));
     auto *box = new QFrame;
     box->setObjectName(QStringLiteral("win7picbox"));
     box->setStyleSheet(QStringLiteral("#win7picbox { background: #ffffff; border: 1px solid #ccd5e0; }"));
@@ -1402,8 +1393,8 @@ inline QWidget *buildPicturePage(const Nav &nav)
     grid->setSpacing(4);
     t.body->addWidget(box, 0, Qt::AlignLeft);
     auto chosen = std::make_shared<QString>();
-    auto *ok = button(t.buttons, QStringLiteral("Змінення рисунка"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    auto *ok = button(t.buttons, tr7("Change Picture"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     ok->setEnabled(false);
     auto tiles = std::make_shared<QList<PictureChoice *>>();
     auto pick = [chosen, tiles, ok](const QString &f) {
@@ -1420,10 +1411,10 @@ inline QWidget *buildPicturePage(const Nav &nav)
         tiles->append(c);
         grid->addWidget(c, i / 9, i % 9);
     }
-    t.body->addWidget(new Link(QStringLiteral("Пошук інших рисунків..."), [box, a, nav] {
-        const QString f = QFileDialog::getOpenFileName(box->window(), QStringLiteral("Відкрити"),
+    t.body->addWidget(new Link(tr7("Browse for more pictures..."), [box, a, nav] {
+        const QString f = QFileDialog::getOpenFileName(box->window(), tr7("Open"),
                                                        QStandardPaths::writableLocation(QStandardPaths::PicturesLocation),
-                                                       QStringLiteral("Файли зображень (*.bmp *.gif *.jpg *.jpeg *.png *.dib *.rle *.webp)"));
+                                                       tr7("Image files (*.bmp *.gif *.jpg *.jpeg *.png *.dib *.rle *.webp)"));
         if (!f.isEmpty() && setPicture(box->window(), a, f)) {
             nav.back();
         }
@@ -1442,25 +1433,23 @@ inline QWidget *buildDeletePage(const Nav &nav)
 {
     const Account a = targetAccount();
     auto t = taskPage();
-    auto *heading = title(QStringLiteral("Зберегти файли користувача %1?").arg(a.name()));
+    auto *heading = title(tr7("Do you want to keep %1's files?").arg(a.name()));
     t.body->addWidget(heading);
     t.body->addWidget(accountHead(a), 0, Qt::AlignLeft);
-    auto *explain = text(QStringLiteral("Перш ніж видалити обліковий запис %1, Windows може автоматично зберегти вміст його домашньої папки (робочий стіл, "
-                                        "«Документи», «Музика», «Зображення», «Відео» тощо) у новій папці «%1» на вашому робочому столі. Однак Windows "
-                                        "не зможе зберегти електронну пошту та інші параметри.")
+    auto *explain = text(tr7("Before you delete %1's account, Windows can automatically save the contents of %1's home folder (desktop, Documents, Music, Pictures, Videos and so on) to a new folder called '%1' on your desktop. However, Windows cannot save %1's e-mail messages and other settings.")
                              .arg(a.name()));
     t.body->addWidget(explain);
-    auto *delFiles = button(t.buttons, QStringLiteral("Видалити файли"));
-    auto *keepFiles = button(t.buttons, QStringLiteral("Зберегти файли"));
-    auto *confirm = button(t.buttons, QStringLiteral("Видалити обліковий запис"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    auto *delFiles = button(t.buttons, tr7("Delete Files"));
+    auto *keepFiles = button(t.buttons, tr7("Keep Files"));
+    auto *confirm = button(t.buttons, tr7("Delete Account"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     confirm->hide();
     auto keep = std::make_shared<bool>(false);
     auto toConfirm = [=](bool keepThem) {
         *keep = keepThem;
-        heading->setText(QStringLiteral("Ви дійсно хочете видалити обліковий запис %1?").arg(a.name()));
-        explain->setText(keepThem ? QStringLiteral("Windows збереже файли %1 у папці «%1» на вашому робочому столі, а потім видалить обліковий запис %1.").arg(a.name())
-                                  : QStringLiteral("Windows видалить усі файли %1, а потім видалить обліковий запис %1.").arg(a.name()));
+        heading->setText(tr7("Are you sure you want to delete %1's account?").arg(a.name()));
+        explain->setText(keepThem ? tr7("Windows will save the files of %1 to a folder called '%1' on your desktop, and then delete the %1 account.").arg(a.name())
+                                  : tr7("Windows will delete all of %1's files, and then delete %1's account.").arg(a.name()));
         delFiles->hide();
         keepFiles->hide();
         confirm->show();
@@ -1482,7 +1471,7 @@ inline QWidget *buildDeletePage(const Nav &nav)
                                                 QString::number(getuid()) + QLatin1Char(':') + QString::number(getgid())});
             if (code != 0) {
                 if (code != 126 && code != 127) {
-                    QMessageBox::warning(w, QStringLiteral("Облікові записи користувачів"), QStringLiteral("Не вдалося зберегти файли. Обліковий запис не видалено."));
+                    QMessageBox::warning(w, tr7("User Accounts"), tr7("The files could not be saved. The account was not deleted."));
                 }
                 return;
             }
@@ -1504,19 +1493,19 @@ inline QWidget *buildGuestPage(const Nav &nav)
         g.user = QStringLiteral("guest");
         g.locked = true;
     }
-    g.real = QStringLiteral("Гість");
+    g.real = tr7("Guest");
     auto t = taskPage(!on);
     if (on) {
-        t.body->addWidget(title(QStringLiteral("Внесення змін в обліковий запис гостя")));
+        t.body->addWidget(title(tr7("Make changes to the guest account")));
         auto *row = new QHBoxLayout;
         row->setSpacing(40);
         auto *links = new QVBoxLayout;
         links->setSpacing(6);
-        links->addWidget(shieldLink(QStringLiteral("Зміна рисунка"), [nav, g] {
+        links->addWidget(shieldLink(tr7("Change the picture"), [nav, g] {
             target() = g.path;
             nav.open(PictureView);
         }, false));
-        links->addWidget(shieldLink(QStringLiteral("Вимкнення облікового запису гостя"), [nav, g] {
+        links->addWidget(shieldLink(tr7("Turn off the guest account"), [nav, g] {
             if (done(nullptr, userCall(g, QStringLiteral("SetLocked"), {true}))) {
                 nav.open(ManageView);
             }
@@ -1530,19 +1519,18 @@ inline QWidget *buildGuestPage(const Nav &nav)
         t.body->addLayout(row);
         return t.root;
     }
-    t.body->addWidget(title(QStringLiteral("Увімкнути обліковий запис гостя?")));
+    t.body->addWidget(title(tr7("Do you want to turn on the guest account?")));
     t.body->addWidget(accountHead(g), 0, Qt::AlignLeft);
-    t.body->addWidget(text(QStringLiteral("Якщо ввімкнути обліковий запис гостя, люди, які не мають облікового запису, зможуть увійти в систему "
-                                          "через нього. Файли, папки й параметри, захищені паролем, гостям недоступні.")));
-    auto *ok = button(t.buttons, QStringLiteral("Увімкнути"));
-    auto *cancel = button(t.buttons, QStringLiteral("Скасувати"));
+    t.body->addWidget(text(tr7("If you turn on the guest account, people who do not have an account can use the guest account to log on to the computer. Password-protected files, folders, or settings are not accessible to guest users.")));
+    auto *ok = button(t.buttons, tr7("Turn on"));
+    auto *cancel = button(t.buttons, tr7("Cancel"));
     QObject::connect(cancel, &QPushButton::clicked, t.root, [nav] { nav.back(); });
     QObject::connect(ok, &QPushButton::clicked, t.root, [nav, path, ok] {
         QWidget *w = ok->window();
         Account guest;
         if (path.isEmpty()) {
             QDBusMessage m = QDBusMessage::createMethodCall(kService, QStringLiteral("/org/freedesktop/Accounts"), kService, QStringLiteral("CreateUser"));
-            m.setArguments({QStringLiteral("guest"), QStringLiteral("Гість"), 0});
+            m.setArguments({QStringLiteral("guest"), tr7("Guest"), 0});
             m.setInteractiveAuthorizationAllowed(true);
             const QDBusMessage r = QDBusConnection::systemBus().call(m, QDBus::BlockWithGui, 300000);
             if (r.type() == QDBusMessage::ErrorMessage) {
@@ -1597,26 +1585,26 @@ inline QString viewTitle(int view)
 {
     switch (view) {
     case HomeView:
-        return QStringLiteral("Облікові записи користувачів");
+        return tr7("User Accounts");
     case ManageView:
-        return QStringLiteral("Керування обліковими записами");
+        return tr7("Manage Accounts");
     case CreateView:
-        return QStringLiteral("Створення нового облікового запису");
+        return tr7("Create New Account");
     case AccountView:
     case GuestView:
-        return QStringLiteral("Зміна облікового запису");
+        return tr7("Change an Account");
     case PasswordView:
-        return QStringLiteral("Зміна пароля");
+        return tr7("Change the password");
     case RemovePasswordView:
-        return QStringLiteral("Видалення пароля");
+        return tr7("Remove the password");
     case NameView:
-        return QStringLiteral("Зміна імені");
+        return tr7("Change Name");
     case TypeView:
-        return QStringLiteral("Зміна типу облікового запису");
+        return tr7("Change the account type");
     case PictureView:
-        return QStringLiteral("Вибір рисунка");
+        return tr7("Choose Picture");
     case DeleteView:
-        return QStringLiteral("Видалення облікового запису");
+        return tr7("Delete the account");
     }
     return QString();
 }
@@ -1638,10 +1626,9 @@ public:
     AutoLogonDialog(const QString &user, QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Автоматичний вхід у систему"));
+        setWindowTitle(tr7("Automatically Log On"));
         auto *v = new QVBoxLayout(this);
-        auto *t = new QLabel(QStringLiteral("Можна налаштувати комп'ютер так, щоб користувачам не потрібно було вводити ім'я користувача та пароль "
-                                            "для входу. Для цього вкажіть нижче користувача, який входитиме автоматично:"));
+        auto *t = new QLabel(tr7("You can set up your computer so that users do not have to type a user name and password to log on. To do this, specify a user that will be automatically logged on below:"));
         t->setWordWrap(true);
         v->addWidget(t);
         auto *g = new QGridLayout;
@@ -1650,23 +1637,23 @@ public:
         again = new QLineEdit;
         pw->setEchoMode(QLineEdit::Password);
         again->setEchoMode(QLineEdit::Password);
-        g->addWidget(new QLabel(QStringLiteral("Ім'я користувача:")), 0, 0);
+        g->addWidget(new QLabel(tr7("User name:")), 0, 0);
         g->addWidget(name, 0, 1);
-        g->addWidget(new QLabel(QStringLiteral("Пароль:")), 1, 0);
+        g->addWidget(new QLabel(tr7("Password:")), 1, 0);
         g->addWidget(pw, 1, 1);
-        g->addWidget(new QLabel(QStringLiteral("Підтвердження:")), 2, 0);
+        g->addWidget(new QLabel(tr7("Confirm Password:")), 2, 0);
         g->addWidget(again, 2, 1);
         v->addLayout(g);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         connect(bb, &QDialogButtonBox::accepted, this, [this] {
             if (pw->text() != again->text()) {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Паролі не збігаються."));
+                QMessageBox::warning(this, windowTitle(), tr7("The passwords do not match."));
                 return;
             }
             if (findUser(name->text().trimmed()).isEmpty()) {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Користувача «%1» не знайдено.").arg(name->text().trimmed()));
+                QMessageBox::warning(this, windowTitle(), tr7("The user \"%1\" was not found.").arg(name->text().trimmed()));
                 return;
             }
             accept();
@@ -1683,7 +1670,7 @@ public:
     UserPropertiesDialog(const Account &a, QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Властивості: %1").arg(a.user));
+        setWindowTitle(tr7("%1 Properties").arg(a.user));
         auto *v = new QVBoxLayout(this);
         auto *tabs = new QTabWidget;
         auto *gen = new QWidget;
@@ -1691,20 +1678,19 @@ public:
         auto *user = new QLineEdit(a.user);
         user->setReadOnly(true);
         auto *full = new QLineEdit(a.real);
-        g->addWidget(new QLabel(QStringLiteral("Ім'я користувача:")), 0, 0);
+        g->addWidget(new QLabel(tr7("User name:")), 0, 0);
         g->addWidget(user, 0, 1);
-        g->addWidget(new QLabel(QStringLiteral("Повне ім'я:")), 1, 0);
+        g->addWidget(new QLabel(tr7("Full Name:")), 1, 0);
         g->addWidget(full, 1, 1);
         g->setRowStretch(2, 1);
-        tabs->addTab(gen, QStringLiteral("Загальні"));
+        tabs->addTab(gen, tr7("General"));
         auto *grp = new QWidget;
         auto *gv = new QVBoxLayout(grp);
-        gv->addWidget(new QLabel(QStringLiteral("Виберіть рівень доступу для цього користувача:")));
-        auto *std_ = new QRadioButton(QStringLiteral("Звичайний користувач"));
-        auto *adm = new QRadioButton(QStringLiteral("Адміністратор"));
-        auto *d1 = new QLabel(QStringLiteral("Користувачі зі звичайним доступом можуть використовувати більшість програм і змінювати параметри, які не "
-                                             "впливають на інших користувачів."));
-        auto *d2 = new QLabel(QStringLiteral("Адміністратори мають повний доступ до комп'ютера й можуть вносити будь-які зміни."));
+        gv->addWidget(new QLabel(tr7("What level of access do you want to grant this user?")));
+        auto *std_ = new QRadioButton(tr7("Standard user", "netplwiz"));
+        auto *adm = new QRadioButton(tr7("Administrator"));
+        auto *d1 = new QLabel(tr7("Standard account users can use most software and can change system settings that do not affect other users."));
+        auto *d2 = new QLabel(tr7("Administrators have complete access to the computer and can make any changes."));
         for (QLabel *l : {d1, d2}) {
             l->setWordWrap(true);
             l->setContentsMargins(20, 0, 0, 6);
@@ -1719,11 +1705,11 @@ public:
             // as in Windows 7 an administrator does not demote himself here
             std_->setEnabled(false);
         }
-        tabs->addTab(grp, QStringLiteral("Членство в групах"));
+        tabs->addTab(grp, tr7("Group Membership"));
         v->addWidget(tabs);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         connect(bb, &QDialogButtonBox::accepted, this, [this, a, full, adm] {
             if (full->text() != a.real && !Win7Users::done(this, userCall(a, QStringLiteral("SetRealName"), {full->text()}))) {
                 return;
@@ -1746,7 +1732,7 @@ public:
     explicit NetplwizDialog(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Облікові записи користувачів"));
+        setWindowTitle(tr7("User Accounts"));
         auto *v = new QVBoxLayout(this);
         auto *tabs = new QTabWidget;
         auto *page = new QWidget;
@@ -1755,26 +1741,25 @@ public:
         auto *ic = new QLabel;
         ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-netplwiz-users")).pixmap(32, 32));
         top->addWidget(ic, 0, Qt::AlignTop);
-        auto *intro = new QLabel(QStringLiteral("Використовуйте наведений нижче список, щоб надавати користувачам доступ до цього комп'ютера або забороняти його, "
-                                                "а також змінювати паролі та інші параметри."));
+        auto *intro = new QLabel(tr7("Use the list below to grant or deny users access to your computer, and to change passwords and other settings."));
         intro->setWordWrap(true);
         top->addWidget(intro, 1);
         pv->addLayout(top);
-        must = new QCheckBox(QStringLiteral("Вимагати введення імені користувача та пароля"));
+        must = new QCheckBox(tr7("Users must enter a user name and password to use this computer"));
         pv->addSpacing(4);
         pv->addWidget(must);
-        pv->addWidget(new QLabel(QStringLiteral("Користувачі цього комп'ютера:")));
+        pv->addWidget(new QLabel(tr7("Users for this computer:")));
         list = new QTreeWidget;
-        list->setHeaderLabels({QStringLiteral("Ім'я користувача"), QStringLiteral("Група")});
+        list->setHeaderLabels({tr7("User Name"), tr7("Group")});
         list->setRootIsDecorated(false);
         list->header()->resizeSection(0, 190);
         list->setMinimumHeight(130);
         pv->addWidget(list);
         auto *bh = new QHBoxLayout;
         bh->addStretch(1);
-        add = new QPushButton(QStringLiteral("Додати..."));
-        remove = new QPushButton(QStringLiteral("Видалити"));
-        props = new QPushButton(QStringLiteral("Властивості"));
+        add = new QPushButton(tr7("Add..."));
+        remove = new QPushButton(tr7("Delete"));
+        props = new QPushButton(tr7("Properties"));
         for (QPushButton *b : {add, remove, props}) {
             bh->addWidget(b);
         }
@@ -1790,17 +1775,17 @@ public:
         gv->addWidget(boxText);
         auto *rh = new QHBoxLayout;
         rh->addStretch(1);
-        reset = new QPushButton(QStringLiteral("Скинути пароль..."));
+        reset = new QPushButton(tr7("Reset Password..."));
         rh->addWidget(reset);
         gv->addLayout(rh);
         gh->addLayout(gv, 1);
         pv->addWidget(box);
-        tabs->addTab(page, QStringLiteral("Користувачі"));
+        tabs->addTab(page, tr7("Users"));
         v->addWidget(tabs);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
-        bb->button(QDialogButtonBox::Apply)->setText(QStringLiteral("Застосувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
+        bb->button(QDialogButtonBox::Apply)->setText(tr7("Apply"));
         apply = bb->button(QDialogButtonBox::Apply);
         v->addWidget(bb);
 
@@ -1849,7 +1834,7 @@ private:
         m_accounts = accounts();
         list->clear();
         for (const Account &a : std::as_const(m_accounts)) {
-            auto *it = new QTreeWidgetItem(list, {a.user, a.type == 1 ? QStringLiteral("Адміністратори; Користувачі") : QStringLiteral("Користувачі")});
+            auto *it = new QTreeWidgetItem(list, {a.user, a.type == 1 ? tr7("Administrators; Users") : tr7("Users")});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-netplwiz-user")));
             if (a.user == keep || (keep.isEmpty() && isSelf(a))) {
                 list->setCurrentItem(it);
@@ -1874,9 +1859,9 @@ private:
         const bool me = isSelf(a);
         remove->setEnabled(a.valid() && !me);
         props->setEnabled(a.valid());
-        box->setTitle(QStringLiteral("Пароль для %1").arg(a.user));
-        boxText->setText(me ? QStringLiteral("Щоб змінити свій пароль, відкрийте «Облікові записи користувачів» у Панелі керування й виберіть «Змінити пароль».")
-                            : QStringLiteral("Щоб змінити пароль для %1, натисніть кнопку «Скинути пароль».").arg(a.user));
+        box->setTitle(tr7("Password for %1").arg(a.user));
+        boxText->setText(me ? tr7("To change your password, open User Accounts in Control Panel and select Change your password.")
+                            : tr7("To change the password for %1, click Reset Password.").arg(a.user));
         reset->setEnabled(a.valid() && !me);
     }
     bool save()
@@ -1900,7 +1885,7 @@ private:
     void removeUser()
     {
         const Account a = current();
-        if (QMessageBox::warning(this, windowTitle(), QStringLiteral("Ви дійсно хочете видалити користувача %1?\n\nЙого файли в домашній папці залишаться на диску.").arg(a.user),
+        if (QMessageBox::warning(this, windowTitle(), tr7("Are you sure you want to remove %1?\n\nTheir files in the home folder stay on the disk.").arg(a.user),
                                  QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
             != QMessageBox::Yes) {
             return;
@@ -1916,28 +1901,28 @@ private:
     {
         const Account a = current();
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Скидання пароля"));
+        d.setWindowTitle(tr7("Reset Password"));
         auto *v = new QVBoxLayout(&d);
-        auto *t = new QLabel(QStringLiteral("Введіть новий пароль для %1:").arg(a.user));
+        auto *t = new QLabel(tr7("Type a new password for %1:").arg(a.user));
         v->addWidget(t);
         auto *g = new QGridLayout;
         auto *pw = new QLineEdit;
         auto *again = new QLineEdit;
         pw->setEchoMode(QLineEdit::Password);
         again->setEchoMode(QLineEdit::Password);
-        g->addWidget(new QLabel(QStringLiteral("Новий пароль:")), 0, 0);
+        g->addWidget(new QLabel(tr7("New password:")), 0, 0);
         g->addWidget(pw, 0, 1);
-        g->addWidget(new QLabel(QStringLiteral("Підтвердження нового пароля:")), 1, 0);
+        g->addWidget(new QLabel(tr7("Confirm new password:")), 1, 0);
         g->addWidget(again, 1, 1);
         v->addLayout(g);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         v->addWidget(bb);
         connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
         connect(bb, &QDialogButtonBox::accepted, &d, [&] {
             if (pw->text() != again->text()) {
-                QMessageBox::warning(&d, d.windowTitle(), QStringLiteral("Паролі не збігаються."));
+                QMessageBox::warning(&d, d.windowTitle(), tr7("The passwords do not match."));
                 return;
             }
             const QString err = pw->text().isEmpty() ? userCall(a, QStringLiteral("SetPasswordMode"), {2})

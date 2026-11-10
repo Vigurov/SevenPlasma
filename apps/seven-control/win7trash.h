@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * "Recycle Bin Properties" (right click on the Recycle Bin > Properties), after the user's photo 1 of a
  * Windows 7 setup: the picture on the left, the list of recycle bin locations with their free space, the
@@ -52,9 +53,9 @@ inline QString freeText(qint64 bytes)
 {
     const double gb = bytes / 1073741824.0;
     if (gb >= 1) {
-        return QLocale(QLocale::Ukrainian).toString(gb, 'f', gb >= 100 ? 0 : 1) + QStringLiteral(" ГБ");
+        return QLocale{}.toString(gb, 'f', gb >= 100 ? 0 : 1) + tr7(" GB");
     }
-    return QLocale(QLocale::Ukrainian).toString(bytes / 1048576.0, 'f', 0) + QStringLiteral(" МБ");
+    return QLocale{}.toString(bytes / 1048576.0, 'f', 0) + tr7(" MB");
 }
 
 /** The partitions with a recycle bin: the one Linux runs from (C:), then the other writable disks (D:, E:...) */
@@ -74,7 +75,7 @@ inline QList<Location> locations()
         }
         if (v.device() == home.device()) {
             Location l;
-            l.name = QStringLiteral("Локальний диск (C:)");
+            l.name = tr7("Local Disk (C:)");
             l.trashDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/Trash");
             l.total = v.bytesTotal();
             l.free = v.bytesAvailable();
@@ -86,7 +87,7 @@ inline QList<Location> locations()
     char letter = 'D';
     for (const QStorageInfo &v : std::as_const(others)) {
         Location l;
-        const QString label = v.displayName() == v.rootPath() ? QStringLiteral("Локальний диск") : v.displayName();
+        const QString label = v.displayName() == v.rootPath() ? tr7("Local Disk") : v.displayName();
         l.name = QStringLiteral("%1 (%2:)").arg(label).arg(QLatin1Char(letter++));
         l.trashDir = v.rootPath() + QStringLiteral("/.Trash-%1").arg(getuid());
         l.total = v.bytesTotal();
@@ -189,7 +190,7 @@ class RecycleBinDialog : public QDialog
 public:
     RecycleBinDialog()
     {
-        setWindowTitle(QStringLiteral("Властивості: Кошик"));
+        setWindowTitle(tr7("Recycle Bin Properties"));
         // the Recycle Bin's own icon, empty or full like on the desktop
         const bool full = !QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/Trash/files"))
                                .isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
@@ -217,7 +218,7 @@ public:
 
         m_list = new QTreeWidget(page);
         m_list->setGeometry(146, 13, 297, 98);
-        m_list->setHeaderLabels({QStringLiteral("Розташування кошика"), QStringLiteral("Вільно")});
+        m_list->setHeaderLabels({tr7("Recycle Bin Location"), tr7("Free Space")});
         m_list->setRootIsDecorated(false);
         m_list->setUniformRowHeights(true);
         // a classic list view: the selected row in the system blue, white text
@@ -232,26 +233,26 @@ public:
             it->setSizeHint(0, QSize(0, 17));
         }
 
-        auto *box = new QGroupBox(QStringLiteral("Параметри для вибраного розташування"), page);
+        auto *box = new QGroupBox(tr7("Settings for selected location"), page);
         box->setGeometry(146, 122, 297, 96);
-        m_custom = new QRadioButton(QStringLiteral("Задати розмір:"), box);
+        m_custom = new QRadioButton(tr7("Custom size:"), box);
         m_custom->move(10, 21);
-        auto *sizeLabel = new QLabel(QStringLiteral("Максимальний розмір (МБ):"), box);
+        auto *sizeLabel = new QLabel(tr7("Maximum disk space in MB:"), box);
         sizeLabel->move(24, 39);
         m_size = new QLineEdit(box);
         m_size->setValidator(new QIntValidator(1, 99999999, m_size));
         m_size->setGeometry(201, 33, 55, 22);
         m_now = new QRadioButton(box);
         m_now->move(10, 61);
-        auto *nowText = new QLabel(QStringLiteral("Знищувати файли одразу після видалення, не переміщуючи їх до кошика"), box);
+        auto *nowText = new QLabel(tr7("Don't move files to the Recycle Bin. Remove files immediately when deleted."), box);
         nowText->setWordWrap(true);
         nowText->setGeometry(27, 61, 260, 30);
         nowText->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-        m_confirm = new QCheckBox(QStringLiteral("Запитувати підтвердження на видалення"), page);
+        m_confirm = new QCheckBox(tr7("Display delete confirmation dialog"), page);
         m_confirm->move(156, 232);
         m_confirm->setChecked(confirmation());
-        tabs->addTab(page, QStringLiteral("Загальні"));
+        tabs->addTab(page, tr7("General"));
         v->addWidget(tabs, 1);
 
         auto *buttons = new QHBoxLayout;
@@ -259,8 +260,8 @@ public:
         buttons->setSpacing(8);
         buttons->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setFixedSize(73, 21);
             buttons->addWidget(b);

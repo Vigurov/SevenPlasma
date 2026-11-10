@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * CPU Meter: the two dials of CPU.Gadget (cpu.js), fed from /proc/stat and /proc/meminfo.
  * Included inside main.cpp's namespace.
@@ -127,7 +128,7 @@ private:
                 m_mem = 100.0 - 100.0 * double(memAvail) / double(memTotal);
             }
         }
-        setToolTip(QStringLiteral("Використання ЦП: %1\nОперативна пам'ять (ОЗП): %2").arg(percentText(m_cpu), percentText(m_mem)));
+        setToolTip(tr7("CPU usage: %1\nPhysical memory usage (RAM): %2").arg(percentText(m_cpu), percentText(m_mem)));
     }
 
     qreal m_cpu = 0;

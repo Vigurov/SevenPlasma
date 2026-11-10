@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 #include "win7header.h"
@@ -88,7 +89,7 @@ inline bool included(const QString &path, const QStringList &inc, const QStringL
 inline QString displayName(const QString &path)
 {
     if (path == QLatin1String("/")) {
-        return QStringLiteral("Локальний диск (/)");
+        return tr7("Local Disk (/)");
     }
     return QFileInfo(path).fileName();
 }
@@ -109,7 +110,7 @@ inline void fillSummary(QTreeWidget *list, const QStringList &inc, const QString
 {
     list->clear();
     QStringList sorted = inc;
-    QCollator coll(QLocale(QLocale::Ukrainian));
+    QCollator coll(QLocale{});
     std::sort(sorted.begin(), sorted.end(), [&coll](const QString &a, const QString &b) { return coll.compare(displayName(a), displayName(b)) < 0; });
     for (const QString &f : sorted) {
         QStringList ex;
@@ -128,7 +129,7 @@ inline QTreeWidget *summaryList()
 {
     auto *list = new QTreeWidget;
     list->setRootIsDecorated(false);
-    list->setHeaderLabels({QStringLiteral("Включені розташування"), QStringLiteral("Виключити")});
+    list->setHeaderLabels({tr7("Included Locations"), tr7("Exclude")});
     Win7HeaderView::install(list);
     list->header()->setSectionsClickable(false);
     return list;
@@ -146,15 +147,15 @@ public:
         , inc(includes)
         , exc(excludes)
     {
-        setWindowTitle(QStringLiteral("Індексовані розташування"));
+        setWindowTitle(tr7("Indexed Locations"));
         setFixedSize(dlu(0, 0, 265, 334).size());
-        place(this, new QGroupBox(QStringLiteral("Змінення вибраних розташувань")), dlu(7, 7, 251, 163));
+        place(this, new QGroupBox(tr7("Change selected locations")), dlu(7, 7, 251, 163));
         m_tree = place(this, new QTreeWidget, dlu(15, 18, 235, 144));
         m_tree->setHeaderHidden(true);
-        place(this, new QGroupBox(QStringLiteral("Підсумок вибраних розташувань")), dlu(7, 176, 251, 123));
+        place(this, new QGroupBox(tr7("Summary of selected locations")), dlu(7, 176, 251, 123));
         m_summary = place(this, summaryList(), dlu(15, 187, 235, 104));
         auto *ok = place(this, new QPushButton(QStringLiteral("OK")), dlu(156, 313, 50, 14));
-        auto *cancel = place(this, new QPushButton(QStringLiteral("Скасувати")), dlu(209, 313, 50, 14));
+        auto *cancel = place(this, new QPushButton(tr7("Cancel")), dlu(209, 313, 50, 14));
         ok->setDefault(true);
         connect(ok, &QPushButton::clicked, this, &QDialog::accept);
         connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
@@ -314,17 +315,17 @@ public:
     explicit AdvancedDialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Додаткові параметри"));
+        setWindowTitle(tr7("More Options"));
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         auto *tabs = new QTabWidget;
-        tabs->addTab(settingsPage(), QStringLiteral("Параметри індексування"));
-        tabs->addTab(typesPage(), QStringLiteral("Типи файлів"));
+        tabs->addTab(settingsPage(), tr7("Indexing Options"));
+        tabs->addTab(typesPage(), tr7("File Types"));
         v->addWidget(tabs);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -350,38 +351,37 @@ private:
     QWidget *settingsPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Параметри файлів")), dlu(7, 7, 222, 50));
+        place(p, new QGroupBox(tr7("File Settings")), dlu(7, 7, 222, 50));
         // Baloo neither reads encrypted files nor folds diacritics differently: greyed, as Windows greys a policy
-        place(p, new QCheckBox(QStringLiteral("Індексувати зашифровані файли")), dlu(16, 18, 204, 10))->setEnabled(false);
+        place(p, new QCheckBox(tr7("Index encrypted files")), dlu(16, 18, 204, 10))->setEnabled(false);
         auto *dia = place(p, new QCheckBox, dlu(16, 32, 18, 10));
         dia->setEnabled(false);
-        auto *diaText = place(p, new QLabel(QStringLiteral("Розглядати схожі слова з діакритичними знаками як різні слова")), dlu(16, 32, 204, 18).adjusted(19, 0, 0, 0));
+        auto *diaText = place(p, new QLabel(tr7("Treat similar words with diacritics as different words")), dlu(16, 32, 204, 18).adjusted(19, 0, 0, 0));
         diaText->setWordWrap(true);
         diaText->setAlignment(Qt::AlignLeft | Qt::AlignTop);
         diaText->setEnabled(false);
 
-        place(p, new QGroupBox(QStringLiteral("Усунення неполадок")), dlu(7, 64, 222, 57));
-        place(p, new QLabel(QStringLiteral("Видалити й перебудувати індекс")), dlu(16, 78, 150, 10));
-        auto *rebuild = place(p, new QPushButton(QStringLiteral("Перебудувати")), dlu(170, 75, 50, 14));
+        place(p, new QGroupBox(tr7("Troubleshooting")), dlu(7, 64, 222, 57));
+        place(p, new QLabel(tr7("Delete and rebuild index")), dlu(16, 78, 150, 10));
+        auto *rebuild = place(p, new QPushButton(tr7("Rebuild")), dlu(170, 75, 50, 14));
         connect(rebuild, &QPushButton::clicked, this, [this] {
-            if (QMessageBox::question(this, QStringLiteral("Перебудування індексу"),
-                                      QStringLiteral("Перебудування індексу може тривати довго. Деякі подання й результати пошуку можуть бути неповними, "
-                                                     "доки перебудування не завершиться."),
+            if (QMessageBox::question(this, tr7("Rebuild Index"),
+                                      tr7("Rebuilding the index might take a long time to complete. Some views and search results might be incomplete until rebuilding is finished."),
                                       QMessageBox::Ok | QMessageBox::Cancel)
                 == QMessageBox::Ok) {
                 runBaloo({QStringLiteral("purge")});
             }
         });
-        auto *trouble = place(p, new Link(QStringLiteral("Усунення неполадок пошуку й індексування"), [] { runBaloo({QStringLiteral("check")}); }), dlu(16, 105, 168, 9));
+        auto *trouble = place(p, new Link(tr7("Troubleshoot search and indexing"), [] { runBaloo({QStringLiteral("check")}); }), dlu(16, 105, 168, 9));
         trouble->setWordWrap(false);
 
-        place(p, new QGroupBox(QStringLiteral("Розташування індексу")), dlu(7, 128, 222, 86));
-        place(p, new QLabel(QStringLiteral("Поточне розташування:")), dlu(16, 139, 204, 8));
+        place(p, new QGroupBox(tr7("Index location")), dlu(7, 128, 222, 86));
+        place(p, new QLabel(tr7("Current location:")), dlu(16, 139, 204, 8));
         auto *cur = place(p, new QLineEdit(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/baloo")), dlu(16, 149, 204, 13));
         cur->setReadOnly(true);
-        place(p, new QLabel(QStringLiteral("Нове розташування після перезапуску служби:")), dlu(16, 166, 204, 8))->setEnabled(false);
+        place(p, new QLabel(tr7("New location, after service is restarted:")), dlu(16, 166, 204, 8))->setEnabled(false);
         place(p, new QLineEdit, dlu(16, 176, 204, 13))->setEnabled(false);
-        place(p, new QPushButton(QStringLiteral("Вибрати нове")), dlu(150, 193, 70, 14))->setEnabled(false);
+        place(p, new QPushButton(tr7("Select new")), dlu(150, 193, 70, 14))->setEnabled(false);
         return p;
     }
 
@@ -393,7 +393,7 @@ private:
         const QStringList mimes = cfg.excludeMimetypes();
         m_types = place(p, new QTreeWidget, dlu(7, 7, 226, 159));
         m_types->setRootIsDecorated(false);
-        m_types->setHeaderLabels({QStringLiteral("Розширення"), QStringLiteral("Опис фільтра")});
+        m_types->setHeaderLabels({tr7("Extension"), tr7("Filter Description")});
         Win7HeaderView::install(m_types);
         KFileMetaData::ExtractorCollection extractors;
         QMap<QString, QString> extMime; // sorted by extension
@@ -408,7 +408,7 @@ private:
         }
         for (auto it = extMime.cbegin(); it != extMime.cend(); ++it) {
             const bool content = !extractors.fetchExtractors(it.value()).isEmpty();
-            auto *row = new QTreeWidgetItem(m_types, {it.key(), content ? QStringLiteral("Фільтр вмісту й властивостей") : QStringLiteral("Фільтр властивостей файлу")});
+            auto *row = new QTreeWidgetItem(m_types, {it.key(), content ? tr7("Properties and Content filter") : tr7("File Properties filter")});
             row->setFlags(row->flags() | Qt::ItemIsUserCheckable);
             row->setData(0, Qt::UserRole, it.value());
             row->setData(1, Qt::UserRole, content);
@@ -419,9 +419,9 @@ private:
         m_types->sortItems(0, Qt::AscendingOrder);
 
         // Baloo reads the contents of every type or of none, so the choice here is shared by all types
-        place(p, new QGroupBox(QStringLiteral("Як слід індексувати цей файл?")), dlu(7, 170, 226, 40));
-        m_props = place(p, new QRadioButton(QStringLiteral("Індексувати лише властивості")), dlu(16, 181, 207, 9));
-        m_contents = place(p, new QRadioButton(QStringLiteral("Індексувати властивості й вміст файлу")), dlu(16, 194, 207, 9));
+        place(p, new QGroupBox(tr7("How should this file be indexed?")), dlu(7, 170, 226, 40));
+        m_props = place(p, new QRadioButton(tr7("Index Properties Only")), dlu(16, 181, 207, 9));
+        m_contents = place(p, new QRadioButton(tr7("Index Properties and File Contents")), dlu(16, 194, 207, 9));
         (cfg.onlyBasicIndexing() ? m_props : m_contents)->setChecked(true);
         auto sync = [this] {
             QTreeWidgetItem *cur = m_types->currentItem();
@@ -433,9 +433,9 @@ private:
         connect(m_types, &QTreeWidget::currentItemChanged, this, sync);
         connect(m_types, &QTreeWidget::itemChanged, this, sync);
 
-        place(p, new QLabel(QStringLiteral("Додати нове розширення до списку:")), dlu(7, 214, 225, 8));
+        place(p, new QLabel(tr7("Add new extension to list:")), dlu(7, 214, 225, 8));
         auto *edit = place(p, new QLineEdit, dlu(7, 225, 50, 12));
-        auto *add = place(p, new QPushButton(QStringLiteral("Додати")), dlu(61, 224, 48, 14));
+        auto *add = place(p, new QPushButton(tr7("Add")), dlu(61, 224, 48, 14));
         add->setEnabled(false);
         connect(edit, &QLineEdit::textChanged, add, [add](const QString &t) { add->setEnabled(!t.trimmed().isEmpty()); });
         connect(add, &QPushButton::clicked, this, [this, edit] {
@@ -449,7 +449,7 @@ private:
             const auto found = m_types->findItems(ext, Qt::MatchExactly, 0);
             QTreeWidgetItem *row = found.isEmpty() ? nullptr : found.first();
             if (!row) {
-                row = new QTreeWidgetItem(m_types, {ext, QStringLiteral("Фільтр властивостей файлу")});
+                row = new QTreeWidgetItem(m_types, {ext, tr7("File Properties filter")});
                 row->setFlags(row->flags() | Qt::ItemIsUserCheckable);
                 row->setData(1, Qt::UserRole, false);
             }
@@ -499,7 +499,7 @@ class IndexingDialog : public QDialog
 public:
     IndexingDialog()
     {
-        setWindowTitle(QStringLiteral("Параметри індексування"));
+        setWindowTitle(tr7("Indexing Options"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-indexing")));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedSize(dlu(0, 0, 326, 313).size());
@@ -512,19 +512,19 @@ public:
         m_state = place(this, new QLabel, dlu(62, 25, 257, 30));
         m_state->setWordWrap(true);
         m_state->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-        place(this, new QLabel(QStringLiteral("Індексувати ці розташування:")), dlu(7, 62, 312, 14));
+        place(this, new QLabel(tr7("Index these locations:")), dlu(7, 62, 312, 14));
         m_list = place(this, summaryList(), dlu(7, 80, 311, 167));
         m_list->setColumnWidth(0, dlu(0, 0, 150, 0).width());
-        auto *modify = place(this, new QPushButton(QStringLiteral("Змінити")), dlu(7, 251, 75, 14));
-        auto *advanced = place(this, new QPushButton(QStringLiteral("Додатково")), dlu(86, 251, 75, 14));
-        m_pause = place(this, new QPushButton(QStringLiteral("Призупинити")), dlu(165, 251, 75, 14));
-        auto *trouble = place(this, new Link(QStringLiteral("Усунення неполадок пошуку й індексування"), [this] {
+        auto *modify = place(this, new QPushButton(tr7("Modify")), dlu(7, 251, 75, 14));
+        auto *advanced = place(this, new QPushButton(tr7("Advanced")), dlu(86, 251, 75, 14));
+        m_pause = place(this, new QPushButton(tr7("Pause")), dlu(165, 251, 75, 14));
+        auto *trouble = place(this, new Link(tr7("Troubleshoot search and indexing"), [this] {
                                   runBaloo({QStringLiteral("check")});
                                   poll();
                               }),
                               dlu(7, 282, 200, 9));
         trouble->setWordWrap(false);
-        auto *close = place(this, new QPushButton(QStringLiteral("Закрити")), dlu(244, 292, 75, 14));
+        auto *close = place(this, new QPushButton(tr7("Close")), dlu(244, 292, 75, 14));
         close->setDefault(true);
         connect(close, &QPushButton::clicked, this, &QDialog::close);
         connect(modify, &QPushButton::clicked, this, [this] {
@@ -568,8 +568,8 @@ public:
         m_poll.start(2000);
         drawFrame();
         loadLocations();
-        m_count->setText(QStringLiteral("Проіндексовано елементів: 0"));
-        m_state->setText(QStringLiteral("Очікування отримання стану індексування..."));
+        m_count->setText(tr7("0 items indexed"));
+        m_state->setText(tr7("Waiting for indexing status..."));
         poll();
     }
 
@@ -626,33 +626,33 @@ private:
         switch (mode) {
         case Disabled:
         case Stopped:
-            state = QStringLiteral("Індексування не виконується.");
+            state = tr7("Indexing is not running.");
             break;
         case Idle:
-            state = QStringLiteral("Індексування завершено.");
+            state = tr7("Indexing complete.");
             break;
         case Paused:
-            state = QStringLiteral("Індексування призупинено.");
+            state = tr7("Indexing is paused.");
             break;
         case Working:
             if (s == QLatin1String("Low Battery")) {
-                state = QStringLiteral("Індексування призупинено для збереження заряду акумулятора.");
+                state = tr7("Indexing is paused to conserve battery power.");
             } else if (s == QLatin1String("Starting")) {
-                state = QStringLiteral("Запуск індексування.");
+                state = tr7("Indexing is starting.");
             } else {
-                state = QStringLiteral("Триває індексування. Протягом цього часу результати пошуку можуть бути неповними.");
+                state = tr7("Indexing in progress. Search results might not be complete during this time.");
             }
             break;
         }
         m_mode = mode;
         const auto cm = countRe.match(out);
         if (cm.hasMatch() || mode == Disabled) {
-            m_count->setText(QStringLiteral("Проіндексовано елементів: %1").arg(QLocale(QLocale::Ukrainian).toString(cm.captured(1).toLongLong())));
+            m_count->setText(tr7("%1 items indexed").arg(QLocale{}.toString(cm.captured(1).toLongLong())));
         }
         m_state->setText(state);
         // Windows shows "Pause" only while it works; with Baloo turned off the same button turns it on
         m_pause->setVisible(mode != Idle);
-        m_pause->setText(mode == Disabled || mode == Stopped ? QStringLiteral("Увімкнути") : (mode == Paused ? QStringLiteral("Продовжити") : QStringLiteral("Призупинити")));
+        m_pause->setText(mode == Disabled || mode == Stopped ? tr7("Turn on") : (mode == Paused ? tr7("Resume") : tr7("Pause")));
         if (mode == Working) {
             if (!m_frames.isActive()) {
                 m_frames.start();

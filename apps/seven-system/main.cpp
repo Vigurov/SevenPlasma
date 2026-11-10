@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * "System" window in the style of Windows 7 (Control Panel > System),
  * showing the real information of this Linux machine.
@@ -90,7 +91,7 @@ Info collect()
     if (!plasma.isEmpty()) {
         i.subtitle += QStringLiteral(", KDE Plasma ") + plasma;
     }
-    i.kernel = QStringLiteral("Ядро Linux ") + QSysInfo::kernelVersion();
+    i.kernel = tr7("Linux kernel ") + QSysInfo::kernelVersion();
 
     // Processor "AMD Ryzen 7 5800H with Radeon Graphics   3.20 GHz"
     const QString cpuinfo = readFile(QStringLiteral("/proc/cpuinfo"));
@@ -106,14 +107,14 @@ Info collect()
     const double installed = std::ceil(totalGiB / 2.0) * 2.0; // firmware reserves a bit; modules come in pairs of GiB
     i.memory = gb(installed);
     if (installed - totalGiB > 0.05) {
-        i.memory += QStringLiteral(" (%1 доступно)").arg(gb(totalGiB));
+        i.memory += tr7(" (%1 usable)").arg(gb(totalGiB));
     }
 
-    i.systemType = QSysInfo::WordSize == 64 ? QStringLiteral("64-розрядна операційна система") : QStringLiteral("32-розрядна операційна система");
+    i.systemType = QSysInfo::WordSize == 64 ? tr7("64-bit Operating System") : tr7("32-bit Operating System");
 
     const QString inputs = readFile(QStringLiteral("/proc/bus/input/devices"));
     const bool touch = inputs.contains(QStringLiteral("Touchscreen"), Qt::CaseInsensitive) || inputs.contains(QStringLiteral(" Pen"), Qt::CaseInsensitive);
-    i.touch = touch ? QStringLiteral("Доступна підтримка пера і сенсорного введення") : QStringLiteral("Перо і сенсорне введення недоступні для цього екрана");
+    i.touch = touch ? tr7("Pen and Touch Input Available") : tr7("No Pen or Touch Input is available for this Display");
 
     i.computer = QSysInfo::machineHostName();
     const QString domain = QHostInfo::localDomainName();
@@ -138,14 +139,14 @@ QWidget *makeHeader(QWidget *parent, QToolButton **refreshOut)
         launch(exe.isEmpty() ? QStringLiteral("systemsettings") : exe, exe.isEmpty() ? QStringList() : QStringList{QStringLiteral("--all")});
     };
     Win7Header h = makeWin7Header(parent,
-                                  {{QStringLiteral("Панель керування"), openControlPanel},
-                                   {QStringLiteral("Усі елементи панелі керування"), openAllItems},
-                                   {QStringLiteral("Система"), nullptr}},
+                                  {{tr7("Control Panel"), openControlPanel},
+                                   {tr7("All Control Panel Items"), openAllItems},
+                                   {tr7("System"), nullptr}},
                                   QStringLiteral("preferences-system"),
-                                  QStringLiteral("Пошук у панелі керування"));
+                                  tr7("Search Control Panel"));
     QObject::connect(h.history, &QToolButton::clicked, h.history, [btn = h.history, openControlPanel] {
         QMenu menu(btn);
-        menu.addAction(QIcon::fromTheme(QStringLiteral("preferences-system")), QStringLiteral("Панель керування"), openControlPanel);
+        menu.addAction(QIcon::fromTheme(QStringLiteral("preferences-system")), tr7("Control Panel"), openControlPanel);
         menu.exec(btn->mapToGlobal(QPoint(0, btn->height())));
     });
     QObject::connect(h.search, &QLineEdit::returnPressed, h.search, openControlPanel);
@@ -155,7 +156,7 @@ QWidget *makeHeader(QWidget *parent, QToolButton **refreshOut)
 
 Aero::Sidebar *makeSidebar()
 {
-    auto *home = new QAction(QStringLiteral("Панель керування — домашня сторінка"));
+    auto *home = new QAction(tr7("Control Panel Home"));
     QObject::connect(home, &QAction::triggered, [] {
         launchWin7Tool(QStringLiteral("seven-control"), QStringLiteral("systemsettings"));
     });
@@ -167,7 +168,7 @@ Aero::Sidebar *makeSidebar()
         QObject::connect(a, &QAction::triggered, a, fn);
         sidebar->addAction(a);
     };
-    elevated(QStringLiteral("Диспетчер пристроїв"), [] {
+    elevated(tr7("Device Manager"), [] {
         const QString exe = QStandardPaths::findExecutable(QStringLiteral("seven-devmgr"), {QDir::homePath() + QStringLiteral("/.local/bin")});
         launch(exe.isEmpty() ? QStringLiteral("kinfocenter") : exe);
     });
@@ -175,10 +176,10 @@ Aero::Sidebar *makeSidebar()
     auto sysprops = [](int tab) {
         launch(QDir::homePath() + QStringLiteral("/.local/bin/seven-control"), {QStringLiteral("--sysprops"), QString::number(tab)});
     };
-    elevated(QStringLiteral("Захист системи"), [sysprops] {
+    elevated(tr7("System protection"), [sysprops] {
         sysprops(3);
     });
-    elevated(QStringLiteral("Додаткові параметри системи"), [sysprops] {
+    elevated(tr7("Advanced system settings"), [sysprops] {
         sysprops(2);
     });
 
@@ -187,20 +188,20 @@ Aero::Sidebar *makeSidebar()
         QObject::connect(a, &QAction::triggered, a, fn);
         sidebar->addSeeAlso(a);
     };
-    seeAlso(QStringLiteral("Центр підтримки"), [] {
+    seeAlso(tr7("Action Center"), [] {
         launch(QStringLiteral("khelpcenter"));
     });
-    seeAlso(QStringLiteral("Центр оновлення"), [] {
+    seeAlso(tr7("Windows Update"), [] {
         launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_updates")});
     });
-    seeAlso(QStringLiteral("Диспетчер задач"), [] {
+    seeAlso(tr7("Task Manager"), [] {
         launchWin7Tool(QStringLiteral("seven-taskmgr"), QStringLiteral("plasma-systemmonitor"));
     });
 
     // libAeroQt only ships the English caption
     for (QLabel *l : sidebar->findChildren<QLabel *>()) {
         if (l->text() == QLatin1String("See also")) {
-            l->setText(QStringLiteral("Див. також"));
+            l->setText(tr7("See also"));
         }
     }
     return sidebar;
@@ -219,7 +220,7 @@ QWidget *makePage(const Info &info)
 
     // Title + "?"
     auto *top = new QHBoxLayout;
-    auto *title = new QLabel(QStringLiteral("Перегляд основних відомостей про ваш комп'ютер"));
+    auto *title = new QLabel(tr7("View basic information about your computer"));
     QFont tf = title->font();
     tf.setPixelSize(16);
     title->setFont(tf);
@@ -228,7 +229,7 @@ QWidget *makePage(const Info &info)
     auto *help = new QToolButton;
     help->setIcon(QIcon::fromTheme(QStringLiteral("browser-help"), QIcon::fromTheme(QStringLiteral("help-contents"))));
     help->setAutoRaise(true);
-    help->setToolTip(QStringLiteral("Отримати довідку"));
+    help->setToolTip(tr7("Get help"));
     QObject::connect(help, &QToolButton::clicked, [] {
         launch(QStringLiteral("khelpcenter"));
     });
@@ -250,7 +251,7 @@ QWidget *makePage(const Info &info)
     // --- Edition, with the big Windows logo on the right ---
     auto *editionRow = new QHBoxLayout;
     auto *editionCol = new QVBoxLayout;
-    editionCol->addWidget(new SectionHeader(QStringLiteral("Випуск Windows")));
+    editionCol->addWidget(new SectionHeader(tr7("Windows edition")));
     auto *ed = new QVBoxLayout;
     ed->setContentsMargins(14, 6, 0, 10);
     ed->setSpacing(8);
@@ -272,12 +273,12 @@ QWidget *makePage(const Info &info)
     v->addLayout(editionRow);
 
     // --- System ---
-    v->addWidget(new SectionHeader(QStringLiteral("Система")));
+    v->addWidget(new SectionHeader(tr7("System")));
     QGridLayout *sys = grid(v);
-    const QList<QPair<QString, QString>> sysRows{{QStringLiteral("Процесор:"), info.cpu},
-                                                 {QStringLiteral("Встановлена пам'ять (ОЗП):"), info.memory},
-                                                 {QStringLiteral("Тип системи:"), info.systemType},
-                                                 {QStringLiteral("Перо і сенсорне введення:"), info.touch}};
+    const QList<QPair<QString, QString>> sysRows{{tr7("Processor:"), info.cpu},
+                                                 {tr7("Installed memory (RAM):"), info.memory},
+                                                 {tr7("System type:"), info.systemType},
+                                                 {tr7("Pen and Touch:"), info.touch}};
     // "Rating: [7,1] Windows Experience Index" (scores of seven-control's Performance Information and Tools)
     {
         QSettings wei(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + QStringLiteral("/seven-weirc"), QSettings::IniFormat);
@@ -306,7 +307,7 @@ QWidget *makePage(const Info &info)
                 QFont f = QApplication::font();
                 f.setBold(true);
                 f.setPixelSize(14);
-                const QString text = QLocale(QLocale::Ukrainian).toString(base, 'f', 1);
+                const QString text = QLocale{}.toString(base, 'f', 1);
                 const QFontMetricsF fm(f);
                 QPainterPath path;
                 path.addText(QPointF((pm.width() - fm.horizontalAdvance(text)) / 2.0, (pm.height() + fm.ascent() - fm.descent()) / 2.0), f, text);
@@ -320,16 +321,16 @@ QWidget *makePage(const Info &info)
             badge->setPixmap(pm);
             badge->setFixedSize(pm.size());
             row->addWidget(badge);
-            auto *link = new Link(QStringLiteral("Індекс продуктивності Windows"), open);
+            auto *link = new Link(tr7("Windows Experience Index"), open);
             link->setWordWrap(false);
             row->addWidget(link);
         } else {
-            auto *link = new Link(QStringLiteral("Індекс продуктивності Windows для системи ще не визначено"), open);
+            auto *link = new Link(tr7("System rating is not available"), open);
             link->setWordWrap(false);
             row->addWidget(link);
         }
         row->addStretch(1);
-        sys->addWidget(grey(QStringLiteral("Оцінка:")), 0, 0, Qt::AlignVCenter);
+        sys->addWidget(grey(tr7("Rating:")), 0, 0, Qt::AlignVCenter);
         sys->addLayout(row, 0, 1);
     }
     for (int r = 0; r < sysRows.size(); ++r) {
@@ -338,12 +339,12 @@ QWidget *makePage(const Info &info)
     }
 
     // --- Computer name, domain and workgroup settings ---
-    v->addWidget(new SectionHeader(QStringLiteral("Ім'я комп'ютера, домену та параметри робочої групи")));
+    v->addWidget(new SectionHeader(tr7("Computer name, domain, and workgroup settings")));
     QGridLayout *name = grid(v);
-    const QList<QPair<QString, QString>> nameRows{{QStringLiteral("Комп'ютер:"), info.computer},
-                                                  {QStringLiteral("Повне ім'я:"), info.fullName},
-                                                  {QStringLiteral("Опис:"), info.description},
-                                                  {QStringLiteral("Робоча група:"), info.workgroup}};
+    const QList<QPair<QString, QString>> nameRows{{tr7("Computer name:"), info.computer},
+                                                  {tr7("Full computer name:"), info.fullName},
+                                                  {tr7("Computer description:"), info.description},
+                                                  {tr7("Workgroup:"), info.workgroup}};
     for (int r = 0; r < nameRows.size(); ++r) {
         name->addWidget(grey(nameRows[r].first), r, 0, Qt::AlignTop);
         name->addWidget(value(nameRows[r].second), r, 1, Qt::AlignTop);
@@ -355,7 +356,7 @@ QWidget *makePage(const Info &info)
     auto *shield = new QLabel;
     shield->setPixmap(qApp->style()->standardIcon(QStyle::SP_VistaShield).pixmap(16, 16));
     cl->addWidget(shield, 0, Qt::AlignTop);
-    cl->addWidget(new Link(QStringLiteral("Змінити\nпараметри"), [] {
+    cl->addWidget(new Link(tr7("Change\nsettings"), [] {
         launch(QDir::homePath() + QStringLiteral("/.local/bin/seven-control"), {QStringLiteral("--sysprops"), QStringLiteral("0")});
     }));
     name->addWidget(change, 0, 2, 2, 1, Qt::AlignTop | Qt::AlignRight);
@@ -369,7 +370,7 @@ class SystemWindow : public QMainWindow
 public:
     SystemWindow()
     {
-        setWindowTitle(QStringLiteral("Система"));
+        setWindowTitle(tr7("System"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("computer")));
 
         auto *central = new QWidget(this);
@@ -403,8 +404,9 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-system"));
-    app.setApplicationDisplayName(QStringLiteral("Система"));
+    app.setApplicationDisplayName(tr7("System"));
     app.setDesktopFileName(QStringLiteral("seven-system"));
     Aero::registerStylesheet(&app);
 

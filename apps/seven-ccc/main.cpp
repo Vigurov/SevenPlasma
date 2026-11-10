@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * seven-ccc: AMD Catalyst™ Control Center of a Windows 7 laptop with Radeon graphics (Catalyst 14.x look),
  * for the AMD GPU of this Linux system. Only pages that really do something are shown; what they change is
@@ -113,12 +114,12 @@ inline QLabel *label(const QString &t, bool bold = false)
 
 inline QString hz(double r)
 {
-    return QStringLiteral("%1 Гц").arg(qRound(r));
+    return tr7("%1 Hz").arg(qRound(r));
 }
 
 inline QString rotationName(int r)
 {
-    return r == 2 ? QStringLiteral("Книжкова (90°)") : r == 4 ? QStringLiteral("Альбомна, перевернута (180°)") : r == 8 ? QStringLiteral("Книжкова, перевернута (270°)") : QStringLiteral("Стандартна альбомна (0°)");
+    return r == 2 ? tr7("Portrait (90°)") : r == 4 ? tr7("Landscape, flipped (180°)") : r == 8 ? tr7("Portrait, flipped (270°)") : tr7("Standard Landscape (0°)");
 }
 
 inline const QList<int> &rotations()
@@ -131,10 +132,10 @@ inline const QList<int> &rotations()
 inline bool confirmKeep(QWidget *parent)
 {
     QMessageBox box(QMessageBox::Question, QStringLiteral("AMD Catalyst Control Center"), QString(), QMessageBox::Yes | QMessageBox::No, parent);
-    box.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-    box.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+    box.button(QMessageBox::Yes)->setText(tr7("Yes"));
+    box.button(QMessageBox::No)->setText(tr7("No"));
     int left = 15;
-    auto text = [&] { return QStringLiteral("Нові параметри дисплея застосовано.\nЗберегти ці параметри?\n\nПопередні параметри буде відновлено через %1 с.").arg(left); };
+    auto text = [&] { return tr7("The new display settings have been applied.\nDo you want to keep these settings?\n\nThe previous settings will be restored in %1 seconds.").arg(left); };
     box.setText(text());
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, &box, [&] {
@@ -157,7 +158,7 @@ public:
     {
         auto *h = new QHBoxLayout(this);
         h->setContentsMargins(10, 0, 10, 6);
-        h->addWidget(label(QStringLiteral("Дисплей:")));
+        h->addWidget(label(tr7("Display:")));
         combo = new QComboBox(this);
         combo->setMinimumWidth(260);
         h->addWidget(combo);
@@ -178,7 +179,7 @@ public:
         combo->clear();
         for (const Output &o : list) {
             QString n = edidName(QString(), o.name);
-            combo->addItem(QStringLiteral("%1%2 (%3)").arg(o.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Монітор"), n.isEmpty() ? QString() : QStringLiteral(" ") + n, o.name), o.name);
+            combo->addItem(QStringLiteral("%1%2 (%3)").arg(o.builtIn() ? tr7("Built-in Display") : tr7("Monitor"), n.isEmpty() ? QString() : QStringLiteral(" ") + n, o.name), o.name);
         }
         const int i = combo->findData(cur);
         combo->setCurrentIndex(i >= 0 ? i : 0);
@@ -208,46 +209,46 @@ public:
     {
         id = pid;
         title = t;
-        description = builtIn ? QStringLiteral("Перегляд і змінення параметрів вбудованого дисплея: роздільної здатності, частоти оновлення та повороту.")
-                              : QStringLiteral("Змінення роздільної здатності, частоти оновлення та інших параметрів робочого стола.");
+        description = builtIn ? tr7("View and change the settings of the built-in display: resolution, refresh rate and rotation.")
+                              : tr7("Change the resolution, refresh rate and other desktop settings.");
         build();
         picker = new OutputPicker(builtIn);
         body->addWidget(picker);
-        section(QStringLiteral("Параметри поточного режиму"));
+        section(tr7("Current Mode Settings"));
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         g->setVerticalSpacing(5);
         curType = label(QString());
         curMode = label(QString());
         curRot = label(QString());
-        g->addWidget(label(QStringLiteral("Тип робочого стола:")), 0, 0);
+        g->addWidget(label(tr7("Desktop type:")), 0, 0);
         g->addWidget(curType, 0, 1);
-        g->addWidget(label(QStringLiteral("Режим:")), 1, 0);
+        g->addWidget(label(tr7("Mode:")), 1, 0);
         g->addWidget(curMode, 1, 1);
-        g->addWidget(label(QStringLiteral("Поворот:")), 2, 0);
+        g->addWidget(label(tr7("Rotation:")), 2, 0);
         g->addWidget(curRot, 2, 1);
         g->setColumnStretch(1, 1);
         box(g);
-        section(QStringLiteral("Параметри"));
+        section(tr7("Preferences"));
         auto *f = new QGridLayout;
         f->setHorizontalSpacing(24);
         f->setVerticalSpacing(6);
         sizes = new QListWidget;
         sizes->setFixedSize(170, 150);
-        f->addWidget(label(QStringLiteral("Розмір робочого стола (у пікселях):")), 0, 0);
+        f->addWidget(label(tr7("Desktop area (in pixels):")), 0, 0);
         f->addWidget(sizes, 1, 0, 6, 1);
         depth = new QComboBox;
-        depth->addItem(QStringLiteral("32 біти"));
+        depth->addItem(tr7("32 bpp"));
         rate = new QComboBox;
         rot = new QComboBox;
         for (int r : rotations()) {
             rot->addItem(rotationName(r), r);
         }
-        f->addWidget(label(QStringLiteral("Якість кольору:")), 1, 1);
+        f->addWidget(label(tr7("Color quality:")), 1, 1);
         f->addWidget(depth, 2, 1);
-        f->addWidget(label(QStringLiteral("Частота оновлення:")), 3, 1);
+        f->addWidget(label(tr7("Refresh rate:")), 3, 1);
         f->addWidget(rate, 4, 1);
-        f->addWidget(label(QStringLiteral("Поворот:")), 5, 1);
+        f->addWidget(label(tr7("Rotation:")), 5, 1);
         f->addWidget(rot, 6, 1);
         f->setColumnStretch(2, 1);
         f->setRowStretch(7, 1);
@@ -283,7 +284,7 @@ public:
         const QString m = selectedMode();
         const int r = rot->currentData().toInt();
         if (!kscreen({QStringLiteral("output.%1.mode.%2").arg(o.name, m), QStringLiteral("output.%1.rotation.%2").arg(o.name, rotationWord(r))})) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося застосувати параметри дисплея."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The display settings could not be applied."));
             return false;
         }
         if (!confirmKeep(this)) {
@@ -297,7 +298,7 @@ private:
     void fill()
     {
         o = picker->current();
-        curType->setText(picker->list.size() > 1 ? QStringLiteral("Розширений робочий стіл") : QStringLiteral("Один"));
+        curType->setText(picker->list.size() > 1 ? tr7("Extended Desktop") : tr7("Single"));
         const Mode cm = o.mode(o.currentMode);
         curMode->setText(QStringLiteral("%1 × %2, %3").arg(cm.w).arg(cm.h).arg(hz(cm.hz)));
         curRot->setText(rotationName(o.rotation));
@@ -429,16 +430,15 @@ public:
     {
         id = pid;
         title = t;
-        description = QStringLiteral("Регулювання колірних характеристик робочого стола: гамми, яскравості та контрасту для всіх кольорів разом або для кожного окремо. "
-                                     "Зміни можна переглянути до застосування; вони зберігаються й відновлюються після входу в систему.");
+        description = tr7("Adjust the color characteristics of the desktop: gamma, brightness and contrast for all colors together or for each one separately. Changes can be previewed before applying; they are kept and restored after you log on.");
         build();
         picker = new OutputPicker(builtIn);
         body->addWidget(picker);
-        section(QStringLiteral("Колір"));
+        section(tr7("Color"));
         auto *top = new QHBoxLayout;
         auto *radios = new QVBoxLayout;
         group = new QButtonGroup(this);
-        const QStringList names{QStringLiteral("Усі кольори"), QStringLiteral("Червоний"), QStringLiteral("Зелений"), QStringLiteral("Синій")};
+        const QStringList names{tr7("All Colors"), tr7("Red"), tr7("Green"), tr7("Blue")};
         for (int i = 0; i < 4; ++i) {
             auto *r = new QRadioButton(names.at(i));
             r->setFont(uiFont(12));
@@ -453,12 +453,12 @@ public:
         top->addWidget(curve);
         top->addStretch(1);
         box(top);
-        section(QStringLiteral("Регулювання"));
+        section(tr7("Adjustment"));
         auto *g = new QGridLayout;
         g->setVerticalSpacing(4);
-        gamma = new SliderRow(g, 0, QStringLiteral("Гамма"), 0.3, 2.8, 0.01, 2, QStringLiteral("0,3"), QStringLiteral("2,8"));
-        bright = new SliderRow(g, 2, QStringLiteral("Яскравість"), -100, 100, 1, 0, QStringLiteral("-100"), QStringLiteral("100"));
-        contrast = new SliderRow(g, 4, QStringLiteral("Контраст"), 0, 200, 1, 0, QStringLiteral("0"), QStringLiteral("200"));
+        gamma = new SliderRow(g, 0, tr7("Gamma"), 0.3, 2.8, 0.01, 2, QStringLiteral("0,3"), QStringLiteral("2,8"));
+        bright = new SliderRow(g, 2, tr7("Brightness"), -100, 100, 1, 0, QStringLiteral("-100"), QStringLiteral("100"));
+        contrast = new SliderRow(g, 4, tr7("Contrast"), 0, 200, 1, 0, QStringLiteral("0"), QStringLiteral("200"));
         g->setColumnStretch(1, 1);
         box(g);
         body->addStretch(1);
@@ -606,12 +606,12 @@ public:
     RotatePage()
     {
         id = QStringLiteral("tasks.rotate");
-        title = QStringLiteral("Повернути робочий стіл");
-        description = QStringLiteral("Повернення робочого стола для дисплеїв, які можна обертати. Виберіть потрібне положення та натисніть «Застосувати».");
+        title = tr7("Rotate Desktop");
+        description = tr7("Rotate the desktop of displays that can rotate. Choose the position you want and click Apply.");
         build();
         picker = new OutputPicker(false);
         body->addWidget(picker);
-        section(QStringLiteral("Поворот"));
+        section(tr7("Rotation", "group"));
         auto *h = new QHBoxLayout;
         h->setSpacing(10);
         group = new QButtonGroup(this);
@@ -671,13 +671,13 @@ public:
     DisplaysPage()
     {
         id = QStringLiteral("tasks.addremove");
-        title = QStringLiteral("Додати чи видалити дисплей");
-        description = QStringLiteral("Увімкнення та вимкнення підключених дисплеїв. Позначте дисплеї, на яких треба показувати робочий стіл.");
+        title = tr7("Add or Remove Display");
+        description = tr7("Turn connected displays on and off. Check the displays the desktop should be shown on.");
         build();
-        section(QStringLiteral("Підключені дисплеї"));
+        section(tr7("Connected Displays"));
         auto *v = new QVBoxLayout;
         list = new QTreeWidget;
-        list->setHeaderLabels({QStringLiteral("Дисплей"), QStringLiteral("Підключення"), QStringLiteral("Режим")});
+        list->setHeaderLabels({tr7("Display"), tr7("Connection"), tr7("Mode")});
         list->setRootIsDecorated(false);
         list->setMinimumHeight(140);
         list->header()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -693,8 +693,8 @@ public:
         state.clear();
         for (const Output &o : outputs()) {
             const QString n = edidName(QString(), o.name);
-            auto *it = new QTreeWidgetItem(list, {(o.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Монітор")) + (n.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(n)), o.name,
-                                                  o.enabled ? QStringLiteral("%1 × %2, %3").arg(o.mode(o.currentMode).w).arg(o.mode(o.currentMode).h).arg(hz(o.mode(o.currentMode).hz)) : QStringLiteral("Вимкнено")});
+            auto *it = new QTreeWidgetItem(list, {(o.builtIn() ? tr7("Built-in Display") : tr7("Monitor")) + (n.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(n)), o.name,
+                                                  o.enabled ? QStringLiteral("%1 × %2, %3").arg(o.mode(o.currentMode).w).arg(o.mode(o.currentMode).h).arg(hz(o.mode(o.currentMode).hz)) : tr7("Disabled")});
             it->setIcon(0, QIcon(icon(o.builtIn() ? QStringLiteral("IconLCD") : QStringLiteral("IconDFP"), 32)));
             it->setCheckState(0, o.enabled ? Qt::Checked : Qt::Unchecked);
             it->setData(0, Qt::UserRole, o.name);
@@ -722,7 +722,7 @@ public:
             args << QStringLiteral("output.%1.%2").arg(it->data(0, Qt::UserRole).toString(), e ? QStringLiteral("enable") : QStringLiteral("disable"));
         }
         if (!on) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Має бути ввімкнено принаймні один дисплей."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("At least one display must be enabled."));
             return false;
         }
         kscreen(args);
@@ -748,12 +748,12 @@ public:
     DetectPage()
     {
         id = QStringLiteral("tasks.detect");
-        title = QStringLiteral("Виявити дисплеї");
-        description = QStringLiteral("Пошук дисплеїв, підключених до комп'ютера. Використовуйте цю дію, якщо новий дисплей не з'явився автоматично.");
+        title = tr7("Detect Displays");
+        description = tr7("Search for displays connected to the computer. Use this when a new display did not appear automatically.");
         build();
-        section(QStringLiteral("Виявлення дисплеїв"));
+        section(tr7("Display Detection"));
         auto *v = new QVBoxLayout;
-        auto *b = new QPushButton(QStringLiteral("Виявити дисплеї"));
+        auto *b = new QPushButton(tr7("Detect Displays"));
         b->setFixedWidth(160);
         result = label(QString());
         v->addWidget(b);
@@ -765,9 +765,9 @@ public:
             const QList<Output> o = outputs();
             QStringList names;
             for (const Output &x : o) {
-                names << QStringLiteral("• %1 (%2)").arg(x.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Монітор"), x.name);
+                names << QStringLiteral("• %1 (%2)").arg(x.builtIn() ? tr7("Built-in Display") : tr7("Monitor"), x.name);
             }
-            result->setText(QStringLiteral("Знайдено дисплеїв: %1\n%2").arg(o.size()).arg(names.join(QLatin1Char('\n'))));
+            result->setText(tr7("Displays found: %1\n%2").arg(o.size()).arg(names.join(QLatin1Char('\n'))));
         });
     }
     bool hasApply() const override { return false; }
@@ -784,13 +784,13 @@ public:
     LcdInfoPage()
     {
         id = QStringLiteral("lcd.props");
-        title = QStringLiteral("Властивості (Вбудований дисплей)");
-        description = QStringLiteral("Відомості про вбудований дисплей ноутбука та його можливості.");
+        title = tr7("Properties (Built-in Display)");
+        description = tr7("Information about the built-in laptop display and its capabilities.");
         build();
-        section(QStringLiteral("Відомості про дисплей"));
+        section(tr7("Display Information"));
         auto *v = new QVBoxLayout;
         table = new QTreeWidget;
-        table->setHeaderLabels({QStringLiteral("Елемент"), QStringLiteral("Значення")});
+        table->setHeaderLabels({tr7("Item"), tr7("Value")});
         table->setRootIsDecorated(false);
         table->setMinimumHeight(220);
         table->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -820,13 +820,13 @@ public:
             const double diag = std::sqrt(double(o.mmW) * o.mmW + double(o.mmH) * o.mmH) / 25.4;
             const QString n = edidName(QString(), o.name);
             const QList<Row> rows{
-                {QStringLiteral("Назва дисплея"), n.isEmpty() ? QStringLiteral("Вбудована цифрова плоска панель") : n},
-                {QStringLiteral("Тип підключення"), o.name.startsWith(QLatin1String("eDP")) ? QStringLiteral("Embedded DisplayPort (eDP)") : o.name},
-                {QStringLiteral("Рідна роздільна здатність"), QStringLiteral("%1 × %2").arg(pm.w).arg(pm.h)},
-                {QStringLiteral("Максимальна частота оновлення"), rl.isEmpty() ? QString() : hz(rl.last())},
-                {QStringLiteral("Підтримувані частоти, Гц"), rs.join(QStringLiteral(", "))},
-                {QStringLiteral("Фізичний розмір"), o.mmW ? QStringLiteral("%1 × %2 мм (%3\")").arg(o.mmW).arg(o.mmH).arg(diag, 0, 'f', 1) : QString()},
-                {QStringLiteral("Поточний стан"), o.enabled ? QStringLiteral("Увімкнено") : QStringLiteral("Вимкнено")},
+                {tr7("Display name"), n.isEmpty() ? tr7("Built-in Digital Flat Panel") : n},
+                {tr7("Connection type"), o.name.startsWith(QLatin1String("eDP")) ? QStringLiteral("Embedded DisplayPort (eDP)") : o.name},
+                {tr7("Native resolution"), QStringLiteral("%1 × %2").arg(pm.w).arg(pm.h)},
+                {tr7("Maximum refresh rate"), rl.isEmpty() ? QString() : hz(rl.last())},
+                {tr7("Supported refresh rates, Hz"), rs.join(QStringLiteral(", "))},
+                {tr7("Physical size"), o.mmW ? tr7("%1 × %2 mm (%3\")").arg(o.mmW).arg(o.mmH).arg(diag, 0, 'f', 1) : QString()},
+                {tr7("Current state"), o.enabled ? tr7("Enabled") : tr7("Disabled")},
             };
             for (const Row &r : rows) {
                 new QTreeWidgetItem(table, {r.item, r.value});
@@ -846,23 +846,22 @@ public:
     Gaming3DPage()
     {
         id = QStringLiteral("game.3d");
-        title = QStringLiteral("Налаштування 3D-програм");
-        description = QStringLiteral("Глобальні параметри для 3D-програм. Синхронізація застосовується до програм OpenGL під час наступного запуску; "
-                                     "анізотропна фільтрація — до програм Vulkan (зокрема ігор через DXVK) після наступного входу в систему.");
+        title = tr7("3D Application Settings");
+        description = tr7("Global settings for 3D applications. Vertical refresh applies to OpenGL programs the next time they start; anisotropic filtering applies to Vulkan programs (including games through DXVK) after the next logon.");
         build();
-        section(QStringLiteral("Системні параметри"));
+        section(tr7("System Settings"));
         auto *f = new QFormLayout;
         f->setHorizontalSpacing(24);
         f->setVerticalSpacing(8);
         vsync = new QComboBox;
-        vsync->addItems({QStringLiteral("Завжди вимкнено"), QStringLiteral("Вимкнено, якщо програма не вказує інше"), QStringLiteral("Увімкнено, якщо програма не вказує інше"), QStringLiteral("Завжди ввімкнено")});
+        vsync->addItems({tr7("Always off"), tr7("Off, unless application specifies"), tr7("On, unless application specifies"), tr7("Always on")});
         aniso = new QComboBox;
-        aniso->addItem(QStringLiteral("Використовувати параметри програми"), 0);
+        aniso->addItem(tr7("Use application settings"), 0);
         for (int x : {2, 4, 8, 16}) {
             aniso->addItem(QStringLiteral("%1x").arg(x), x);
         }
-        f->addRow(label(QStringLiteral("Очікувати вертикальне оновлення:")), vsync);
-        f->addRow(label(QStringLiteral("Рівень анізотропної фільтрації:")), aniso);
+        f->addRow(label(tr7("Wait for vertical refresh:")), vsync);
+        f->addRow(label(tr7("Anisotropic Filtering Mode:")), aniso);
         box(f);
         body->addStretch(1);
         QObject::connect(vsync, &QComboBox::currentIndexChanged, this, [this] { notify(); });
@@ -903,7 +902,7 @@ public:
             QFile::remove(envPath());
         }
         if (!ok) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося зберегти параметри 3D."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The 3D settings could not be saved."));
         }
         load();
         return ok;
@@ -923,20 +922,19 @@ public:
     {
         id = QStringLiteral("power.pp");
         title = QStringLiteral("PowerPlay™");
-        description = QStringLiteral("Технологія PowerPlay™ керує енергоспоживанням графічного процесора й системи. Виберіть режим, який відповідає "
-                                     "вашим потребам: максимальну продуктивність, баланс або найдовшу роботу від батареї.");
+        description = tr7("PowerPlay™ technology manages the power consumption of the GPU and the system. Choose the mode that suits your needs: maximum performance, balance or the longest battery life.");
         build();
-        section(QStringLiteral("Параметри PowerPlay™"));
+        section(tr7("PowerPlay™ Settings"));
         auto *v = new QVBoxLayout;
-        enable = new QCheckBox(QStringLiteral("Увімкнути PowerPlay™"));
+        enable = new QCheckBox(tr7("Enable PowerPlay™"));
         enable->setChecked(true);
         enable->setEnabled(false);
         v->addWidget(enable);
         v->addSpacing(8);
         group = new QButtonGroup(this);
-        const QList<QPair<QString, QString>> modes{{QStringLiteral("performance"), QStringLiteral("Максимальна продуктивність")},
-                                                    {QStringLiteral("balanced"), QStringLiteral("Збалансований режим")},
-                                                    {QStringLiteral("power-saver"), QStringLiteral("Максимальний час роботи батареї")}};
+        const QList<QPair<QString, QString>> modes{{QStringLiteral("performance"), tr7("Maximize Performance")},
+                                                    {QStringLiteral("balanced"), tr7("Balanced")},
+                                                    {QStringLiteral("power-saver"), tr7("Maximize Battery Life")}};
         const QStringList have = powerProfiles();
         int idx = 0;
         for (const auto &m : modes) {
@@ -948,14 +946,14 @@ public:
             v->addWidget(r);
         }
         box(v);
-        section(QStringLiteral("Поточний стан"));
+        section(tr7("Current state"));
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         source = label(QString());
         clock = label(QString());
-        g->addWidget(label(QStringLiteral("Джерело живлення:")), 0, 0);
+        g->addWidget(label(tr7("Power source:")), 0, 0);
         g->addWidget(source, 0, 1);
-        g->addWidget(label(QStringLiteral("Поточна частота графічного процесора:")), 1, 0);
+        g->addWidget(label(tr7("Current GPU clock:")), 1, 0);
         g->addWidget(clock, 1, 1);
         g->setColumnStretch(1, 1);
         box(g);
@@ -990,7 +988,7 @@ public:
     {
         const bool ok = setPowerProfile(group->checkedButton()->property("profile").toString());
         if (!ok) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося змінити режим PowerPlay™."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The PowerPlay™ mode could not be changed."));
         }
         load();
         return ok;
@@ -1002,9 +1000,9 @@ private:
         if (!isVisible()) {
             return;
         }
-        source->setText(onBattery() ? QStringLiteral("Батарея") : QStringLiteral("Мережа змінного струму"));
+        source->setText(onBattery() ? tr7("Battery") : tr7("AC Power"));
         const int c = currentClock(amdGpu().card + QStringLiteral("/device/pp_dpm_sclk"));
-        clock->setText(c ? QStringLiteral("%1 МГц").arg(c) : QStringLiteral("Невідомо"));
+        clock->setText(c ? tr7("%1 MHz").arg(c) : tr7("Unknown"));
     }
     QCheckBox *enable;
     QButtonGroup *group;
@@ -1016,7 +1014,7 @@ private:
 
 inline const QStringList &pxStateNames()
 {
-    static const QStringList n{QStringLiteral("Не призначено"), QStringLiteral("Висока продуктивність"), QStringLiteral("Енергозбереження")};
+    static const QStringList n{tr7("Not Assigned"), tr7("High Performance"), tr7("Power Saving")};
     return n;
 }
 inline int pxStateIndex(const QString &s)
@@ -1117,28 +1115,26 @@ public:
     PxAppsPage()
     {
         id = QStringLiteral("power.pxapps");
-        title = QStringLiteral("Параметри програм перемиканої графіки");
-        description = QStringLiteral("Використовуйте цю сторінку, щоб призначити програмам енергозберігальний або високопродуктивний графічний процесор залежно від глобальних параметрів. "
-                                     "Високопродуктивний процесор краще підходить для програм, що інтенсивно використовують тривимірну графіку або відео.");
+        title = tr7("Switchable Graphics Application Settings");
+        description = tr7("Use this page to assign power-saving or high-performance GPU to applications depending on the global settings. High-performance GPU is better for applications that use 3D graphics or video intensively.");
         build();
-        section(QStringLiteral("Недавні програми"));
+        section(tr7("Recent Applications"));
         auto *v1 = new QVBoxLayout;
-        v1->addWidget(label(QStringLiteral("Програми, які зараз використовують графічний процесор. Щоб змінити графічний процесор, пов'язаний із програмою, натисніть кнопку поруч із нею.")));
+        v1->addWidget(label(tr7("Applications that use the GPU now. To change the GPU an application is associated with, click the button next to it.")));
         recent = makeTree();
         v1->addWidget(recent);
         box(v1, 10);
-        section(QStringLiteral("Інші програми"));
+        section(tr7("Other Applications"));
         auto *v2 = new QVBoxLayout;
-        v2->addWidget(label(QStringLiteral("Щоб налаштувати інші програми, спочатку виберіть їх на комп'ютері, а потім виберіть потрібний графічний процесор для кожної програми.")));
+        v2->addWidget(label(tr7("To set up other applications, first select them on the computer, and then choose the GPU for each application.")));
         other = makeTree();
         v2->addWidget(other);
         auto *h = new QHBoxLayout;
         h->addStretch(1);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         h->addWidget(browse);
         v2->addLayout(h);
-        auto *note = label(QStringLiteral("Щоб вибрані параметри перемиканої графіки набули чинності, потрібно закрити всі тривимірні програми. "
-                                          "Для програм Vulkan вибір діє, коли їх запущено з меню «Пуск»."));
+        auto *note = label(tr7("For the selected switchable graphics settings to take effect, all 3D applications must be closed. For Vulkan programs the choice applies when they are started from the Start menu."));
         QPalette pal = note->palette();
         pal.setColor(QPalette::WindowText, QColor(0x55, 0x55, 0x55));
         note->setPalette(pal);
@@ -1185,7 +1181,7 @@ public:
         const bool ok = applySwitchable();
         QProcess::startDetached(QStringLiteral("kbuildsycoca6"), {});
         if (!ok) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося зберегти параметри перемиканої графіки (~/.drirc)."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The switchable graphics settings could not be saved (~/.drirc)."));
         }
         load();
         return ok;
@@ -1195,7 +1191,7 @@ private:
     QTreeWidget *makeTree()
     {
         auto *t = new QTreeWidget;
-        t->setHeaderLabels({QStringLiteral("Програма"), QStringLiteral("Графічний процесор")});
+        t->setHeaderLabels({tr7("Application"), tr7("Graphics Settings")});
         t->setRootIsDecorated(false);
         t->setIconSize(QSize(24, 24));
         t->setMinimumHeight(150);
@@ -1211,8 +1207,8 @@ private:
             }
             const QString key = it->data(0, Qt::UserRole).toString();
             QMenu m;
-            auto *def = m.addAction(QStringLiteral("Відновити параметр за замовчуванням"));
-            QAction *del = m_now.contains(key) ? m.addAction(QStringLiteral("Видалити зі списку")) : nullptr;
+            auto *def = m.addAction(tr7("Restore default setting"));
+            QAction *del = m_now.contains(key) ? m.addAction(tr7("Remove from list")) : nullptr;
             QAction *a = m.exec(t->viewport()->mapToGlobal(pos));
             if (a == def) {
                 if (m_now.contains(key)) {
@@ -1238,13 +1234,13 @@ private:
             ic = QIcon::fromTheme(QStringLiteral("application-x-executable"));
         }
         it->setIcon(0, ic);
-        it->setToolTip(0, QStringLiteral("Шлях: %1%2").arg(a.exec.isEmpty() ? a.key : a.exec, extra));
+        it->setToolTip(0, tr7("Path: %1%2").arg(a.exec.isEmpty() ? a.key : a.exec, extra));
         auto *c = new QComboBox;
         c->addItems(pxStateNames());
         c->setCurrentIndex(pxStateIndex(state));
-        c->setToolTip(QStringList{QStringLiteral("Цю програму не пов'язано з певним процесором. Натисніть, щоб вибрати процесор."),
-                                  QStringLiteral("Ця програма працює на високопродуктивному процесорі. Натисніть, щоб вибрати енергозберігальний процесор."),
-                                  QStringLiteral("Ця програма працює на енергозберігальному процесорі. Натисніть, щоб вибрати високопродуктивний процесор.")}
+        c->setToolTip(QStringList{tr7("This application is not associated with a GPU. Click to select a GPU."),
+                                  tr7("This application runs on the high-performance GPU. Click to select the power-saving GPU."),
+                                  tr7("This application runs on the power-saving GPU. Click to select the high-performance GPU.")}
                           .at(pxStateIndex(state)));
         const QString key = a.key;
         QObject::connect(c, &QComboBox::currentIndexChanged, this, [this, key](int i) {
@@ -1278,8 +1274,8 @@ private:
             if (a.exec.isEmpty()) {
                 a.exec = prog;
             }
-            const QString on = g.pci == sw.performance.pci ? QStringLiteral("високопродуктивному") : QStringLiteral("енергозберігальному");
-            addRow(recent, a, m_now.value(key), QStringLiteral("\nЗараз працює на %1 графічному процесорі").arg(on));
+            const QString on = g.pci == sw.performance.pci ? tr7("high-performance") : tr7("power-saving");
+            addRow(recent, a, m_now.value(key), tr7("\nNow running on the %1 GPU").arg(on));
         }
         for (auto it = m_now.cbegin(); it != m_now.cend(); ++it) {
             if (!shown.contains(it.key())) {
@@ -1289,8 +1285,8 @@ private:
     }
     void add()
     {
-        const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Вибрати"), QStringLiteral("/usr/share/applications"),
-                                                       QStringLiteral("Програми (*.desktop);;Усі файли (*)"));
+        const QString f = QFileDialog::getOpenFileName(this, tr7("Select"), QStringLiteral("/usr/share/applications"),
+                                                       tr7("Applications (*.desktop);;All Files (*)"));
         if (f.isEmpty()) {
             return;
         }
@@ -1298,13 +1294,13 @@ private:
         if (f.endsWith(QLatin1String(".desktop"))) {
             key = QFileInfo(f).fileName();
             if (desktopPath(key).isEmpty()) {
-                QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Цей ярлик не встановлено в меню програм."));
+                QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("This shortcut is not installed in the applications menu."));
                 return;
             }
         } else if (QFileInfo(f).isExecutable()) {
             key = QFileInfo(f).canonicalFilePath();
         } else {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("%1 не є програмою. Перевірте шлях і повторіть спробу.").arg(f));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("%1 is not an application. Check the path and try again.").arg(f));
             return;
         }
         if (!m_now.contains(key)) {
@@ -1326,19 +1322,19 @@ public:
     PxGlobalPage()
     {
         id = QStringLiteral("power.pxglobal");
-        title = QStringLiteral("Глобальні параметри перемиканої графіки");
-        description = QStringLiteral("Використовуйте цю сторінку, щоб змінити параметри перемиканих графічних адаптерів для всієї системи.");
+        title = tr7("Global Switchable Graphics Settings");
+        description = tr7("Use this page to change the settings of switchable graphics adapters for the whole system.");
         build();
-        section(QStringLiteral("Глобальні параметри програм"));
+        section(tr7("Global Application Settings"));
         auto *v = new QVBoxLayout;
         auto *h = new QHBoxLayout;
-        auto *cap = label(QStringLiteral("Глобальні параметри програм:"));
+        auto *cap = label(tr7("Global Application Settings:"));
         cap->setWordWrap(false);
         h->addWidget(cap);
         mode = new QComboBox;
-        mode->addItems({QStringLiteral("Оптимальне енергозбереження"), QStringLiteral("Оптимальна продуктивність"),
-                        QStringLiteral("Примусово використовувати енергозберігальні графічні адаптери")});
-        mode->setToolTip(QStringLiteral("Виберіть глобальний параметр програм."));
+        mode->addItems({tr7("Optimize power savings"), tr7("Optimize performance"),
+                        tr7("Force power-saving graphics for all applications")});
+        mode->setToolTip(tr7("Choose a global application setting."));
         h->addWidget(mode);
         h->addStretch(1);
         v->addLayout(h);
@@ -1346,7 +1342,7 @@ public:
         v->addSpacing(6);
         v->addWidget(explain);
         box(v);
-        section(QStringLiteral("Графічні процесори"));
+        section(tr7("GPUs"));
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         g->setVerticalSpacing(6);
@@ -1355,8 +1351,8 @@ public:
             const QString n = x.name.section(QLatin1Char('['), 1).section(QLatin1Char(']'), 0, 0);
             return n.isEmpty() ? x.name : n;
         };
-        auto *l1 = label(QStringLiteral("Енергозберігальний графічний процесор:"));
-        auto *l2 = label(QStringLiteral("Високопродуктивний графічний процесор:"));
+        auto *l1 = label(tr7("Power-saving GPU:"));
+        auto *l2 = label(tr7("High-performance GPU:"));
         l1->setWordWrap(false);
         l2->setWordWrap(false);
         g->addWidget(l1, 0, 0);
@@ -1391,7 +1387,7 @@ public:
         const bool ok = applySwitchable();
         QProcess::startDetached(QStringLiteral("kbuildsycoca6"), {});
         if (!ok) {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося зберегти параметри перемиканої графіки (~/.drirc)."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The switchable graphics settings could not be saved (~/.drirc)."));
         }
         load();
         return ok;
@@ -1401,9 +1397,9 @@ private:
     void text()
     {
         static const QStringList t{
-            QStringLiteral("Запускати програми на призначеному графічному процесорі. Непризначені програми запускаються на енергозберігальному графічному процесорі."),
-            QStringLiteral("Запускати програми на призначеному графічному процесорі. Непризначені програми OpenGL запускаються на високопродуктивному графічному процесорі."),
-            QStringLiteral("Запускати програми на енергозберігальному графічному процесорі незалежно від параметрів окремих програм.")};
+            tr7("Run applications on their assigned GPU. Unassigned applications run on the power-saving GPU."),
+            tr7("Run applications on their assigned GPU. Unassigned OpenGL applications run on the high-performance GPU."),
+            tr7("Run applications on the power-saving GPU regardless of individual application settings.")};
         explain->setText(t.value(mode->currentIndex()));
     }
     QComboBox *mode;
@@ -1417,25 +1413,24 @@ public:
     PxMonitorPage()
     {
         id = QStringLiteral("power.pxmon");
-        title = QStringLiteral("Монітор програм перемиканих графічних адаптерів");
-        description = QStringLiteral("Стеження за тим, які програми працюють на високопродуктивному графічному процесорі. Програми, що виконуються деінде, у списку не показано. "
-                                     "Після зупинки стеження список програм буде очищено.");
+        title = tr7("Switchable Graphics Application Monitor");
+        description = tr7("Monitor which applications run on the high-performance GPU. Applications running elsewhere are not listed. When monitoring stops, the list of applications is cleared.");
         build();
         auto *v = new QVBoxLayout;
         auto *h = new QHBoxLayout;
-        toggle = new QPushButton(QStringLiteral("Запустити моніторинг"));
+        toggle = new QPushButton(tr7("Start Monitoring"));
         h->addWidget(toggle);
         h->addStretch(1);
         v->addLayout(h);
         list = new QTreeWidget;
-        list->setHeaderLabels({QStringLiteral("Програма"), QStringLiteral("Код процесу (PID)"), QStringLiteral("Шлях")});
+        list->setHeaderLabels({tr7("Application"), tr7("Process ID (PID)"), tr7("Path")});
         list->setRootIsDecorated(false);
         list->setIconSize(QSize(16, 16));
         list->setMinimumHeight(260);
         list->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         list->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
         v->addWidget(list);
-        auto *note = label(QStringLiteral("Монітор показує, на якому графічному процесорі працює програма, але й сам споживає системні ресурси. Якщо моніторинг не потрібен, його можна зупинити."));
+        auto *note = label(tr7("The monitor shows which GPU an application runs on, but it uses system resources too. If you do not need monitoring, you can stop it."));
         v->addWidget(note);
         box(v, 10);
         body->addStretch(1);
@@ -1445,13 +1440,13 @@ public:
             if (timer->isActive()) {
                 timer->stop();
                 list->clear();
-                toggle->setText(QStringLiteral("Запустити моніторинг"));
-                toggle->setToolTip(QStringLiteral("Натисніть, щоб почати стежити за тим, який графічний процесор використовує та чи інша програма."));
+                toggle->setText(tr7("Start Monitoring"));
+                toggle->setToolTip(tr7("Click to start monitoring which GPU each application uses."));
             } else {
                 refresh();
                 timer->start(2000);
-                toggle->setText(QStringLiteral("Зупинити моніторинг"));
-                toggle->setToolTip(QStringLiteral("Натисніть, щоб зупинити стеження за програмами й очистити список."));
+                toggle->setText(tr7("Stop Monitoring"));
+                toggle->setToolTip(tr7("Click to stop monitoring applications and clear the list."));
             }
         });
     }
@@ -1508,20 +1503,20 @@ protected:
         const int sclkTop = o.sclkLevels.isEmpty() ? maxClock(o.dev + QStringLiteral("/pp_dpm_sclk")) : o.sclkMax;
         const int mclkTop = o.mclkLevels.isEmpty() ? maxClock(o.dev + QStringLiteral("/pp_dpm_mclk")) : o.mclkMax;
         QList<G> gs;
-        gs << G{QStringLiteral("Активність"), QStringLiteral("GPUActivity_base"), o.activity >= 0 ? QStringLiteral("%1%").arg(o.activity) : QStringLiteral("—"), 2, o.activity / 100.0};
-        gs << G{QStringLiteral("Частота GPU"), QStringLiteral("ActualGPUClock"), o.sclk ? QStringLiteral("%1 МГц").arg(o.sclk) : QStringLiteral("—"), 1, pct(o.sclk, sclkTop)};
+        gs << G{tr7("Activity"), QStringLiteral("GPUActivity_base"), o.activity >= 0 ? QStringLiteral("%1%").arg(o.activity) : QStringLiteral("—"), 2, o.activity / 100.0};
+        gs << G{tr7("GPU Clock"), QStringLiteral("ActualGPUClock"), o.sclk ? tr7("%1 MHz").arg(o.sclk) : QStringLiteral("—"), 1, pct(o.sclk, sclkTop)};
         if (o.mclk) {
-            gs << G{QStringLiteral("Частота пам'яті"), QStringLiteral("ActualMemoryClock"), QStringLiteral("%1 МГц").arg(o.mclk), 1, pct(o.mclk, mclkTop)};
+            gs << G{tr7("Memory Clock", "activity"), QStringLiteral("ActualMemoryClock"), tr7("%1 MHz").arg(o.mclk), 1, pct(o.mclk, mclkTop)};
         }
         if (o.powerW >= 0) {
-            gs << G{QStringLiteral("Потужність"), QStringLiteral("RequestedPC"), QStringLiteral("%1 Вт").arg(qRound(o.powerW)), 0, 0};
+            gs << G{tr7("Power", "activity"), QStringLiteral("RequestedPC"), tr7("%1 W").arg(qRound(o.powerW)), 0, 0};
         }
         if (o.temp > -1000) {
-            gs << G{QStringLiteral("Температура"), QStringLiteral("GPUTemperature"), QStringLiteral("%1 °C").arg(o.temp), 0, 0};
+            gs << G{tr7("Temperature"), QStringLiteral("GPUTemperature"), QStringLiteral("%1 °C").arg(o.temp), 0, 0};
         }
         if (o.fanPct >= 0 || o.fanRpm >= 0) {
-            gs << G{QStringLiteral("Швидкість вентилятора"), QStringLiteral("ActualFanSpeed"),
-                    o.fanPct >= 0 ? QStringLiteral("%1%").arg(o.fanPct) : QStringLiteral("%1 об/хв").arg(o.fanRpm), 0, 0};
+            gs << G{tr7("Fan Speed"), QStringLiteral("ActualFanSpeed"),
+                    o.fanPct >= 0 ? QStringLiteral("%1%").arg(o.fanPct) : tr7("%1 RPM").arg(o.fanRpm), 0, 0};
         }
         const int colW = 95, x0 = 2;
         for (int i = 0; i < gs.size(); ++i) {
@@ -1648,33 +1643,18 @@ inline bool odWarningAccepted(QWidget *parent)
         return true;
     }
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Попередження AMD OverDrive"));
+    d.setWindowTitle(tr7("AMD OverDrive Warning"));
     d.resize(560, 460);
     auto *v = new QVBoxLayout(&d);
-    auto *head = label(QStringLiteral("Прочитайте ліцензійну угоду й натисніть «Прийняти»."));
+    auto *head = label(tr7("Please read the license agreement and click Accept."));
     head->setFont(uiFont(16));
     v->addWidget(head);
     auto *t = new QTextBrowser(&d);
-    t->setHtml(QStringLiteral(
-        "<p><b><u>ПОПЕРЕДЖЕННЯ.</u></b> Процесори AMD призначено для роботи лише в середовищах із відповідними технічними характеристиками та "
-        "заводськими параметрами. Робота процесорів AMD з обладнанням, технічні характеристики якого не відповідають офіційно затвердженим "
-        "компанією AMD, або з параметрами, що відрізняються від установлених виробником, зокрема, але не виключно, розгін процесора (у тому числі "
-        "за допомогою цієї програми для розгону, навіть якщо її прямо чи опосередковано надала компанія AMD або її якось пов'язано з AMD), може "
-        "пошкодити процесор і/або спричинити інші проблеми. До них, серед іншого, належать: пошкодження компонентів системи (зокрема материнської "
-        "плати та встановлених на ній компонентів, наприклад модулів пам'яті), нестабільна робота системи (наприклад, утрата даних і спотворене "
-        "зображення), зниження продуктивності системи, скорочення строку служби процесора, компонентів системи та/або самої системи, а в крайніх "
-        "випадках — повна відмова системи.</p>"
-        "<p>Компанія AMD не надає технічної підтримки чи обслуговування у зв'язку зі збоями або пошкодженнями, спричиненими роботою процесорів AMD "
-        "з обладнанням, технічні характеристики якого не відповідають офіційно затвердженим компанією AMD, або з параметрами, що відрізняються від "
-        "установлених виробником. Від технічної підтримки чи обслуговування можуть також відмовитися виробники материнської плати або системи.</p>"
-        "<p>Перш ніж використовувати цю програму для розгону, обов'язково створіть резервну копію важливих даних.</p>"
-        "<p>НА ПОШКОДЖЕННЯ, СПРИЧИНЕНІ РОБОТОЮ ПРОЦЕСОРІВ AMD АБО ІНШИХ КОМПОНЕНТІВ (НАПРИКЛАД, ПАМ'ЯТІ) З ОБЛАДНАННЯМ, ТЕХНІЧНІ ХАРАКТЕРИСТИКИ ЯКОГО "
-        "НЕ ВІДПОВІДАЮТЬ ОФІЦІЙНО ЗАТВЕРДЖЕНИМ КОМПАНІЄЮ AMD, АБО З ПАРАМЕТРАМИ, ЩО ВІДРІЗНЯЮТЬСЯ ВІД УСТАНОВЛЕНИХ ВИРОБНИКОМ, НЕ ПОШИРЮЄТЬСЯ ЖОДНА "
-        "З ГАРАНТІЙ НА ПРОДУКЦІЮ AMD, А ТАКОЖ МОЖУТЬ НЕ ПОШИРЮВАТИСЯ ГАРАНТІЇ ВИРОБНИКІВ МАТЕРИНСЬКОЇ ПЛАТИ АБО СИСТЕМИ.</p>"));
+    t->setHtml(tr7("<p><b><u>WARNING.</u></b> AMD processors are intended to be operated only within their associated specifications and factory settings. Operating your AMD processor outside of official AMD specifications or outside of factory settings, including but not limited to the overclocking of your processor (including use of this overclocking software, even if such software has been directly or indirectly provided by AMD or otherwise affiliated in any way with AMD), may damage your processor and/or lead to other problems, including but not limited to: damage to your system components (including your motherboard and components thereon, such as memory), system instabilities (such as data loss and corrupted images), reduction in system performance, shortened processor, system component and/or system life and, in extreme cases, total system failure.</p><p>AMD does not provide support or service for issues or damages related to use of an AMD processor outside of official AMD specifications or outside of factory settings. You may also not receive support or service from your board or system manufacturer.</p><p>Please make sure you have saved all important data before using this overclocking software.</p><p>DAMAGES CAUSED BY USE OF YOUR AMD PROCESSOR OR OTHER COMPONENTS (SUCH AS MEMORY) OUTSIDE OF OFFICIAL AMD SPECIFICATIONS OR OUTSIDE OF FACTORY SETTINGS ARE NOT COVERED UNDER ANY AMD PRODUCT WARRANTY AND MAY NOT BE COVERED BY YOUR BOARD OR SYSTEM MANUFACTURER'S WARRANTY.</p>"));
     v->addWidget(t, 1);
     auto *bb = new QDialogButtonBox(&d);
-    auto *acc = bb->addButton(QStringLiteral("Прийняти"), QDialogButtonBox::AcceptRole);
-    bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+    auto *acc = bb->addButton(tr7("Accept"), QDialogButtonBox::AcceptRole);
+    bb->addButton(tr7("Discard"), QDialogButtonBox::RejectRole);
     acc->setDefault(true);
     QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
     QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
@@ -1693,12 +1673,12 @@ public:
     {
         id = QStringLiteral("perf.od");
         title = QStringLiteral("AMD OverDrive");
-        description = QStringLiteral("Налаштуйте швидкість вентилятора, тактову частоту, енергоспоживання й цільову робочу температуру відеокарти.");
+        description = tr7("Adjust the fan speed, clock speed, power consumption and target operating temperature of the graphics card.");
         build();
         m_gpus = overdriveGpus();
         if (m_gpus.size() > 1) {
             auto *h = new QHBoxLayout;
-            auto *l = label(QStringLiteral("Виберіть GPU для налаштування:"));
+            auto *l = label(tr7("Select the GPU to configure:"));
             l->setWordWrap(false);
             h->addWidget(l);
             pick = new QComboBox;
@@ -1713,14 +1693,14 @@ public:
                 notify();
             });
         }
-        section(QStringLiteral("Поточні значення"));
+        section(tr7("Current Values"));
         gauges = new OdGauges;
         auto *gw = new QHBoxLayout;
         gw->addWidget(gauges);
         gw->addStretch(1);
         box(gw, 10);
-        enable = new QCheckBox(QStringLiteral("Увімкнути Graphics OverDrive"));
-        enable->setToolTip(QStringLiteral("Установіть цей прапорець, щоб використовувати запитані параметри OverDrive, або зніміть його, щоб використовувати параметри драйвера за замовчуванням."));
+        enable = new QCheckBox(tr7("Enable Graphics OverDrive"));
+        enable->setToolTip(tr7("Select this check box to use the requested OverDrive settings, or clear it to use the default driver settings."));
         enable->setFont(uiFont(12));
         auto *eh = new QHBoxLayout;
         eh->addWidget(enable);
@@ -1739,19 +1719,19 @@ public:
         info = label(QString());
         ih->addWidget(info, 1);
         fv->addLayout(ih);
-        sclk = new OdRow(QStringLiteral("Параметри частоти високопродуктивного графічного процесора:"), QStringLiteral("МГц"));
-        sclk->spin->setToolTip(QStringLiteral("Налаштуйте тактову частоту GPU для вибраного графічного процесора."));
-        mclk = new OdRow(QStringLiteral("Параметри частоти високопродуктивної пам'яті:"), QStringLiteral("МГц"));
-        mclk->spin->setToolTip(QStringLiteral("Налаштуйте тактову частоту пам'яті для вибраного графічного процесора."));
-        fanOn = new QCheckBox(QStringLiteral("Увімкнути ручне керування вентилятором"));
+        sclk = new OdRow(tr7("High Performance GPU Clock Settings:"), tr7("MHz"));
+        sclk->spin->setToolTip(tr7("Adjust the GPU clock speed for the selected GPU."));
+        mclk = new OdRow(tr7("High Performance Memory Clock Settings:"), tr7("MHz"));
+        mclk->spin->setToolTip(tr7("Adjust the memory clock speed for the selected GPU."));
+        fanOn = new QCheckBox(tr7("Enable Manual Fan Control"));
         fanOn->setFont(uiFont(12));
-        fanOn->setToolTip(QStringLiteral("Установіть прапорець для ручного керування швидкістю вентилятора або зніміть його для автоматичного керування."));
+        fanOn->setToolTip(tr7("Select the check box for manual fan speed control, or clear it for automatic control."));
         fan = new OdRow(QString(), QStringLiteral("%"));
         fan->title->hide();
-        temp = new OdRow(QStringLiteral("Цільова температура GPU:"), QStringLiteral("°C"));
-        temp->spin->setToolTip(QStringLiteral("Налаштуйте цільову температуру для вибраного графічного процесора."));
-        power = new OdRow(QStringLiteral("Обмеження енергоспоживання (%):"), QStringLiteral("%"));
-        power->spin->setToolTip(QStringLiteral("Налаштуйте максимальні межі живлення для вибраного графічного процесора."));
+        temp = new OdRow(tr7("Target GPU Temperature:"), QStringLiteral("°C"));
+        temp->spin->setToolTip(tr7("Adjust the target temperature for the selected GPU."));
+        power = new OdRow(tr7("Power Control Settings (%):"), QStringLiteral("%"));
+        power->spin->setToolTip(tr7("Adjust the maximum power limits for the selected GPU."));
         fv->addWidget(sclk);
         fv->addWidget(mclk);
         fv->addSpacing(4);
@@ -1806,10 +1786,9 @@ public:
                 mclk->setRange(o.mclkMin, o.mclkMax);
                 mclk->setValue(m_saved.mclk);
             }
-            info->setText(QStringLiteral("Параметри тактової частоти застосовуються лише тоді, коли GPU працює в режимі високої продуктивності."));
+            info->setText(tr7("The clock settings apply only when the GPU runs in high performance mode."));
         } else {
-            info->setText(QStringLiteral("Драйвер не дозволяє змінювати частоти цієї відеокарти. Щоб їх змінювати, додайте до параметрів ядра "
-                                         "amdgpu.ppfeaturemask=0xffffffff і перезавантажте комп'ютер. Вентилятор і обмеження енергоспоживання можна налаштувати й так."));
+            info->setText(tr7("The driver does not allow changing the clocks of this graphics card. To change them, add amdgpu.ppfeaturemask=0xffffffff to the kernel parameters and restart the computer. The fan and the power limit can be adjusted anyway."));
         }
         sclk->setVisible(o.odClocks);
         mclk->setVisible(o.odClocks && !o.mclkLevels.isEmpty() && o.mclkMax > 0);
@@ -1882,7 +1861,7 @@ public:
         if (ok) {
             store().setValue(key() + QStringLiteral("enabled"), n.enabled);
         } else {
-            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Не вдалося застосувати параметри AMD OverDrive."));
+            QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("The AMD OverDrive settings could not be applied."));
         }
         load();
         return ok;
@@ -1940,7 +1919,7 @@ public:
         auto *v = new QVBoxLayout;
         v->addWidget(label(cap));
         table = new QTreeWidget;
-        table->setHeaderLabels({QStringLiteral("Елемент"), QStringLiteral("Значення")});
+        table->setHeaderLabels({tr7("Item"), tr7("Value")});
         table->setRootIsDecorated(false);
         table->setMinimumHeight(300);
         table->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -1948,7 +1927,7 @@ public:
         if (sysBtn) {
             auto *h = new QHBoxLayout;
             h->addStretch(1);
-            auto *b = new QPushButton(QStringLiteral("Відомості про систему..."));
+            auto *b = new QPushButton(tr7("System Information..."));
             h->addWidget(b);
             v->addLayout(h);
             QObject::connect(b, &QPushButton::clicked, this, [this] { systemInfo(); });
@@ -1977,7 +1956,7 @@ private:
 
 inline QString adapterTitle(int i)
 {
-    return i == 0 ? QStringLiteral("Основний адаптер") : QStringLiteral("Адаптер %1 увімкнено").arg(i);
+    return i == 0 ? tr7("Primary Adapter") : tr7("Adapter %1 enabled").arg(i);
 }
 
 inline void systemInfoDialog(QWidget *parent);
@@ -1990,11 +1969,11 @@ inline void InfoTablePage::systemInfo()
 inline void systemInfoDialog(QWidget *parent)
 {
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Відомості про систему"));
+    d.setWindowTitle(tr7("System Information"));
     d.resize(560, 520);
     auto *v = new QVBoxLayout(&d);
     auto *t = new QTreeWidget(&d);
-    t->setHeaderLabels({QStringLiteral("Елемент"), QStringLiteral("Значення")});
+    t->setHeaderLabels({tr7("Item"), tr7("Value")});
     t->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     auto add = [&](const QString &group, const QList<Row> &rows) {
         auto *g = new QTreeWidgetItem(t, {group});
@@ -2016,19 +1995,19 @@ inline void systemInfoDialog(QWidget *parent)
         }
     }
     const auto mem = QRegularExpression(QStringLiteral("MemTotal:\\s+(\\d+)")).match(readFile(QStringLiteral("/proc/meminfo")));
-    add(QStringLiteral("Комп'ютер"), {{QStringLiteral("Операційна система"), QSysInfo::prettyProductName()},
-                                      {QStringLiteral("Ядро"), QSysInfo::kernelType() + QLatin1Char(' ') + QSysInfo::kernelVersion()},
-                                      {QStringLiteral("Процесор"), cpu},
-                                      {QStringLiteral("Системна пам'ять"), mem.hasMatch() ? QStringLiteral("%1 МБ").arg(mem.captured(1).toLongLong() / 1024) : QString()},
-                                      {QStringLiteral("Мова системи"), QLocale().nativeLanguageName()}});
-    add(QStringLiteral("Програмне забезпечення"), softwareRows());
+    add(tr7("Computer"), {{tr7("Operating System"), QSysInfo::prettyProductName()},
+                                      {tr7("Kernel"), QSysInfo::kernelType() + QLatin1Char(' ') + QSysInfo::kernelVersion()},
+                                      {tr7("Processor"), cpu},
+                                      {tr7("System Memory"), mem.hasMatch() ? tr7("%1 MB").arg(mem.captured(1).toLongLong() / 1024) : QString()},
+                                      {tr7("System Language"), QLocale().nativeLanguageName()}});
+    add(tr7("Software"), softwareRows());
     const QList<Gpu> adapters = amdGpus();
     for (int i = 0; i < adapters.size(); ++i) {
-        add(adapters.size() > 1 ? QStringLiteral("Апаратне забезпечення — %1").arg(adapterTitle(i)) : QStringLiteral("Апаратне забезпечення"), hardwareRows(adapters.at(i)));
+        add(adapters.size() > 1 ? tr7("Hardware - %1").arg(adapterTitle(i)) : tr7("Hardware"), hardwareRows(adapters.at(i)));
     }
     v->addWidget(t);
     auto *bb = new QDialogButtonBox(QDialogButtonBox::Close, &d);
-    bb->button(QDialogButtonBox::Close)->setText(QStringLiteral("Закрити"));
+    bb->button(QDialogButtonBox::Close)->setText(tr7("Close"));
     QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
     v->addWidget(bb);
     d.exec();
@@ -2076,12 +2055,12 @@ public:
     HardwarePage()
     {
         id = QStringLiteral("info.hw");
-        title = QStringLiteral("Апаратне забезпечення");
+        title = tr7("Hardware");
         build();
         auto *top = new QHBoxLayout;
-        auto *d = label(QStringLiteral("Перегляд властивостей графічного обладнання."));
+        auto *d = label(tr7("View the properties of the graphics hardware."));
         top->addWidget(d, 1);
-        auto *b = new QPushButton(QStringLiteral("Відомості про систему..."));
+        auto *b = new QPushButton(tr7("System Information..."));
         top->addWidget(b);
         box(top, 10);
         QObject::connect(b, &QPushButton::clicked, this, [this] { systemInfoDialog(this); });
@@ -2089,7 +2068,7 @@ public:
         for (int i = 0; i < adapters.size(); ++i) {
             auto *t = new AdapterToggle(adapterTitle(i));
             auto *table = new QTreeWidget;
-            table->setHeaderLabels({QStringLiteral("Елемент"), QStringLiteral("Значення")});
+            table->setHeaderLabels({tr7("Item"), tr7("Value")});
             table->setRootIsDecorated(false);
             table->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
             table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -2169,7 +2148,7 @@ public:
             name->setFont(uiFont(18, QFont::DemiBold));
             cv->addSpacing(10);
             cv->addWidget(name);
-            auto *drv = label(QStringLiteral("Драйвер: Mesa %1 (amdgpu)").arg(mesaVersion()));
+            auto *drv = label(tr7("Driver: Mesa %1 (amdgpu)").arg(mesaVersion()));
             drv->setAlignment(Qt::AlignCenter);
             cv->addWidget(drv);
             body->addSpacing(20);
@@ -2286,10 +2265,10 @@ inline QString presetContents(const Preset &p)
         c |= k.startsWith(QLatin1String("color/"));
     }
     if (d) {
-        parts << QStringLiteral("Параметри дисплея");
+        parts << tr7("Display Options");
     }
     if (c) {
-        parts << QStringLiteral("Колір");
+        parts << tr7("Color");
     }
     if (p.values.contains(QStringLiteral("power"))) {
         parts << QStringLiteral("PowerPlay™");
@@ -2307,22 +2286,21 @@ public:
     AddPresetPage()
     {
         id = QStringLiteral("presets.add");
-        title = QStringLiteral("Додати установку");
-        description = QStringLiteral("Установка зберігає поточні параметри, щоб пізніше застосувати їх одним клацанням у розділі «Установки». "
-                                     "Введіть назву та виберіть, які параметри зберегти.");
+        title = tr7("Add Preset");
+        description = tr7("A preset saves the current settings so that you can apply them later with one click under Presets. Type a name and choose which settings to save.");
         build();
-        section(QStringLiteral("Нова установка"));
+        section(tr7("New preset"));
         auto *v = new QVBoxLayout;
-        v->addWidget(label(QStringLiteral("Назва установки:")));
+        v->addWidget(label(tr7("Preset name:")));
         name = new QLineEdit;
         name->setMaximumWidth(300);
         v->addWidget(name);
         v->addSpacing(10);
-        v->addWidget(label(QStringLiteral("Зберегти в установці:")));
-        display = new QCheckBox(QStringLiteral("Параметри дисплея (роздільна здатність, частота, поворот)"));
-        color = new QCheckBox(QStringLiteral("Колір робочого стола"));
-        power = new QCheckBox(QStringLiteral("Режим PowerPlay™"));
-        d3 = new QCheckBox(QStringLiteral("Налаштування 3D-програм"));
+        v->addWidget(label(tr7("Save in the preset:")));
+        display = new QCheckBox(tr7("Display settings (resolution, refresh rate, rotation)"));
+        color = new QCheckBox(tr7("Desktop color"));
+        power = new QCheckBox(tr7("PowerPlay™ mode"));
+        d3 = new QCheckBox(tr7("3D Application Settings"));
         for (QCheckBox *c : {display, color, power, d3}) {
             c->setChecked(c != d3);
             v->addWidget(c);
@@ -2339,7 +2317,7 @@ public:
         const QString n = name->text().trimmed();
         for (const Preset &p : l) {
             if (p.name == n) {
-                QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Установка з такою назвою вже існує."));
+                QMessageBox::warning(this, QStringLiteral("AMD Catalyst Control Center"), tr7("A preset with this name already exists."));
                 return false;
             }
         }
@@ -2364,20 +2342,20 @@ public:
     ManagePresetsPage()
     {
         id = QStringLiteral("presets.manage");
-        title = QStringLiteral("Керування установками");
-        description = QStringLiteral("Перегляд, застосування, перейменування та видалення установок.");
+        title = tr7("Manage Presets");
+        description = tr7("View, apply, rename and delete presets.");
         build();
         auto *v = new QVBoxLayout;
         list = new QTreeWidget;
-        list->setHeaderLabels({QStringLiteral("Назва"), QStringLiteral("Вміст")});
+        list->setHeaderLabels({tr7("Name"), tr7("Contents")});
         list->setRootIsDecorated(false);
         list->setMinimumHeight(220);
         list->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         v->addWidget(list);
         auto *h = new QHBoxLayout;
-        auto *apply = new QPushButton(QStringLiteral("Застосувати"));
-        auto *ren = new QPushButton(QStringLiteral("Перейменувати"));
-        auto *del = new QPushButton(QStringLiteral("Видалити"));
+        auto *apply = new QPushButton(tr7("Apply"));
+        auto *ren = new QPushButton(tr7("Rename"));
+        auto *del = new QPushButton(tr7("Delete"));
         h->addWidget(apply);
         h->addWidget(ren);
         h->addWidget(del);
@@ -2399,7 +2377,7 @@ public:
             }
             QList<Preset> l = presets();
             bool ok = false;
-            const QString n = QInputDialog::getText(this, QStringLiteral("Перейменувати установку"), QStringLiteral("Нова назва:"), QLineEdit::Normal, l.at(i).name, &ok).trimmed();
+            const QString n = QInputDialog::getText(this, tr7("Rename Preset"), tr7("New name:"), QLineEdit::Normal, l.at(i).name, &ok).trimmed();
             if (ok && !n.isEmpty()) {
                 l[i].name = n;
                 savePresets(l);
@@ -2412,7 +2390,7 @@ public:
                 return;
             }
             QList<Preset> l = presets();
-            if (QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("Видалити установку «%1»?").arg(l.at(i).name)) == QMessageBox::Yes) {
+            if (QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), tr7("Delete the preset \"%1\"?").arg(l.at(i).name)) == QMessageBox::Yes) {
                 l.removeAt(i);
                 savePresets(l);
                 changedList();
@@ -2450,8 +2428,8 @@ public:
     PinnedPage()
     {
         id = QStringLiteral("pinned");
-        title = QStringLiteral("Закріплені");
-        description = QStringLiteral("Сторінки, які ви закріпили, щоб швидко їх відкривати. Щоб закріпити сторінку, натисніть значок кнопки в її заголовку.");
+        title = tr7("Pinned");
+        description = tr7("Pages you pinned so that you can open them quickly. To pin a page, click the pin icon in its title.");
         build();
         auto *v = new QVBoxLayout;
         list = new QListWidget;
@@ -2482,7 +2460,7 @@ public:
             list->addItem(it);
         }
         if (!list->count()) {
-            auto *it = new QListWidgetItem(QStringLiteral("Немає закріплених сторінок."));
+            auto *it = new QListWidgetItem(tr7("No pages are pinned."));
             it->setFlags(Qt::NoItemFlags);
             list->addItem(it);
         }
@@ -2497,7 +2475,7 @@ private:
 inline void about(QWidget *parent)
 {
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Про AMD Catalyst™ Control Center"));
+    d.setWindowTitle(tr7("About AMD Catalyst™ Control Center"));
     auto *v = new QVBoxLayout(&d);
     auto *h = new QHBoxLayout;
     auto *logo = new QLabel;
@@ -2505,11 +2483,11 @@ inline void about(QWidget *parent)
     logo->setStyleSheet(QStringLiteral("background:#080808;padding:6px"));
     h->addWidget(logo, 0, Qt::AlignTop);
     h->addSpacing(14);
-    auto *t = label(QStringLiteral("AMD Catalyst Control Center\nВерсія 2014.0915.1813.32737\n© Advanced Micro Devices, Inc., 2002–2014\nУсі права захищено."));
+    auto *t = label(tr7("AMD Catalyst Control Center\nVersion 2014.0915.1813.32737\n© 2002-2014 Advanced Micro Devices, Inc.\nAll rights reserved."));
     h->addWidget(t, 1, Qt::AlignTop);
     v->addLayout(h);
     v->addSpacing(14);
-    v->addWidget(label(QStringLiteral("Це відтворення AMD Catalyst Control Center для Linux (seven-ccc). Параметри застосовуються через драйвер amdgpu, Mesa та KDE Plasma.")));
+    v->addWidget(label(tr7("This is a re-creation of AMD Catalyst Control Center for Linux (seven-ccc). The settings are applied through the amdgpu driver, Mesa and KDE Plasma.")));
     auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok, &d);
     QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
     v->addWidget(bb);
@@ -2621,7 +2599,7 @@ public:
             p = m_pages.value(QStringLiteral("info.sw"));
         }
         if (Page *old = page(); old && old != p && old->dirty()) {
-            const auto r = QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("На цій сторінці є незастосовані зміни. Застосувати їх?"),
+            const auto r = QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), tr7("This page has unapplied changes. Do you want to apply them?"),
                                                  QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
             if (r == QMessageBox::Cancel) {
                 return;
@@ -2727,7 +2705,7 @@ protected:
     void closeEvent(QCloseEvent *e) override
     {
         if (Page *p = page(); p && p->dirty()) {
-            const auto r = QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), QStringLiteral("На цій сторінці є незастосовані зміни. Застосувати їх перед закриттям?"),
+            const auto r = QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"), tr7("This page has unapplied changes. Do you want to apply them before closing?"),
                                                  QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
             if (r == QMessageBox::Cancel) {
                 e->ignore();
@@ -2799,27 +2777,27 @@ private:
         auto *man = new ManagePresetsPage;
         man->presetsChanged = [this] { sections(); };
         add(man);
-        add(new DesktopPropsPage(QStringLiteral("desk.props"), QStringLiteral("Властивості робочого стола"), false));
-        add(new ColorPage(QStringLiteral("desk.color"), QStringLiteral("Колір робочого стола"), false));
+        add(new DesktopPropsPage(QStringLiteral("desk.props"), tr7("Desktop Properties"), false));
+        add(new ColorPage(QStringLiteral("desk.color"), tr7("Desktop color"), false));
         add(new RotatePage);
         add(new DisplaysPage);
         add(new DetectPage);
         add(new LcdInfoPage);
-        add(new ColorPage(QStringLiteral("lcd.color"), QStringLiteral("Колір (Вбудований дисплей)"), true));
+        add(new ColorPage(QStringLiteral("lcd.color"), tr7("Color (Built-in Display)"), true));
         add(new Gaming3DPage);
         add(new PowerPlayPage);
         if (!overdriveGpus().isEmpty()) {
             add(new OverDrivePage);
         }
-        auto *home = new LinksPage(QStringLiteral("info.home"), QStringLiteral("Домашня сторінка AMD"),
-                                   QStringLiteral("Покращте свої враження від графіки з AMD."),
-                                   {{QStringLiteral("Відвідати www.amd.com"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com"))); }},
-                                    {QStringLiteral("Драйвери та підтримка"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com/en/support"))); }},
-                                    {QStringLiteral("Ігри та технології Radeon"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com/en/products/graphics"))); }}});
+        auto *home = new LinksPage(QStringLiteral("info.home"), tr7("AMD Home"),
+                                   tr7("Enhance your graphics experience with AMD."),
+                                   {{tr7("Visit www.amd.com"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com"))); }},
+                                    {tr7("Drivers and Support"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com/en/support"))); }},
+                                    {tr7("Radeon Gaming and Technologies"), [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.amd.com/en/products/graphics"))); }}});
         {
             auto *h = new QHBoxLayout;
-            auto *web = new QCheckBox(QStringLiteral("Дозволити веб-вміст"));
-            auto *start = new QCheckBox(QStringLiteral("Показувати цю сторінку під час запуску"));
+            auto *web = new QCheckBox(tr7("Allow web content"));
+            auto *start = new QCheckBox(tr7("Show this page on startup"));
             web->setChecked(store().value(QStringLiteral("AllowWebContent"), true).toBool());
             start->setChecked(store().value(QStringLiteral("HomeOnStartup"), false).toBool());
             QObject::connect(web, &QCheckBox::toggled, home, [](bool on) { store().setValue(QStringLiteral("AllowWebContent"), on); });
@@ -2831,17 +2809,17 @@ private:
             home->box(h, 10);
         }
         add(home);
-        add(new InfoTablePage(QStringLiteral("info.sw"), QStringLiteral("Програмне забезпечення"), QStringLiteral("Перегляд властивостей програмного забезпечення."),
-                              QStringLiteral("Графічне програмне забезпечення:"), [] { return softwareRows(); }, true));
+        add(new InfoTablePage(QStringLiteral("info.sw"), tr7("Software"), tr7("View the properties of the software."),
+                              tr7("Graphics software:"), [] { return softwareRows(); }, true));
         add(new HardwarePage);
         if (switchable().valid()) {
             add(new PxAppsPage);
             add(new PxGlobalPage);
             add(new PxMonitorPage);
         }
-        auto *upd = new LinksPage(QStringLiteral("info.update"), QStringLiteral("Оновлення програмного забезпечення"),
-                            QStringLiteral("Перевірка наявності нових версій графічного драйвера (Mesa, ядро Linux, мікропрограми)."),
-                            {{QStringLiteral("Перевірити наявність оновлень"), [this] {
+        auto *upd = new LinksPage(QStringLiteral("info.update"), tr7("Software Update"),
+                            tr7("Check for new versions of the graphics driver (Mesa, the Linux kernel, firmware)."),
+                            {{tr7("Check for Updates"), [this] {
                                   const QString o = run(QStringLiteral("apt"), {QStringLiteral("list"), QStringLiteral("--upgradable")}, 20000);
                                   QStringList hits;
                                   for (const QString &l : o.split(QLatin1Char('\n'))) {
@@ -2850,11 +2828,11 @@ private:
                                       }
                                   }
                                   if (m_update) {
-                                      m_update->result->setText(hits.isEmpty() ? QStringLiteral("Нових версій графічного драйвера не знайдено.")
-                                                                         : QStringLiteral("Доступні оновлення графічного драйвера:\n") + hits.join(QLatin1Char('\n')));
+                                      m_update->result->setText(hits.isEmpty() ? tr7("No new versions of the graphics driver were found.")
+                                                                         : tr7("Graphics driver updates are available:\n") + hits.join(QLatin1Char('\n')));
                                   }
                               }},
-                             {QStringLiteral("Відкрити Центр оновлення Windows"), [] { QProcess::startDetached(QStringLiteral("seven-control"), {QStringLiteral("--windows-update")}); }}});
+                             {tr7("Open Windows Update"), [] { QProcess::startDetached(QStringLiteral("seven-control"), {QStringLiteral("--windows-update")}); }}});
         m_update = upd;
         add(upd);
         sections();
@@ -2864,46 +2842,46 @@ private:
     {
         const bool advanced = store().value(QStringLiteral("AdvancedView"), true).toBool();
         QList<NavSection> s;
-        s << NavSection{QStringLiteral("pinned"), QStringLiteral("Закріплені"), QStringLiteral("IconFavourites"), {}};
-        NavSection pre{QStringLiteral("presets"), QStringLiteral("Установки"), QStringLiteral("IconPresets"),
-                       {{QStringLiteral("presets.add"), QStringLiteral("Додати установку")}, {QStringLiteral("presets.manage"), QStringLiteral("Керування установками")}}};
+        s << NavSection{QStringLiteral("pinned"), tr7("Pinned"), QStringLiteral("IconFavourites"), {}};
+        NavSection pre{QStringLiteral("presets"), tr7("Presets"), QStringLiteral("IconPresets"),
+                       {{QStringLiteral("presets.add"), tr7("Add Preset")}, {QStringLiteral("presets.manage"), tr7("Manage Presets")}}};
         const QList<Preset> l = presets();
         for (int i = 0; i < l.size(); ++i) {
             pre.items << NavItem{QStringLiteral("preset:%1").arg(i), l.at(i).name};
         }
         s << pre;
-        s << NavSection{QStringLiteral("desk"), QStringLiteral("Керування робочим столом"), QStringLiteral("IconDesktopDisplays"),
-                        {{QStringLiteral("desk.props"), QStringLiteral("Властивості робочого стола")}, {QStringLiteral("desk.color"), QStringLiteral("Колір робочого стола")}}};
-        s << NavSection{QStringLiteral("tasks"), QStringLiteral("Загальні завдання дисплея"), QStringLiteral("IconDisplayConfig"),
-                        {{QStringLiteral("tasks.rotate"), QStringLiteral("Повернути робочий стіл")},
-                         {QStringLiteral("tasks.addremove"), QStringLiteral("Додати чи видалити дисплей")},
-                         {QStringLiteral("tasks.detect"), QStringLiteral("Виявити дисплеї")}}};
+        s << NavSection{QStringLiteral("desk"), tr7("Desktop Management"), QStringLiteral("IconDesktopDisplays"),
+                        {{QStringLiteral("desk.props"), tr7("Desktop Properties")}, {QStringLiteral("desk.color"), tr7("Desktop color")}}};
+        s << NavSection{QStringLiteral("tasks"), tr7("Common Display Tasks"), QStringLiteral("IconDisplayConfig"),
+                        {{QStringLiteral("tasks.rotate"), tr7("Rotate Desktop")},
+                         {QStringLiteral("tasks.addremove"), tr7("Add or Remove Display")},
+                         {QStringLiteral("tasks.detect"), tr7("Detect Displays")}}};
         bool lcd = false;
         for (const Output &o : outputs()) {
             lcd |= o.builtIn();
         }
         if (lcd) {
-            s << NavSection{QStringLiteral("lcd"), QStringLiteral("Мої вбудовані дисплеї"), QStringLiteral("IconLCD"),
-                            {{QStringLiteral("lcd.props"), QStringLiteral("Властивості (Вбудований дисплей)")}, {QStringLiteral("lcd.color"), QStringLiteral("Колір (Вбудований дисплей)")}}};
+            s << NavSection{QStringLiteral("lcd"), tr7("My Built-in Displays"), QStringLiteral("IconLCD"),
+                            {{QStringLiteral("lcd.props"), tr7("Properties (Built-in Display)")}, {QStringLiteral("lcd.color"), tr7("Color (Built-in Display)")}}};
         }
         if (advanced) {
-            s << NavSection{QStringLiteral("game"), QStringLiteral("Ігри"), QStringLiteral("IconGaming"), {{QStringLiteral("game.3d"), QStringLiteral("Налаштування 3D-програм")}}};
+            s << NavSection{QStringLiteral("game"), tr7("Gaming"), QStringLiteral("IconGaming"), {{QStringLiteral("game.3d"), tr7("3D Application Settings")}}};
             if (!overdriveGpus().isEmpty()) {
-                s << NavSection{QStringLiteral("perf"), QStringLiteral("Продуктивність"), QStringLiteral("IconPerformance"), {{QStringLiteral("perf.od"), QStringLiteral("AMD OverDrive")}}};
+                s << NavSection{QStringLiteral("perf"), tr7("Performance"), QStringLiteral("IconPerformance"), {{QStringLiteral("perf.od"), QStringLiteral("AMD OverDrive")}}};
             }
-            NavSection power{QStringLiteral("power"), QStringLiteral("Живлення"), QStringLiteral("IconPower"), {{QStringLiteral("power.pp"), QStringLiteral("PowerPlay™")}}};
+            NavSection power{QStringLiteral("power"), tr7("Power"), QStringLiteral("IconPower"), {{QStringLiteral("power.pp"), QStringLiteral("PowerPlay™")}}};
             if (switchable().valid()) {
-                power.items << NavItem{QStringLiteral("power.pxapps"), QStringLiteral("Параметри програм перемиканої графіки")}
-                            << NavItem{QStringLiteral("power.pxglobal"), QStringLiteral("Глобальні параметри перемиканої графіки")}
-                            << NavItem{QStringLiteral("power.pxmon"), QStringLiteral("Монітор програм перемиканих графічних адаптерів")};
+                power.items << NavItem{QStringLiteral("power.pxapps"), tr7("Switchable Graphics Application Settings")}
+                            << NavItem{QStringLiteral("power.pxglobal"), tr7("Global Switchable Graphics Settings")}
+                            << NavItem{QStringLiteral("power.pxmon"), tr7("Switchable Graphics Application Monitor")};
             }
             s << power;
         }
-        s << NavSection{QStringLiteral("info"), QStringLiteral("Інформація"), QStringLiteral("IconInfo"),
-                        {{QStringLiteral("info.home"), QStringLiteral("Домашня сторінка AMD")},
-                         {QStringLiteral("info.sw"), QStringLiteral("Програмне забезпечення")},
-                         {QStringLiteral("info.hw"), QStringLiteral("Апаратне забезпечення")},
-                         {QStringLiteral("info.update"), QStringLiteral("Оновлення програмного забезпечення")}}};
+        s << NavSection{QStringLiteral("info"), tr7("Information"), QStringLiteral("IconInfo"),
+                        {{QStringLiteral("info.home"), tr7("AMD Home")},
+                         {QStringLiteral("info.sw"), tr7("Software")},
+                         {QStringLiteral("info.hw"), tr7("Hardware")},
+                         {QStringLiteral("info.update"), tr7("Software Update")}}};
         nav->setSections(s);
         if (page()) {
             nav->setCurrent(page()->id);
@@ -2913,29 +2891,28 @@ private:
     void preferences()
     {
         QMenu m(this);
-        auto *top = m.addAction(QStringLiteral("Завжди поверх інших вікон"));
+        auto *top = m.addAction(tr7("Always on top"));
         top->setCheckable(true);
         top->setChecked(windowFlags() & Qt::WindowStaysOnTopHint);
         m.addSeparator();
-        auto *factory = m.addAction(QStringLiteral("Відновити заводські параметри"));
+        auto *factory = m.addAction(tr7("Restore Factory Defaults"));
         m.addSeparator();
         const bool adv = store().value(QStringLiteral("AdvancedView"), true).toBool();
-        auto *advA = m.addAction(QStringLiteral("Розширене подання"));
-        auto *stdA = m.addAction(QStringLiteral("Стандартне подання"));
+        auto *advA = m.addAction(tr7("Advanced View"));
+        auto *stdA = m.addAction(tr7("Standard View"));
         advA->setCheckable(true);
         stdA->setCheckable(true);
         advA->setChecked(adv);
         stdA->setChecked(!adv);
         m.addSeparator();
-        auto *ab = m.addAction(QStringLiteral("Про AMD Catalyst Control Center..."));
-        auto *web = m.addAction(QStringLiteral("Відвідати www.amd.com..."));
+        auto *ab = m.addAction(tr7("About AMD Catalyst Control Center..."));
+        auto *web = m.addAction(tr7("Visit www.amd.com..."));
         QAction *a = m.exec(banner->preferences->mapToGlobal(QPoint(0, banner->preferences->height() + 2)));
         if (a == top) {
             setTopmost(top->isChecked());
         } else if (a == factory) {
             if (QMessageBox::question(this, QStringLiteral("AMD Catalyst Control Center"),
-                                      QStringLiteral("Відновити заводські параметри? Буде скинуто колір робочого стола, налаштування 3D-програм, перемиканої графіки і закріплені сторінки. "
-                                                     "Роздільна здатність і поворот дисплеїв не зміняться.")) == QMessageBox::Yes) {
+                                      tr7("Restore factory defaults? The desktop color, 3D application settings, switchable graphics and pinned pages will be reset. The resolution and rotation of displays do not change.")) == QMessageBox::Yes) {
                 for (const Output &o : outputs()) {
                     saveColor(o.name, Color());
                     applyColor(o.name, Color());
@@ -2978,6 +2955,7 @@ int main(int argc, char **argv)
     // root helpers (pkexec / boot service): no display there
     if (argc > 1 && (qstrcmp(argv[1], "--od-write") == 0 || qstrcmp(argv[1], "--od-restore") == 0)) {
         QCoreApplication core(argc, argv);
+        Win7I18n::install(&core);
         const QStringList a = core.arguments();
         return a.at(1) == QLatin1String("--od-write") ? Ccc::odWriteMain(a.mid(2)) : Ccc::odRestoreMain();
     }
@@ -2992,7 +2970,7 @@ int main(int argc, char **argv)
     }
     if (Ccc::amdGpu().card.isEmpty()) {
         QMessageBox::critical(nullptr, QStringLiteral("AMD Catalyst Control Center"),
-                              QStringLiteral("Не вдалося запустити AMD Catalyst Control Center.\nЗараз немає параметрів, які можна налаштувати за допомогою AMD Catalyst Control Center."));
+                              tr7("AMD Catalyst Control Center failed to start.\nThere are currently no settings that can be configured using AMD Catalyst Control Center."));
         return 1;
     }
     Ccc::Window w;

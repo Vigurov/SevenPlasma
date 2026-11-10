@@ -13,6 +13,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7header.h"
 
@@ -109,15 +110,15 @@ inline QString sizeText(qint64 bytes)
     if (bytes < 0) {
         return QString();
     }
-    const QLocale uk(QLocale::Ukrainian);
+    const QLocale uk;
     if (bytes < 1024 * 1024) {
-        return QStringLiteral("%1 КБ").arg(qMax<qint64>(1, (bytes + 1023) / 1024));
+        return tr7("%1 KB").arg(qMax<qint64>(1, (bytes + 1023) / 1024));
     }
     double v = bytes / (1024.0 * 1024.0);
-    QString unit = QStringLiteral("МБ");
+    QString unit = tr7("MB");
     if (v >= 1000) {
         v /= 1024.0;
-        unit = QStringLiteral("ГБ");
+        unit = tr7("GB");
     }
     const int decimals = v < 10 ? 2 : v < 100 ? 1 : 0;
     return uk.toString(v, 'f', decimals) + QLatin1Char(' ') + unit;
@@ -673,7 +674,7 @@ inline QList<Update> installedUpdates(const QList<Program> &programs)
                 const QString pkg = u.captured(1);
                 Update up;
                 up.program = debNames.value(pkg, QStringLiteral("Kubuntu"));
-                up.name = debNames.contains(pkg) ? QStringLiteral("Оновлення для %1 (%2)").arg(up.program, pkg) : QStringLiteral("Оновлення для Kubuntu (%1)").arg(pkg);
+                up.name = debNames.contains(pkg) ? tr7("Update for %1 (%2)").arg(up.program, pkg) : tr7("Update for Kubuntu (%1)").arg(pkg);
                 up.version = u.captured(3).trimmed().section(QLatin1Char(':'), -1);
                 up.publisher = status.contains(pkg) ? publisherOf(status.value(pkg).value(QStringLiteral("Maintainer"))) : QStringLiteral("Ubuntu");
                 up.installed = date;
@@ -697,7 +698,7 @@ inline QList<Update> installedUpdates(const QList<Program> &programs)
         for (const QJsonValue &n : c.value(QStringLiteral("data")).toObject().value(QStringLiteral("snap-names")).toArray()) {
             Update up;
             up.program = snapNames.value(n.toString(), n.toString());
-            up.name = QStringLiteral("Оновлення для %1").arg(up.program);
+            up.name = tr7("Update for %1").arg(up.program);
             up.publisher = QStringLiteral("Snapcraft");
             up.installed = QDateTime::fromString(c.value(QStringLiteral("ready-time")).toString(), Qt::ISODateWithMs).date();
             out.append(up);
@@ -806,7 +807,7 @@ inline void showFailure(QWidget *parent, const QString &title, const QString &te
 /** "Uninstall" of one program; refresh() runs when something may have changed */
 inline void uninstall(QWidget *parent, const Program &p, std::function<void()> refresh)
 {
-    const QString title = QStringLiteral("Програми та засоби");
+    const QString title = tr7("Programs and Features");
     if (p.kind == Program::Wine) {
         // the program's own uninstaller, like on Windows
         auto *proc = new QProcess(parent);
@@ -821,9 +822,9 @@ inline void uninstall(QWidget *parent, const Program &p, std::function<void()> r
         QProcess::startDetached(QStringLiteral("steam"), {QStringLiteral("steam://uninstall/") + p.id});
         return;
     }
-    QMessageBox ask(QMessageBox::Question, title, QStringLiteral("Справді видалити програму «%1»?").arg(p.name), QMessageBox::Yes | QMessageBox::No, parent);
-    ask.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-    ask.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+    QMessageBox ask(QMessageBox::Question, title, tr7("Are you sure you want to uninstall %1?").arg(p.name), QMessageBox::Yes | QMessageBox::No, parent);
+    ask.button(QMessageBox::Yes)->setText(tr7("Yes"));
+    ask.button(QMessageBox::No)->setText(tr7("No"));
     if (ask.exec() != QMessageBox::Yes) {
         return;
     }
@@ -834,10 +835,10 @@ inline void uninstall(QWidget *parent, const Program &p, std::function<void()> r
         refresh();
         return;
     }
-    const QString wait = QStringLiteral("Зачекайте, доки програму «%1» буде видалено з комп'ютера.").arg(p.name);
+    const QString wait = tr7("Please wait while %1 is uninstalled from your computer.").arg(p.name);
     auto finished = [parent, title, p, refresh](bool ok, bool cancelled, const QString &out) {
         if (!ok && !cancelled) {
-            showFailure(parent, title, QStringLiteral("Не вдалося видалити програму «%1».").arg(p.name), out);
+            showFailure(parent, title, tr7("%1 could not be uninstalled.").arg(p.name), out);
         }
         refresh();
     };
@@ -852,11 +853,11 @@ inline void uninstall(QWidget *parent, const Program &p, std::function<void()> r
     extra.removeAll(p.id);
     if (!extra.isEmpty()) {
         QMessageBox more(QMessageBox::Warning, title,
-                         QStringLiteral("Разом із програмою «%1» буде видалено пакети, які від неї залежать:").arg(p.name), QMessageBox::Yes | QMessageBox::No, parent);
+                         tr7("Together with %1, the packages that depend on it will be removed:").arg(p.name), QMessageBox::Yes | QMessageBox::No, parent);
         more.setInformativeText(extra.mid(0, 25).join(QStringLiteral(", ")) + (extra.size() > 25 ? QStringLiteral(" …") : QString())
-                                + QStringLiteral("\n\nПродовжити?"));
-        more.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-        more.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+                                + tr7("\n\nDo you want to continue?"));
+        more.button(QMessageBox::Yes)->setText(tr7("Yes"));
+        more.button(QMessageBox::No)->setText(tr7("No"));
         if (more.exec() != QMessageBox::Yes) {
             return;
         }
@@ -1095,7 +1096,7 @@ inline void addViewAndHelp(QToolBar *bar, QMenu *viewMenu, const QString &viewTi
         }
     };
     auto *arrowBtn = new ArrowButton;
-    arrowBtn->setToolTip(QStringLiteral("Інші параметри"));
+    arrowBtn->setToolTip(tr7("Other settings"));
     arrowBtn->setFixedWidth(18);
     arrowBtn->setPopupMode(QToolButton::InstantPopup);
     arrowBtn->setMenu(viewMenu);
@@ -1106,7 +1107,7 @@ inline void addViewAndHelp(QToolBar *bar, QMenu *viewMenu, const QString &viewTi
     auto *help = new QToolButton;
     help->setIcon(QIcon(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-aero/help.png"))));
     help->setIconSize(QSize(16, 16));
-    help->setToolTip(QStringLiteral("Довідка"));
+    help->setToolTip(tr7("Help"));
     QObject::connect(help, &QToolButton::clicked, help, [] { QProcess::startDetached(QStringLiteral("khelpcenter"), {}); });
     bar->addWidget(help);
 }
@@ -1120,10 +1121,10 @@ public:
         , m_nav(std::move(nav))
     {
         auto *side = Win7Display::sidePane(m_nav.home,
-                                           updates ? QList<Win7Display::SideItem>{{QStringLiteral("Видалення програми"), [this] { m_nav.open(ProgramsView); }},
-                                                                                  {QStringLiteral("Увімкнення або вимкнення компонентів Windows"), [this] { openFeatures(); }, {}, true}}
-                                                   : QList<Win7Display::SideItem>{{QStringLiteral("Перегляд встановлених оновлень"), [this] { m_nav.open(UpdatesView); }},
-                                                                                  {QStringLiteral("Увімкнення або вимкнення компонентів Windows"), [this] { openFeatures(); }, {}, true}},
+                                           updates ? QList<Win7Display::SideItem>{{tr7("Uninstall a program"), [this] { m_nav.open(ProgramsView); }},
+                                                                                  {tr7("Turn Windows features on or off"), [this] { openFeatures(); }, {}, true}}
+                                                   : QList<Win7Display::SideItem>{{tr7("View installed updates"), [this] { m_nav.open(UpdatesView); }},
+                                                                                  {tr7("Turn Windows features on or off"), [this] { openFeatures(); }, {}, true}},
                                            {});
         auto *content = new QWidget;
         auto *v = new QVBoxLayout(content);
@@ -1133,9 +1134,9 @@ public:
         auto *hv = new QVBoxLayout(head);
         hv->setContentsMargins(32, 22, 30, 16);
         hv->setSpacing(14);
-        hv->addWidget(pageTitle(updates ? QStringLiteral("Видалення оновлення") : QStringLiteral("Видалення або зміна програми")));
-        hv->addWidget(wrapped(updates ? QStringLiteral("Щоб видалити оновлення, виберіть його у списку, а потім натисніть кнопку «Видалити» або «Змінити».")
-                                      : QStringLiteral("Щоб видалити програму, виберіть її у списку, а потім натисніть кнопку «Видалити», «Змінити» або «Відновити».")));
+        hv->addWidget(pageTitle(updates ? tr7("Uninstall an update") : tr7("Uninstall or change a program")));
+        hv->addWidget(wrapped(updates ? tr7("To uninstall an update, select it from the list and then click Uninstall or Change.")
+                                      : tr7("To uninstall a program, select it from the list and then click Uninstall, Change, or Repair.")));
         v->addWidget(head);
 
         // Windows 7: a light line between the page and the command bar (measured #d2ddec)
@@ -1146,39 +1147,39 @@ public:
         v->addWidget(barLine);
         m_bar = commandBar();
         auto *organize = new QMenu(this);
-        m_organizeRemove = organize->addAction(QStringLiteral("Видалити"), this, [this] { removeSelected(); });
+        m_organizeRemove = organize->addAction(tr7("Delete"), this, [this] { removeSelected(); });
         organize->addSeparator();
-        auto *layoutMenu = organize->addMenu(QStringLiteral("Макет"));
-        m_detailsToggle = layoutMenu->addAction(QStringLiteral("Область відомостей"));
+        auto *layoutMenu = organize->addMenu(tr7("Layout"));
+        m_detailsToggle = layoutMenu->addAction(tr7("Details pane"));
         m_detailsToggle->setCheckable(true);
         m_detailsToggle->setChecked(!updates);
         connect(m_detailsToggle, &QAction::toggled, this, [this](bool on) { m_details->setVisible(on); });
-        m_bar->addWidget(menuButton(QStringLiteral("Упорядкувати"), organize));
-        m_remove = m_bar->addAction(QStringLiteral("Видалити"), this, [this] { removeSelected(); });
-        m_remove->setToolTip(updates ? QStringLiteral("Видалення оновлення.") : QStringLiteral("Видалення програми."));
+        m_bar->addWidget(menuButton(tr7("Organize"), organize));
+        m_remove = m_bar->addAction(tr7("Delete"), this, [this] { removeSelected(); });
+        m_remove->setToolTip(updates ? tr7("Uninstall an update.") : tr7("Uninstall a program."));
         auto *spacer = new QWidget;
         spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         m_bar->addWidget(spacer);
         auto *viewMenu = new QMenu(this);
         auto *viewGroup = new QActionGroup(viewMenu);
-        auto *table = viewMenu->addAction(QStringLiteral("Таблиця"), this, [this] { setListMode(false); });
-        auto *list = viewMenu->addAction(QStringLiteral("Список"), this, [this] { setListMode(true); });
+        auto *table = viewMenu->addAction(tr7("Details"), this, [this] { setListMode(false); });
+        auto *list = viewMenu->addAction(tr7("List"), this, [this] { setListMode(true); });
         for (QAction *a : {table, list}) {
             a->setCheckable(true);
             viewGroup->addAction(a);
         }
         table->setChecked(true);
-        addViewAndHelp(m_bar, viewMenu, QStringLiteral("Змінення подання."));
+        addViewAndHelp(m_bar, viewMenu, tr7("Change your view."));
         v->addWidget(m_bar);
 
         m_tree = new DetailsTree;
         if (updates) {
-            m_tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Програма"), QStringLiteral("Версія"), QStringLiteral("Видавець"), QStringLiteral("Встановлено")});
+            m_tree->setHeaderLabels({tr7("Name"), tr7("Application"), tr7("Version"), tr7("Publisher"), tr7("Installed On")});
             for (int c : {280, 120, 110, 130, 85}) {
                 m_tree->setColumnWidth(m_widths++, c);
             }
         } else {
-            m_tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Видавець"), QStringLiteral("Встановлено"), QStringLiteral("Розмір"), QStringLiteral("Версія")});
+            m_tree->setHeaderLabels({tr7("Name"), tr7("Publisher"), tr7("Installed On"), tr7("Size"), tr7("Version")});
             for (int c : {270, 170, 85, 70, 120}) {
                 m_tree->setColumnWidth(m_widths++, c);
             }
@@ -1190,7 +1191,7 @@ public:
                 return;
             }
             QMenu menu;
-            menu.addAction(QStringLiteral("Видалити"), this, [this] { removeSelected(); });
+            menu.addAction(tr7("Delete"), this, [this] { removeSelected(); });
             menu.exec(m_tree->viewport()->mapToGlobal(pos));
         });
         connect(m_tree, &QTreeWidget::itemSelectionChanged, this, [this] { selectionChanged(); });
@@ -1227,7 +1228,7 @@ public:
         auto *outer = new QVBoxLayout(this);
         outer->setContentsMargins(0, 0, 0, 0);
         outer->addWidget(root);
-        m_tree->addTopLevelItem(new QTreeWidgetItem({QStringLiteral("Зачекайте...")}));
+        m_tree->addTopLevelItem(new QTreeWidgetItem({tr7("Please wait...")}));
         QTimer::singleShot(30, this, [this] { reload(); });
     }
 
@@ -1340,22 +1341,22 @@ private:
                 total += qMax<qint64>(0, q.size);
             }
             m_detailsIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-appwiz")).pixmap(48, 48));
-            m_detailsText->setText(QStringLiteral("<span style='font-size:15px'>Встановлені програми</span>&nbsp;&nbsp;%1 %2<br>%3 %4")
-                                       .arg(grey(QStringLiteral("Загальний розмір:")), sizeText(total), grey(QStringLiteral("Встановлено програм:")))
+            m_detailsText->setText(tr7("<span style='font-size:15px'>Currently installed programs</span>&nbsp;&nbsp;%1 %2<br>%3 %4")
+                                       .arg(grey(tr7("Total size:")), sizeText(total), grey(tr7("Programs installed:")))
                                        .arg(m_programs.size()));
             return;
         }
         m_detailsIcon->setPixmap(themeIcon(p->icon).pixmap(48, 48));
         QString text = QStringLiteral("<span style='font-size:15px'>%1</span>").arg((p->publisher.isEmpty() ? p->name : p->publisher).toHtmlEscaped());
         if (!p->version.isEmpty()) {
-            text += QStringLiteral("&nbsp;&nbsp;%1 %2").arg(grey(QStringLiteral("Версія продукту:")), p->version.toHtmlEscaped());
+            text += QStringLiteral("&nbsp;&nbsp;%1 %2").arg(grey(tr7("Product version:")), p->version.toHtmlEscaped());
         }
         QStringList second;
         if (p->size >= 0) {
-            second.append(grey(QStringLiteral("Розмір:")) + QLatin1Char(' ') + sizeText(p->size));
+            second.append(grey(tr7("Size:")) + QLatin1Char(' ') + sizeText(p->size));
         }
         if (!p->help.isEmpty()) {
-            second.append(grey(QStringLiteral("Посилання на довідку:")) + QStringLiteral(" <a href='%1' style='color:#0066cc; text-decoration:none'>%1</a>").arg(p->help.toHtmlEscaped()));
+            second.append(grey(tr7("Help link:")) + QStringLiteral(" <a href='%1' style='color:#0066cc; text-decoration:none'>%1</a>").arg(p->help.toHtmlEscaped()));
         }
         if (!second.isEmpty()) {
             text += QStringLiteral("<br>") + second.join(QStringLiteral("&nbsp;&nbsp;&nbsp;"));
@@ -1407,33 +1408,33 @@ struct Feature {
 inline QList<Feature> features()
 {
     return {
-        {QStringLiteral("Ігри"), QStringLiteral("Ігри, що входять до складу системи."), {},
-         {{QStringLiteral("Пасьянси (Косинка, Павук, Вільна комірка)"), QStringLiteral("KPatience — понад десять карткових пасьянсів."), {QStringLiteral("kpat")}, {}},
-          {QStringLiteral("Сапер"), QStringLiteral("KMines — класична гра «Сапер»."), {QStringLiteral("kmines")}, {}},
-          {QStringLiteral("Маджонг"), QStringLiteral("KMahjongg — пасьянс із кісточок маджонгу."), {QStringLiteral("kmahjongg")}, {}},
-          {QStringLiteral("Шахи"), QStringLiteral("Knights — шахи з комп'ютером або іншим гравцем."), {QStringLiteral("knights")}, {}},
-          {QStringLiteral("Реверсі"), QStringLiteral("KReversi — гра «Реверсі»."), {QStringLiteral("kreversi")}, {}},
-          {QStringLiteral("Судоку"), QStringLiteral("KSudoku — головоломки судоку."), {QStringLiteral("ksudoku")}, {}}}},
-        {QStringLiteral("Клієнт Telnet"), QStringLiteral("Дає змогу підключатися до віддалених комп'ютерів за протоколом Telnet."), {QStringLiteral("telnet")}, {}},
-        {QStringLiteral("Клієнт TFTP"), QStringLiteral("Передавання файлів за протоколом TFTP."), {QStringLiteral("tftp-hpa")}, {}},
-        {QStringLiteral("Сервер Telnet"), QStringLiteral("Дає змогу іншим комп'ютерам підключатися до цього комп'ютера за протоколом Telnet."), {QStringLiteral("inetutils-telnetd")}, {}},
-        {QStringLiteral("Сервер SSH"), QStringLiteral("Віддалений доступ до командного рядка цього комп'ютера за протоколом SSH."), {QStringLiteral("openssh-server")}, {}},
-        {QStringLiteral("Компоненти для роботи з мультимедіа"), QStringLiteral("Програми для відтворення музики та відео."), {},
-         {{QStringLiteral("Програвач музики Elisa"), QStringLiteral("Відтворення музики та керування фонотекою."), {QStringLiteral("elisa")}, {}},
-          {QStringLiteral("Відеопрогравач Haruna"), QStringLiteral("Відтворення відеофайлів і дисків DVD."), {QStringLiteral("haruna")}, {}}}},
-        {QStringLiteral("Служби друку та документів"), QStringLiteral("Друк, керування принтерами та друк у PDF."), {},
-         {{QStringLiteral("Служба друку CUPS"), QStringLiteral("Керування принтерами та чергою друку."), {QStringLiteral("cups")}, {}},
-          {QStringLiteral("Друк у файл PDF"), QStringLiteral("Віртуальний принтер, який зберігає документи у файли PDF."), {QStringLiteral("printer-driver-cups-pdf")}, {}}}},
-        {QStringLiteral("Служби для NFS"), QStringLiteral("Доступ до спільних папок у мережах NFS."), {},
-         {{QStringLiteral("Клієнт для NFS"), QStringLiteral("Підключення до спільних папок NFS."), {QStringLiteral("nfs-common")}, {}}}},
-        {QStringLiteral("Спільний доступ до файлів (SMB)"), QStringLiteral("Дає змогу надавати іншим комп'ютерам мережі доступ до папок цього комп'ютера."), {QStringLiteral("samba")}, {}},
-        {QStringLiteral("Пошук Windows"), QStringLiteral("Індексування файлів для швидкого пошуку в меню «Пуск» і Провіднику."), {}, {}, true},
-        {QStringLiteral("Віртуальний ПК"), QStringLiteral("Створення та запуск віртуальних машин."), {QStringLiteral("virt-manager")}, {}},
-        {QStringLiteral("Microsoft .NET Framework (Mono)"), QStringLiteral("Середовище для запуску програм .NET."), {QStringLiteral("mono-runtime")}, {}},
-        {QStringLiteral("Середовище виконання Java"), QStringLiteral("Запуск програм, написаних мовою Java."), {QStringLiteral("default-jre")}, {}},
-        {QStringLiteral("Підсистема для програм Windows (Wine)"), QStringLiteral("Запуск програм, створених для Windows."), {QStringLiteral("wine")}, {}},
-        {QStringLiteral("Компоненти планшетного ПК"), QStringLiteral("Екранна клавіатура для введення без фізичної клавіатури."), {},
-         {{QStringLiteral("Екранна клавіатура"), QStringLiteral("Onboard — клавіатура на екрані."), {QStringLiteral("onboard")}, {}}}},
+        {tr7("Games"), tr7("Games that come with the system."), {},
+         {{tr7("Solitaire games (Solitaire, Spider, FreeCell)"), tr7("KPatience - over ten card solitaire games."), {QStringLiteral("kpat")}, {}},
+          {tr7("Minesweeper"), tr7("KMines - the classic Minesweeper game."), {QStringLiteral("kmines")}, {}},
+          {tr7("Mahjong"), tr7("KMahjongg - Mahjong tile solitaire."), {QStringLiteral("kmahjongg")}, {}},
+          {tr7("Chess"), tr7("Knights - chess against the computer or another player."), {QStringLiteral("knights")}, {}},
+          {tr7("Reversi"), tr7("KReversi - the Reversi game."), {QStringLiteral("kreversi")}, {}},
+          {tr7("Sudoku"), tr7("KSudoku - sudoku puzzles."), {QStringLiteral("ksudoku")}, {}}}},
+        {tr7("Telnet Client"), tr7("Lets you connect to remote computers with the Telnet protocol."), {QStringLiteral("telnet")}, {}},
+        {tr7("TFTP Client"), tr7("Transfers files with the TFTP protocol."), {QStringLiteral("tftp-hpa")}, {}},
+        {tr7("Telnet Server"), tr7("Lets other computers connect to this computer with the Telnet protocol."), {QStringLiteral("inetutils-telnetd")}, {}},
+        {tr7("SSH Server"), tr7("Remote command line access to this computer with the SSH protocol."), {QStringLiteral("openssh-server")}, {}},
+        {tr7("Media Features"), tr7("Programs for playing music and video."), {},
+         {{tr7("Elisa Music Player"), tr7("Plays music and manages the music library."), {QStringLiteral("elisa")}, {}},
+          {tr7("Haruna Video Player"), tr7("Plays video files and DVDs."), {QStringLiteral("haruna")}, {}}}},
+        {tr7("Print and Document Services"), tr7("Printing, printer management and printing to PDF."), {},
+         {{tr7("CUPS Print Service"), tr7("Manages printers and the print queue."), {QStringLiteral("cups")}, {}},
+          {tr7("Print to PDF"), tr7("A virtual printer that saves documents to PDF files."), {QStringLiteral("printer-driver-cups-pdf")}, {}}}},
+        {tr7("Services for NFS"), tr7("Access to shared folders on NFS networks."), {},
+         {{tr7("Client for NFS"), tr7("Connects to NFS shared folders."), {QStringLiteral("nfs-common")}, {}}}},
+        {tr7("File Sharing (SMB)"), tr7("Lets you share the folders of this computer with other computers on the network."), {QStringLiteral("samba")}, {}},
+        {tr7("Windows Search"), tr7("Indexes files for fast search in the Start menu and Explorer."), {}, {}, true},
+        {tr7("Virtual PC"), tr7("Creates and runs virtual machines."), {QStringLiteral("virt-manager")}, {}},
+        {QStringLiteral("Microsoft .NET Framework (Mono)"), tr7("A runtime for .NET programs."), {QStringLiteral("mono-runtime")}, {}},
+        {tr7("Java Runtime Environment"), tr7("Runs programs written in Java."), {QStringLiteral("default-jre")}, {}},
+        {tr7("Subsystem for Windows programs (Wine)"), tr7("Runs programs made for Windows."), {QStringLiteral("wine")}, {}},
+        {tr7("Tablet PC Components"), tr7("On-screen keyboard for typing without a physical keyboard."), {},
+         {{tr7("On-Screen Keyboard"), tr7("Onboard - a keyboard on the screen."), {QStringLiteral("onboard")}, {}}}},
     };
 }
 
@@ -1500,7 +1501,7 @@ public:
     explicit FeaturesDialog(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Компоненти Windows"));
+        setWindowTitle(tr7("Windows Features"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-optfeatures")));
         setAttribute(Qt::WA_DeleteOnClose);
         resize(434 - 16, 374 - 38); // Windows 7: 434x374 with the frame (measured)
@@ -1514,28 +1515,27 @@ public:
         tv->setSpacing(0);
         auto *titleRow = new QHBoxLayout;
         titleRow->setContentsMargins(0, 0, 0, 0);
-        titleRow->addWidget(pageTitle(QStringLiteral("Увімкнення або вимкнення компонентів Windows")), 1);
+        titleRow->addWidget(pageTitle(tr7("Turn Windows features on or off")), 1);
         auto *help = new QLabel;
         help->setPixmap(QPixmap(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-aero/help.png"))));
         help->setCursor(Qt::PointingHandCursor);
-        help->setToolTip(QStringLiteral("Довідка"));
+        help->setToolTip(tr7("Help"));
         titleRow->addWidget(help, 0, Qt::AlignTop);
         tv->addLayout(titleRow);
         tv->addSpacing(12);
-        tv->addWidget(wrapped(QStringLiteral("Щоб увімкнути компонент, установіть його прапорець. Щоб вимкнути компонент, зніміть його прапорець. "
-                                             "Затінений прапорець означає, що компонент увімкнено частково.")));
+        tv->addWidget(wrapped(tr7("To turn a feature on, select its check box. To turn a feature off, clear its check box. A filled box means that only part of the feature is turned on.")));
         tv->addSpacing(6);
         m_stack = new QStackedWidget;
         m_tree = new Win7ClassicTree;
         m_tree->setHeaderHidden(true);
         m_tree->setIconSize(QSize(16, 16));
         m_tree->setUniformRowHeights(true);
-        m_tree->addTopLevelItem(new QTreeWidgetItem({QStringLiteral("Зачекайте...")}));
+        m_tree->addTopLevelItem(new QTreeWidgetItem({tr7("Please wait...")}));
         m_stack->addWidget(m_tree);
         auto *wait = new QWidget;
         auto *wv = new QVBoxLayout(wait);
         wv->setContentsMargins(0, 30, 0, 0);
-        wv->addWidget(wrapped(QStringLiteral("Зачекайте, доки Windows змінить компоненти. Це може тривати кілька хвилин.")));
+        wv->addWidget(wrapped(tr7("Please wait while Windows makes changes to features. This might take several minutes.")));
         auto *bar = new QProgressBar;
         bar->setRange(0, 0);
         bar->setTextVisible(false);
@@ -1549,7 +1549,7 @@ public:
         bh->setSpacing(8);
         bh->addStretch(1);
         m_ok = new QPushButton(QStringLiteral("OK"));
-        m_cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_ok, m_cancel}) {
             b->setMinimumWidth(75);
             b->setFixedHeight(23);
@@ -1719,12 +1719,12 @@ private:
                 extra.removeAll(p);
             }
             if (!extra.isEmpty()) {
-                QMessageBox more(QMessageBox::Warning, windowTitle(), QStringLiteral("Разом із вимкненими компонентами буде видалено пакети, які від них залежать:"),
+                QMessageBox more(QMessageBox::Warning, windowTitle(), tr7("Together with the features turned off, the packages that depend on them will be removed:"),
                                  QMessageBox::Yes | QMessageBox::No, this);
                 more.setInformativeText(extra.mid(0, 25).join(QStringLiteral(", ")) + (extra.size() > 25 ? QStringLiteral(" …") : QString())
-                                        + QStringLiteral("\n\nПродовжити?"));
-                more.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-                more.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+                                        + tr7("\n\nDo you want to continue?"));
+                more.button(QMessageBox::Yes)->setText(tr7("Yes"));
+                more.button(QMessageBox::No)->setText(tr7("No"));
                 if (more.exec() != QMessageBox::Yes) {
                     return;
                 }
@@ -1745,7 +1745,7 @@ private:
                 return;
             }
             if (code != 126 && code != 127) {
-                showFailure(this, windowTitle(), QStringLiteral("Не вдалося змінити деякі компоненти Windows."), out);
+                showFailure(this, windowTitle(), tr7("Windows couldn't change some features."), out);
             }
             m_stack->setCurrentIndex(0);
             m_cancel->setEnabled(true);
@@ -1884,7 +1884,7 @@ public:
         : QDialog(parent)
         , m_mime(mime)
     {
-        setWindowTitle(QStringLiteral("Вибір програми"));
+        setWindowTitle(tr7("Open With"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-sud-assoc")));
         resize(500, 520);
         auto *v = new QVBoxLayout(this);
@@ -1903,16 +1903,16 @@ public:
         ic->setPixmap(themeIcon(mt.iconName(), mt.genericIconName()).pixmap(32, 32));
         head->addWidget(ic, 0, Qt::AlignTop);
         auto *hl = new QVBoxLayout;
-        hl->addWidget(wrapped(QStringLiteral("Виберіть програму для відкриття цього файлу:")));
-        hl->addWidget(grey(QStringLiteral("Файл:  ") + shownName));
+        hl->addWidget(wrapped(tr7("Choose the program you want to use to open this file:", "open with")));
+        hl->addWidget(grey(tr7("File:  ") + shownName));
         head->addLayout(hl, 1);
         tv->addLayout(head);
         tv->addSpacing(4);
-        tv->addWidget(new SectionHeader(QStringLiteral("Рекомендовані програми")));
+        tv->addWidget(new SectionHeader(tr7("Recommended Programs")));
         m_recommended = makeList();
         tv->addWidget(m_recommended, 2);
         auto *other = new QToolButton;
-        other->setText(QStringLiteral("Інші програми  ▾"));
+        other->setText(tr7("Other Programs  ▾"));
         other->setAutoRaise(true);
         other->setCursor(Qt::PointingHandCursor);
         tv->addWidget(other, 0, Qt::AlignLeft);
@@ -1921,15 +1921,15 @@ public:
         tv->addWidget(m_other, 3);
         connect(other, &QToolButton::clicked, this, [this, other] {
             m_other->setVisible(!m_other->isVisible());
-            other->setText(m_other->isVisible() ? QStringLiteral("Інші програми  ▴") : QStringLiteral("Інші програми  ▾"));
+            other->setText(m_other->isVisible() ? tr7("Other Programs  ▴") : tr7("Other Programs  ▾"));
         });
-        auto *always = new QCheckBox(QStringLiteral("Використовувати вибрану програму для всіх файлів такого типу"));
+        auto *always = new QCheckBox(tr7("Always use the selected program to open this kind of file", "open with"));
         always->setChecked(true);
         always->setEnabled(false);
         tv->addWidget(always);
         auto *browseRow = new QHBoxLayout;
-        browseRow->addWidget(wrapped(QStringLiteral("Якщо потрібної програми немає у списку, натисніть кнопку «Огляд» і виберіть її файл.")), 1);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        browseRow->addWidget(wrapped(tr7("If the program you want is not in the list, click Browse and select its file.")), 1);
+        auto *browse = new QPushButton(tr7("Browse..."));
         browseRow->addWidget(browse, 0, Qt::AlignBottom);
         tv->addLayout(browseRow);
         v->addWidget(top, 1);
@@ -1941,7 +1941,7 @@ public:
         bh->setContentsMargins(10, 10, 14, 0);
         bh->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(75);
             bh->addWidget(b);
@@ -2025,7 +2025,7 @@ private:
     /** "Browse...": a menu entry of our own for any program file */
     void browseProgram()
     {
-        const QString file = QFileDialog::getOpenFileName(this, QStringLiteral("Відкрити за допомогою..."), QStringLiteral("/usr/bin"));
+        const QString file = QFileDialog::getOpenFileName(this, tr7("Open with..."), QStringLiteral("/usr/bin"));
         if (file.isEmpty()) {
             return;
         }
@@ -2138,12 +2138,12 @@ inline void showAccessDialog(QWidget *parent);
 /** "Choose the programs that Windows uses by default" */
 inline QWidget *buildDefaultsPage(const Nav &nav, std::function<void()> autoplay)
 {
-    auto *side = Win7Display::sidePane(nav.home, {}, {{QStringLiteral("Програми та засоби"), [nav] { nav.open(ProgramsView); }}});
+    auto *side = Win7Display::sidePane(nav.home, {}, {{tr7("Programs and Features"), [nav] { nav.open(ProgramsView); }}});
     auto *content = new QWidget;
     auto *v = new QVBoxLayout(content);
     v->setContentsMargins(26, 22, 30, 20);
     v->setSpacing(16);
-    v->addWidget(pageTitle(QStringLiteral("Вибір програм, які Windows використовує за замовчуванням")));
+    v->addWidget(pageTitle(tr7("Choose the programs that Windows uses by default")));
     auto entry = [v](const QString &icon, const QString &title, const QString &desc, std::function<void()> open) {
         auto *row = new QHBoxLayout;
         row->setSpacing(10);
@@ -2161,14 +2161,14 @@ inline QWidget *buildDefaultsPage(const Nav &nav, std::function<void()> autoplay
         w->setLayout(row);
         v->addWidget(w);
     };
-    entry(QStringLiteral("seven-sud"), QStringLiteral("Задання програм за замовчуванням"),
-          QStringLiteral("Використання програми за замовчуванням для всіх типів файлів і протоколів, які вона може відкривати."), [nav] { nav.open(SetDefaultsView); });
-    entry(QStringLiteral("seven-sud-assoc"), QStringLiteral("Зіставлення типів файлів або протоколів з певними програмами"),
-          QStringLiteral("Призначення програм, які відкриватимуть файли або протоколи певного типу (наприклад, файли MP3 або протокол HTTP://)."), [nav] { nav.open(AssocView); });
-    entry(QStringLiteral("seven-sud-autoplay"), QStringLiteral("Змінення параметрів автозапуску"),
-          QStringLiteral("Автоматичне відтворення компакт-дисків або інших носіїв."), std::move(autoplay));
-    entry(QStringLiteral("seven-sud-access"), QStringLiteral("Налаштування доступу до програм і параметрів за замовчуванням"),
-          QStringLiteral("Керування доступом до деяких програм і задання параметрів за замовчуванням для цього комп'ютера."), [content] { showAccessDialog(content->window()); });
+    entry(QStringLiteral("seven-sud"), tr7("Set your default programs"),
+          tr7("Make a program always open all file types and protocols it can open."), [nav] { nav.open(SetDefaultsView); });
+    entry(QStringLiteral("seven-sud-assoc"), tr7("Associate a file type or protocol with a program"),
+          tr7("Make a file type or protocol (such as .mp3 or http://) always open in a specific program."), [nav] { nav.open(AssocView); });
+    entry(QStringLiteral("seven-sud-autoplay"), tr7("Change AutoPlay settings"),
+          tr7("Play CDs or other media automatically.", "default programs"), std::move(autoplay));
+    entry(QStringLiteral("seven-sud-access"), tr7("Set program access and computer defaults"),
+          tr7("Control access to certain programs and set defaults for this computer."), [content] { showAccessDialog(content->window()); });
     v->addStretch(1);
     return Win7Display::pageWithSide(side, content);
 }
@@ -2207,16 +2207,15 @@ public:
         auto *v = new QVBoxLayout(body);
         v->setContentsMargins(20, 18, 20, 16);
         v->setSpacing(8);
-        v->addWidget(pageTitle(QStringLiteral("Задання програм, які використовуються за замовчуванням")));
-        v->addWidget(wrapped(QStringLiteral("Щоб використовувати програму за замовчуванням для всіх типів файлів і всіх протоколів, які вона може відкривати, "
-                                            "клацніть назву програми, а потім виберіть «Використовувати цю програму за замовчуванням».")));
+        v->addWidget(pageTitle(tr7("Set Default Programs")));
+        v->addWidget(wrapped(tr7("To set a program as the default for all file types and protocols it can open, click the program and then click Set as default.")));
         v->addSpacing(10);
         m_stack = new QStackedWidget;
         // "Loading..." first, like Windows 7
         auto *loading = new QWidget;
         auto *lv = new QVBoxLayout(loading);
         lv->addStretch(1);
-        auto *lt = new QLabel(QStringLiteral("Завантаження..."));
+        auto *lt = new QLabel(tr7("Loading..."));
         lt->setAlignment(Qt::AlignHCenter);
         lv->addWidget(lt);
         m_progress = new QProgressBar;
@@ -2229,7 +2228,7 @@ public:
         mh->setContentsMargins(0, 0, 0, 0);
         mh->setSpacing(20);
         m_list = new QTreeWidget;
-        m_list->setHeaderLabels({QStringLiteral("Програми")});
+        m_list->setHeaderLabels({tr7("Programs")});
         m_list->setRootIsDecorated(false);
         m_list->setFixedWidth(262);
         m_list->setIconSize(QSize(16, 16));
@@ -2295,7 +2294,7 @@ private:
         auto *v = new QVBoxLayout(w);
         v->setContentsMargins(10, 8, 10, 8);
         if (!it) {
-            auto *l = grey(QStringLiteral("(Виберіть програму, щоб переглянути відомості про неї)"));
+            auto *l = grey(tr7("(Select a program to see information about it)"));
             v->addWidget(l);
             v->addStretch(1);
             m_detailsBox->setWidget(w);
@@ -2329,24 +2328,24 @@ private:
         for (const QString &m : mimes) {
             used += isDefaultFor(s, m) ? 1 : 0;
         }
-        auto *count = wrapped(used == mimes.size() ? QStringLiteral("Ця програма використовує за замовчуванням усі свої параметри.")
-                                                  : QStringLiteral("Ця програма використовує за замовчуванням %1 з %2 своїх параметрів.").arg(used).arg(mimes.size()));
+        auto *count = wrapped(used == mimes.size() ? tr7("This program has all its defaults.")
+                                                  : tr7("This program has %1 out of %2 defaults.").arg(used).arg(mimes.size()));
         QFont cf = count->font();
         cf.setBold(true);
         count->setFont(cf);
         v->addWidget(count);
         v->addSpacing(6);
         QPointer<SetDefaultsPage> self(this);
-        v->addWidget(new ArrowLink(QStringLiteral("Використовувати цю програму за замовчуванням"),
-                                   QStringLiteral("Використання вибраної програми для відкриття всіх типів файлів і протоколів, які вона може відкривати за замовчуванням."),
+        v->addWidget(new ArrowLink(tr7("Set this program as default"),
+                                   tr7("Use the selected program to open all file types and protocols it can open by default."),
                                    [self, s] {
                                        setDefaults(s->mimeTypes(), s->storageId());
                                        if (self) {
                                            self->showProgram(self->m_list->currentItem());
                                        }
                                    }));
-        v->addWidget(new ArrowLink(QStringLiteral("Вибрати значення за замовчуванням для цієї програми"),
-                                   QStringLiteral("Виберіть типи файлів і протоколи, які вибрана програма відкриватиме за замовчуванням."), [self, s] {
+        v->addWidget(new ArrowLink(tr7("Choose defaults for this program"),
+                                   tr7("Choose which file types and protocols the selected program opens by default."), [self, s] {
                                        assocProgram() = s->storageId();
                                        if (self) {
                                            self->m_nav.open(ProgramAssocView);
@@ -2420,7 +2419,7 @@ inline QList<AssocRow> assocRows(const QStringList &onlyMimes = {})
     QStringList prot = protocols.values();
     std::sort(prot.begin(), prot.end());
     for (const QString &p : prot) {
-        rows.append({protocolName(p), p, QStringLiteral("URL:протокол %1").arg(protocolName(p)), QStringLiteral("text-html"), true});
+        rows.append({protocolName(p), p, tr7("URL:%1 Protocol").arg(protocolName(p)), QStringLiteral("text-html"), true});
     }
     return rows;
 }
@@ -2442,9 +2441,8 @@ public:
         auto *v = new QVBoxLayout(body);
         v->setContentsMargins(20, 18, 20, 12);
         v->setSpacing(8);
-        v->addWidget(pageTitle(QStringLiteral("Зіставлення типу файлу або протоколу з певною програмою")));
-        v->addWidget(wrapped(QStringLiteral("Клацніть розширення, щоб переглянути програму, яка відкриває його за замовчуванням. "
-                                            "Щоб змінити програму за замовчуванням, натисніть кнопку «Змінити програму».")));
+        v->addWidget(pageTitle(tr7("Associate a file type or protocol with a specific program")));
+        v->addWidget(wrapped(tr7("Click on an extension to view the program that currently opens it by default. To change the default program, click Change program.")));
         v->addSpacing(6);
         auto *info = new QHBoxLayout;
         m_icon = new QLabel;
@@ -2460,20 +2458,20 @@ public:
         m_current = grey(QString());
         iv->addWidget(m_current);
         info->addLayout(iv, 1);
-        m_change = new QPushButton(QStringLiteral("Змінити програму..."));
+        m_change = new QPushButton(tr7("Change program..."));
         m_change->setEnabled(false);
         info->addWidget(m_change, 0, Qt::AlignTop);
         v->addLayout(info);
         m_tree = new DetailsTree;
         m_tree->setFrameShape(QFrame::StyledPanel);
-        m_tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Опис"), QStringLiteral("Поточна програма за замовчуванням")});
+        m_tree->setHeaderLabels({tr7("Name"), tr7("Description"), tr7("Current Default")});
         m_tree->setColumnWidth(0, 130);
         m_tree->setColumnWidth(1, 330);
         m_tree->setColumnWidth(2, 260);
         m_tree->setUniformRowHeights(true);
         v->addWidget(m_tree, 1);
         outer->addWidget(body, 1);
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *close = new QPushButton(tr7("Close"));
         connect(close, &QPushButton::clicked, this, [this] { m_nav.back(); });
         outer->addWidget(footer({close}));
         connect(m_tree, &QTreeWidget::currentItemChanged, this, [this] { selectionChanged(); });
@@ -2483,7 +2481,7 @@ public:
             }
         });
         connect(m_change, &QPushButton::clicked, this, [this] { change(); });
-        m_tree->addTopLevelItem(new QTreeWidgetItem({QStringLiteral("Зачекайте...")}));
+        m_tree->addTopLevelItem(new QTreeWidgetItem({tr7("Please wait...")}));
         QTimer::singleShot(30, this, [this] { fill(); });
     }
 
@@ -2510,7 +2508,7 @@ private:
         for (int i = 0; i < m_rows.size(); ++i) {
             const AssocRow &r = m_rows.at(i);
             if (r.protocol && !protocolHeader) {
-                auto *g = new QTreeWidgetItem({QStringLiteral("Протоколи")});
+                auto *g = new QTreeWidgetItem({tr7("Protocols")});
                 g->setData(0, GroupRole, true);
                 g->setFlags(Qt::ItemIsEnabled);
                 items.append(g);
@@ -2518,7 +2516,7 @@ private:
             }
             if (!defaults.contains(r.mime)) {
                 const KService::Ptr s = KApplicationTrader::preferredService(r.mime);
-                defaults.insert(r.mime, s ? s->name() : QStringLiteral("Невідома програма"));
+                defaults.insert(r.mime, s ? s->name() : tr7("Unknown application"));
             }
             auto *it = new QTreeWidgetItem({r.name, r.description, defaults.value(r.mime)});
             it->setIcon(0, themeIcon(r.icon, QStringLiteral("unknown")));
@@ -2559,7 +2557,7 @@ private:
         m_icon->setPixmap(themeIcon(r->icon, QStringLiteral("unknown")).pixmap(32, 32));
         m_name->setText(r->name + QStringLiteral("    ") + r->description);
         const KService::Ptr s = KApplicationTrader::preferredService(r->mime);
-        m_current->setText(QStringLiteral("Поточна програма за замовчуванням:  ") + (s ? s->name() : QStringLiteral("Невідома програма")));
+        m_current->setText(tr7("Current Default:  ") + (s ? s->name() : tr7("Unknown application")));
     }
 
     void change()
@@ -2609,13 +2607,13 @@ inline QWidget *buildProgramAssocPage(const Nav &nav)
     auto *v = new QVBoxLayout(body);
     v->setContentsMargins(20, 18, 20, 12);
     v->setSpacing(8);
-    v->addWidget(pageTitle(QStringLiteral("Задання зіставлень для програми")));
-    v->addWidget(wrapped(QStringLiteral("Виберіть розширення, які ця програма має відкривати за замовчуванням, і натисніть кнопку «Зберегти».")));
+    v->addWidget(pageTitle(tr7("Set Program Associations")));
+    v->addWidget(wrapped(tr7("Select the extensions you want this program to open by default, and then click Save.")));
     if (!s) {
-        v->addWidget(grey(QStringLiteral("Програму не знайдено.")));
+        v->addWidget(grey(tr7("The program was not found.")));
         v->addStretch(1);
         outer->addWidget(body, 1);
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *close = new QPushButton(tr7("Close"));
         QObject::connect(close, &QPushButton::clicked, page, [nav] { nav.back(); });
         outer->addWidget(footer({close}));
         return page;
@@ -2637,11 +2635,11 @@ inline QWidget *buildProgramAssocPage(const Nav &nav)
     }
     head->addLayout(names, 1);
     v->addLayout(head);
-    auto *all = new QCheckBox(QStringLiteral("Вибрати все"));
+    auto *all = new QCheckBox(tr7("Select All"));
     v->addWidget(all);
     auto *tree = new DetailsTree;
     tree->setFrameShape(QFrame::StyledPanel);
-    tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Опис"), QStringLiteral("Поточна програма за замовчуванням")});
+    tree->setHeaderLabels({tr7("Name"), tr7("Description"), tr7("Current Default")});
     tree->setColumnWidth(0, 150);
     tree->setColumnWidth(1, 330);
     tree->setColumnWidth(2, 260);
@@ -2651,21 +2649,21 @@ inline QWidget *buildProgramAssocPage(const Nav &nav)
     bool extHeader = false;
     for (const AssocRow &r : rows) {
         if (!r.protocol && !extHeader) {
-            auto *g = new QTreeWidgetItem(tree, {QStringLiteral("Розширення")});
+            auto *g = new QTreeWidgetItem(tree, {tr7("Extension")});
             g->setData(0, GroupRole, true);
             g->setFlags(Qt::ItemIsEnabled);
             g->setFirstColumnSpanned(true);
             extHeader = true;
         }
         if (r.protocol && !protocolHeader) {
-            auto *g = new QTreeWidgetItem(tree, {QStringLiteral("Протоколи")});
+            auto *g = new QTreeWidgetItem(tree, {tr7("Protocols")});
             g->setData(0, GroupRole, true);
             g->setFlags(Qt::ItemIsEnabled);
             g->setFirstColumnSpanned(true);
             protocolHeader = true;
         }
         const KService::Ptr cur = KApplicationTrader::preferredService(r.mime);
-        auto *it = new QTreeWidgetItem(tree, {r.name, r.description, cur ? cur->name() : QStringLiteral("Невідома програма")});
+        auto *it = new QTreeWidgetItem(tree, {r.name, r.description, cur ? cur->name() : tr7("Unknown application")});
         it->setIcon(0, themeIcon(r.icon, QStringLiteral("unknown")));
         it->setData(0, Qt::UserRole, r.mime);
         const bool already = cur && cur->storageId() == s->storageId();
@@ -2696,8 +2694,8 @@ inline QWidget *buildProgramAssocPage(const Nav &nav)
         }
     });
     outer->addWidget(body, 1);
-    auto *save = new QPushButton(QStringLiteral("Зберегти"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *save = new QPushButton(tr7("Save"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     QObject::connect(save, &QPushButton::clicked, page, [tree, s, nav] {
         QStringList mimes;
         for (int i = 0; i < tree->topLevelItemCount(); ++i) {
@@ -2731,13 +2729,13 @@ struct AccessCategory {
 inline QList<AccessCategory> accessCategories()
 {
     return {
-        {QStringLiteral("Виберіть веб-оглядач за замовчуванням:"), QStringLiteral("Використовувати поточний веб-оглядач"), QStringLiteral("x-scheme-handler/https"),
+        {tr7("Choose a default web browser:"), tr7("Use my current Web browser"), QStringLiteral("x-scheme-handler/https"),
          {QStringLiteral("x-scheme-handler/http"), QStringLiteral("x-scheme-handler/https"), QStringLiteral("text/html"), QStringLiteral("application/xhtml+xml")}, false,
          QStringLiteral("BrowserApplication")},
-        {QStringLiteral("Виберіть поштову програму за замовчуванням:"), QStringLiteral("Використовувати поточну поштову програму"), QStringLiteral("x-scheme-handler/mailto"),
+        {tr7("Choose a default e-mail program:"), tr7("Use my current e-mail program"), QStringLiteral("x-scheme-handler/mailto"),
          {QStringLiteral("x-scheme-handler/mailto")}, false, {}},
-        {QStringLiteral("Виберіть програвач мультимедіа за замовчуванням:"), QStringLiteral("Використовувати поточний програвач мультимедіа"), QStringLiteral("audio/mpeg"), {}, true, {}},
-        {QStringLiteral("Виберіть файловий менеджер за замовчуванням:"), QStringLiteral("Використовувати поточний файловий менеджер"), QStringLiteral("inode/directory"),
+        {tr7("Choose a default media player:"), tr7("Use my current media player"), QStringLiteral("audio/mpeg"), {}, true, {}},
+        {tr7("Choose a default file manager:"), tr7("Use my current file manager"), QStringLiteral("inode/directory"),
          {QStringLiteral("inode/directory")}, false, {}},
     };
 }
@@ -2748,7 +2746,7 @@ public:
     explicit AccessDialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Налаштування доступу до програм і параметрів за замовчуванням"));
+        setWindowTitle(tr7("Set program access and computer defaults"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-sud-access")));
         setAttribute(Qt::WA_DeleteOnClose);
         resize(720, 560);
@@ -2762,9 +2760,8 @@ public:
         auto *tv = new QVBoxLayout(top);
         tv->setContentsMargins(16, 14, 16, 10);
         tv->setSpacing(8);
-        tv->addWidget(wrapped(QStringLiteral("Конфігурація задає програми за замовчуванням для певних дій, наприклад для перегляду веб-сторінок або надсилання "
-                                             "електронної пошти, і визначає, до яких програм можна отримати доступ з меню «Пуск», робочого столу та інших розташувань.")));
-        tv->addWidget(new QLabel(QStringLiteral("Виберіть конфігурацію:")));
+        tv->addWidget(wrapped(tr7("A configuration specifies default programs for certain activities, such as Web browsing or sending e-mail, and which programs are accessible from the Start menu, desktop, and other locations.")));
+        tv->addWidget(new QLabel(tr7("Choose a configuration:")));
         auto *scroll = new QScrollArea;
         scroll->setWidgetResizable(true);
         scroll->setStyleSheet(QStringLiteral("QScrollArea { border: 1px solid #c8c8c8; background: #ffffff; }"));
@@ -2780,10 +2777,10 @@ public:
         bf.setBold(true);
         m_system->setFont(bf);
         iv->addWidget(m_system);
-        auto *sysDesc = grey(QStringLiteral("Програми за замовчуванням, які пропонує Kubuntu."));
+        auto *sysDesc = grey(tr7("The default programs Kubuntu suggests."));
         sysDesc->setContentsMargins(22, 0, 0, 6);
         iv->addWidget(sysDesc);
-        m_custom = new QRadioButton(QStringLiteral("Інша"));
+        m_custom = new QRadioButton(tr7("Custom", "configuration"));
         m_custom->setFont(bf);
         m_custom->setChecked(true);
         iv->addWidget(m_custom);
@@ -2829,7 +2826,7 @@ public:
         bh->setContentsMargins(10, 10, 14, 0);
         bh->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(75);
             bh->addWidget(b);

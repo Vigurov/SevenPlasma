@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /* Windows 7 "Open with" (OpenWith.exe) dialog: header with the file name, a white box with "Recommended Programs"
  * and a collapsible "Other Programs" group of program tiles (32 px icon, name, grey second line), the
  * "Always use the selected program..." check box, Browse..., the web link line, OK / Cancel.
@@ -84,7 +85,7 @@ protected:
         QPainter p(this);
         p.fillRect(rect(), Qt::white);
         p.setRenderHint(QPainter::Antialiasing);
-        header(p, QStringLiteral("Рекомендовані програми"), 12);
+        header(p, tr7("Recommended Programs"), 12);
         const int n = recommended.size() + (otherOpen ? other.size() : 0);
         for (int i = 0; i < n; ++i) {
             const KService::Ptr s = i < recommended.size() ? recommended[i] : other[i - recommended.size()];
@@ -164,16 +165,17 @@ protected:
 private:
     int m_hover = -1;
     bool m_chevHover = false;
-    const QString m_otherText = QStringLiteral("Інші програми");
+    const QString m_otherText = tr7("Other Programs");
 };
 
 class Dialog : public QDialog
 {
 public:
-    explicit Dialog(const QStringList &files)
+    /** mime / shownName: for a file only known by name (the "Open with" portal), else taken from files */
+    explicit Dialog(const QStringList &files, const QString &mime = QString(), const QString &shownName = QString())
         : m_files(files)
     {
-        setWindowTitle(QStringLiteral("Відкрити за допомогою"));
+        setWindowTitle(tr7("Open with"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("document-open")));
         setAttribute(Qt::WA_DeleteOnClose);
         QFont f(QStringLiteral("Segoe UI"));
@@ -182,16 +184,16 @@ public:
         setFixedSize(566, 442);
 
         const QString first = files.value(0);
-        m_mime = QMimeDatabase().mimeTypeForFile(first).name();
+        m_mime = mime.isEmpty() ? QMimeDatabase().mimeTypeForFile(first).name() : mime;
 
         auto *icon = new QLabel(this);
         icon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-openwith"), QIcon::fromTheme(QStringLiteral("system-search"))).pixmap(32, 32));
         icon->setGeometry(12, 11, 32, 32);
-        auto *l1 = new QLabel(QStringLiteral("Виберіть програму, яку слід використати для відкриття цього файлу:"), this);
+        auto *l1 = new QLabel(tr7("Choose the program you want to use to open this file:"), this);
         l1->setGeometry(55, 9, 500, 18);
-        auto *l2 = new QLabel(QStringLiteral("Файл:"), this);
+        auto *l2 = new QLabel(tr7("File:"), this);
         l2->setGeometry(55, 35, 40, 18);
-        auto *l3 = new QLabel(QFileInfo(first).fileName(), this);
+        auto *l3 = new QLabel(shownName.isEmpty() ? QFileInfo(first).fileName() : shownName, this);
         l3->setGeometry(91, 35, 460, 18);
 
         m_list = new ProgramList;
@@ -204,14 +206,13 @@ public:
         scroll->setStyleSheet(QStringLiteral("QScrollArea { border: 1px solid #828790; background: white; }"));
         m_list->relayout();
 
-        m_always = new QCheckBox(QStringLiteral("Завжди використовувати вибрану програму для відкриття файлів цього типу"), this);
+        m_always = new QCheckBox(tr7("Always use the selected program to open this kind of file"), this);
         m_always->setGeometry(13, 343, 460, 18);
         m_always->setChecked(true);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."), this);
+        auto *browse = new QPushButton(tr7("Browse..."), this);
         browse->setGeometry(480, 345, 73, 23);
 
-        auto *web = new QLabel(QStringLiteral("Якщо потрібної програми немає у списку або на комп'ютері, можна "
-                                              "<a href=\"x\" style=\"color:#0066cc\">знайти відповідну програму в Інтернеті</a>."),
+        auto *web = new QLabel(tr7("If the program you want is not in the list or on your computer, you can <a href=\"x\" style=\"color:#0066cc\">look for the appropriate program on the Web</a>."),
                                this);
         web->setWordWrap(true);
         web->setGeometry(13, 373, 540, 32);
@@ -223,7 +224,7 @@ public:
         m_ok = new QPushButton(QStringLiteral("OK"), this);
         m_ok->setGeometry(399, 410, 73, 23);
         m_ok->setDefault(true);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"), this);
+        auto *cancel = new QPushButton(tr7("Cancel"), this);
         cancel->setGeometry(480, 410, 73, 23);
         connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
         connect(m_ok, &QPushButton::clicked, this, [this] { run(m_list->current()); });
@@ -232,7 +233,7 @@ public:
         m_ok->setEnabled(bool(m_list->current()));
 
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QString exe = QFileDialog::getOpenFileName(this, QStringLiteral("Відкрити за допомогою..."), QStringLiteral("/usr/bin"));
+            const QString exe = QFileDialog::getOpenFileName(this, tr7("Open with..."), QStringLiteral("/usr/bin"));
             if (exe.isEmpty()) return;
             KService::Ptr s(new KService(QFileInfo(exe).fileName(), exe + QStringLiteral(" %F"), QString()));
             run(s, false);
@@ -265,6 +266,11 @@ private:
         if (canRemember && m_always->isChecked() && !s->storageId().isEmpty()) {
             Win7Programs::setDefaults({m_mime}, s->storageId());
         }
+        if (onChosen) {                                    // the portal starts the program itself
+            onChosen(s);
+            accept();
+            return;
+        }
         QList<QUrl> urls;
         for (const QString &f : m_files) urls << QUrl::fromLocalFile(f);
         auto *job = new KIO::ApplicationLauncherJob(s);
@@ -274,6 +280,11 @@ private:
         job->start();
     }
 
+public:
+    /** set: OK hands the chosen program over instead of starting it */
+    std::function<void(const KService::Ptr &)> onChosen;
+
+private:
     QStringList m_files;
     QString m_mime;
     ProgramList *m_list = nullptr;

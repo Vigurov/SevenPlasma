@@ -12,6 +12,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7wrapmenubar.h"
 #include "win7states.h"
@@ -97,10 +98,10 @@ struct Disk {
     QString protectReason() const
     {
         if (system) {
-            return QStringLiteral("На цьому диску встановлено систему, з якої зараз працює комп'ютер. Його не можна змінювати.");
+            return tr7("The system the computer is running from is installed on this disk. It cannot be changed.");
         }
         if (windows) {
-            return QStringLiteral("На цьому диску встановлено Windows. Щоб не пошкодити її, змінювати цей диск заборонено.");
+            return tr7("Windows is installed on this disk. To avoid damaging it, changing this disk is not allowed.");
         }
         return QString();
     }
@@ -108,18 +109,18 @@ struct Disk {
 
 inline QString sizeText(qint64 bytes)
 {
-    const QLocale uk(QLocale::Ukrainian);
+    const QLocale uk;
     const double kb = bytes / 1024.0, mb = kb / 1024.0, gb = mb / 1024.0, tb = gb / 1024.0;
     if (tb >= 1) {
-        return uk.toString(tb, 'f', 2) + QStringLiteral(" ТБ");
+        return uk.toString(tb, 'f', 2) + tr7(" TB");
     }
     if (gb >= 1) {
-        return uk.toString(gb, 'f', 2) + QStringLiteral(" ГБ");
+        return uk.toString(gb, 'f', 2) + tr7(" GB");
     }
     if (mb >= 1) {
-        return uk.toString(qRound(mb)) + QStringLiteral(" МБ");
+        return uk.toString(qRound(mb)) + tr7(" MB");
     }
-    return uk.toString(qRound(kb)) + QStringLiteral(" КБ");
+    return uk.toString(qRound(kb)) + tr7(" KB");
 }
 
 inline QString fsName(const QString &fs)
@@ -128,7 +129,7 @@ inline QString fsName(const QString &fs)
                                            {QStringLiteral("exfat"), QStringLiteral("exFAT")}, {QStringLiteral("ext4"), QStringLiteral("ext4")},
                                            {QStringLiteral("ext3"), QStringLiteral("ext3")},   {QStringLiteral("ext2"), QStringLiteral("ext2")},
                                            {QStringLiteral("btrfs"), QStringLiteral("Btrfs")}, {QStringLiteral("xfs"), QStringLiteral("XFS")},
-                                           {QStringLiteral("swap"), QStringLiteral("Файл підкачки")}, {QStringLiteral("iso9660"), QStringLiteral("CDFS")},
+                                           {QStringLiteral("swap"), tr7("Page File")}, {QStringLiteral("iso9660"), QStringLiteral("CDFS")},
                                            {QStringLiteral("udf"), QStringLiteral("UDF")}};
     return m.value(fs, fs.isEmpty() ? QString() : fs.toUpper());
 }
@@ -353,30 +354,30 @@ inline QList<Disk> scan()
 inline QString status(const Disk &d, const Part &p)
 {
     if (p.unallocated) {
-        return p.logical ? QStringLiteral("Вільне місце") : QStringLiteral("Не розподілено");
+        return p.logical ? tr7("Free space") : tr7("Unallocated");
     }
     QStringList what;
     if (p.mount == QLatin1String("/")) {
-        what << QStringLiteral("Система") << QStringLiteral("Завантаження");
+        what << tr7("System") << tr7("Downloads");
     }
     if (p.mount == QLatin1String("[SWAP]") || p.fstype == QLatin1String("swap")) {
-        what << QStringLiteral("Файл підкачки");
+        what << tr7("Page File");
     }
     if (p.parttypeName == QLatin1String("EFI System")) {
-        what << QStringLiteral("Системний розділ EFI");
+        what << tr7("EFI System Partition");
     } else if (p.parttypeName.contains(QLatin1String("recovery"))) {
-        what << QStringLiteral("Розділ відновлення");
+        what << tr7("Recovery Partition");
     } else if (p.extended) {
         return QString();
     } else if (p.logical) {
-        what << QStringLiteral("Логічний диск");
+        what << tr7("Logical Drive");
     } else if (!d.wholeDiskFs) {
-        what << QStringLiteral("Основний розділ");
+        what << tr7("Primary Partition");
     }
     if (p.fstype.isEmpty() && !p.extended) {
-        return QStringLiteral("Справний") + (what.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(what.join(QStringLiteral(", "))));
+        return tr7("Healthy") + (what.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(what.join(QStringLiteral(", "))));
     }
-    return QStringLiteral("Справний (%1)").arg(what.join(QStringLiteral(", ")));
+    return tr7("Healthy (%1)").arg(what.join(QStringLiteral(", ")));
 }
 
 inline QString volumeName(const Part &p)
@@ -422,13 +423,13 @@ inline bool stillAllowed(QWidget *parent, const QString &diskKname)
     for (const Disk &d : scan()) {
         if (d.kname == diskKname) {
             if (d.isProtected()) {
-                QMessageBox::warning(parent, QStringLiteral("Керування дисками"), d.protectReason());
+                QMessageBox::warning(parent, tr7("Disk Management"), d.protectReason());
                 return false;
             }
             return true;
         }
     }
-    QMessageBox::warning(parent, QStringLiteral("Керування дисками"), QStringLiteral("Диск більше не знайдено. Можливо, його було від'єднано."));
+    QMessageBox::warning(parent, tr7("Disk Management"), tr7("The disk can no longer be found. It might have been disconnected."));
     return false;
 }
 
@@ -488,7 +489,7 @@ inline void failed(QWidget *parent, const QString &what, const QString &error)
     if (error.isEmpty() || error == QLatin1String("cancelled")) {
         return;
     }
-    QMessageBox box(QMessageBox::Critical, QStringLiteral("Служба віртуальних дисків"), what, QMessageBox::Ok, parent);
+    QMessageBox box(QMessageBox::Critical, tr7("Virtual Disk Service"), what, QMessageBox::Ok, parent);
     box.setDetailedText(error);
     box.exec();
 }
@@ -515,20 +516,20 @@ inline FormatChoice formatFields(QGridLayout *g, int row, const QString &default
     }
     c.fs->setCurrentIndex(qMax(0, c.fs->findData(defaultFs)));
     c.cluster = new QComboBox;
-    c.cluster->addItem(QStringLiteral("За замовчуванням"));
+    c.cluster->addItem(tr7("Default"));
     c.cluster->setEnabled(false);
-    c.cluster->setToolTip(QStringLiteral("Розмір кластера вибирається автоматично."));
+    c.cluster->setToolTip(tr7("The allocation unit size is chosen automatically."));
     c.label = new QLineEdit(defaultLabel);
-    c.quick = new QCheckBox(QStringLiteral("Швидке форматування"));
+    c.quick = new QCheckBox(tr7("Perform a quick format"));
     c.quick->setChecked(true);
-    c.compress = new QCheckBox(QStringLiteral("Застосовувати стиснення файлів і папок"));
+    c.compress = new QCheckBox(tr7("Enable file and folder compression"));
     c.compress->setEnabled(false);
-    c.compress->setToolTip(QStringLiteral("Стиснення NTFS у цій системі недоступне."));
-    g->addWidget(new QLabel(QStringLiteral("Файлова система:")), row, 0);
+    c.compress->setToolTip(tr7("NTFS compression is not available on this system."));
+    g->addWidget(new QLabel(tr7("File system:")), row, 0);
     g->addWidget(c.fs, row, 1);
-    g->addWidget(new QLabel(QStringLiteral("Розмір кластера:")), row + 1, 0);
+    g->addWidget(new QLabel(tr7("Allocation unit size:")), row + 1, 0);
     g->addWidget(c.cluster, row + 1, 1);
-    g->addWidget(new QLabel(QStringLiteral("Мітка тому:")), row + 2, 0);
+    g->addWidget(new QLabel(tr7("Volume label:")), row + 2, 0);
     g->addWidget(c.label, row + 2, 1);
     g->addWidget(c.quick, row + 3, 0, 1, 2);
     g->addWidget(c.compress, row + 4, 0, 1, 2);
@@ -538,8 +539,8 @@ inline FormatChoice formatFields(QGridLayout *g, int row, const QString &default
 inline bool confirm(QWidget *parent, const QString &title, const QString &text)
 {
     QMessageBox box(QMessageBox::Warning, title, text, QMessageBox::Yes | QMessageBox::No, parent);
-    box.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-    box.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+    box.button(QMessageBox::Yes)->setText(tr7("Yes"));
+    box.button(QMessageBox::No)->setText(tr7("No"));
     box.setDefaultButton(QMessageBox::No);
     return box.exec() == QMessageBox::Yes;
 }
@@ -548,7 +549,7 @@ inline bool confirm(QWidget *parent, const QString &title, const QString &text)
 inline bool formatDialog(QWidget *parent, const Disk &d, const Part &p)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Форматування %1").arg(p.letter.isEmpty() ? volumeName(p) : p.letter));
+    dlg.setWindowTitle(tr7("Format %1").arg(p.letter.isEmpty() ? volumeName(p) : p.letter));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedWidth(380);
     auto *g = new QGridLayout(&dlg);
@@ -558,7 +559,7 @@ inline bool formatDialog(QWidget *parent, const Disk &d, const Part &p)
     auto *row = new QHBoxLayout;
     row->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     row->addWidget(ok);
     row->addWidget(cancel);
@@ -568,9 +569,8 @@ inline bool formatDialog(QWidget *parent, const Disk &d, const Part &p)
     if (dlg.exec() != QDialog::Accepted) {
         return false;
     }
-    if (!confirm(parent, QStringLiteral("Форматування %1").arg(volumeName(p)),
-                 QStringLiteral("Форматування цього тому знищить усі дані на ньому. Перед форматуванням заархівуйте всі дані, які потрібно зберегти. "
-                                "Продовжити?"))) {
+    if (!confirm(parent, tr7("Format %1").arg(volumeName(p)),
+                 tr7("Formatting this volume will erase all data on it. Back up any data you want to keep before formatting. Do you want to continue?"))) {
         return false;
     }
     if (!stillAllowed(parent, d.kname)) {
@@ -583,15 +583,14 @@ inline bool formatDialog(QWidget *parent, const Disk &d, const Part &p)
         err = udisks(udisksPath(p.kname), QStringLiteral("Block"), QStringLiteral("Format"), {fs, formatOptions(fitLabel(fs, c.label->text()), c.quick->isChecked())});
         QApplication::restoreOverrideCursor();
     }
-    failed(parent, QStringLiteral("Не вдалося відформатувати том."), err);
+    failed(parent, tr7("The volume could not be formatted."), err);
     return err.isEmpty();
 }
 
 inline bool deleteVolume(QWidget *parent, const Disk &d, const Part &p)
 {
-    if (!confirm(parent, QStringLiteral("Видалити простий том"),
-                 QStringLiteral("Видалення тому знищує всі дані на цьому томі. Перед видаленням заархівуйте всі дані, які потрібно зберегти. "
-                                "Продовжити?"))) {
+    if (!confirm(parent, tr7("Delete simple volume"),
+                 tr7("Deleting this volume will erase all data on it. Back up any data you want to keep before deleting. Do you want to continue?"))) {
         return false;
     }
     if (!stillAllowed(parent, d.kname)) {
@@ -606,7 +605,7 @@ inline bool deleteVolume(QWidget *parent, const Disk &d, const Part &p)
             err = udisks(udisksPath(p.kname), QStringLiteral("Partition"), QStringLiteral("Delete"), {QVariantMap{}});
         }
     }
-    failed(parent, QStringLiteral("Не вдалося видалити том."), err);
+    failed(parent, tr7("The volume could not be deleted."), err);
     return err.isEmpty();
 }
 
@@ -638,11 +637,11 @@ inline bool shrinkDialog(QWidget *parent, const Disk &d, const Part &p)
     const qint64 keep = p.used >= 0 ? qMax<qint64>(64, qint64(p.used * 1.1) / mb + 32) : total;
     const qint64 can = qMax<qint64>(0, total - keep);
     if (can < 8) {
-        QMessageBox::information(parent, QStringLiteral("Стиснення %1").arg(volumeName(p)), QStringLiteral("На цьому томі немає місця, яке можна стиснути."));
+        QMessageBox::information(parent, tr7("Shrink %1").arg(volumeName(p)), tr7("There is no space on this volume that can be shrunk."));
         return false;
     }
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Стиснення %1").arg(volumeName(p)));
+    dlg.setWindowTitle(tr7("Shrink %1").arg(volumeName(p)));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedWidth(460);
     auto *g = new QGridLayout(&dlg);
@@ -652,26 +651,26 @@ inline bool shrinkDialog(QWidget *parent, const Disk &d, const Part &p)
     spin->setRange(8, int(qMin<qint64>(can, INT_MAX)));
     spin->setValue(spin->maximum());
     auto *after = new QLabel;
-    g->addWidget(new QLabel(QStringLiteral("Загальний розмір до стиснення (МБ):")), 0, 0);
+    g->addWidget(new QLabel(tr7("Total size before shrink in MB:")), 0, 0);
     g->addWidget(new QLabel(QString::number(total)), 0, 1);
-    g->addWidget(new QLabel(QStringLiteral("Доступне для стиснення місце (МБ):")), 1, 0);
+    g->addWidget(new QLabel(tr7("Size of available shrink space in MB:")), 1, 0);
     g->addWidget(new QLabel(QString::number(can)), 1, 1);
-    g->addWidget(new QLabel(QStringLiteral("Розмір стискуваного простору (МБ):")), 2, 0);
+    g->addWidget(new QLabel(tr7("Enter the amount of space to shrink in MB:")), 2, 0);
     g->addWidget(spin, 2, 1);
-    g->addWidget(new QLabel(QStringLiteral("Загальний розмір після стиснення (МБ):")), 3, 0);
+    g->addWidget(new QLabel(tr7("Total size after shrink in MB:")), 3, 0);
     g->addWidget(after, 3, 1);
     auto update = [after, spin, total] {
         after->setText(QString::number(total - spin->value()));
     };
     QObject::connect(spin, &QSpinBox::valueChanged, &dlg, update);
     update();
-    auto *note = new QLabel(QStringLiteral("Під час стиснення том буде тимчасово від'єднано."));
+    auto *note = new QLabel(tr7("The volume will be temporarily unmounted while it is shrunk."));
     note->setWordWrap(true);
     g->addWidget(note, 4, 0, 1, 2);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
-    auto *ok = new QPushButton(QStringLiteral("Стиснути"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *ok = new QPushButton(tr7("Shrink"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     row->addWidget(ok);
     row->addWidget(cancel);
@@ -691,7 +690,7 @@ inline bool shrinkDialog(QWidget *parent, const Disk &d, const Part &p)
         err = udisks(udisksPath(p.kname), QStringLiteral("Partition"), QStringLiteral("Resize"), {QVariant::fromValue(newSize), QVariantMap{}});
     }
     QApplication::restoreOverrideCursor();
-    failed(parent, QStringLiteral("Не вдалося стиснути том."), err);
+    failed(parent, tr7("The volume could not be shrunk."), err);
     return err.isEmpty();
 }
 
@@ -700,30 +699,30 @@ inline bool extendDialog(QWidget *parent, const Disk &d, const Part &p, qint64 f
 {
     const qint64 mb = 1024 * 1024;
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Майстер розширення тому"));
+    dlg.setWindowTitle(tr7("Extend Volume Wizard"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedWidth(460);
     auto *g = new QGridLayout(&dlg);
     g->setContentsMargins(14, 14, 14, 12);
     g->setVerticalSpacing(10);
-    auto *title = new QLabel(QStringLiteral("Вибір дисків"));
+    auto *title = new QLabel(tr7("Select Disks"));
     QFont f = title->font();
     f.setBold(true);
     title->setFont(f);
     g->addWidget(title, 0, 0, 1, 2);
-    g->addWidget(new QLabel(QStringLiteral("Загальний розмір тому (МБ):")), 1, 0);
+    g->addWidget(new QLabel(tr7("Total volume size in megabytes (MB):")), 1, 0);
     g->addWidget(new QLabel(QString::number(p.size / mb)), 1, 1);
-    g->addWidget(new QLabel(QStringLiteral("Максимальний доступний простір (МБ):")), 2, 0);
+    g->addWidget(new QLabel(tr7("Maximum available space in MB:")), 2, 0);
     g->addWidget(new QLabel(QString::number(freeAfter / mb)), 2, 1);
     auto *spin = new QSpinBox;
     spin->setRange(1, int(qMin<qint64>(freeAfter / mb, INT_MAX)));
     spin->setValue(spin->maximum());
-    g->addWidget(new QLabel(QStringLiteral("Виберіть обсяг простору (МБ):")), 3, 0);
+    g->addWidget(new QLabel(tr7("Select the amount of space in MB:")), 3, 0);
     g->addWidget(spin, 3, 1);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
-    auto *ok = new QPushButton(QStringLiteral("Розширити"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *ok = new QPushButton(tr7("Extend"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     row->addWidget(ok);
     row->addWidget(cancel);
@@ -744,7 +743,7 @@ inline bool extendDialog(QWidget *parent, const Disk &d, const Part &p, qint64 f
         err = udisks(udisksPath(p.kname), QStringLiteral("Filesystem"), QStringLiteral("Resize"), {QVariant::fromValue(quint64(0)), QVariantMap{}}); // 0 = fill the partition
     }
     QApplication::restoreOverrideCursor();
-    failed(parent, QStringLiteral("Не вдалося розширити том."), err);
+    failed(parent, tr7("The volume could not be extended."), err);
     return err.isEmpty();
 }
 
@@ -752,27 +751,27 @@ inline bool extendDialog(QWidget *parent, const Disk &d, const Part &p, qint64 f
 inline bool initializeDisk(QWidget *parent, const Disk &d)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Ініціалізація диска"));
+    dlg.setWindowTitle(tr7("Initialize Disk"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedWidth(430);
     auto *v = new QVBoxLayout(&dlg);
     v->setContentsMargins(14, 14, 14, 12);
-    auto *t = new QLabel(QStringLiteral("Щоб диск був доступний для диспетчера логічних дисків, його потрібно ініціалізувати."));
+    auto *t = new QLabel(tr7("You must initialize a disk before Logical Disk Manager can access it."));
     t->setWordWrap(true);
     v->addWidget(t);
-    v->addWidget(new QLabel(QStringLiteral("Вибрані диски:")));
-    auto *list = new QLabel(QStringLiteral("    Диск %1").arg(d.index));
+    v->addWidget(new QLabel(tr7("Select disks:")));
+    auto *list = new QLabel(tr7("    Disk %1").arg(d.index));
     v->addWidget(list);
-    v->addWidget(new QLabel(QStringLiteral("Використовувати такий стиль розділу для вибраних дисків:")));
-    auto *mbr = new QRadioButton(QStringLiteral("Основний завантажувальний запис (MBR — Master Boot Record)"));
-    auto *gpt = new QRadioButton(QStringLiteral("Таблиця з GUID розділів (GPT — GUID Partition Table)"));
+    v->addWidget(new QLabel(tr7("Use the following partition style for the selected disks:")));
+    auto *mbr = new QRadioButton(tr7("MBR (Master Boot Record)"));
+    auto *gpt = new QRadioButton(tr7("GPT (GUID Partition Table)"));
     (d.size > 2LL * 1024 * 1024 * 1024 * 1024 ? gpt : mbr)->setChecked(true);
     v->addWidget(mbr);
     v->addWidget(gpt);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     row->addWidget(ok);
     row->addWidget(cancel);
     v->addLayout(row);
@@ -782,7 +781,7 @@ inline bool initializeDisk(QWidget *parent, const Disk &d)
         return false;
     }
     const QString err = udisks(udisksPath(d.kname), QStringLiteral("Block"), QStringLiteral("Format"), {gpt->isChecked() ? QStringLiteral("gpt") : QStringLiteral("dos"), QVariantMap{}});
-    failed(parent, QStringLiteral("Не вдалося ініціалізувати диск."), err);
+    failed(parent, tr7("The disk could not be initialized."), err);
     return err.isEmpty();
 }
 
@@ -820,7 +819,7 @@ public:
         , m_space(space)
         , m_letter(nextLetter)
     {
-        setWindowTitle(QStringLiteral("Майстер створення простих томів"));
+        setWindowTitle(tr7("New Simple Volume Wizard"));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setFixedSize(500, 390);
         auto *v = new QVBoxLayout(this);
@@ -835,9 +834,9 @@ public:
         auto *row = new QHBoxLayout;
         row->setContentsMargins(10, 10, 12, 10);
         row->addStretch(1);
-        m_back = new QPushButton(QStringLiteral("< Назад"));
-        m_next = new QPushButton(QStringLiteral("Далі >"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_back = new QPushButton(tr7("< Back"));
+        m_next = new QPushButton(tr7("Next >"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_back, m_next, cancel}) {
             b->setMinimumWidth(80);
             row->addWidget(b);
@@ -845,17 +844,16 @@ public:
         row->insertSpacing(3, 8);
         m_next->setDefault(true);
         v->addLayout(row);
-        m_stack->addWidget(edgePage(QStringLiteral("Майстер створення простого тому"),
-                                    QStringLiteral("Цей майстер допоможе створити простий том на диску.\n\nПростий том може розташовуватися лише на одному диску.\n\n"
-                                                   "Щоб продовжити, натисніть кнопку «Далі»."),
+        m_stack->addWidget(edgePage(tr7("Welcome to the New Simple Volume Wizard"),
+                                    tr7("This wizard helps you create a simple volume on a disk.\n\nA simple volume can only be on a single disk.\n\nTo continue, click Next."),
                                     nullptr));
         m_stack->addWidget(sizePage());
         m_stack->addWidget(letterPage());
         m_stack->addWidget(formatPage());
         m_summary = new QPlainTextEdit;
         m_summary->setReadOnly(true);
-        m_stack->addWidget(edgePage(QStringLiteral("Завершення майстра створення простого тому"),
-                                    QStringLiteral("Майстер створення простого тому успішно завершив роботу.\n\nВибрано такі параметри:"), m_summary));
+        m_stack->addWidget(edgePage(tr7("Completing the New Simple Volume Wizard"),
+                                    tr7("You have successfully completed the New Simple Volume Wizard.\n\nYou selected the following settings:"), m_summary));
         connect(m_back, &QPushButton::clicked, this, [this] { go(m_stack->currentIndex() - 1); });
         connect(m_next, &QPushButton::clicked, this, [this] {
             if (m_stack->currentIndex() == m_stack->count() - 1) {
@@ -893,7 +891,7 @@ private:
         v->addWidget(l);
         if (extra) {
             v->addWidget(extra, 1);
-            v->addWidget(new QLabel(QStringLiteral("Щоб закрити майстер, натисніть кнопку «Готово».")));
+            v->addWidget(new QLabel(tr7("To close this wizard, click Finish.")));
         } else {
             v->addStretch(1);
         }
@@ -935,11 +933,11 @@ private:
         auto *g = new QGridLayout(c);
         g->setVerticalSpacing(14);
         m_maxMb = int(qMin<qint64>(m_space.size / mb, INT_MAX));
-        g->addWidget(new QLabel(QStringLiteral("Максимальний розмір (МБ):")), 0, 0);
+        g->addWidget(new QLabel(tr7("Maximum disk space in MB:")), 0, 0);
         g->addWidget(new QLabel(QString::number(m_maxMb)), 0, 1);
-        g->addWidget(new QLabel(QStringLiteral("Мінімальний розмір розділу (МБ):")), 1, 0);
+        g->addWidget(new QLabel(tr7("Minimum disk space in MB:")), 1, 0);
         g->addWidget(new QLabel(QStringLiteral("8")), 1, 1);
-        g->addWidget(new QLabel(QStringLiteral("Розмір простого тому (МБ):")), 2, 0);
+        g->addWidget(new QLabel(tr7("Simple volume size in MB:")), 2, 0);
         m_size = new QSpinBox;
         m_size->setRange(8, m_maxMb);
         m_size->setValue(m_maxMb);
@@ -947,7 +945,7 @@ private:
         g->addWidget(m_size, 2, 1);
         g->setColumnStretch(2, 1);
         g->setRowStretch(3, 1);
-        return innerPage(QStringLiteral("Зазначення розміру тому"), QStringLiteral("Виберіть розмір тому в межах мінімального та максимального значень."), c);
+        return innerPage(tr7("Specify Volume Size"), tr7("Choose a volume size that is between the maximum and minimum sizes."), c);
     }
 
     QWidget *letterPage()
@@ -955,19 +953,19 @@ private:
         auto *c = new QWidget;
         auto *g = new QGridLayout(c);
         g->setVerticalSpacing(10);
-        auto *assign = new QRadioButton(QStringLiteral("Призначити букву диска (A-Z):"));
+        auto *assign = new QRadioButton(tr7("Assign the following drive letter (A-Z):"));
         assign->setChecked(true);
         m_letterBox = new QComboBox;
         m_letterBox->addItem(m_letter.left(1));
-        m_letterBox->setToolTip(QStringLiteral("Букви дискам призначаються по черзі: новий том отримає наступну вільну букву."));
+        m_letterBox->setToolTip(tr7("Drive letters are assigned in order: the new volume gets the next free letter."));
         m_letterBox->setFixedWidth(50);
-        auto *folder = new QRadioButton(QStringLiteral("Підключити том як порожню NTFS-папку:"));
+        auto *folder = new QRadioButton(tr7("Mount in the following empty NTFS folder:"));
         folder->setEnabled(false);
         auto *path = new QLineEdit;
         path->setEnabled(false);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         browse->setEnabled(false);
-        m_noLetter = new QRadioButton(QStringLiteral("Не призначати букви диска або шляху диска"));
+        m_noLetter = new QRadioButton(tr7("Do not assign a drive letter or drive path"));
         g->addWidget(assign, 0, 0);
         g->addWidget(m_letterBox, 0, 1, Qt::AlignLeft);
         g->addWidget(folder, 1, 0, 1, 2);
@@ -978,7 +976,7 @@ private:
         g->addLayout(pr, 2, 0, 1, 2);
         g->addWidget(m_noLetter, 3, 0, 1, 2);
         g->setRowStretch(4, 1);
-        return innerPage(QStringLiteral("Призначення букви диска або шляху"), QStringLiteral("Для спрощення доступу можна призначити розділу букву диска або шлях до диска."), c);
+        return innerPage(tr7("Assign Drive Letter or Path"), tr7("For easier access, you can assign a drive letter or drive path to your partition."), c);
     }
 
     QWidget *formatPage()
@@ -986,21 +984,21 @@ private:
         auto *c = new QWidget;
         auto *v = new QVBoxLayout(c);
         v->setSpacing(8);
-        auto *t = new QLabel(QStringLiteral("Укажіть, чи потрібно форматувати цей том, і якщо так, то з якими параметрами."));
+        auto *t = new QLabel(tr7("Choose whether you want to format this volume, and if so, what settings you want to use."));
         t->setWordWrap(true);
         v->addWidget(t);
-        m_noFormat = new QRadioButton(QStringLiteral("Не форматувати цей том"));
-        auto *doFormat = new QRadioButton(QStringLiteral("Форматувати цей том таким чином:"));
+        m_noFormat = new QRadioButton(tr7("Do not format this volume"));
+        auto *doFormat = new QRadioButton(tr7("Format this volume with the following settings:"));
         doFormat->setChecked(true);
         v->addWidget(m_noFormat);
         v->addWidget(doFormat);
         auto *box = new QWidget;
         auto *g = new QGridLayout(box);
         g->setContentsMargins(20, 0, 0, 0);
-        m_format = formatFields(g, 0, m_disk.removable ? QStringLiteral("exfat") : QStringLiteral("ntfs"), QStringLiteral("Новий том"), m_space.size);
+        m_format = formatFields(g, 0, m_disk.removable ? QStringLiteral("exfat") : QStringLiteral("ntfs"), tr7("New Volume"), m_space.size);
         v->addWidget(box);
         connect(doFormat, &QRadioButton::toggled, box, &QWidget::setEnabled);
-        return innerPage(QStringLiteral("Форматування розділу"), QStringLiteral("Щоб зберігати дані в цьому розділі, його потрібно спочатку відформатувати."), c);
+        return innerPage(tr7("Format Partition"), tr7("To store data on this partition, you must format it first."), c);
     }
 
     void go(int page)
@@ -1008,19 +1006,19 @@ private:
         page = qBound(0, page, m_stack->count() - 1);
         m_stack->setCurrentIndex(page);
         m_back->setEnabled(page > 0);
-        m_next->setText(page == m_stack->count() - 1 ? QStringLiteral("Готово") : QStringLiteral("Далі >"));
+        m_next->setText(page == m_stack->count() - 1 ? tr7("Done") : tr7("Next >"));
         if (page == m_stack->count() - 1) {
             const bool format = !m_noFormat->isChecked();
-            QStringList s{QStringLiteral("Тип тому: Простий том"), QStringLiteral("Вибрані диски: Диск %1").arg(m_disk.index),
-                          QStringLiteral("Розмір тому: %1 МБ").arg(m_size->value()),
-                          QStringLiteral("Буква диска або шлях: %1").arg(m_noLetter->isChecked() ? QStringLiteral("Немає") : m_letter.left(1))};
+            QStringList s{tr7("Volume type: Simple Volume"), tr7("Disks selected: Disk %1").arg(m_disk.index),
+                          tr7("Volume size: %1 MB").arg(m_size->value()),
+                          tr7("Drive letter or path: %1").arg(m_noLetter->isChecked() ? tr7("None") : m_letter.left(1))};
             if (format) {
-                s << QStringLiteral("Файлова система: %1").arg(m_format.fs->currentText()) << QStringLiteral("Розмір кластера: За замовчуванням")
-                  << QStringLiteral("Мітка тому: %1").arg(m_format.label->text())
-                  << QStringLiteral("Швидке форматування: %1").arg(m_format.quick->isChecked() ? QStringLiteral("Так") : QStringLiteral("Ні"))
-                  << QStringLiteral("Застосування стиснення файлів і папок: Ні");
+                s << tr7("File system: %1").arg(m_format.fs->currentText()) << tr7("Allocation unit size: Default")
+                  << tr7("Volume label: %1").arg(m_format.label->text())
+                  << tr7("Quick format: %1").arg(m_format.quick->isChecked() ? tr7("Yes") : tr7("No"))
+                  << tr7("Enable file and folder compression: No");
             } else {
-                s << QStringLiteral("Файлова система: Немає");
+                s << tr7("File system: None");
             }
             m_summary->setPlainText(s.join(QLatin1Char('\n')));
         }
@@ -1052,7 +1050,7 @@ private:
                          {QVariant::fromValue(quint64(m_space.start)), QVariant::fromValue(quint64(size)), type, QString(), opts});
         }
         QApplication::restoreOverrideCursor();
-        failed(this, QStringLiteral("Не вдалося створити том."), err);
+        failed(this, tr7("The volume could not be created."), err);
         if (err.isEmpty()) {
             accept();
         }
@@ -1181,14 +1179,14 @@ protected:
                 p.setPen(Qt::black);
                 p.setFont(bold);
                 p.drawText(QRect(r.left() + 28, r.top() + 8, r.width() - 30, 20), Qt::AlignVCenter,
-                           d.optical ? QStringLiteral("CD-ROM %1").arg(d.index) : QStringLiteral("%1 %2").arg(d.removable ? QStringLiteral("Диск") : QStringLiteral("Диск")).arg(d.index));
+                           d.optical ? QStringLiteral("CD-ROM %1").arg(d.index) : QStringLiteral("%1 %2").arg(d.removable ? tr7("Disk") : tr7("Disk")).arg(d.index));
                 p.setFont(font());
                 QStringList lines;
                 if (d.optical) {
-                    lines << QStringLiteral("CD-ROM") << QString() << (d.noMedia ? QStringLiteral("Немає носія") : sizeText(d.size));
+                    lines << QStringLiteral("CD-ROM") << QString() << (d.noMedia ? tr7("No Media") : sizeText(d.size));
                 } else {
-                    lines << (d.removable ? QStringLiteral("Знімний") : QStringLiteral("Основний")) << sizeText(d.size)
-                          << (d.pttype.isEmpty() && !d.wholeDiskFs ? QStringLiteral("Не ініціалізовано") : QStringLiteral("В мережі"));
+                    lines << (d.removable ? tr7("Removable") : tr7("Basic")) << sizeText(d.size)
+                          << (d.pttype.isEmpty() && !d.wholeDiskFs ? tr7("Not Initialized") : tr7("Online"));
                 }
                 for (int k = 0; k < lines.size(); ++k) {
                     p.drawText(QRect(r.left() + 12, r.top() + 28 + k * 17, r.width() - 14, 17), Qt::AlignVCenter, lines.at(k));
@@ -1383,15 +1381,15 @@ class DiskManagement : public QMainWindow
 public:
     DiskManagement()
     {
-        setWindowTitle(QStringLiteral("Керування дисками"));
+        setWindowTitle(tr7("Disk Management"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-at-disks"))); // title bar: the snap-in; the taskbar takes the mmc.exe toolbox from seven-diskmgmt.desktop
         m_list = new QTreeWidget;
         m_list->setRootIsDecorated(false);
         m_list->setUniformRowHeights(true);
         m_list->setHeader(new Win7Header(m_list));
-        m_list->setHeaderLabels({QStringLiteral("Том"), QStringLiteral("Розташування"), QStringLiteral("Тип"), QStringLiteral("Файлова система"),
-                                 QStringLiteral("Стан"), QStringLiteral("Ємність"), QStringLiteral("Вільно"), QStringLiteral("Вільно %"),
-                                 QStringLiteral("Відмовостійкість"), QStringLiteral("Накладні витрати")});
+        m_list->setHeaderLabels({tr7("Volume"), tr7("Location"), tr7("Type"), tr7("File System"),
+                                 tr7("Status"), tr7("Capacity"), tr7("Free Space"), tr7("% Free"),
+                                 tr7("Fault Tolerance"), tr7("Overhead")});
         // the column widths of diskmgmt.msc (long names get "..." like there)
         const QList<int> widths{142, 85, 74, 95, 85, 107, 73, 100, 132, 85};
         m_list->setTextElideMode(Qt::ElideRight);
@@ -1495,11 +1493,11 @@ private:
         auto *h = new QHBoxLayout(w);
         h->setContentsMargins(8, 4, 8, 4);
         h->setSpacing(4);
-        const QList<QPair<QColor, QString>> items{{Qt::black, QStringLiteral("Не розподілено")},
-                                                  {QColor(0x00, 0x00, 0x80), QStringLiteral("Основний розділ")},
-                                                  {QColor(0x00, 0x80, 0x00), QStringLiteral("Додатковий розділ")},
-                                                  {QColor(0x66, 0xcc, 0x66), QStringLiteral("Вільне місце")},
-                                                  {QColor(0x00, 0x66, 0xff), QStringLiteral("Логічний диск")}};
+        const QList<QPair<QColor, QString>> items{{Qt::black, tr7("Unallocated")},
+                                                  {QColor(0x00, 0x00, 0x80), tr7("Primary Partition")},
+                                                  {QColor(0x00, 0x80, 0x00), tr7("Extended Partition")},
+                                                  {QColor(0x66, 0xcc, 0x66), tr7("Free space")},
+                                                  {QColor(0x00, 0x66, 0xff), tr7("Logical Drive")}};
         m_legendItems.clear();
         for (const auto &[c, t] : items) {
             auto *sw = new QLabel;
@@ -1518,17 +1516,17 @@ private:
     void buildMenus()
     {
         // the MMC toolbar of Windows 7 (icons taken from it)
-        m_refresh = new QAction(flatIcon(QStringLiteral("seven-mmc-refresh")), QStringLiteral("Оновити"), this);
-        m_rescan = new QAction(flatIcon(QStringLiteral("seven-mmc-find")), QStringLiteral("Повторно перевірити диски"), this);
-        m_props = new QAction(flatIcon(QStringLiteral("seven-mmc-props")), QStringLiteral("Властивості"), this);
-        m_delete = new QAction(flatIcon(QStringLiteral("seven-mmc-delete")), QStringLiteral("Видалити"), this);
-        m_open = new QAction(flatIcon(QStringLiteral("seven-mmc-open")), QStringLiteral("Відкрити"), this);
-        auto *help = new QAction(flatIcon(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this);
-        auto *back = new QAction(flatIcon(QStringLiteral("seven-mmc-back")), QStringLiteral("Назад"), this);
-        auto *forward = new QAction(flatIcon(QStringLiteral("seven-mmc-forward")), QStringLiteral("Вперед"), this);
-        auto *console = new QAction(flatIcon(QStringLiteral("seven-mmc-console")), QStringLiteral("Показати або приховати дерево консолі"), this);
-        auto *actionPane = new QAction(flatIcon(QStringLiteral("seven-mmc-actionpane")), QStringLiteral("Показати або приховати область дій"), this);
-        auto *settings = new QAction(flatIcon(QStringLiteral("seven-mmc-settings")), QStringLiteral("Параметри"), this);
+        m_refresh = new QAction(flatIcon(QStringLiteral("seven-mmc-refresh")), tr7("Refresh"), this);
+        m_rescan = new QAction(flatIcon(QStringLiteral("seven-mmc-find")), tr7("Rescan Disks"), this);
+        m_props = new QAction(flatIcon(QStringLiteral("seven-mmc-props")), tr7("Properties"), this);
+        m_delete = new QAction(flatIcon(QStringLiteral("seven-mmc-delete")), tr7("Delete"), this);
+        m_open = new QAction(flatIcon(QStringLiteral("seven-mmc-open")), tr7("Open"), this);
+        auto *help = new QAction(flatIcon(QStringLiteral("seven-mmc-help")), tr7("Help"), this);
+        auto *back = new QAction(flatIcon(QStringLiteral("seven-mmc-back")), tr7("Back"), this);
+        auto *forward = new QAction(flatIcon(QStringLiteral("seven-mmc-forward")), tr7("Forward"), this);
+        auto *console = new QAction(flatIcon(QStringLiteral("seven-mmc-console")), tr7("Show/Hide Console Tree"), this);
+        auto *actionPane = new QAction(flatIcon(QStringLiteral("seven-mmc-actionpane")), tr7("Show/Hide Action Pane"), this);
+        auto *settings = new QAction(flatIcon(QStringLiteral("seven-mmc-settings")), tr7("Options"), this);
         // both panes are shown, so both buttons stay pressed, as in Windows 7
         for (QAction *t : {console, actionPane}) {
             t->setCheckable(true);
@@ -1541,28 +1539,28 @@ private:
         connect(m_delete, &QAction::triggered, this, [this] { run(m_selDisk, m_selPart, &deleteVolume); });
         connect(m_open, &QAction::triggered, this, [this] { openVolume(m_selDisk, m_selPart, false); });
         connect(help, &QAction::triggered, this, [this] { showHelp(); });
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QStringLiteral("Вихід"), this, &QWidget::close);
-        m_actionMenu = menuBar()->addMenu(QStringLiteral("&Дія"));
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(tr7("Exit"), this, &QWidget::close);
+        m_actionMenu = menuBar()->addMenu(tr7("&Action"));
         connect(m_actionMenu, &QMenu::aboutToShow, this, [this, help] {
             m_actionMenu->clear();
             m_actionMenu->addAction(m_refresh);
             m_actionMenu->addAction(m_rescan);
             m_actionMenu->addSeparator();
             if (m_selDisk >= 0) {
-                m_actionMenu->addMenu(buildContextMenu(m_selDisk, m_selPart, m_actionMenu))->setText(QStringLiteral("Усі завдання"));
+                m_actionMenu->addMenu(buildContextMenu(m_selDisk, m_selPart, m_actionMenu))->setText(tr7("All Tasks"));
             }
             m_actionMenu->addSeparator();
             m_actionMenu->addAction(help);
         });
-        QMenu *view = menuBar()->addMenu(QStringLiteral("&Вигляд"));
-        auto *top = view->addAction(QStringLiteral("Верхня частина: список томів"));
+        QMenu *view = menuBar()->addMenu(tr7("&View"));
+        auto *top = view->addAction(tr7("Top: Volume List"));
         top->setCheckable(true);
         top->setChecked(true);
         connect(top, &QAction::toggled, m_list, &QWidget::setVisible);
-        QMenu *helpMenu = menuBar()->addMenu(QStringLiteral("&Довідка"));
+        QMenu *helpMenu = menuBar()->addMenu(tr7("&Help"));
         helpMenu->addAction(help);
-        QToolBar *bar = addToolBar(QStringLiteral("Стандартна"));
+        QToolBar *bar = addToolBar(tr7("Standard"));
         bar->setMovable(false);
         bar->setIconSize(QSize(16, 16));
         bar->addAction(back);
@@ -1603,10 +1601,10 @@ private:
                     continue;
                 }
                 const qint64 free = p.avail;
-                auto *it = new QTreeWidgetItem(m_list, {volumeName(p).simplified(), QStringLiteral("Простий"), d.removable ? QStringLiteral("Основний") : QStringLiteral("Основний"),
+                auto *it = new QTreeWidgetItem(m_list, {volumeName(p).simplified(), tr7("Simple"), d.removable ? tr7("Basic") : tr7("Basic"),
                                                         fsName(p.fstype), status(d, p), sizeText(p.size), free >= 0 ? sizeText(free) : QString(),
                                                         free >= 0 && p.size > 0 ? QStringLiteral("%1 %").arg(qRound(100.0 * free / p.size)) : QString(),
-                                                        QStringLiteral("Ні"), QStringLiteral("0%")});
+                                                        tr7("No"), QStringLiteral("0%")});
                 it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-mmc-volume"))); // dmdskres.dll
                 it->setData(0, Qt::UserRole, di);
                 it->setData(0, Qt::UserRole + 1, pi);
@@ -1703,16 +1701,16 @@ private:
         };
         if (pi == -1 || pi == -2) {
             // the disk itself
-            add(QStringLiteral("Ініціалізувати диск"), d.pttype.isEmpty() && !d.wholeDiskFs && !d.optical && !d.noMedia, [this, d] {
+            add(tr7("Initialize Disk", "menu"), d.pttype.isEmpty() && !d.wholeDiskFs && !d.optical && !d.noMedia, [this, d] {
                 if (initializeDisk(this, d)) {
                     reload();
                 }
             });
-            m->addAction(QStringLiteral("Перетворити на динамічний диск..."))->setEnabled(false);
+            m->addAction(tr7("Convert to Dynamic Disk..."))->setEnabled(false);
             m->addSeparator();
-            m->addAction(QStringLiteral("Властивості"), this, [this, di] { properties(di, -1); });
+            m->addAction(tr7("Properties"), this, [this, di] { properties(di, -1); });
             m->addSeparator();
-            m->addAction(QStringLiteral("Довідка"), this, [this] { showHelp(); });
+            m->addAction(tr7("Help"), this, [this] { showHelp(); });
             if (locked) {
                 m->setToolTipsVisible(true);
             }
@@ -1720,7 +1718,7 @@ private:
         }
         const Part p = d.parts.at(pi);
         if (p.unallocated) {
-            add(QStringLiteral("Створити простий том..."), true, [this, d, p] {
+            add(tr7("New Simple Volume..."), true, [this, d, p] {
                 if (stillAllowed(this, d.kname)) {
                     NewVolumeWizard w(this, d, p, nextLetter());
                     if (w.exec() == QDialog::Accepted) {
@@ -1728,35 +1726,35 @@ private:
                     }
                 }
             });
-            for (const QString &t : {QStringLiteral("Створити складений том..."), QStringLiteral("Створити чергований том..."), QStringLiteral("Створити дзеркальний том..."),
-                                     QStringLiteral("Створити том RAID-5...")}) {
+            for (const QString &t : {tr7("New Spanned Volume..."), tr7("New Striped Volume..."), tr7("New Mirrored Volume..."),
+                                     tr7("New RAID-5 Volume...")}) {
                 m->addAction(t)->setEnabled(false);
             }
         } else {
             const bool hasFs = !p.fstype.isEmpty() && p.fstype != QLatin1String("swap");
-            m->addAction(QStringLiteral("Відкрити"), this, [this, di, pi] { openVolume(di, pi, false); })->setEnabled(hasFs);
-            m->addAction(QStringLiteral("Провідник"), this, [this, di, pi] { openVolume(di, pi, true); })->setEnabled(hasFs);
+            m->addAction(tr7("Open"), this, [this, di, pi] { openVolume(di, pi, false); })->setEnabled(hasFs);
+            m->addAction(tr7("Explore"), this, [this, di, pi] { openVolume(di, pi, true); })->setEnabled(hasFs);
             m->addSeparator();
-            m->addAction(QStringLiteral("Зробити розділ активним"))->setEnabled(false);
-            m->addAction(QStringLiteral("Змінити букву диска або шлях до диска..."))->setEnabled(false);
-            add(QStringLiteral("Форматувати..."), true, [this, di, pi] { run(di, pi, &formatDialog); });
+            m->addAction(tr7("Mark Partition as Active"))->setEnabled(false);
+            m->addAction(tr7("Change Drive Letter and Paths..."))->setEnabled(false);
+            add(tr7("Format..."), true, [this, di, pi] { run(di, pi, &formatDialog); });
             m->addSeparator();
             const quint64 modes = resizeModes(p.fstype);
             const qint64 after = freeAfter(di, pi);
-            add(QStringLiteral("Розширити том..."), after > 0 && (modes & (4 | 16)) && !d.wholeDiskFs, [this, di, pi, after] {
+            add(tr7("Extend Volume..."), after > 0 && (modes & (4 | 16)) && !d.wholeDiskFs, [this, di, pi, after] {
                 const Disk dd = m_disks.at(di);
                 if (extendDialog(this, dd, dd.parts.at(pi), after)) {
                     reload();
                 }
             });
-            add(QStringLiteral("Стиснути том..."), (modes & (2 | 8)) && !d.wholeDiskFs, [this, di, pi] { run(di, pi, &shrinkDialog); });
-            m->addAction(QStringLiteral("Додати дзеркало..."))->setEnabled(false);
-            add(QStringLiteral("Видалити том..."), true, [this, di, pi] { run(di, pi, &deleteVolume); });
+            add(tr7("Shrink Volume..."), (modes & (2 | 8)) && !d.wholeDiskFs, [this, di, pi] { run(di, pi, &shrinkDialog); });
+            m->addAction(tr7("Add Mirror..."))->setEnabled(false);
+            add(tr7("Delete Volume..."), true, [this, di, pi] { run(di, pi, &deleteVolume); });
         }
         m->addSeparator();
-        m->addAction(QStringLiteral("Властивості"), this, [this, di, pi] { properties(di, pi); });
+        m->addAction(tr7("Properties"), this, [this, di, pi] { properties(di, pi); });
         m->addSeparator();
-        m->addAction(QStringLiteral("Довідка"), this, [this] { showHelp(); });
+        m->addAction(tr7("Help"), this, [this] { showHelp(); });
         m->setToolTipsVisible(true);
         return m;
     }
@@ -1795,7 +1793,7 @@ private:
             QVariantList out;
             const QString err = udisks(udisksPath(p->kname), QStringLiteral("Filesystem"), QStringLiteral("Mount"), {QVariantMap{}}, &out);
             if (!err.isEmpty()) {
-                failed(this, QStringLiteral("Не вдалося відкрити том."), err);
+                failed(this, tr7("The volume could not be opened."), err);
                 return;
             }
             where = out.value(0).toString();
@@ -1812,36 +1810,34 @@ private:
         const Disk &d = m_disks.at(di);
         QStringList rows;
         if (pi < 0) {
-            rows << QStringLiteral("Диск %1").arg(d.index) << QStringLiteral("Пристрій: %1").arg(d.dev) << QStringLiteral("Модель: %1").arg(d.model)
-                 << QStringLiteral("Підключення: %1").arg(d.tran.toUpper()) << QStringLiteral("Ємність: %1").arg(sizeText(d.size))
-                 << QStringLiteral("Стиль розділів: %1").arg(d.pttype == QLatin1String("gpt") ? QStringLiteral("Таблиця з GUID розділів (GPT)")
-                                                             : d.pttype == QLatin1String("dos") ? QStringLiteral("Основний завантажувальний запис (MBR)")
-                                                                                                : QStringLiteral("Немає"));
+            rows << tr7("Disk %1").arg(d.index) << tr7("Device: %1").arg(d.dev) << tr7("Model: %1").arg(d.model)
+                 << tr7("Connection: %1").arg(d.tran.toUpper()) << tr7("Capacity: %1").arg(sizeText(d.size))
+                 << tr7("Partition style: %1").arg(d.pttype == QLatin1String("gpt") ? tr7("GUID Partition Table (GPT)")
+                                                             : d.pttype == QLatin1String("dos") ? tr7("Master Boot Record (MBR)")
+                                                                                                : tr7("None"));
         } else {
             const Part &p = d.parts.at(pi);
-            rows << volumeName(p) << QStringLiteral("Пристрій: %1").arg(p.dev.isEmpty() ? QStringLiteral("—") : p.dev)
-                 << QStringLiteral("Файлова система: %1").arg(fsName(p.fstype).isEmpty() ? QStringLiteral("—") : fsName(p.fstype))
-                 << QStringLiteral("Ємність: %1").arg(sizeText(p.size));
+            rows << volumeName(p) << tr7("Device: %1").arg(p.dev.isEmpty() ? QStringLiteral("—") : p.dev)
+                 << tr7("File system: %1").arg(fsName(p.fstype).isEmpty() ? QStringLiteral("—") : fsName(p.fstype))
+                 << tr7("Capacity: %1").arg(sizeText(p.size));
             if (p.used >= 0) {
-                rows << QStringLiteral("Зайнято: %1").arg(sizeText(p.used)) << QStringLiteral("Вільно: %1").arg(sizeText(p.avail));
+                rows << tr7("Used: %1").arg(sizeText(p.used)) << tr7("Free: %1").arg(sizeText(p.avail));
             }
             if (!p.mount.isEmpty()) {
-                rows << QStringLiteral("Підключено до: %1").arg(p.mount);
+                rows << tr7("Mounted at: %1").arg(p.mount);
             }
-            rows << QStringLiteral("Стан: %1").arg(status(d, p));
+            rows << tr7("Status: %1").arg(status(d, p));
         }
         if (d.isProtected()) {
             rows << QString() << d.protectReason();
         }
-        QMessageBox::information(this, QStringLiteral("Властивості"), rows.join(QLatin1Char('\n')));
+        QMessageBox::information(this, tr7("Properties"), rows.join(QLatin1Char('\n')));
     }
 
     void showHelp()
     {
-        QMessageBox::information(this, QStringLiteral("Керування дисками"),
-                                 QStringLiteral("Клацніть том або нерозподілене місце правою кнопкою миші, щоб створити, форматувати, стиснути, розширити або "
-                                                "видалити том.\n\nДиски із системою, з якої зараз працює комп'ютер, і диски з установленою Windows захищено: "
-                                                "змінювати їх не можна (вони позначені щитком)."));
+        QMessageBox::information(this, tr7("Disk Management"),
+                                 tr7("Right-click a volume or unallocated space to create, format, shrink, extend or delete a volume.\n\nDisks with the system the computer is running from and disks with Windows installed are protected: they cannot be changed (they are marked with a shield)."));
     }
 
     QList<QPair<QLabel *, QLabel *>> m_legendItems; // unallocated, primary, extended, free, logical

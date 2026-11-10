@@ -13,12 +13,12 @@ rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
 find "$L/share/icons/hicolor" -name 'seven-*' -delete 2>/dev/null
 rm -rf "$L/share/fonts/Windows 7" "$L/share/sounds/Windows 7" "$L/share/wallpapers/Windows7" "$HOME/.config/Kvantum/Windows7"*
 systemctl --user disable --now seven-folder-refresh.service seven-soundfx.service 2>/dev/null
-rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME/.config/environment.d/60-sevenplasma.conf"
+rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME/.config/xdg-desktop-portal/kde-portals.conf" "$L"/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service "$HOME/.config/environment.d/60-sevenplasma.conf"
 kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
 echo "$(T "Системні частини (потрібен пароль):" "System parts (the password is needed):")"
 sudo rm -f /usr/local/libexec/seven-* /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf \
     /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf /etc/systemd/system.conf.d/seven-stop-timeout.conf \
-    /etc/sddm.conf.d/zz-sevenplasma.conf
+    /etc/sddm.conf.d/zz-sevenplasma.conf /usr/share/xdg-desktop-portal/portals/seven.portal
 sudo systemctl unmask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
 if [ -d /usr/share/plymouth/themes/sevenplasma ]; then
     sudo rm -rf /usr/share/plymouth/themes/sevenplasma

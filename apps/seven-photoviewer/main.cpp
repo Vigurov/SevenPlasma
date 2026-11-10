@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Windows Photo Viewer of Windows 7 ("Засіб перегляду фотографій Windows"): the blue Explorer command bar
  * (File, Print, E-mail, Burn, Open), the picture on a light background, and the bottom bar with the
@@ -39,7 +40,7 @@
 
 namespace
 {
-const QString TITLE = QStringLiteral("Засіб перегляду фотографій Windows");
+const QString TITLE = tr7("Windows Photo Viewer");
 const QColor BACKGROUND(0xee, 0xf3, 0xfa);
 
 QString res(const QString &name)
@@ -401,14 +402,14 @@ private:
         auto *h = new QHBoxLayout(pill);
         h->setContentsMargins(14, 0, 14, 0);
         h->setSpacing(2);
-        auto *zoom = new SpriteButton(QStringLiteral("4019"), QStringLiteral("Змінити розмір відображення"), pill);
-        auto *actual = new SpriteButton(QStringLiteral("4124"), QStringLiteral("Фактичний розмір (Ctrl+Alt+0)"), pill);
-        m_prev = new SpriteButton(QStringLiteral("4006"), QStringLiteral("Попереднє (стрілка вліво)"), pill);
-        auto *show = new SpriteButton(QStringLiteral("4000"), QStringLiteral("Відтворити показ слайдів (F11)"), pill);
-        m_next = new SpriteButton(QStringLiteral("4003"), QStringLiteral("Наступне (стрілка вправо)"), pill);
-        auto *ccw = new SpriteButton(QStringLiteral("4009"), QStringLiteral("Повернути проти годинникової стрілки (Ctrl+,)"), pill);
-        auto *cw = new SpriteButton(QStringLiteral("4012"), QStringLiteral("Повернути за годинниковою стрілкою (Ctrl+.)"), pill);
-        auto *del = new SpriteButton(QStringLiteral("4015"), QStringLiteral("Видалити (Del)"), pill);
+        auto *zoom = new SpriteButton(QStringLiteral("4019"), tr7("Change the display size"), pill);
+        auto *actual = new SpriteButton(QStringLiteral("4124"), tr7("Actual size (Ctrl+Alt+0)"), pill);
+        m_prev = new SpriteButton(QStringLiteral("4006"), tr7("Previous (Left Arrow)"), pill);
+        auto *show = new SpriteButton(QStringLiteral("4000"), tr7("Play slide show (F11)"), pill);
+        m_next = new SpriteButton(QStringLiteral("4003"), tr7("Next (Right Arrow)"), pill);
+        auto *ccw = new SpriteButton(QStringLiteral("4009"), tr7("Rotate counterclockwise (Ctrl+,)"), pill);
+        auto *cw = new SpriteButton(QStringLiteral("4012"), tr7("Rotate clockwise (Ctrl+.)"), pill);
+        auto *del = new SpriteButton(QStringLiteral("4015"), tr7("Delete (Del)"), pill);
         h->addWidget(zoom);
         h->addWidget(actual);
         h->addSpacing(10);
@@ -501,26 +502,26 @@ private:
             bar->addWidget(b);
             return m;
         };
-        QMenu *file = addMenu(QStringLiteral("Файл"));
-        file->addAction(QStringLiteral("Створити копію..."), this, &PhotoViewer::makeCopy);
-        file->addAction(QStringLiteral("Видалити"), this, &PhotoViewer::deleteFile);
+        QMenu *file = addMenu(tr7("File"));
+        file->addAction(tr7("Make a copy..."), this, &PhotoViewer::makeCopy);
+        file->addAction(tr7("Delete"), this, &PhotoViewer::deleteFile);
         file->addSeparator();
-        file->addAction(QStringLiteral("Властивості"), this, [this]() {
+        file->addAction(tr7("Properties"), this, [this]() {
             QProcess::startDetached(QDir::homePath() + QStringLiteral("/.local/bin/seven-control"), {QStringLiteral("--properties"), m_file});
         });
         file->addSeparator();
-        file->addAction(QStringLiteral("Вихід"), this, &QWidget::close);
-        QMenu *print = addMenu(QStringLiteral("Друк"));
-        print->addAction(QStringLiteral("Друк..."), this, &PhotoViewer::printImage);
+        file->addAction(tr7("Exit"), this, &QWidget::close);
+        QMenu *print = addMenu(tr7("Print"));
+        print->addAction(tr7("Print..."), this, &PhotoViewer::printImage);
         auto *mail = new QToolButton(bar);
-        mail->setText(QStringLiteral("Надіслати ел. поштою"));
+        mail->setText(tr7("E-mail"));
         connect(mail, &QToolButton::clicked, this, [this]() {
             QProcess::startDetached(QStringLiteral("xdg-email"), {QStringLiteral("--attach"), m_file});
         });
         bar->addWidget(mail);
-        QMenu *burn = addMenu(QStringLiteral("Записати"));
-        burn->addAction(QStringLiteral("Диск із даними"))->setEnabled(false);
-        m_openMenu = addMenu(QStringLiteral("Відкрити"));
+        QMenu *burn = addMenu(tr7("Burn"));
+        burn->addAction(tr7("Data disc"))->setEnabled(false);
+        m_openMenu = addMenu(tr7("Open"));
         connect(m_openMenu, &QMenu::aboutToShow, this, &PhotoViewer::fillOpenMenu);
         addToolBar(Qt::TopToolBarArea, bar);
     }
@@ -540,7 +541,7 @@ private:
             });
         }
         m_openMenu->addSeparator();
-        m_openMenu->addAction(QStringLiteral("Вибрати програму..."), this, [this]() {
+        m_openMenu->addAction(tr7("Choose program..."), this, [this]() {
             auto *job = new KIO::ApplicationLauncherJob();
             job->setUrls({QUrl::fromLocalFile(m_file)});
             job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, this));
@@ -583,7 +584,7 @@ private:
         QImageWriter w(m_file);
         w.setQuality(95);
         if (!w.canWrite() || !w.write(img)) {
-            QMessageBox::warning(this, TITLE, QStringLiteral("Не вдалося повернути цей рисунок."));
+            QMessageBox::warning(this, TITLE, tr7("This picture could not be rotated."));
             return;
         }
         m_view->setImage(img);
@@ -594,16 +595,16 @@ private:
         if (m_file.isEmpty()) {
             return;
         }
-        QMessageBox box(QMessageBox::Warning, QStringLiteral("Видалення файлу"),
-                        QStringLiteral("Ви дійсно бажаєте перемістити цей файл до кошика?\n\n%1").arg(QFileInfo(m_file).fileName()),
+        QMessageBox box(QMessageBox::Warning, tr7("Delete File"),
+                        tr7("Are you sure you want to move this file to the Recycle Bin?\n\n%1").arg(QFileInfo(m_file).fileName()),
                         QMessageBox::Yes | QMessageBox::No, this);
-        box.setButtonText(QMessageBox::Yes, QStringLiteral("Так"));
-        box.setButtonText(QMessageBox::No, QStringLiteral("Ні"));
+        box.setButtonText(QMessageBox::Yes, tr7("Yes"));
+        box.setButtonText(QMessageBox::No, tr7("No"));
         if (box.exec() != QMessageBox::Yes) {
             return;
         }
         if (!QFile::moveToTrash(m_file)) {
-            QMessageBox::warning(this, TITLE, QStringLiteral("Не вдалося видалити файл."));
+            QMessageBox::warning(this, TITLE, tr7("The file could not be deleted."));
             return;
         }
         m_files.removeAt(m_index);
@@ -618,8 +619,8 @@ private:
     void makeCopy()
     {
         const QFileInfo fi(m_file);
-        const QString to = QFileDialog::getSaveFileName(this, QStringLiteral("Створити копію"),
-                                                        fi.absolutePath() + QStringLiteral("/") + fi.completeBaseName() + QStringLiteral(" - копія.") + fi.suffix());
+        const QString to = QFileDialog::getSaveFileName(this, tr7("Make a Copy"),
+                                                        fi.absolutePath() + QStringLiteral("/") + fi.completeBaseName() + tr7(" - Copy.") + fi.suffix());
         if (!to.isEmpty()) {
             QFile::copy(m_file, to);
         }
@@ -629,7 +630,7 @@ private:
     {
         QPrinter printer;
         QPrintDialog dlg(&printer, this);
-        dlg.setWindowTitle(QStringLiteral("Друк рисунків"));
+        dlg.setWindowTitle(tr7("Print Pictures"));
         if (dlg.exec() != QDialog::Accepted) {
             return;
         }
@@ -660,6 +661,7 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-photoviewer"));
     app.setApplicationDisplayName(QString());
     app.setDesktopFileName(QStringLiteral("seven-photoviewer"));
@@ -668,8 +670,8 @@ int main(int argc, char **argv)
         file = QUrl(file).toLocalFile();
     }
     if (file.isEmpty()) {
-        file = QFileDialog::getOpenFileName(nullptr, QStringLiteral("Відкрити"), QDir::homePath() + QStringLiteral("/Pictures"),
-                                            QStringLiteral("Рисунки (*.jpg *.jpeg *.png *.bmp *.gif *.tif *.tiff *.webp *.ico)"));
+        file = QFileDialog::getOpenFileName(nullptr, tr7("Open"), QDir::homePath() + QStringLiteral("/Pictures"),
+                                            tr7("Pictures (*.jpg *.jpeg *.png *.bmp *.gif *.tif *.tiff *.webp *.ico)"));
         if (file.isEmpty()) {
             return 0;
         }

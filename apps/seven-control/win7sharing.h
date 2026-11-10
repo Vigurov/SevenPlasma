@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Windows 7 "Advanced sharing settings" (Control Panel > Network and Sharing Center), after the real one:
  * the "Home or Work" and "Public" profiles, each with network discovery, file and printer sharing, Public
@@ -128,9 +129,8 @@ inline bool apply(QWidget *parent, const Settings &want)
     }
     bool install = false;
     if (sambaNeeded && !QFile::exists(QStringLiteral("/usr/sbin/smbd"))) {
-        if (QMessageBox::question(parent, QStringLiteral("Спільний доступ до файлів і принтерів"),
-                                  QStringLiteral("Для спільного доступу до файлів потрібен сервер Samba (пакет samba), а його не встановлено.\n\n"
-                                                 "Установити його зараз?"))
+        if (QMessageBox::question(parent, tr7("File and Printer Sharing"),
+                                  tr7("File sharing needs the Samba server (the samba package), which is not installed.\n\nInstall it now?"))
             != QMessageBox::Yes) {
             return false;
         }
@@ -177,8 +177,8 @@ elif [ -x /usr/sbin/smbd ]; then systemctl disable --now smbd; fi
         return false; // the password prompt was cancelled
     }
     if (p.exitCode() != 0) {
-        QMessageBox::warning(parent, QStringLiteral("Додаткові параметри спільного доступу"),
-                             QStringLiteral("Не вдалося застосувати параметри.\n\n%1").arg(QString::fromUtf8(p.readAll()).trimmed().right(600)));
+        QMessageBox::warning(parent, tr7("Advanced sharing settings"),
+                             tr7("The settings could not be applied.\n\n%1").arg(QString::fromUtf8(p.readAll()).trimmed().right(600)));
         return false;
     }
     return true;
@@ -239,10 +239,9 @@ public:
         auto *v = new QVBoxLayout(content);
         v->setContentsMargins(0, 22, 0, 24);
         v->setSpacing(0);
-        v->addWidget(Win7Net::blueTitle(QStringLiteral("Змінення параметрів спільного доступу для різних мережевих профілів")));
+        v->addWidget(Win7Net::blueTitle(tr7("Change sharing options for different network profiles")));
         v->addSpacing(6);
-        v->addWidget(Win7Net::plain(QStringLiteral("Windows створює окремий мережевий профіль для кожної мережі, яку ви використовуєте. "
-                                                   "Для кожного профілю можна вибрати окремі параметри.")));
+        v->addWidget(Win7Net::plain(tr7("Windows creates a separate network profile for each network you use. You can choose specific options for each profile.")));
         v->addSpacing(12);
         for (const QString &profile : {QStringLiteral("home"), QStringLiteral("public")}) {
             buildProfile(v, profile);
@@ -264,10 +263,10 @@ public:
         fch->setContentsMargins(0, 0, 0, 0);
         fch->setSpacing(8);
         fch->addStretch(1);
-        m_save = new QPushButton(QStringLiteral("Зберегти зміни"));
+        m_save = new QPushButton(tr7("Save changes"));
         m_save->setIcon(QIcon::fromTheme(QStringLiteral("seven-cp-shield")));
         m_save->setEnabled(false);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         cancel->setMinimumWidth(74);
         fch->addWidget(m_save);
         fch->addWidget(cancel);
@@ -363,9 +362,9 @@ private:
         // "Home or Work ─────────── (v)"
         auto *head = new QHBoxLayout;
         head->setSpacing(0);
-        QString name = profile == QLatin1String("home") ? QStringLiteral("Домашній або робочий") : QStringLiteral("Загальний");
+        QString name = profile == QLatin1String("home") ? tr7("Home or Work") : tr7("Public");
         if (current) {
-            name += QStringLiteral(" (поточний профіль)");
+            name += tr7(" (current profile)");
         }
         head->addWidget(new QLabel(name));
         head->addWidget(new Win7Action::Rule, 1);
@@ -379,79 +378,66 @@ private:
         bv->setContentsMargins(23, 0, 0, 10);
         bv->setSpacing(0);
         Ui ui;
-        section(bv, QStringLiteral("Мережеве виявлення"));
-        para(bv, QStringLiteral("Якщо мережеве виявлення ввімкнуто, цей комп'ютер бачить інші комп'ютери та пристрої в мережі й видимий для них."),
-             QStringLiteral("Що таке мережеве виявлення?"), [this] {
-                 QMessageBox::information(this, QStringLiteral("Мережеве виявлення"),
-                                          QStringLiteral("Мережеве виявлення дає змогу цьому комп'ютеру бачити інші комп'ютери й пристрої в мережі "
-                                                         "(папка «Мережа») і бути видимим для них.\n\nУ цій системі за нього відповідає служба Avahi."));
+        section(bv, tr7("Network discovery"));
+        para(bv, tr7("When network discovery is on, this computer can see other network computers and devices and is visible to other network computers."),
+             tr7("What is network discovery?"), [this] {
+                 QMessageBox::information(this, tr7("Network discovery"),
+                                          tr7("Network discovery lets this computer see other computers and devices on the network (the Network folder) and be visible to them.\n\nOn this system it is provided by the Avahi service."));
              });
-        ui.discovery = choice(bv, QStringLiteral("Увімкнути мережеве виявлення"), QStringLiteral("Вимкнути мережеве виявлення"), s.discovery);
+        ui.discovery = choice(bv, tr7("Turn on network discovery"), tr7("Turn off network discovery"), s.discovery);
 
-        section(bv, QStringLiteral("Спільний доступ до файлів і принтерів"));
-        para(bv, QStringLiteral("Якщо спільний доступ до файлів і принтерів увімкнуто, користувачі мережі матимуть доступ до файлів і принтерів, "
-                                "до яких ви надали спільний доступ на цьому комп'ютері."));
-        ui.files = choice(bv, QStringLiteral("Увімкнути спільний доступ до файлів і принтерів"), QStringLiteral("Вимкнути спільний доступ до файлів і принтерів"),
+        section(bv, tr7("File and Printer Sharing"));
+        para(bv, tr7("When file and printer sharing is on, files and printers that you have shared from this computer can be accessed by people on the network."));
+        ui.files = choice(bv, tr7("Turn on file and printer sharing"), tr7("Turn off file and printer sharing"),
                           s.files);
 
-        section(bv, QStringLiteral("Спільний доступ до загальних папок"));
-        para(bv, QStringLiteral("Якщо спільний доступ до загальних папок увімкнуто, користувачі мережі, зокрема члени домашньої групи, "
-                                "матимуть доступ до файлів у загальних папках."),
-             QStringLiteral("Що таке загальні папки?"), [this] {
-                 QMessageBox::information(this, QStringLiteral("Загальні папки"),
-                                          QStringLiteral("Загальна папка — це папка «%1». Файли, які ви туди покладете, можна відкрити з інших "
-                                                         "комп'ютерів мережі, коли спільний доступ до загальних папок увімкнуто.")
+        section(bv, tr7("Public folder sharing"));
+        para(bv, tr7("When Public folder sharing is on, people on the network, including homegroup members, can access files in the Public folders."),
+             tr7("What are the Public folders?"), [this] {
+                 QMessageBox::information(this, tr7("Public folders"),
+                                          tr7("The Public folder is the folder \"%1\". Files you put there can be opened from other computers on the network when Public folder sharing is on.")
                                               .arg(QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/Public"))));
              });
         ui.publicFolder = choice(bv,
-                                 QStringLiteral("Увімкнути спільний доступ, щоб будь-який користувач із доступом до мережі міг читати й записувати файли "
-                                                "в загальних папках"),
-                                 QStringLiteral("Вимкнути спільний доступ до загальних папок (користувачі, які ввійшли в систему цього комп'ютера, "
-                                                "матимуть доступ до цих папок)"),
+                                 tr7("Turn on sharing so anyone with network access can read and write files in the Public folders"),
+                                 tr7("Turn off Public folder sharing (people logged on to this computer can still access these folders)"),
                                  s.publicFolder);
 
-        section(bv, QStringLiteral("Потокова передача мультимедіа"));
-        para(bv, QStringLiteral("Якщо потокову передачу мультимедіа ввімкнуто, користувачі й пристрої в мережі матимуть доступ до зображень, "
-                                "музики та відео на цьому комп'ютері. Цей комп'ютер також зможе знаходити мультимедіа в мережі."));
+        section(bv, tr7("Media streaming"));
+        para(bv, tr7("When media streaming is on, people and devices on the network can access pictures, music, and videos on this computer. This computer can also find media on the network."));
         auto *media = new QVBoxLayout;
         media->setContentsMargins(50, 9, 0, 0);
         media->setSpacing(1);
         if (profile == QLatin1String("home")) {
-            media->addWidget(new QLabel(QStringLiteral("Потокову передачу мультимедіа вимкнуто.")));
+            media->addWidget(new QLabel(tr7("Media streaming is off.")));
         }
-        auto *mediaLink = new Link(QStringLiteral("Вибрати параметри потокової передачі мультимедіа..."), [this] {
-            QMessageBox::information(this, QStringLiteral("Параметри потокової передачі мультимедіа"),
-                                     QStringLiteral("Для потокової передачі мультимедіа потрібен медіасервер DLNA (наприклад, пакет minidlna), "
-                                                    "а його не встановлено."));
+        auto *mediaLink = new Link(tr7("Choose media streaming options..."), [this] {
+            QMessageBox::information(this, tr7("Media streaming options"),
+                                     tr7("Media streaming needs a DLNA media server (for example, the minidlna package), which is not installed."));
         });
         mediaLink->setWordWrap(false);
         media->addWidget(mediaLink, 0, Qt::AlignLeft);
         bv->addLayout(media);
 
-        section(bv, QStringLiteral("Підключення для спільного доступу до файлів"));
-        para(bv, QStringLiteral("Для захисту підключень для спільного доступу до файлів Windows 7 використовує 128-розрядне шифрування. "
-                                "Деякі пристрої не підтримують 128-розрядне шифрування, тому мають використовувати 40- або 56-розрядне шифрування."));
-        ui.strong = choice(bv, QStringLiteral("Використовувати 128-розрядне шифрування для захисту підключень для спільного доступу до файлів (рекомендовано)"),
-                           QStringLiteral("Увімкнути спільний доступ до файлів для пристроїв, які використовують 40- або 56-розрядне шифрування"), s.strong);
+        section(bv, tr7("File sharing connections"));
+        para(bv, tr7("Windows 7 uses 128-bit encryption to help protect file sharing connections. Some devices don't support 128-bit encryption and must use 40- or 56-bit encryption."));
+        ui.strong = choice(bv, tr7("Use 128-bit encryption to help protect file sharing connections (recommended)"),
+                           tr7("Enable file sharing for devices that use 40- or 56-bit encryption"), s.strong);
 
-        section(bv, QStringLiteral("Спільний доступ із парольним захистом"));
-        para(bv, QStringLiteral("Якщо спільний доступ із парольним захистом увімкнуто, доступ до спільних файлів, принтерів, підключених до цього "
-                                "комп'ютера, і загальних папок матимуть лише користувачі, які мають обліковий запис і пароль на цьому комп'ютері. "
-                                "Щоб надати доступ іншим користувачам, вимкніть спільний доступ із парольним захистом."));
-        ui.password = choice(bv, QStringLiteral("Увімкнути спільний доступ із парольним захистом"), QStringLiteral("Вимкнути спільний доступ із парольним захистом"),
+        section(bv, tr7("Password protected sharing"));
+        para(bv, tr7("When password protected sharing is on, only people who have a user account and password on this computer can access shared files, printers attached to this computer, and the Public folders. To give other people access, you must turn off password protected sharing."));
+        ui.password = choice(bv, tr7("Turn on password protected sharing"), tr7("Turn off password protected sharing"),
                              s.password);
 
         if (profile == QLatin1String("home")) {
-            section(bv, QStringLiteral("Підключення домашньої групи"));
-            para(bv, QStringLiteral("Зазвичай Windows керує підключеннями до інших комп'ютерів домашньої групи. Але якщо на всіх ваших комп'ютерах "
-                                    "однакові облікові записи й паролі, домашня група може використовувати ваш обліковий запис."),
-                 QStringLiteral("Допомога у виборі"), [this] {
-                     QMessageBox::information(this, QStringLiteral("Підключення домашньої групи"),
-                                              QStringLiteral("Якщо не знаєте, що вибрати, залиште рекомендований параметр: Windows сама керуватиме "
-                                                             "підключеннями домашньої групи."));
+            section(bv, tr7("HomeGroup connections"));
+            para(bv, tr7("Typically, Windows manages the connections to other homegroup computers. But if you have the same user accounts and passwords on all of your computers, you can have HomeGroup use your account instead."),
+                 tr7("Help me choose"), [this] {
+                     QMessageBox::information(this, tr7("HomeGroup connections"),
+                                              tr7("If you don't know what to choose, keep the recommended option: Windows will manage homegroup connections itself."));
                  });
-            ui.homegroup = choice(bv, QStringLiteral("Дозволити Windows керувати підключеннями домашньої групи (рекомендовано)"),
-                                  QStringLiteral("Використовувати облікові записи та паролі для підключення до інших комп'ютерів"), s.homegroupWindows);
+            ui.homegroup = choice(bv, tr7("Allow Windows to manage homegroup connections (recommended)"),
+                                  tr7("Use user accounts and passwords to connect to other computers"), s.homegroupWindows);
         }
         v->addWidget(box);
 

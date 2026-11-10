@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Calculator in the style of Windows 7.
  *
@@ -552,56 +553,56 @@ struct Category {
 QList<Category> categories()
 {
     QList<Category> list{
-        {QStringLiteral("Вага/Маса"),
-         {{QStringLiteral("Гектограм"), 0.1}, {QStringLiteral("Грам"), 0.001}, {QStringLiteral("Декаграм"), 0.01}, {QStringLiteral("Дециграм"), 0.0001},
-          {QStringLiteral("Довга тонна (1016 кг)"), 1016.0469088}, {QStringLiteral("Карат"), 0.0002}, {QStringLiteral("Кілограм"), 1},
-          {QStringLiteral("Коротка тонна (~907 кг)"), 907.18474}, {QStringLiteral("Міліграм"), 1e-6}, {QStringLiteral("Сантиграм"), 1e-5},
-          {QStringLiteral("Стоун (14 фунтів)"), 6.35029318}, {QStringLiteral("Тонна"), 1000}, {QStringLiteral("Унція"), 0.028349523125},
-          {QStringLiteral("Фунт"), 0.45359237}}},
-        {QStringLiteral("Час"),
-         {{QStringLiteral("Мікросекунда"), 1e-6}, {QStringLiteral("Мілісекунда"), 1e-3}, {QStringLiteral("Секунда"), 1}, {QStringLiteral("Хвилина"), 60},
-          {QStringLiteral("Година"), 3600}, {QStringLiteral("День"), 86400}, {QStringLiteral("Тиждень"), 604800}}},
-        {QStringLiteral("Тиск"),
-         {{QStringLiteral("Атмосфера"), 101325}, {QStringLiteral("Бар"), 1e5}, {QStringLiteral("Кілопаскаль"), 1000},
-          {QStringLiteral("Міліметр ртутного стовпа"), 133.322387415}, {QStringLiteral("Паскаль"), 1},
-          {QStringLiteral("Фунт на квадратний дюйм"), 6894.757293168}}},
-        {QStringLiteral("Довжина"),
-         {{QStringLiteral("Ангстрем"), 1e-10}, {QStringLiteral("Нанометр"), 1e-9}, {QStringLiteral("Мікрон"), 1e-6}, {QStringLiteral("Міліметр"), 1e-3},
-          {QStringLiteral("Сантиметр"), 0.01}, {QStringLiteral("Метр"), 1}, {QStringLiteral("Кілометр"), 1000}, {QStringLiteral("Дюйм"), 0.0254},
-          {QStringLiteral("Фут"), 0.3048}, {QStringLiteral("Ярд"), 0.9144}, {QStringLiteral("Миля"), 1609.344}, {QStringLiteral("Морська миля"), 1852},
-          {QStringLiteral("Морська сажень"), 1.8288}, {QStringLiteral("Ланцюг"), 20.1168}, {QStringLiteral("Род"), 5.0292}}},
-        {QStringLiteral("Потужність"),
-         {{QStringLiteral("Ват"), 1}, {QStringLiteral("Кіловат"), 1000}, {QStringLiteral("Кінська сила"), 745.69987158227},
-          {QStringLiteral("Метрична кінська сила"), 735.49875}, {QStringLiteral("Фут-фунт за хвилину"), 0.0225969658},
-          {QStringLiteral("Британська теплова одиниця за хвилину"), 17.58426666}}},
-        {QStringLiteral("Об'єм"),
-         {{QStringLiteral("Кубічний сантиметр"), 1e-6}, {QStringLiteral("Кубічний метр"), 1}, {QStringLiteral("Літр"), 1e-3},
-          {QStringLiteral("Мілілітр"), 1e-6}, {QStringLiteral("Кубічний дюйм"), 1.6387064e-5}, {QStringLiteral("Кубічний фут"), 0.028316846592},
-          {QStringLiteral("Кубічний ярд"), 0.764554857984}, {QStringLiteral("Галон (США)"), 3.785411784e-3},
-          {QStringLiteral("Галон (Великобританія)"), 4.54609e-3}, {QStringLiteral("Кварта (США)"), 9.46352946e-4},
-          {QStringLiteral("Пінта (США)"), 4.73176473e-4}, {QStringLiteral("Чашка (США)"), 2.365882365e-4},
-          {QStringLiteral("Рідка унція (США)"), 2.95735295625e-5}, {QStringLiteral("Столова ложка (США)"), 1.478676478125e-5},
-          {QStringLiteral("Чайна ложка (США)"), 4.92892159375e-6}}},
-        {QStringLiteral("Площа"),
-         {{QStringLiteral("Квадратний міліметр"), 1e-6}, {QStringLiteral("Квадратний сантиметр"), 1e-4}, {QStringLiteral("Квадратний метр"), 1},
-          {QStringLiteral("Гектар"), 1e4}, {QStringLiteral("Квадратний кілометр"), 1e6}, {QStringLiteral("Квадратний дюйм"), 6.4516e-4},
-          {QStringLiteral("Квадратний фут"), 0.09290304}, {QStringLiteral("Квадратний ярд"), 0.83612736}, {QStringLiteral("Акр"), 4046.8564224},
-          {QStringLiteral("Квадратна миля"), 2589988.110336}}},
-        {QStringLiteral("Швидкість"),
-         {{QStringLiteral("Сантиметр за секунду"), 0.01}, {QStringLiteral("Метр за секунду"), 1}, {QStringLiteral("Кілометр за годину"), 1 / 3.6},
-          {QStringLiteral("Фут за секунду"), 0.3048}, {QStringLiteral("Миля за годину"), 0.44704}, {QStringLiteral("Вузол"), 1852.0 / 3600.0},
-          {QStringLiteral("Мах"), 340.3}}},
-        {QStringLiteral("Температура"),
-         {{QStringLiteral("Градус Цельсія"), 0}, {QStringLiteral("Градус Фаренгейта"), 0}, {QStringLiteral("Кельвін"), 0}},
+        {tr7("Weight / Mass"),
+         {{tr7("Hectograms"), 0.1}, {tr7("Grams"), 0.001}, {tr7("Dekagrams"), 0.01}, {tr7("Decigrams"), 0.0001},
+          {tr7("Long tons (UK)"), 1016.0469088}, {tr7("Carats"), 0.0002}, {tr7("Kilograms"), 1},
+          {tr7("Short tons (US)"), 907.18474}, {tr7("Milligrams"), 1e-6}, {tr7("Centigrams"), 1e-5},
+          {tr7("Stone"), 6.35029318}, {tr7("Metric tonnes"), 1000}, {tr7("Ounces"), 0.028349523125},
+          {tr7("Pounds"), 0.45359237}}},
+        {tr7("Time"),
+         {{tr7("Microseconds"), 1e-6}, {tr7("Milliseconds"), 1e-3}, {tr7("Seconds"), 1}, {tr7("Minutes"), 60},
+          {tr7("Hours"), 3600}, {tr7("Days"), 86400}, {tr7("Weeks"), 604800}}},
+        {tr7("Pressure"),
+         {{tr7("Atmosphere"), 101325}, {tr7("Bar"), 1e5}, {tr7("Kilopascal"), 1000},
+          {tr7("Millimeter of mercury"), 133.322387415}, {tr7("Pascal"), 1},
+          {tr7("Pounds per square inch"), 6894.757293168}}},
+        {tr7("Length"),
+         {{tr7("Angstroms"), 1e-10}, {tr7("Nanometers"), 1e-9}, {tr7("Microns"), 1e-6}, {tr7("Millimeters"), 1e-3},
+          {tr7("Centimeters"), 0.01}, {tr7("Meters"), 1}, {tr7("Kilometers"), 1000}, {tr7("Inches"), 0.0254},
+          {tr7("Feet"), 0.3048}, {tr7("Yard"), 0.9144}, {tr7("Miles"), 1609.344}, {tr7("Nautical miles"), 1852},
+          {tr7("Fathoms"), 1.8288}, {tr7("Chains"), 20.1168}, {tr7("Rods"), 5.0292}}},
+        {tr7("Power"),
+         {{tr7("Watt"), 1}, {tr7("Kilowatt"), 1000}, {tr7("Horsepower (US)"), 745.69987158227},
+          {tr7("Metric horsepower"), 735.49875}, {tr7("Foot-pound/minute"), 0.0225969658},
+          {tr7("BTU/minute"), 17.58426666}}},
+        {tr7("Volume"),
+         {{tr7("Cubic centimeters"), 1e-6}, {tr7("Cubic meters"), 1}, {tr7("Liters"), 1e-3},
+          {tr7("Milliliters"), 1e-6}, {tr7("Cubic inches"), 1.6387064e-5}, {tr7("Cubic feet"), 0.028316846592},
+          {tr7("Cubic yards"), 0.764554857984}, {tr7("Gallons (US)"), 3.785411784e-3},
+          {tr7("Gallons (UK)"), 4.54609e-3}, {tr7("Quarts (US)"), 9.46352946e-4},
+          {tr7("Pints (US)"), 4.73176473e-4}, {tr7("Cups (US)"), 2.365882365e-4},
+          {tr7("Fluid ounces (US)"), 2.95735295625e-5}, {tr7("Tablespoons (US)"), 1.478676478125e-5},
+          {tr7("Teaspoons (US)"), 4.92892159375e-6}}},
+        {tr7("Area"),
+         {{tr7("Square millimeters"), 1e-6}, {tr7("Square centimeters"), 1e-4}, {tr7("Square meters"), 1},
+          {tr7("Hectares"), 1e4}, {tr7("Square kilometers"), 1e6}, {tr7("Square inches"), 6.4516e-4},
+          {tr7("Square feet"), 0.09290304}, {tr7("Square yard"), 0.83612736}, {tr7("Acres"), 4046.8564224},
+          {tr7("Square miles"), 2589988.110336}}},
+        {tr7("Velocity"),
+         {{tr7("Centimeters per second"), 0.01}, {tr7("Meters per second"), 1}, {tr7("Kilometers per hour"), 1 / 3.6},
+          {tr7("Feet per second"), 0.3048}, {tr7("Miles per hour"), 0.44704}, {tr7("Knots"), 1852.0 / 3600.0},
+          {tr7("Mach"), 340.3}}},
+        {tr7("Temperature"),
+         {{tr7("Degrees Celsius"), 0}, {tr7("Degrees Fahrenheit"), 0}, {tr7("Kelvin"), 0}},
          true},
-        {QStringLiteral("Кут"), {{QStringLiteral("Градус"), M_PI / 180}, {QStringLiteral("Радіан"), 1}, {QStringLiteral("Град"), M_PI / 200}}},
-        {QStringLiteral("Енергія"),
-         {{QStringLiteral("Джоуль"), 1}, {QStringLiteral("Кілоджоуль"), 1000}, {QStringLiteral("Калорія"), 4.1868},
-          {QStringLiteral("Кілокалорія"), 4186.8}, {QStringLiteral("Британська теплова одиниця"), 1055.05585262},
-          {QStringLiteral("Фут-фунт"), 1.3558179483314}, {QStringLiteral("Електрон-вольт"), 1.602176634e-19},
-          {QStringLiteral("Кіловат-година"), 3.6e6}}},
+        {tr7("Angle"), {{tr7("Degrees"), M_PI / 180}, {tr7("Radians"), 1}, {tr7("Gradians"), M_PI / 200}}},
+        {tr7("Energy"),
+         {{tr7("Joules"), 1}, {tr7("Kilojoules"), 1000}, {tr7("Thermal calories"), 4.1868},
+          {tr7("Food calories"), 4186.8}, {tr7("British thermal units"), 1055.05585262},
+          {tr7("Foot-pounds"), 1.3558179483314}, {tr7("Electron volts"), 1.602176634e-19},
+          {tr7("Kilowatt-hours"), 3.6e6}}},
     };
-    QCollator collator(QLocale(QLocale::Ukrainian));
+    QCollator collator(QLocale{});
     for (Category &c : list) {
         if (!c.temperature) {
             std::sort(c.units.begin(), c.units.end(), [&collator](const Unit &a, const Unit &b) {
@@ -638,8 +639,8 @@ double annuity(double r, double n)
 Sheet mortgageSheet()
 {
     // 0 price, 1 down payment, 2 years, 3 rate, 4 monthly payment
-    return {{QStringLiteral("Ціна покупки"), QStringLiteral("Початковий внесок"), QStringLiteral("Термін (років)"), QStringLiteral("Процентна ставка (%)"),
-             QStringLiteral("Щомісячний платіж")},
+    return {{tr7("Purchase price"), tr7("Down payment"), tr7("Term (years)"), tr7("Interest rate (%)"),
+             tr7("Monthly payment")},
             {4, 1, 2, 0},
             [](int t, const QMap<int, double> &in) -> std::optional<double> {
                 const double r = in.value(3) / 1200;
@@ -676,8 +677,8 @@ Sheet mortgageSheet()
 Sheet leaseSheet()
 {
     // 0 lease amount, 1 residual value, 2 years, 3 rate, 4 monthly payment
-    return {{QStringLiteral("Сума лізингу"), QStringLiteral("Залишкова вартість"), QStringLiteral("Термін лізингу (років)"), QStringLiteral("Процентна ставка (%)"),
-             QStringLiteral("Щомісячний платіж")},
+    return {{tr7("Lease value"), tr7("Residual value"), tr7("Lease period (years)"), tr7("Interest rate (%)"),
+             tr7("Monthly payment")},
             {4, 0, 2, 1},
             [](int t, const QMap<int, double> &in) -> std::optional<double> {
                 const double r = in.value(3) / 1200;
@@ -718,9 +719,9 @@ Sheet leaseSheet()
 Sheet fuelSheet(bool litres)
 {
     // 0 distance, 1 fuel used, 2 economy
-    QStringList fields = litres ? QStringList{QStringLiteral("Відстань (км)"), QStringLiteral("Використано пального (л)"), QStringLiteral("Витрата пального (л/100 км)")}
-                                : QStringList{QStringLiteral("Відстань (милі)"), QStringLiteral("Використано пального (галони)"),
-                                              QStringLiteral("Економія пального (миль на галон)")};
+    QStringList fields = litres ? QStringList{tr7("Distance (kilometers)"), tr7("Fuel used (liters)"), tr7("Fuel economy (L/100 km)")}
+                                : QStringList{tr7("Distance (miles)"), tr7("Fuel used (gallons)"),
+                                              tr7("Fuel economy (mpg)")};
     return {fields, {2, 0, 1}, [litres](int t, const QMap<int, double> &in) -> std::optional<double> {
                 const double d = in.value(0), f = in.value(1), e = in.value(2);
                 if (litres) {
@@ -766,7 +767,7 @@ QLabel *panelLabel(const QString &text)
 QLineEdit *valueEdit()
 {
     auto *e = new QLineEdit;
-    e->setPlaceholderText(QStringLiteral("Введіть значення"));
+    e->setPlaceholderText(tr7("Enter a value"));
     return e;
 }
 
@@ -825,7 +826,7 @@ protected:
         p.drawRect(rect().adjusted(0, 0, -1, -1));
         // header: ◂ Month Year ▸
         p.setPen(Qt::black);
-        const QString title = QLocale(QLocale::Ukrainian).standaloneMonthName(m_month.month()) + QStringLiteral(" ") + QString::number(m_month.year());
+        const QString title = QLocale{}.standaloneMonthName(m_month.month()) + QStringLiteral(" ") + QString::number(m_month.year());
         QString cap = title;
         cap[0] = cap.at(0).toUpper();
         p.drawText(QRect(0, 4, width(), 18), Qt::AlignCenter, cap);
@@ -837,7 +838,7 @@ protected:
         p.setRenderHint(QPainter::Antialiasing, false);
         p.setBrush(Qt::NoBrush);
         // weekday names and the line under them
-        const QStringList days{QStringLiteral("Пн"), QStringLiteral("Вт"), QStringLiteral("Ср"), QStringLiteral("Чт"), QStringLiteral("Пт"), QStringLiteral("Сб"), QStringLiteral("Нд")};
+        const QStringList days{tr7("Mo"), tr7("Tu"), tr7("We"), tr7("Th"), tr7("Fr"), tr7("Sa"), tr7("Su")};
         p.setPen(Qt::black);
         for (int i = 0; i < 7; ++i) {
             p.drawText(QRect(8 + i * kCell, 24, kCell, 16), Qt::AlignCenter, days.at(i));
@@ -863,7 +864,7 @@ protected:
         // "Today: dd.MM.yyyy"
         // centred like Windows 7
         const QRect fr = footerRect();
-        const QString todayText = QStringLiteral("Сьогодні: ") + today.toString(QStringLiteral("dd.MM.yyyy"));
+        const QString todayText = tr7("Today: ") + today.toString(QStringLiteral("dd.MM.yyyy"));
         const int tw = fontMetrics().horizontalAdvance(todayText);
         const int x0 = fr.left() + (fr.width() - tw - 24) / 2;
         p.setPen(QColor(0x80, 0x80, 0x80));
@@ -1021,7 +1022,7 @@ public:
     Calculator()
         : m_settings(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/seven-calcrc"), QSettings::IniFormat)
     {
-        setWindowTitle(QStringLiteral("Калькулятор"));
+        setWindowTitle(tr7("Calculator"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-calc")));
         m_mode = Mode(m_settings.value(QStringLiteral("Mode"), Standard).toInt());
         m_historyOn = m_settings.value(QStringLiteral("History"), false).toBool();
@@ -1306,7 +1307,7 @@ private:
             m_bitView->setValue(quint64(currentInt()) & mask(), m_wordBits);
         }
         if (m_mode == Statistics) {
-            m_display->count->setText(QStringLiteral("Кількість = %1").arg(m_stats.size()));
+            m_display->count->setText(tr7("Count = %1").arg(m_stats.size()));
         }
         if (mirror && m_panel == UnitsPanel && m_unitFrom && !m_unitFrom->hasFocus()) {
             m_unitFrom->setText(m_error ? QString() : m_entry);
@@ -1594,7 +1595,7 @@ private:
             case '/':
             case 'm':
                 if (sb == 0) {
-                    showError(QStringLiteral("Ділення на нуль неможливе"));
+                    showError(tr7("Cannot divide by zero"));
                     return std::nullopt;
                 }
                 if (sb == -1) {
@@ -1616,14 +1617,14 @@ private:
         case '*': r = a * b; break;
         case '/':
             if (b == 0) {
-                showError(a == 0 ? QStringLiteral("Результат не визначено") : QStringLiteral("Ділення на нуль неможливе"));
+                showError(a == 0 ? tr7("Result is undefined") : tr7("Cannot divide by zero"));
                 return std::nullopt;
             }
             r = a / b;
             break;
         case 'm':
             if (b == 0) {
-                showError(QStringLiteral("Ділення на нуль неможливе"));
+                showError(tr7("Cannot divide by zero"));
                 return std::nullopt;
             }
             r = std::fmod(a, b);
@@ -1631,7 +1632,7 @@ private:
         case '^': r = std::pow(a, b); break;
         case 'r':
             if (b == 0) {
-                showError(QStringLiteral("Неприпустиме введення"));
+                showError(tr7("Invalid input"));
                 return std::nullopt;
             }
             if (a < 0 && std::fmod(b, 2.0L) != 0 && std::fmod(b, 1.0L) == 0) {
@@ -1647,11 +1648,11 @@ private:
     std::optional<Num> checked(Num r)
     {
         if (std::isnan(double(r))) {
-            showError(QStringLiteral("Неприпустиме введення"));
+            showError(tr7("Invalid input"));
             return std::nullopt;
         }
         if (std::isinf(double(r))) {
-            showError(QStringLiteral("Переповнення"));
+            showError(tr7("Overflow"));
             return std::nullopt;
         }
         return r;
@@ -1867,13 +1868,13 @@ private:
     {
         if (which == QLatin1String("sqrt")) {
             if (value() < 0) {
-                showError(QStringLiteral("Неприпустиме введення"));
+                showError(tr7("Invalid input"));
                 return;
             }
             unary(QStringLiteral("sqrt"), [](Num x) { return std::sqrt(x); });
         } else if (which == QLatin1String("reciproc")) {
             if (value() == 0) {
-                showError(QStringLiteral("Ділення на нуль неможливе"));
+                showError(tr7("Cannot divide by zero"));
                 return;
             }
             unary(QStringLiteral("reciproc"), [](Num x) { return 1 / x; });
@@ -1971,7 +1972,7 @@ private:
             } else {
                 const Num x = value();
                 if (k != QLatin1String("tan") && (x < -1 || x > 1)) {
-                    showError(QStringLiteral("Неприпустиме введення"));
+                    showError(tr7("Invalid input"));
                     return;
                 }
                 unary(QStringLiteral("a") + k + s, [this, k](Num x) {
@@ -1988,14 +1989,14 @@ private:
             if (inv) {
                 unary(QStringLiteral("powe"), [](Num x) { return std::exp(x); });
             } else if (value() <= 0) {
-                showError(QStringLiteral("Неприпустиме введення"));
+                showError(tr7("Invalid input"));
                 return;
             } else {
                 unary(QStringLiteral("ln"), [](Num x) { return std::log(x); });
             }
         } else if (k == QLatin1String("log")) {
             if (value() <= 0) {
-                showError(QStringLiteral("Неприпустиме введення"));
+                showError(tr7("Invalid input"));
                 return;
             }
             unary(QStringLiteral("log"), [](Num x) { return std::log10(x); });
@@ -2010,7 +2011,7 @@ private:
         } else if (k == QLatin1String("n!")) {
             const Num x = value();
             if (x < 0 && std::fmod(x, 1.0L) == 0) {
-                showError(QStringLiteral("Неприпустиме введення"));
+                showError(tr7("Invalid input"));
                 return;
             }
             unary(QStringLiteral("fact"), [](Num x) { return std::tgamma(x + 1); });
@@ -2153,7 +2154,7 @@ private:
         } else if (which == QLatin1String("Σx²")) {
             r = sumSq;
         } else if (n == 0) {
-            showError(QStringLiteral("Неприпустиме введення"));
+            showError(tr7("Invalid input"));
             return;
         } else if (which == QLatin1String("x̄")) {
             r = sum / n;
@@ -2169,7 +2170,7 @@ private:
                 r = std::sqrt(dev / n);
             } else {
                 if (n < 2) {
-                    showError(QStringLiteral("Неприпустиме введення"));
+                    showError(tr7("Invalid input"));
                     return;
                 }
                 r = std::sqrt(dev / (n - 1));
@@ -2350,7 +2351,7 @@ private:
         const int row = m_display->list->row(item);
         const auto r = evaluate(item->text());
         if (!r) {
-            showError(QStringLiteral("Неприпустиме введення"));
+            showError(tr7("Invalid input"));
             return;
         }
         item->setData(Qt::UserRole, double(*r));
@@ -2476,7 +2477,7 @@ private:
             auto *ah = new QHBoxLayout(angles);
             ah->setContentsMargins(6, 0, 6, 0);
             auto *angleGroup = new QButtonGroup(angles);
-            const QStringList names{QStringLiteral("Градуси"), QStringLiteral("Радіани"), QStringLiteral("Гради")};
+            const QStringList names{tr7("Degrees", "angle mode"), tr7("Radians", "angle mode"), tr7("Grads")};
             for (int i = 0; i < 3; ++i) {
                 auto *r = new QRadioButton(names.at(i));
                 r->setFocusPolicy(Qt::NoFocus);
@@ -2553,7 +2554,7 @@ private:
             g->addWidget(radios({{16, QStringLiteral("Hex")}, {10, QStringLiteral("Dec")}, {8, QStringLiteral("Oct")}, {2, QStringLiteral("Bin")}}, m_radixButtons, m_radix,
                                 [this](int id) { setRadix(id); }),
                          0, 0, 3, 1);
-            g->addWidget(radios({{64, QStringLiteral("8 байтів")}, {32, QStringLiteral("4 байти")}, {16, QStringLiteral("2 байти")}, {8, QStringLiteral("1 байт")}},
+            g->addWidget(radios({{64, tr7("Qword")}, {32, tr7("Dword")}, {16, tr7("Word")}, {8, tr7("Byte")}},
                                 m_wordButtons, m_wordBits, [this](int id) { setWordBits(id); }),
                          3, 0, 3, 1);
             makeKey(g, QString(), 0, 1, nullptr);
@@ -2679,12 +2680,12 @@ private:
             " border: 1px solid #a8c8ea; border-radius: 2px; }"
             "QMenuBar::item:pressed { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #f6f9fd, stop:1 #e2eaf4);"
             " border: 1px solid #8e9fb4; border-radius: 2px; }"));
-        QMenu *view = menuBar()->addMenu(QStringLiteral("&Вигляд"));
+        QMenu *view = menuBar()->addMenu(tr7("&View"));
         auto *modes = new QActionGroup(this);
-        const QList<std::tuple<Mode, QString, QString>> list{{Standard, QStringLiteral("&Звичайний"), QStringLiteral("Alt+1")},
-                                                             {Scientific, QStringLiteral("&Інженерний"), QStringLiteral("Alt+2")},
-                                                             {Programmer, QStringLiteral("&Програміст"), QStringLiteral("Alt+3")},
-                                                             {Statistics, QStringLiteral("&Статистика"), QStringLiteral("Alt+4")}};
+        const QList<std::tuple<Mode, QString, QString>> list{{Standard, tr7("&Standard"), QStringLiteral("Alt+1")},
+                                                             {Scientific, tr7("Sc&ientific"), QStringLiteral("Alt+2")},
+                                                             {Programmer, tr7("&Programmer"), QStringLiteral("Alt+3")},
+                                                             {Statistics, tr7("S&tatistics"), QStringLiteral("Alt+4")}};
         for (const auto &[mode, text, key] : list) {
             QAction *a = view->addAction(text);
             a->setCheckable(true);
@@ -2697,7 +2698,7 @@ private:
             });
         }
         view->addSeparator();
-        m_historyAction = view->addAction(QStringLiteral("&Журнал"));
+        m_historyAction = view->addAction(tr7("&History"));
         m_historyAction->setCheckable(true);
         m_historyAction->setChecked(m_historyOn);
         m_historyAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+H")));
@@ -2706,7 +2707,7 @@ private:
             m_settings.setValue(QStringLiteral("History"), on);
             setMode(m_mode);
         });
-        QAction *grouping = view->addAction(QStringLiteral("&Групування цифр за розрядами"));
+        QAction *grouping = view->addAction(tr7("D&igit grouping"));
         grouping->setCheckable(true);
         grouping->setChecked(m_grouping);
         connect(grouping, &QAction::toggled, this, [this](bool on) {
@@ -2729,37 +2730,37 @@ private:
                 setPanel(p != BasicPanel && p == m_panel ? BasicPanel : p);
             });
         };
-        addPanel(view, BasicPanel, QStringLiteral("&Основний"), QStringLiteral("Ctrl+F4"));
-        addPanel(view, UnitsPanel, QStringLiteral("&Перетворення одиниць"), QStringLiteral("Ctrl+U"));
-        addPanel(view, DatesPanel, QStringLiteral("&Обчислення дати"), QStringLiteral("Ctrl+E"));
-        QMenu *sheets = view->addMenu(QStringLiteral("&Листи"));
-        addPanel(sheets, MortgagePanel, QStringLiteral("&Іпотека"), {});
-        addPanel(sheets, LeasePanel, QStringLiteral("&Автолізинг"), {});
-        addPanel(sheets, FuelMpgPanel, QStringLiteral("Економія пального (&миль на галон)"), {});
-        addPanel(sheets, FuelLitresPanel, QStringLiteral("Економія пального (&л/100 км)"), {});
+        addPanel(view, BasicPanel, tr7("&Basic"), QStringLiteral("Ctrl+F4"));
+        addPanel(view, UnitsPanel, tr7("&Unit conversion"), QStringLiteral("Ctrl+U"));
+        addPanel(view, DatesPanel, tr7("&Date calculation"), QStringLiteral("Ctrl+E"));
+        QMenu *sheets = view->addMenu(tr7("&Worksheets"));
+        addPanel(sheets, MortgagePanel, tr7("&Mortgage"), {});
+        addPanel(sheets, LeasePanel, tr7("Vehicle &lease"), {});
+        addPanel(sheets, FuelMpgPanel, tr7("Fuel economy (&mpg)"), {});
+        addPanel(sheets, FuelLitresPanel, tr7("Fuel economy (&L/100 km)"), {});
 
-        QMenu *edit = menuBar()->addMenu(QStringLiteral("&Правка"));
+        QMenu *edit = menuBar()->addMenu(tr7("&Edit"));
         edit->setProperty("win7plain", true);
-        edit->addAction(QStringLiteral("&Копіювати"), QKeySequence::Copy, this, [this] {
+        edit->addAction(tr7("&Copy"), QKeySequence::Copy, this, [this] {
             QGuiApplication::clipboard()->setText(m_entry);
         });
-        QAction *paste = edit->addAction(QStringLiteral("&Вставити"), QKeySequence::Paste, this, [this] {
+        QAction *paste = edit->addAction(tr7("&Paste"), QKeySequence::Paste, this, [this] {
             pasteNumber(QGuiApplication::clipboard()->text());
         });
         connect(edit, &QMenu::aboutToShow, paste, [paste] {
             paste->setEnabled(!QGuiApplication::clipboard()->text().trimmed().isEmpty());
         });
         edit->addSeparator();
-        QMenu *history = edit->addMenu(QStringLiteral("&Журнал"));
+        QMenu *history = edit->addMenu(tr7("&History"));
         history->setProperty("win7plain", true);
-        m_copyHistory = history->addAction(QStringLiteral("&Копіювати журнал"), this, [this] {
+        m_copyHistory = history->addAction(tr7("&Copy history"), this, [this] {
             QStringList lines;
             for (const auto &[expression, result] : std::as_const(m_history)) {
                 lines << expression + QStringLiteral(" = ") + numToText(result, false);
             }
             QGuiApplication::clipboard()->setText(lines.join(QLatin1Char('\n')));
         });
-        m_editHistory = history->addAction(QStringLiteral("&Змінити"), QKeySequence(Qt::Key_F2), this, [this] {
+        m_editHistory = history->addAction(tr7("&Edit", "history"), QKeySequence(Qt::Key_F2), this, [this] {
             QListWidget *l = m_display->list;
             if (!l->currentItem() && l->count() > 0) {
                 l->setCurrentRow(l->count() - 1);
@@ -2768,7 +2769,7 @@ private:
                 l->editItem(l->currentItem());
             }
         });
-        QAction *cancel = history->addAction(QStringLiteral("&Скасувати редагування\tEsc"), this, [this] {
+        QAction *cancel = history->addAction(tr7("&Cancel edit\tEsc"), this, [this] {
             if (QWidget *editor = QApplication::focusWidget()) {
                 QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
                 QApplication::sendEvent(editor, &esc);
@@ -2777,26 +2778,25 @@ private:
         connect(history, &QMenu::aboutToShow, cancel, [this, cancel] {
             cancel->setEnabled(m_display->list->isEditing());
         });
-        m_clearHistory = history->addAction(QStringLiteral("&Очистити"), QKeySequence(QStringLiteral("Ctrl+Shift+D")), this, [this] {
+        m_clearHistory = history->addAction(tr7("C&lear"), QKeySequence(QStringLiteral("Ctrl+Shift+D")), this, [this] {
             m_history.clear();
             if (m_mode != Statistics) {
                 m_display->list->clear();
             }
         });
 
-        QMenu *help = menuBar()->addMenu(QStringLiteral("&Довідка"));
+        QMenu *help = menuBar()->addMenu(tr7("&Help"));
         help->setProperty("win7plain", true);
-        help->addAction(QStringLiteral("&Переглянути довідку"), QKeySequence(Qt::Key_F1), this, [this] {
+        help->addAction(tr7("&View Help"), QKeySequence(Qt::Key_F1), this, [this] {
             showHelp();
         });
         help->addSeparator();
-        help->addAction(QStringLiteral("&Про програму"), this, [this] {
+        help->addAction(tr7("&About Calculator"), this, [this] {
             QMessageBox about(this);
-            about.setWindowTitle(QStringLiteral("Про програму «Калькулятор»"));
+            about.setWindowTitle(tr7("About Calculator"));
             about.setIconPixmap(QIcon::fromTheme(QStringLiteral("seven-calc")).pixmap(48, 48));
-            about.setText(QStringLiteral("<b>Калькулятор</b>"));
-            about.setInformativeText(QStringLiteral("Калькулятор у стилі Windows 7: звичайний, інженерний, програмістський і статистичний режими, "
-                                                    "журнал, перетворення одиниць, обчислення дати та листи."));
+            about.setText(tr7("<b>Calculator</b>"));
+            about.setInformativeText(tr7("A calculator in the Windows 7 style: standard, scientific, programmer and statistics modes, history, unit conversion, date calculation and worksheets."));
             about.exec();
         });
         win7WrapMenuBar(this); // Windows 7: the menu bar wraps instead of showing a "»" arrow
@@ -2805,23 +2805,14 @@ private:
     void showHelp()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Довідка: Калькулятор"));
+        dlg.setWindowTitle(tr7("Help: Calculator"));
         auto *v = new QVBoxLayout(&dlg);
-        auto *text = new QLabel(QStringLiteral(
-            "<b>Клавіатура</b><br>"
-            "Цифри, + − * /, Enter або = — обчислення<br>"
-            "Esc — C (очистити все), Delete — CE, Backspace — ←, F9 — ±<br>"
-            "@ — квадратний корінь, R — 1/x, % — відсоток<br>"
-            "Ctrl+M / Ctrl+R / Ctrl+P / Ctrl+Q / Ctrl+L — MS, MR, M+, M−, MC<br><br>"
-            "<b>Інженерний</b>: S sin, O cos, T tan, N ln, L log, Q x², # x³, Y xʸ, ! n!, P π, I Inv, V F-E, X Exp, ( )<br>"
-            "<b>Програміст</b>: F5 Hex, F6 Dec, F7 Oct, F8 Bin, F12/F2/F3/F4 — 8/4/2/1 байти, &amp; And, | Or, ^ Xor, &lt; Lsh, &gt; Rsh, ~ Not<br>"
-            "<b>Статистика</b>: Insert — Add<br><br>"
-            "<b>Вигляд</b>: Alt+1…Alt+4 — режими, Ctrl+H — журнал, Ctrl+U — одиниці, Ctrl+E — дати, Ctrl+F4 — основний"));
+        auto *text = new QLabel(tr7("<b>Keyboard</b><br>Digits, + − * /, Enter or = - calculate<br>Esc - C (clear all), Delete - CE, Backspace - ←, F9 - ±<br>@ - square root, R - 1/x, % - percent<br>Ctrl+M / Ctrl+R / Ctrl+P / Ctrl+Q / Ctrl+L - MS, MR, M+, M−, MC<br><br><b>Scientific</b>: S sin, O cos, T tan, N ln, L log, Q x², # x³, Y xʸ, ! n!, P π, I Inv, V F-E, X Exp, ( )<br><b>Programmer</b>: F5 Hex, F6 Dec, F7 Oct, F8 Bin, F12/F2/F3/F4 - 8/4/2/1 bytes, &amp; And, | Or, ^ Xor, &lt; Lsh, &gt; Rsh, ~ Not<br><b>Statistics</b>: Insert - Add<br><br><b>View</b>: Alt+1…Alt+4 - modes, Ctrl+H - history, Ctrl+U - units, Ctrl+E - dates, Ctrl+F4 - basic"));
         text->setWordWrap(true);
         text->setMinimumWidth(460);
         v->addWidget(text);
         auto *bb = new QDialogButtonBox;
-        bb->addButton(QStringLiteral("Закрити"), QDialogButtonBox::AcceptRole);
+        bb->addButton(tr7("Close"), QDialogButtonBox::AcceptRole);
         connect(bb, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
         v->addWidget(bb);
         dlg.exec();
@@ -2879,20 +2870,20 @@ private:
         v->setContentsMargins(12, 12, 12, 12);
         v->setSpacing(6);
         const QList<Category> cats = categories();
-        v->addWidget(panelLabel(QStringLiteral("Виберіть тип перетворюваної одиниці")));
+        v->addWidget(panelLabel(tr7("Select the type of unit you want to convert")));
         auto *category = new QComboBox;
         for (const Category &c : cats) {
             category->addItem(c.name);
         }
         v->addWidget(category);
         v->addSpacing(6);
-        v->addWidget(panelLabel(QStringLiteral("З")));
+        v->addWidget(panelLabel(tr7("From")));
         m_unitFrom = valueEdit();
         v->addWidget(m_unitFrom);
         auto *fromUnit = new QComboBox;
         v->addWidget(fromUnit);
         v->addSpacing(6);
-        v->addWidget(panelLabel(QStringLiteral("в")));
+        v->addWidget(panelLabel(tr7("To")));
         auto *to = resultEdit();
         v->addWidget(to);
         auto *toUnit = new QComboBox;
@@ -2946,7 +2937,7 @@ private:
             std::swap(a, b);
         }
         if (a == b) {
-            return QStringLiteral("Однакові дати");
+            return tr7("Same dates");
         }
         int months = (b.year() - a.year()) * 12 + (b.month() - a.month());
         if (a.addMonths(months) > b) {
@@ -2956,16 +2947,16 @@ private:
         const int days = t.daysTo(b);
         QStringList parts;
         if (months / 12) {
-            parts << QStringLiteral("%1 р.").arg(months / 12);
+            parts << tr7("%1 years").arg(months / 12);
         }
         if (months % 12) {
-            parts << QStringLiteral("%1 міс.").arg(months % 12);
+            parts << tr7("%1 months").arg(months % 12);
         }
         if (days / 7) {
-            parts << QStringLiteral("%1 тиж.").arg(days / 7);
+            parts << tr7("%1 weeks").arg(days / 7);
         }
         if (days % 7) {
-            parts << QStringLiteral("%1 дн.").arg(days % 7);
+            parts << tr7("%1 days").arg(days % 7);
         }
         return parts.join(QStringLiteral("; "));
     }
@@ -2976,10 +2967,10 @@ private:
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 12, 12, 12);
         v->setSpacing(6);
-        v->addWidget(panelLabel(QStringLiteral("Виберіть потрібне обчислення дати")));
+        v->addWidget(panelLabel(tr7("Select the date calculation you want")));
         auto *kind = new QComboBox;
-        kind->addItem(QStringLiteral("Обчислення інтервалу між двома датами"));
-        kind->addItem(QStringLiteral("Додавання або віднімання днів для вказаної дати"));
+        kind->addItem(tr7("Calculate the difference between two dates"));
+        kind->addItem(tr7("Add or subtract days to a specified date"));
         v->addWidget(kind);
         auto *stack = new QStackedWidget;
         v->addWidget(stack);
@@ -2989,18 +2980,18 @@ private:
         auto *v1 = new QVBoxLayout(p1);
         v1->setContentsMargins(0, 4, 0, 0);
         auto *r1 = new QHBoxLayout;
-        r1->addWidget(panelLabel(QStringLiteral("З")));
+        r1->addWidget(panelLabel(tr7("From")));
         auto *from = dateEdit();
         r1->addWidget(from);
         r1->addStretch(1);
-        r1->addWidget(panelLabel(QStringLiteral("По")));
+        r1->addWidget(panelLabel(tr7("To", "date")));
         auto *till = dateEdit();
         r1->addWidget(till);
         v1->addLayout(r1);
-        v1->addWidget(panelLabel(QStringLiteral("Різниця (роки, місяці, тижні, дні)")));
+        v1->addWidget(panelLabel(tr7("Difference (years, months, weeks, days)")));
         auto *diff = resultEdit();
         v1->addWidget(diff);
-        v1->addWidget(panelLabel(QStringLiteral("Різниця (дні)")));
+        v1->addWidget(panelLabel(tr7("Difference (days)")));
         auto *diffDays = resultEdit();
         v1->addWidget(diffDays);
         v1->addStretch(1);
@@ -3011,11 +3002,11 @@ private:
         auto *v2 = new QVBoxLayout(p2);
         v2->setContentsMargins(0, 4, 0, 0);
         auto *r2 = new QHBoxLayout;
-        r2->addWidget(panelLabel(QStringLiteral("З")));
+        r2->addWidget(panelLabel(tr7("From")));
         auto *base = dateEdit();
         r2->addWidget(base);
-        auto *add = new QRadioButton(QStringLiteral("Додати"));
-        auto *sub = new QRadioButton(QStringLiteral("Відняти"));
+        auto *add = new QRadioButton(tr7("Add"));
+        auto *sub = new QRadioButton(tr7("Subtract"));
         add->setChecked(true);
         r2->addWidget(add);
         r2->addWidget(sub);
@@ -3031,11 +3022,11 @@ private:
             r3->addStretch(1);
             return s;
         };
-        auto *years = spin(QStringLiteral("Роки"));
-        auto *months = spin(QStringLiteral("Місяці"));
-        auto *days = spin(QStringLiteral("Дні"));
+        auto *years = spin(tr7("Years"));
+        auto *months = spin(tr7("Months"));
+        auto *days = spin(tr7("Days", "date"));
         v2->addLayout(r3);
-        v2->addWidget(panelLabel(QStringLiteral("Дата")));
+        v2->addWidget(panelLabel(tr7("Date")));
         auto *resultDate = resultEdit();
         v2->addWidget(resultDate);
         v2->addStretch(1);
@@ -3043,7 +3034,7 @@ private:
 
         auto *btnRow = new QHBoxLayout;
         btnRow->addStretch(1);
-        auto *calc = new QPushButton(QStringLiteral("Обчислити"));
+        auto *calc = new QPushButton(tr7("Calculate"));
         calc->setMinimumWidth(100);
         calc->setAutoDefault(false);
         btnRow->addWidget(calc);
@@ -3054,12 +3045,12 @@ private:
         connect(calc, &QPushButton::clicked, panel, [=] {
             if (kind->currentIndex() == 0) {
                 diff->setText(dateDifference(from->date(), till->date()));
-                diffDays->setText(from->date() == till->date() ? QStringLiteral("Однакові дати")
-                                                               : QStringLiteral("%1 дн.").arg(std::abs(from->date().daysTo(till->date()))));
+                diffDays->setText(from->date() == till->date() ? tr7("Same dates")
+                                                               : tr7("%1 days").arg(std::abs(from->date().daysTo(till->date()))));
             } else {
                 const int s = add->isChecked() ? 1 : -1;
                 const QDate d = base->date().addYears(s * years->value()).addMonths(s * months->value()).addDays(s * days->value());
-                resultDate->setText(d.isValid() ? QLocale(QLocale::Ukrainian).toString(d, QStringLiteral("d MMMM yyyy 'р.'")) : QString());
+                resultDate->setText(d.isValid() ? QLocale{}.toString(d, tr7("MMMM d, yyyy")) : QString());
             }
         });
         return panel;
@@ -3071,7 +3062,7 @@ private:
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 12, 12, 12);
         v->setSpacing(6);
-        v->addWidget(panelLabel(QStringLiteral("Виберіть значення для обчислення")));
+        v->addWidget(panelLabel(tr7("Select the value you want to calculate")));
         auto *target = new QComboBox;
         for (int t : sheet.targets) {
             target->addItem(sheet.fields.at(t), t);
@@ -3086,7 +3077,7 @@ private:
         form->setColumnStretch(1, 1);
         v->addWidget(formHost);
         auto *row = new QHBoxLayout;
-        auto *calc = new QPushButton(QStringLiteral("Обчислити"));
+        auto *calc = new QPushButton(tr7("Calculate"));
         calc->setMinimumWidth(100);
         calc->setAutoDefault(false);
         row->addWidget(calc);
@@ -3130,14 +3121,14 @@ private:
             for (auto it = edits->cbegin(); it != edits->cend(); ++it) {
                 const auto v = parseInput(it.value()->text());
                 if (!v) {
-                    result->setText(QStringLiteral("Неприпустиме введення"));
+                    result->setText(tr7("Invalid input"));
                     it.value()->setFocus();
                     return;
                 }
                 in.insert(it.key(), *v);
             }
             const auto r = sheet.solve(target->currentData().toInt(), in);
-            result->setText(r && std::isfinite(*r) ? resultText(*r) : QStringLiteral("Неприпустиме введення"));
+            result->setText(r && std::isfinite(*r) ? resultText(*r) : tr7("Invalid input"));
         });
         rebuild();
         return panel;
@@ -3221,8 +3212,9 @@ void applyWin7Menus(QApplication &app)
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-calc"));
-    app.setApplicationDisplayName(QStringLiteral("Калькулятор"));
+    app.setApplicationDisplayName(tr7("Calculator"));
     app.setDesktopFileName(QStringLiteral("seven-calc"));
     applyWin7Menus(app);
     Calculator w;

@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -64,7 +65,7 @@ inline Result nmcli(const QStringList &args, const QByteArray &input = {}, int t
     p.setProcessEnvironment(env);
     p.start(QStringLiteral("nmcli"), args);
     if (!p.waitForStarted(3000)) {
-        return {false, {}, QStringLiteral("nmcli не знайдено")};
+        return {false, {}, tr7("nmcli not found")};
     }
     if (!input.isEmpty()) {
         p.write(input);
@@ -72,7 +73,7 @@ inline Result nmcli(const QStringList &args, const QByteArray &input = {}, int t
     p.closeWriteChannel();
     if (!p.waitForFinished(timeoutMs)) {
         p.kill();
-        return {false, {}, QStringLiteral("Час очікування вичерпано")};
+        return {false, {}, tr7("The operation timed out")};
     }
     return {p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0, QString::fromUtf8(p.readAllStandardOutput()),
             QString::fromUtf8(p.readAllStandardError()).trimmed()};
@@ -143,7 +144,7 @@ inline bool modify(QWidget *parent, const QString &uuid, const QStringList &sett
     }
     const Result r = nmcli(QStringList{QStringLiteral("con"), QStringLiteral("modify"), uuid} + settings);
     if (!r.ok) {
-        QMessageBox::warning(parent, QStringLiteral("Мережеві підключення"), QStringLiteral("Не вдалося змінити параметри підключення.\n\n%1").arg(r.err));
+        QMessageBox::warning(parent, tr7("Network Connections"), tr7("The connection settings could not be changed.\n\n%1").arg(r.err));
     }
     return r.ok;
 }
@@ -151,8 +152,8 @@ inline bool modify(QWidget *parent, const QString &uuid, const QStringList &sett
 inline bool askYesNo(QWidget *parent, const QString &title, const QString &text, QMessageBox::Icon icon = QMessageBox::Question)
 {
     QMessageBox box(icon, title, text, QMessageBox::NoButton, parent);
-    QPushButton *yes = box.addButton(QStringLiteral("Так"), QMessageBox::YesRole);
-    box.addButton(QStringLiteral("Ні"), QMessageBox::NoRole);
+    QPushButton *yes = box.addButton(tr7("Yes"), QMessageBox::YesRole);
+    box.addButton(tr7("No"), QMessageBox::NoRole);
     box.setDefaultButton(yes);
     box.exec();
     return box.clickedButton() == yes;
@@ -253,22 +254,22 @@ inline QList<Tile> loadTiles()
                     }
                 }
             }
-            t.name = t.uuid.isEmpty() ? QStringLiteral("Підключення по локальній мережі") : conByUuid(t.uuid).value(0);
+            t.name = t.uuid.isEmpty() ? tr7("Local Area Connection") : conByUuid(t.uuid).value(0);
             if (off || t.devState == QLatin1String("disconnected")) {
-                t.status = QStringLiteral("Вимкнено");
+                t.status = tr7("Off", "firewall state");
                 t.grey = true;
             } else if (t.devState == QLatin1String("unavailable")) {
-                t.status = QStringLiteral("Мережевий кабель не підключено");
+                t.status = tr7("Network cable unplugged");
                 t.redX = true;
             } else if (t.active) {
-                t.status = QStringLiteral("Підключено");
+                t.status = tr7("Connected");
             } else {
-                t.status = QStringLiteral("Ідентифікація...");
+                t.status = tr7("Identifying...");
             }
         } else {
-            t.name = QStringLiteral("Бездротове мережеве з'єднання");
+            t.name = tr7("Wireless Network Connection");
             if (off) {
-                t.status = QStringLiteral("Вимкнено");
+                t.status = tr7("Off", "firewall state");
                 t.grey = true;
             } else if (t.active) {
                 t.status = conByUuid(t.uuid).value(0);
@@ -281,7 +282,7 @@ inline QList<Tile> loadTiles()
                     }
                 }
             } else {
-                t.status = QStringLiteral("Немає підключення");
+                t.status = tr7("Not connected", "network");
                 t.redX = true;
             }
         }
@@ -292,17 +293,17 @@ inline QList<Tile> loadTiles()
         Tile t;
         if (type == QLatin1String("pppoe")) {
             t.kind = Tile::Dialup;
-            t.description = QStringLiteral("Високошвидкісне підключення (PPPoE)");
+            t.description = tr7("Broadband Connection (PPPoE)");
         } else if (type == QLatin1String("vpn") || type == QLatin1String("wireguard")) {
             t.kind = Tile::Vpn;
-            t.description = type == QLatin1String("wireguard") ? QStringLiteral("VPN (WireGuard)") : QStringLiteral("VPN-підключення");
+            t.description = type == QLatin1String("wireguard") ? QStringLiteral("VPN (WireGuard)") : tr7("VPN Connection");
         } else {
             continue;
         }
         t.uuid = c.value(1);
         t.name = c.value(0);
         t.active = c.value(4) == QLatin1String("yes");
-        t.status = t.active ? QStringLiteral("Підключено") : QStringLiteral("Відключено");
+        t.status = t.active ? tr7("Connected") : tr7("Disabled");
         t.grey = !t.active;
         tiles << t;
     }
@@ -537,12 +538,12 @@ inline IpField *ipEdit()
 inline QString connectivityText(const QString &v)
 {
     if (v.contains(QLatin1String("full"))) {
-        return QStringLiteral("Інтернет");
+        return tr7("Internet");
     }
     if (v.contains(QLatin1String("limited")) || v.contains(QLatin1String("portal"))) {
-        return QStringLiteral("Без доступу до Інтернету");
+        return tr7("No Internet access");
     }
-    return QStringLiteral("Без доступу до мережі");
+    return tr7("No network access");
 }
 
 /* ---------------- dialogs ---------------- */
@@ -569,10 +570,10 @@ inline QWidget *alternateConfigTab()
     auto *v = new QVBoxLayout(page);
     v->setContentsMargins(10, 10, 10, 8);
     v->setSpacing(4);
-    v->addWidget(plain(QStringLiteral("Якщо цей комп'ютер використовується в кількох мережах, введіть нижче альтернативні параметри IP.")));
+    v->addWidget(plain(tr7("If this computer is used on more than one network, enter the alternate IP settings below.")));
     v->addSpacing(6);
-    auto *apipa = new QRadioButton(QStringLiteral("Автоматична приватна IP-адреса"));
-    auto *user = new QRadioButton(QStringLiteral("Указана користувачем"));
+    auto *apipa = new QRadioButton(tr7("Automatic private IP address"));
+    auto *user = new QRadioButton(tr7("User configured"));
     apipa->setChecked(true);
     user->setEnabled(false);
     v->addWidget(apipa);
@@ -581,9 +582,9 @@ inline QWidget *alternateConfigTab()
     auto *g = new QGridLayout(box);
     g->setColumnStretch(0, 1);
     g->setVerticalSpacing(5);
-    const QStringList labels = {QStringLiteral("IP-адреса:"), QStringLiteral("Маска підмережі:"), QStringLiteral("Основний шлюз:"), QString(),
-                                QStringLiteral("Бажаний DNS-сервер:"), QStringLiteral("Альтернативний DNS-сервер:"), QString(),
-                                QStringLiteral("Бажаний WINS-сервер:"), QStringLiteral("Альтернативний WINS-сервер:")};
+    const QStringList labels = {tr7("IP address:"), tr7("Subnet mask:"), tr7("Default gateway:"), QString(),
+                                tr7("Preferred DNS server:"), tr7("Alternate DNS server:"), QString(),
+                                tr7("Preferred WINS server:"), tr7("Alternate WINS server:")};
     for (int i = 0; i < labels.size(); ++i) {
         if (labels[i].isEmpty()) {
             g->setRowMinimumHeight(i, 6);
@@ -602,7 +603,7 @@ inline QWidget *alternateConfigTab()
 inline void advancedTcpIp(QWidget *parent, const QString &uuid)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Додаткові параметри TCP/IP"));
+    dlg.setWindowTitle(tr7("Advanced TCP/IP Settings"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowContextHelpButtonHint | Qt::WindowCloseButtonHint);
     dlg.setFixedSize(400, 470);
     auto *v = new QVBoxLayout(&dlg);
@@ -622,8 +623,8 @@ inline void advancedTcpIp(QWidget *parent, const QString &uuid)
         bv->addWidget(t);
         auto *h = new QHBoxLayout;
         h->addStretch(1);
-        for (const char *b : {"Додати...", "Змінити...", "Видалити"}) {
-            auto *btn = win7Button(QString::fromUtf8(b));
+        for (const char *b : {"Add...", "Edit...", "Delete"}) {
+            auto *btn = win7Button(tr7(b));
             btn->setEnabled(false);
             h->addWidget(btn);
         }
@@ -639,7 +640,7 @@ inline void advancedTcpIp(QWidget *parent, const QString &uuid)
     const bool dhcp = conValue(uuid, QStringLiteral("ipv4.method")) == QLatin1String("auto");
     QList<QStringList> addrs, gws, dnss;
     if (dhcp) {
-        addrs << QStringList{QStringLiteral("DHCP увімкнено"), QString()};
+        addrs << QStringList{tr7("DHCP Enabled"), QString()};
     } else {
         for (const QString &a : info.value(QStringLiteral("IP4.ADDRESS"))) {
             addrs << QStringList{a.section(QLatin1Char('/'), 0, 0), prefixToMask(a.section(QLatin1Char('/'), 1, 1).toInt())};
@@ -647,31 +648,31 @@ inline void advancedTcpIp(QWidget *parent, const QString &uuid)
     }
     const QString gw = info.value(QStringLiteral("IP4.GATEWAY")).value(0);
     if (!gw.isEmpty() && gw != QLatin1String("--")) {
-        gws << QStringList{gw, QStringLiteral("Автоматично")};
+        gws << QStringList{gw, tr7("Automatic")};
     }
     for (const QString &d : info.value(QStringLiteral("IP4.DNS"))) {
         dnss << QStringList{d};
     }
     auto *ipPage = new QWidget;
     auto *iv = new QVBoxLayout(ipPage);
-    iv->addWidget(listBox(QStringLiteral("IP-адреси"), {QStringLiteral("IP-адреса"), QStringLiteral("Маска підмережі")}, addrs));
-    iv->addWidget(listBox(QStringLiteral("Основні шлюзи:"), {QStringLiteral("Шлюз"), QStringLiteral("Метрика")}, gws));
-    tabs->addTab(ipPage, QStringLiteral("Параметри IP"));
+    iv->addWidget(listBox(tr7("IP addresses"), {tr7("IP address"), tr7("Subnet mask")}, addrs));
+    iv->addWidget(listBox(tr7("Default gateways:"), {tr7("Gateway"), tr7("Metric")}, gws));
+    tabs->addTab(ipPage, tr7("IP Settings"));
     auto *dnsPage = new QWidget;
     auto *dv = new QVBoxLayout(dnsPage);
-    dv->addWidget(listBox(QStringLiteral("Адреси DNS-серверів у порядку використання:"), {QStringLiteral("DNS")}, dnss));
+    dv->addWidget(listBox(tr7("DNS server addresses, in order of use:"), {QStringLiteral("DNS")}, dnss));
     dv->addStretch(1);
     tabs->addTab(dnsPage, QStringLiteral("DNS"));
     auto *winsPage = new QWidget;
     auto *wv = new QVBoxLayout(winsPage);
-    wv->addWidget(listBox(QStringLiteral("Адреси WINS у порядку використання:"), {QStringLiteral("WINS")}, {}));
+    wv->addWidget(listBox(tr7("WINS addresses, in order of use:"), {QStringLiteral("WINS")}, {}));
     wv->addStretch(1);
     tabs->addTab(winsPage, QStringLiteral("WINS"));
     v->addWidget(tabs);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
     auto *ok = win7Button(QStringLiteral("OK"));
-    auto *cancel = win7Button(QStringLiteral("Скасувати"));
+    auto *cancel = win7Button(tr7("Cancel"));
     row->addWidget(ok);
     row->addWidget(cancel);
     v->addLayout(row);
@@ -684,7 +685,7 @@ inline void advancedTcpIp(QWidget *parent, const QString &uuid)
 inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Властивості: Протокол Інтернету версії 4 (TCP/IPv4)"));
+    dlg.setWindowTitle(tr7("Internet Protocol Version 4 (TCP/IPv4) Properties"));
     // Windows 7: "?" and close only, fixed size
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowContextHelpButtonHint | Qt::WindowCloseButtonHint);
     auto *v = new QVBoxLayout(&dlg);
@@ -694,8 +695,7 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     auto *pv = new QVBoxLayout(page);
     pv->setContentsMargins(10, 10, 10, 8);
     pv->setSpacing(4);
-    pv->addWidget(plain(QStringLiteral("Параметри IP можна призначати автоматично, якщо мережа підтримує цю можливість. "
-                                       "В іншому разі дізнайтеся параметри IP в адміністратора мережі.")));
+    pv->addWidget(plain(tr7("You can get IP settings assigned automatically if your network supports this capability. Otherwise, you need to ask your network administrator for the appropriate IP settings.")));
     pv->addSpacing(6);
 
     const QString method = conValue(uuid, QStringLiteral("ipv4.method"));
@@ -704,8 +704,8 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     const QStringList dns = conValue(uuid, QStringLiteral("ipv4.dns")).split(QLatin1Char(','), Qt::SkipEmptyParts);
     const bool ignoreAutoDns = conValue(uuid, QStringLiteral("ipv4.ignore-auto-dns")) == QLatin1String("yes");
 
-    auto *autoIp = new QRadioButton(QStringLiteral("Отримати IP-адресу автоматично"));
-    auto *manualIp = new QRadioButton(QStringLiteral("Використовувати таку IP-адресу:"));
+    auto *autoIp = new QRadioButton(tr7("Obtain an IP address automatically"));
+    auto *manualIp = new QRadioButton(tr7("Use the following IP address:"));
     auto *ip = ipEdit();
     auto *mask = ipEdit();
     auto *gw = ipEdit();
@@ -721,18 +721,18 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     auto *ipForm = new QGridLayout(ipBox);
     ipForm->setColumnStretch(0, 1);
     ipForm->setVerticalSpacing(5);
-    ipForm->addWidget(new QLabel(QStringLiteral("IP-адреса:")), 0, 0);
+    ipForm->addWidget(new QLabel(tr7("IP address:")), 0, 0);
     ipForm->addWidget(ip, 0, 1);
-    ipForm->addWidget(new QLabel(QStringLiteral("Маска підмережі:")), 1, 0);
+    ipForm->addWidget(new QLabel(tr7("Subnet mask:")), 1, 0);
     ipForm->addWidget(mask, 1, 1);
-    ipForm->addWidget(new QLabel(QStringLiteral("Основний шлюз:")), 2, 0);
+    ipForm->addWidget(new QLabel(tr7("Default gateway:")), 2, 0);
     ipForm->addWidget(gw, 2, 1);
     pv->addWidget(autoIp);
     pv->addWidget(manualIp);
     pv->addWidget(ipBox);
 
-    auto *autoDns = new QRadioButton(QStringLiteral("Отримати адресу DNS-сервера автоматично"));
-    auto *manualDns = new QRadioButton(QStringLiteral("Використовувати такі адреси DNS-серверів:"));
+    auto *autoDns = new QRadioButton(tr7("Obtain DNS server address automatically"));
+    auto *manualDns = new QRadioButton(tr7("Use the following DNS server addresses:"));
     auto *dns1 = ipEdit();
     auto *dns2 = ipEdit();
     dns1->setText(dns.value(0).trimmed());
@@ -742,9 +742,9 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     auto *dnsForm = new QGridLayout(dnsBox);
     dnsForm->setColumnStretch(0, 1);
     dnsForm->setVerticalSpacing(5);
-    dnsForm->addWidget(new QLabel(QStringLiteral("Бажаний DNS-сервер:")), 0, 0);
+    dnsForm->addWidget(new QLabel(tr7("Preferred DNS server:")), 0, 0);
     dnsForm->addWidget(dns1, 0, 1);
-    dnsForm->addWidget(new QLabel(QStringLiteral("Альтернативний DNS-сервер:")), 1, 0);
+    dnsForm->addWidget(new QLabel(tr7("Alternate DNS server:")), 1, 0);
     dnsForm->addWidget(dns2, 1, 1);
     pv->addSpacing(6);
     pv->addWidget(autoDns);
@@ -752,11 +752,11 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     pv->addWidget(dnsBox);
     pv->addSpacing(6);
     auto *bottom = new QHBoxLayout;
-    auto *validate = new QCheckBox(QStringLiteral("Перевірити параметри при виході"));
+    auto *validate = new QCheckBox(tr7("Validate settings upon exit"));
     validate->setChecked(netStore().value(QStringLiteral("ValidateOnExit"), false).toBool());
     bottom->addWidget(validate);
     bottom->addStretch(1);
-    auto *advanced = win7Button(QStringLiteral("Додатково..."));
+    auto *advanced = win7Button(tr7("Advanced..."));
     bottom->addWidget(advanced);
     pv->addLayout(bottom);
     QObject::connect(advanced, &QPushButton::clicked, &dlg, [&dlg, uuid] {
@@ -776,8 +776,8 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     }
     sync();
 
-    tabs->addTab(page, QStringLiteral("Загальні"));
-    tabs->addTab(alternateConfigTab(), QStringLiteral("Альтернативна конфігурація"));
+    tabs->addTab(page, tr7("General"));
+    tabs->addTab(alternateConfigTab(), tr7("Alternate Configuration"));
     QObject::connect(manualIp, &QRadioButton::toggled, tabs, [tabs](bool manual) {
         tabs->setTabVisible(1, !manual); // Windows 7 hides it for a static address
     });
@@ -785,10 +785,10 @@ inline bool editIpv4(QWidget *parent, const QString &uuid, QStringList *settings
     v->addWidget(tabs);
     auto *buttons = new QDialogButtonBox;
     buttons->addButton(win7Button(QStringLiteral("OK")), QDialogButtonBox::AcceptRole);
-    buttons->addButton(win7Button(QStringLiteral("Скасувати")), QDialogButtonBox::RejectRole);
+    buttons->addButton(win7Button(tr7("Cancel")), QDialogButtonBox::RejectRole);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, [&] {
         if (manualIp->isChecked() && (!ip->isComplete() || !mask->isComplete())) {
-            QMessageBox::warning(&dlg, QStringLiteral("Протокол Інтернету версії 4 (TCP/IPv4)"), QStringLiteral("Введіть IP-адресу та маску підмережі."));
+            QMessageBox::warning(&dlg, tr7("Internet Protocol Version 4 (TCP/IPv4)"), tr7("Type an IP address and a subnet mask."));
             return;
         }
         dlg.accept();
@@ -833,7 +833,7 @@ inline QWidget *networkingTab(QWidget *dlg, const QString &uuid, const QString &
     v->setContentsMargins(10, 10, 10, 10);
     v->setSpacing(4);
     if (!through.isEmpty()) {
-        v->addWidget(new QLabel(QStringLiteral("Підключення через:")));
+        v->addWidget(new QLabel(tr7("Connect using:")));
         // the adapter in a sunken box with its icon, "Configure..." under it on the right
         auto *box = new QFrame;
         box->setFrameShape(QFrame::StyledPanel);
@@ -851,14 +851,14 @@ inline QWidget *networkingTab(QWidget *dlg, const QString &uuid, const QString &
         v->addWidget(box);
         auto *cfgRow = new QHBoxLayout;
         cfgRow->addStretch(1);
-        auto *cfg = win7Button(QStringLiteral("Настроїти..."));
+        auto *cfg = win7Button(tr7("Configure..."));
         cfgRow->addWidget(cfg);
         QObject::connect(cfg, &QPushButton::clicked, page, [] {
             QProcess::startDetached(QDir::homePath() + QStringLiteral("/.local/bin/seven-devmgr"), {});
         });
         v->addLayout(cfgRow);
     }
-    v->addWidget(new QLabel(QStringLiteral("Позначені компоненти використовуються цим підключенням:")));
+    v->addWidget(new QLabel(tr7("This connection uses the following items:")));
     auto *list = new QTreeWidget;
     list->setHeaderHidden(true);
     list->setRootIsDecorated(false);
@@ -874,19 +874,18 @@ inline QWidget *networkingTab(QWidget *dlg, const QString &uuid, const QString &
         bool on;
     };
     const QList<Comp> fixed1 = {
-        {QStringLiteral("Клієнт для мереж Microsoft"), QStringLiteral("seven-net-comp-client"),
-         QStringLiteral("Дає змогу комп'ютеру отримувати доступ до ресурсів у мережі Microsoft."), true},
-        {QStringLiteral("Планувальник пакетів QoS"), QStringLiteral("seven-net-comp-client"),
-         QStringLiteral("Забезпечує керування мережевим трафіком, включно з рівнем швидкості та службами пріоритетів."), true},
-        {QStringLiteral("Служба доступу до файлів і принтерів мереж Microsoft"), QStringLiteral("seven-net-comp-client"),
-         QStringLiteral("Дає змогу іншим комп'ютерам отримувати доступ до ресурсів на цьому комп'ютері в мережі Microsoft."), smbd},
+        {tr7("Client for Microsoft Networks"), QStringLiteral("seven-net-comp-client"),
+         tr7("Allows your computer to access resources on a Microsoft network."), true},
+        {tr7("QoS Packet Scheduler"), QStringLiteral("seven-net-comp-client"),
+         tr7("Provides network traffic control, including rate-of-flow and prioritization services."), true},
+        {tr7("File and Printer Sharing for Microsoft Networks"), QStringLiteral("seven-net-comp-client"),
+         tr7("Allows other computers to access resources on your computer using a Microsoft network."), smbd},
     };
     const QList<Comp> fixed2 = {
-        {QStringLiteral("Драйвер вводу-виводу відображувача топології канального рівня"), QStringLiteral("seven-net-comp-protocol"),
-         QStringLiteral("Використовується для виявлення та розміщення інших комп'ютерів, пристроїв і мережевої інфраструктури в мережі, "
-                        "а також для визначення пропускної здатності мережі."), true},
-        {QStringLiteral("Відповідач виявлення топології канального рівня"), QStringLiteral("seven-net-comp-protocol"),
-         QStringLiteral("Дозволяє виявляти цей комп'ютер і розміщувати його в мережі."), true},
+        {tr7("Link-Layer Topology Discovery Mapper I/O Driver"), QStringLiteral("seven-net-comp-protocol"),
+         tr7("Used to discover and locate other PCs, devices, and network infrastructure components on the network. Also used to determine network bandwidth."), true},
+        {tr7("Link-Layer Topology Discovery Responder"), QStringLiteral("seven-net-comp-protocol"),
+         tr7("Allows this PC to be discovered and located on the network."), true},
     };
     QHash<QTreeWidgetItem *, QString> descs;
     auto addFixed = [&](const Comp &c) {
@@ -899,29 +898,29 @@ inline QWidget *networkingTab(QWidget *dlg, const QString &uuid, const QString &
     for (const Comp &c : fixed1) {
         addFixed(c);
     }
-    auto *ipv6 = new QTreeWidgetItem(list, {QStringLiteral("Протокол Інтернету версії 6 (TCP/IPv6)")});
+    auto *ipv6 = new QTreeWidgetItem(list, {tr7("Internet Protocol Version 6 (TCP/IPv6)")});
     ipv6->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-net-comp-protocol")));
     ipv6->setCheckState(0, v6 == QLatin1String("disabled") || v6 == QLatin1String("ignore") ? Qt::Unchecked : Qt::Checked);
-    descs.insert(ipv6, QStringLiteral("Протокол TCP/IP версії 6. Остання версія протоколу Інтернету, що забезпечує зв'язок між різними взаємодіючими мережами."));
-    auto *ipv4 = new QTreeWidgetItem(list, {QStringLiteral("Протокол Інтернету версії 4 (TCP/IPv4)")});
+    descs.insert(ipv6, tr7("TCP/IP version 6. The latest version of the internet protocol that provides communication across diverse interconnected networks."));
+    auto *ipv4 = new QTreeWidgetItem(list, {tr7("Internet Protocol Version 4 (TCP/IPv4)")});
     ipv4->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-net-comp-protocol")));
     ipv4->setCheckState(0, v4 == QLatin1String("disabled") ? Qt::Unchecked : Qt::Checked);
-    descs.insert(ipv4, QStringLiteral("Протокол TCP/IP. Стандартний протокол глобальних мереж, що забезпечує зв'язок між різними взаємодіючими мережами."));
+    descs.insert(ipv4, tr7("Transmission Control Protocol/Internet Protocol. The default wide area network protocol that provides communication across diverse interconnected networks."));
     for (const Comp &c : fixed2) {
         addFixed(c);
     }
     v->addWidget(list);
     auto *row = new QHBoxLayout;
-    auto *install = win7Button(QStringLiteral("Інсталювати..."));
-    auto *remove = win7Button(QStringLiteral("Видалити"));
+    auto *install = win7Button(tr7("Install..."));
+    auto *remove = win7Button(tr7("Delete"));
     install->setEnabled(false); // nothing to add or remove on Linux from here
     remove->setEnabled(false);
-    auto *props = win7Button(QStringLiteral("Властивості"));
+    auto *props = win7Button(tr7("Properties"));
     row->addWidget(install);
     row->addWidget(remove);
     row->addWidget(props);
     v->addLayout(row);
-    auto *descBox = new QGroupBox(QStringLiteral("Опис"));
+    auto *descBox = new QGroupBox(tr7("Description"));
     auto *dv = new QVBoxLayout(descBox);
     auto *desc = plain(QString());
     desc->setMinimumHeight(48);
@@ -961,7 +960,7 @@ inline QDialogButtonBox *okCancel(QDialog *dlg)
 {
     auto *buttons = new QDialogButtonBox;
     buttons->addButton(win7Button(QStringLiteral("OK")), QDialogButtonBox::AcceptRole);
-    buttons->addButton(win7Button(QStringLiteral("Скасувати")), QDialogButtonBox::RejectRole);
+    buttons->addButton(win7Button(tr7("Cancel")), QDialogButtonBox::RejectRole);
     QObject::connect(buttons, &QDialogButtonBox::accepted, dlg, &QDialog::accept);
     QObject::connect(buttons, &QDialogButtonBox::rejected, dlg, &QDialog::reject);
     return buttons;
@@ -982,7 +981,7 @@ inline bool showProperties(QWidget *parent, const Tile &t)
         return false;
     }
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Властивості: %1").arg(t.name));
+    dlg.setWindowTitle(tr7("%1 Properties").arg(t.name));
     dlg.setMinimumWidth(380);
     auto *v = new QVBoxLayout(&dlg);
     auto *tabs = new QTabWidget;
@@ -1006,52 +1005,52 @@ inline bool showProperties(QWidget *parent, const Tile &t)
         // General
         auto *general = new QWidget;
         auto *gv = new QVBoxLayout(general);
-        gv->addWidget(plain(QStringLiteral("Ім'я служби:")));
+        gv->addWidget(plain(tr7("Service name:")));
         service = new QLineEdit(conValue(t.uuid, QStringLiteral("pppoe.service")));
         gv->addWidget(service);
         gv->addStretch(1);
-        tabs->addTab(general, QStringLiteral("Загальні"));
+        tabs->addTab(general, tr7("General"));
 
         // Options
         auto *options = new QWidget;
         auto *ov = new QVBoxLayout(options);
-        auto *dialBox = new QGroupBox(QStringLiteral("Параметри набору номера"));
+        auto *dialBox = new QGroupBox(tr7("Dialing options"));
         auto *dbv = new QVBoxLayout(dialBox);
-        showProgress = new QCheckBox(QStringLiteral("Відображати хід підключення"));
-        askCreds = new QCheckBox(QStringLiteral("Запитувати ім'я, пароль, сертифікат тощо"));
+        showProgress = new QCheckBox(tr7("Display progress while connecting"));
+        askCreds = new QCheckBox(tr7("Prompt for name, password, certificate, etc."));
         showProgress->setChecked(netStore().value(store + QStringLiteral("ShowProgress"), true).toBool());
         askCreds->setChecked(netStore().value(store + QStringLiteral("AskCredentials"), true).toBool());
         dbv->addWidget(showProgress);
         dbv->addWidget(askCreds);
         ov->addWidget(dialBox);
-        auto *redialBox = new QGroupBox(QStringLiteral("Параметри повторного дзвінка"));
+        auto *redialBox = new QGroupBox(tr7("Redialing options"));
         auto *rf = new QFormLayout(redialBox);
         retries = new QSpinBox;
         retries->setRange(1, 999);
         const int r = conValue(t.uuid, QStringLiteral("connection.autoconnect-retries")).toInt();
         retries->setValue(r <= 0 ? 3 : r);
         retries->setFixedWidth(100);
-        rf->addRow(QStringLiteral("Число спроб набору номера:"), retries);
-        redial = new QCheckBox(QStringLiteral("Перезвонити при розриві зв'язку"));
+        rf->addRow(tr7("Redial attempts:"), retries);
+        redial = new QCheckBox(tr7("Redial if line is dropped"));
         redial->setChecked(conValue(t.uuid, QStringLiteral("connection.autoconnect")) == QLatin1String("yes"));
         rf->addRow(redial);
         ov->addWidget(redialBox);
         auto *pppRow = new QHBoxLayout;
-        auto *pppButton = win7Button(QStringLiteral("Параметри PPP..."), 110);
+        auto *pppButton = win7Button(tr7("PPP Settings..."), 110);
         pppRow->addWidget(pppButton);
         pppRow->addStretch(1);
         ov->addLayout(pppRow);
         ov->addStretch(1);
-        tabs->addTab(options, QStringLiteral("Параметри"));
+        tabs->addTab(options, tr7("Options"));
 
         lcp = conValue(t.uuid, QStringLiteral("ppp.lcp-echo-interval")).toInt() > 0;
         compression = conValue(t.uuid, QStringLiteral("ppp.nobsdcomp")) != QLatin1String("yes") || conValue(t.uuid, QStringLiteral("ppp.nodeflate")) != QLatin1String("yes");
         QObject::connect(pppButton, &QPushButton::clicked, &dlg, [&dlg, &settings, &lcp, &compression] {
             QDialog ppp(&dlg);
-            ppp.setWindowTitle(QStringLiteral("Параметри PPP"));
+            ppp.setWindowTitle(tr7("PPP Settings"));
             auto *pv = new QVBoxLayout(&ppp);
-            auto *lcpBox = new QCheckBox(QStringLiteral("Увімкнути розширення LCP"));
-            auto *compBox = new QCheckBox(QStringLiteral("Увімкнути програмне стиснення"));
+            auto *lcpBox = new QCheckBox(tr7("Enable LCP extensions"));
+            auto *compBox = new QCheckBox(tr7("Enable software compression"));
             lcpBox->setChecked(lcp);
             compBox->setChecked(compression);
             pv->addWidget(lcpBox);
@@ -1070,20 +1069,20 @@ inline bool showProperties(QWidget *parent, const Tile &t)
         // Security
         auto *security = new QWidget;
         auto *sv = new QVBoxLayout(security);
-        sv->addWidget(plain(QStringLiteral("Шифрування даних:")));
+        sv->addWidget(plain(tr7("Data encryption:")));
         encryption = new QComboBox;
-        encryption->addItem(QStringLiteral("Необов'язкове (підключитися навіть без шифрування)"));
-        encryption->addItem(QStringLiteral("Обов'язкове шифрування (відключитися, якщо сервер не погоджується)"));
+        encryption->addItem(tr7("Optional encryption (connect even if no encryption)"));
+        encryption->addItem(tr7("Require encryption (disconnect if server declines)"));
         encryption->setCurrentIndex(conValue(t.uuid, QStringLiteral("ppp.require-mppe")) == QLatin1String("yes") ? 1 : 0);
         sv->addWidget(encryption);
-        auto *authBox = new QGroupBox(QStringLiteral("Дозволити такі протоколи"));
+        auto *authBox = new QGroupBox(tr7("Allow these protocols"));
         auto *av = new QVBoxLayout(authBox);
         const QList<QPair<QString, QString>> list{
-            {QStringLiteral("Незашифрований пароль (PAP)"), QStringLiteral("ppp.refuse-pap")},
-            {QStringLiteral("Протокол перевірки пароля (CHAP)"), QStringLiteral("ppp.refuse-chap")},
-            {QStringLiteral("Протокол Microsoft CHAP (MS-CHAP)"), QStringLiteral("ppp.refuse-mschap")},
-            {QStringLiteral("Протокол Microsoft CHAP версії 2 (MS-CHAP v2)"), QStringLiteral("ppp.refuse-mschapv2")},
-            {QStringLiteral("Протокол EAP"), QStringLiteral("ppp.refuse-eap")},
+            {tr7("Unencrypted password (PAP)"), QStringLiteral("ppp.refuse-pap")},
+            {tr7("Challenge Handshake Authentication Protocol (CHAP)"), QStringLiteral("ppp.refuse-chap")},
+            {tr7("Microsoft CHAP (MS-CHAP)"), QStringLiteral("ppp.refuse-mschap")},
+            {tr7("Microsoft CHAP Version 2 (MS-CHAP v2)"), QStringLiteral("ppp.refuse-mschapv2")},
+            {tr7("Extensible Authentication Protocol (EAP)"), QStringLiteral("ppp.refuse-eap")},
         };
         for (const auto &[text, key] : list) {
             auto *cb = new QCheckBox(text);
@@ -1093,9 +1092,9 @@ inline bool showProperties(QWidget *parent, const Tile &t)
         }
         sv->addWidget(authBox);
         sv->addStretch(1);
-        tabs->addTab(security, QStringLiteral("Безпека"));
+        tabs->addTab(security, tr7("Security"));
     }
-    tabs->addTab(networkingTab(&dlg, t.uuid, t.kind == Tile::Dialup ? QString() : t.description, &settings), QStringLiteral("Мережа"));
+    tabs->addTab(networkingTab(&dlg, t.uuid, t.kind == Tile::Dialup ? QString() : t.description, &settings), tr7("Network"));
     v->addWidget(tabs);
     v->addWidget(okCancel(&dlg));
     if (dlg.exec() != QDialog::Accepted) {
@@ -1125,17 +1124,17 @@ inline bool showProperties(QWidget *parent, const Tile &t)
 inline bool bringUp(QWidget *parent, const QString &uuid, const QString &name, const QByteArray &secrets = {}, bool showProgress = true)
 {
     QDialog progress(parent);
-    progress.setWindowTitle(QStringLiteral("Підключення до %1").arg(name));
+    progress.setWindowTitle(tr7("Connect %1").arg(name));
     auto *v = new QVBoxLayout(&progress);
     auto *row = new QHBoxLayout;
     auto *ic = new QLabel;
     ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-computers")).pixmap(32, 32));
     row->addWidget(ic);
-    row->addWidget(plain(QStringLiteral("Підключення до %1...").arg(name)), 1);
+    row->addWidget(plain(tr7("Connecting to %1...").arg(name)), 1);
     v->addLayout(row);
     auto *cancelRow = new QHBoxLayout;
     cancelRow->addStretch(1);
-    auto *cancel = win7Button(QStringLiteral("Скасувати"));
+    auto *cancel = win7Button(tr7("Cancel"));
     cancelRow->addWidget(cancel);
     v->addLayout(cancelRow);
     progress.setMinimumWidth(340);
@@ -1173,7 +1172,7 @@ inline bool bringUp(QWidget *parent, const QString &uuid, const QString &name, c
     }
     if (!ok && !err.isEmpty()) {
         err.remove(QRegularExpression(QStringLiteral("^Error: ")));
-        QMessageBox::warning(parent, QStringLiteral("Помилка підключення"), QStringLiteral("Не вдалося підключитися до «%1».\n\n%2").arg(name, err));
+        QMessageBox::warning(parent, tr7("Connection error"), tr7("Could not connect to \"%1\".\n\n%2").arg(name, err));
     }
     return ok;
 }
@@ -1207,7 +1206,7 @@ inline void connectDialog(QWidget *parent, const Tile &t, const std::function<vo
         return;
     }
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Підключення: %1").arg(t.name));
+    dlg.setWindowTitle(tr7("Connection: %1").arg(t.name));
     dlg.setWindowIcon(QIcon(tileIcon(t, 32)));
     auto *v = new QVBoxLayout(&dlg);
     auto *banner = new QLabel;
@@ -1232,15 +1231,15 @@ inline void connectDialog(QWidget *parent, const Tile &t, const std::function<vo
     auto *passEdit = new QLineEdit;
     passEdit->setEchoMode(QLineEdit::Password);
     if (!savedPassword.isEmpty()) {
-        passEdit->setPlaceholderText(QStringLiteral("[Для зміни пароля клацніть тут]"));
+        passEdit->setPlaceholderText(tr7("[To change the saved password, click here]"));
     }
-    form->addRow(QStringLiteral("Користувач:"), userEdit);
-    form->addRow(QStringLiteral("Пароль:"), passEdit);
+    form->addRow(tr7("Username:"), userEdit);
+    form->addRow(tr7("Password:"), passEdit);
     v->addLayout(form);
-    auto *save = new QCheckBox(QStringLiteral("Зберігати ім'я користувача та пароль:"));
+    auto *save = new QCheckBox(tr7("Save this user name and password for the following users:"));
     save->setChecked(vpn ? true : !savedPassword.isEmpty() || netStore().value(store + QStringLiteral("Save"), true).toBool());
-    auto *onlyMe = new QRadioButton(QStringLiteral("лише для мене"));
-    auto *anyone = new QRadioButton(QStringLiteral("для будь-якого користувача"));
+    auto *onlyMe = new QRadioButton(tr7("Me only"));
+    auto *anyone = new QRadioButton(tr7("Anyone who uses this computer"));
     (everyone ? anyone : onlyMe)->setChecked(true);
     auto *line = new QFrame;
     line->setFrameShape(QFrame::HLine);
@@ -1266,9 +1265,9 @@ inline void connectDialog(QWidget *parent, const Tile &t, const std::function<vo
     anyone->setEnabled(save->isChecked());
 
     auto *buttons = new QHBoxLayout;
-    auto *connectButton = win7Button(QStringLiteral("Підключення"), 90);
-    auto *cancel = win7Button(QStringLiteral("Скасувати"));
-    auto *props = win7Button(QStringLiteral("Властивості"));
+    auto *connectButton = win7Button(tr7("Connections"), 90);
+    auto *cancel = win7Button(tr7("Cancel"));
+    auto *props = win7Button(tr7("Properties"));
     connectButton->setDefault(true);
     buttons->addWidget(connectButton);
     buttons->addWidget(cancel);
@@ -1366,7 +1365,7 @@ public:
         , m_tile(tile)
         , m_changed(std::move(changed))
     {
-        setWindowTitle(QStringLiteral("Стан: %1").arg(tile.name));
+        setWindowTitle(tr7("Status: %1").arg(tile.name));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedWidth(372);
         m_ipIface = tile.isAdapter() ? tile.iface : conValue(tile.uuid, QStringLiteral("GENERAL.IP-IFACE"));
@@ -1378,7 +1377,7 @@ public:
         // Windows 7 layout: headed sections (text + line), indented rows, no group boxes
         pv->setContentsMargins(10, 10, 10, 10);
         pv->setSpacing(0);
-        pv->addWidget(new SheetHeader(QStringLiteral("Підключення")));
+        pv->addWidget(new SheetHeader(tr7("Connections")));
         pv->addSpacing(4);
         auto *grid = new QGridLayout;
         grid->setContentsMargins(12, 0, 4, 0);
@@ -1391,41 +1390,41 @@ public:
             grid->addWidget(valueLabel, r, 1);
             ++r;
         };
-        addRow(QStringLiteral("IPv4-підключення:"), m_v4);
-        addRow(QStringLiteral("IPv6-підключення:"), m_v6);
-        addRow(QStringLiteral("Стан середовища:"), m_media);
+        addRow(tr7("IPv4 Connectivity:"), m_v4);
+        addRow(tr7("IPv6 Connectivity:"), m_v6);
+        addRow(tr7("Media State:"), m_media);
         if (tile.kind == Tile::Wifi) {
             addRow(QStringLiteral("SSID:"), m_ssid);
         }
-        addRow(QStringLiteral("Тривалість:"), m_duration);
-        addRow(QStringLiteral("Швидкість:"), m_speed);
+        addRow(tr7("Duration:"), m_duration);
+        addRow(tr7("Speed:"), m_speed);
         if (tile.kind == Tile::Wifi) {
-            addRow(QStringLiteral("Якість сигналу:"), m_signal);
+            addRow(tr7("Signal Quality:"), m_signal);
         }
         pv->addLayout(grid);
         pv->addSpacing(8);
         auto *detailsRow = new QHBoxLayout;
         detailsRow->setContentsMargins(12, 0, 0, 0);
-        auto *details = win7Button(QStringLiteral("Відомості..."));
+        auto *details = win7Button(tr7("Details..."));
         detailsRow->addWidget(details);
         detailsRow->addStretch(1);
         pv->addLayout(detailsRow);
         pv->addSpacing(30);
 
-        pv->addWidget(new SheetHeader(QStringLiteral("Активність")));
+        pv->addWidget(new SheetHeader(tr7("Activity")));
         pv->addSpacing(6);
         auto *ag = new QGridLayout;
         ag->setContentsMargins(12, 0, 4, 0);
         ag->setHorizontalSpacing(6);
         ag->setVerticalSpacing(2);
-        auto *sent = new QLabel(QStringLiteral("Надіслано —"));
-        auto *recv = new QLabel(QStringLiteral("— Отримано"));
+        auto *sent = new QLabel(tr7("Sent —"));
+        auto *recv = new QLabel(tr7("— Received"));
         auto *ic = new QLabel;
         ic->setPixmap(QPixmap(QDir::homePath() + QStringLiteral("/.local/share/icons/hicolor/48x48/apps/seven-net-activity.png"))); // cut from Windows 7
         ag->addWidget(sent, 0, 1, Qt::AlignRight | Qt::AlignVCenter);
         ag->addWidget(ic, 0, 2, Qt::AlignCenter);
         ag->addWidget(recv, 0, 3, Qt::AlignLeft | Qt::AlignVCenter);
-        ag->addWidget(new QLabel(QStringLiteral("Байт:")), 1, 0);
+        ag->addWidget(new QLabel(tr7("Bytes:")), 1, 0);
         m_tx = rightAligned(QString());
         m_rx = rightAligned(QString());
         auto *sep = new QWidget;
@@ -1442,11 +1441,11 @@ public:
 
         auto *actions = new QHBoxLayout;
         actions->setSpacing(6);
-        auto *props = win7Button(QStringLiteral("Властивості"));
+        auto *props = win7Button(tr7("Properties"));
         props->setIcon(QIcon::fromTheme(QStringLiteral("seven-cp-shield")));
-        auto *off = win7Button(tile.isAdapter() ? QStringLiteral("Вимкнути") : QStringLiteral("Відключити"));
+        auto *off = win7Button(tile.isAdapter() ? tr7("Disable") : tr7("Disconnect"));
         off->setIcon(QIcon::fromTheme(QStringLiteral("seven-cp-shield")));
-        auto *diag = win7Button(QStringLiteral("Діагностика"));
+        auto *diag = win7Button(tr7("Diagnose"));
         actions->addWidget(props);
         actions->addWidget(off);
         actions->addWidget(diag);
@@ -1455,11 +1454,11 @@ public:
         connect(diag, &QPushButton::clicked, this, [this] {
             diagnoseNetwork(this);
         });
-        tabs->addTab(page, QStringLiteral("Загальні"));
+        tabs->addTab(page, tr7("General"));
         v->addWidget(tabs);
         auto *closeRow = new QHBoxLayout;
         closeRow->addStretch(1);
-        auto *close = win7Button(QStringLiteral("Закрити"));
+        auto *close = win7Button(tr7("Close"));
         closeRow->addWidget(close);
         v->addLayout(closeRow);
 
@@ -1506,7 +1505,7 @@ private:
             const qint64 d = qMax<qint64>(0, QDateTime::currentSecsSinceEpoch() - m_since);
             const qint64 days = d / 86400;
             const QString hms = QStringLiteral("%1:%2:%3").arg((d / 3600) % 24, 2, 10, QLatin1Char('0')).arg((d / 60) % 60, 2, 10, QLatin1Char('0')).arg(d % 60, 2, 10, QLatin1Char('0'));
-            m_duration->setText(days > 0 ? QStringLiteral("%1 дн. %2").arg(days).arg(hms) : hms);
+            m_duration->setText(days > 0 ? tr7("%1 days %2").arg(days).arg(hms) : hms);
         } else {
             m_duration->setText(QStringLiteral("—"));
         }
@@ -1516,7 +1515,7 @@ private:
         const QString dev = m_tile.isAdapter() ? m_tile.iface : m_ipIface;
         m_v4->setText(connectivityText(devValue(dev, QStringLiteral("GENERAL.IP4-CONNECTIVITY"))));
         m_v6->setText(connectivityText(devValue(dev, QStringLiteral("GENERAL.IP6-CONNECTIVITY"))));
-        m_media->setText(readSys(m_ipIface, QStringLiteral("operstate")) == QLatin1String("down") ? QStringLiteral("Вимкнено") : QStringLiteral("Увімкнено"));
+        m_media->setText(readSys(m_ipIface, QStringLiteral("operstate")) == QLatin1String("down") ? tr7("Off", "firewall state") : tr7("On", "state"));
         QString speed;
         if (m_tile.kind == Tile::Wifi) {
             const QList<QStringList> aps = terse({QStringLiteral("-t"), QStringLiteral("-f"), QStringLiteral("IN-USE,SSID,SIGNAL,RATE"), QStringLiteral("dev"),
@@ -1526,15 +1525,15 @@ private:
                 if (ap.value(0) == QLatin1String("*")) {
                     m_ssid->setText(ap.value(1));
                     m_signal->setText(QStringLiteral("%1 %").arg(ap.value(2)));
-                    speed = QString(ap.value(3)).replace(QStringLiteral("Mbit/s"), QStringLiteral("Мбіт/с"));
+                    speed = QString(ap.value(3)).replace(QStringLiteral("Mbit/s"), tr7("Mbps"));
                 }
             }
         } else {
             const int mbit = readSys(m_ipIface, QStringLiteral("speed")).toInt();
             if (mbit >= 1000) {
-                speed = QStringLiteral("%1 Гбіт/с").arg(QLocale(QLocale::Ukrainian).toString(mbit / 1000.0, 'f', 1));
+                speed = tr7("%1 Gbps").arg(QLocale{}.toString(mbit / 1000.0, 'f', 1));
             } else if (mbit > 0) {
-                speed = QStringLiteral("%1 Мбіт/с").arg(mbit);
+                speed = tr7("%1 Mbps").arg(mbit);
             }
         }
         m_speed->setText(speed.isEmpty() ? QStringLiteral("—") : speed);
@@ -1544,16 +1543,16 @@ private:
     {
         // Windows 7 "Network Connection Details": every property in a fixed order, empty ones too
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Відомості про мережеве підключення"));
+        dlg.setWindowTitle(tr7("Network Connection Details"));
         dlg.setFixedSize(404, 436);
         auto *v = new QVBoxLayout(&dlg);
         v->setContentsMargins(11, 8, 11, 11);
         v->setSpacing(4);
-        v->addWidget(new QLabel(QStringLiteral("Відомості про мережеве підключення:")));
+        v->addWidget(new QLabel(tr7("Network Connection Details:")));
         auto *tree = new QTreeWidget;
         tree->setRootIsDecorated(false);
         tree->setUniformRowHeights(true);
-        tree->setHeaderLabels({QStringLiteral("Властивість"), QStringLiteral("Значення")});
+        tree->setHeaderLabels({tr7("Property"), tr7("Value")});
         tree->setColumnWidth(0, 160);
         tree->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         tree->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -1569,8 +1568,8 @@ private:
             new QTreeWidgetItem(tree, {k, val});
         };
         const bool dhcp = !m_tile.uuid.isEmpty() && conValue(m_tile.uuid, QStringLiteral("ipv4.method")) == QLatin1String("auto");
-        const QLocale uk(QLocale::Ukrainian);
-        const QString dateFmt = QStringLiteral("d MMMM yyyy 'р.' H:mm:ss");
+        const QLocale uk;
+        const QString dateFmt = tr7("dddd, MMMM d, yyyy h:mm:ss AP");
         QString expiry, obtained, server, suffix;
         qint64 expirySecs = 0, leaseSecs = 0;
         // the DHCP lease is shown by the connection, not by the device
@@ -1601,43 +1600,43 @@ private:
         }
         const QStringList v4 = info.value(QStringLiteral("IP4.ADDRESS"));
         QString mac = info.value(QStringLiteral("GENERAL.HWADDR")).value(0);
-        add(QStringLiteral("Суфікс DNS для підключення"), suffix);
-        add(QStringLiteral("Опис"), m_tile.description);
-        add(QStringLiteral("Фізична адреса"), mac.replace(QLatin1Char(':'), QLatin1Char('-')));
-        add(QStringLiteral("DHCP увімкнено"), dhcp ? QStringLiteral("Так") : QStringLiteral("Ні"));
-        add(QStringLiteral("Адреса IPv4"), v4.value(0).section(QLatin1Char('/'), 0, 0));
-        add(QStringLiteral("Маска підмережі IPv4"), v4.isEmpty() ? QString() : prefixToMask(v4.value(0).section(QLatin1Char('/'), 1, 1).toInt()));
+        add(tr7("Connection-specific DNS Suffix"), suffix);
+        add(tr7("Description"), m_tile.description);
+        add(tr7("Physical Address"), mac.replace(QLatin1Char(':'), QLatin1Char('-')));
+        add(tr7("DHCP Enabled"), dhcp ? tr7("Yes") : tr7("No"));
+        add(tr7("IPv4 Address"), v4.value(0).section(QLatin1Char('/'), 0, 0));
+        add(tr7("IPv4 Subnet Mask"), v4.isEmpty() ? QString() : prefixToMask(v4.value(0).section(QLatin1Char('/'), 1, 1).toInt()));
         for (const QString &a : v4.mid(1)) {
-            add(QStringLiteral("Адреса IPv4"), a.section(QLatin1Char('/'), 0, 0));
+            add(tr7("IPv4 Address"), a.section(QLatin1Char('/'), 0, 0));
         }
         if (dhcp) {
-            add(QStringLiteral("Оренду отримано"), obtained);
-            add(QStringLiteral("Термін оренди закінчується"), expiry);
+            add(tr7("Lease Obtained"), obtained);
+            add(tr7("Lease Expires"), expiry);
         }
-        add(QStringLiteral("Основний шлюз IPv4"), info.value(QStringLiteral("IP4.GATEWAY")).value(0).replace(QStringLiteral("--"), QString()));
+        add(tr7("IPv4 Default Gateway"), info.value(QStringLiteral("IP4.GATEWAY")).value(0).replace(QStringLiteral("--"), QString()));
         if (dhcp) {
-            add(QStringLiteral("DHCP-сервер IPv4"), server);
+            add(tr7("IPv4 DHCP Server"), server);
         }
         const QStringList dns = info.value(QStringLiteral("IP4.DNS"));
-        add(QStringLiteral("DNS-сервер IPv4"), dns.value(0));
+        add(tr7("IPv4 DNS Server"), dns.value(0));
         for (const QString &d : dns.mid(1)) {
             add(QString(), d);
         }
-        add(QStringLiteral("WINS-сервер IPv4"), QString());
-        add(QStringLiteral("NetBIOS через Tcpip увімкнено"), QStringLiteral("Так"));
+        add(tr7("IPv4 WINS Server"), QString());
+        add(tr7("NetBIOS over Tcpip Enabled"), tr7("Yes"));
         QStringList global6;
         QString link6;
         for (const QString &a : info.value(QStringLiteral("IP6.ADDRESS"))) {
             (a.startsWith(QLatin1String("fe80")) ? link6 : global6.emplaceBack()) = a.section(QLatin1Char('/'), 0, 0);
         }
         for (const QString &a : std::as_const(global6)) {
-            add(QStringLiteral("Адреса IPv6"), a);
+            add(tr7("IPv6 Address"), a);
         }
-        add(QStringLiteral("Локальна IPv6-адреса каналу"), link6.isEmpty() ? QString() : link6 + QStringLiteral("%") + readSys(m_ipIface, QStringLiteral("ifindex")));
+        add(tr7("Link-local IPv6 Address"), link6.isEmpty() ? QString() : link6 + QStringLiteral("%") + readSys(m_ipIface, QStringLiteral("ifindex")));
         const QString gw6 = info.value(QStringLiteral("IP6.GATEWAY")).value(0);
-        add(QStringLiteral("Основний шлюз IPv6"), gw6 == QLatin1String("--") ? QString() : gw6);
+        add(tr7("IPv6 Default Gateway"), gw6 == QLatin1String("--") ? QString() : gw6);
         const QStringList dns6 = info.value(QStringLiteral("IP6.DNS"));
-        add(QStringLiteral("DNS-сервер IPv6"), dns6.value(0));
+        add(tr7("IPv6 DNS Server"), dns6.value(0));
         for (const QString &d : dns6.mid(1)) {
             add(QString(), d);
         }
@@ -1646,7 +1645,7 @@ private:
         v->addSpacing(6);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
-        auto *close = win7Button(QStringLiteral("Закрити"));
+        auto *close = win7Button(tr7("Close"));
         close->setDefault(true);
         row->addWidget(close);
         v->addLayout(row);
@@ -1826,12 +1825,12 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     enum { Choose, Internet, Pppoe, VpnHow, VpnAddress, VpnCredentials, Result };
     auto *wiz = new Aero::Wizard(parent);
     wiz->setAttribute(Qt::WA_DeleteOnClose);
-    wiz->setWindowTitle(QStringLiteral("Установка підключення або мережі"));
+    wiz->setWindowTitle(tr7("Set Up a Connection or Network"));
     wiz->setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-net-center")));
-    wiz->setButtonText(QWizard::NextButton, QStringLiteral("Далі"));
-    wiz->setButtonText(QWizard::CancelButton, QStringLiteral("Скасувати"));
-    wiz->setButtonText(QWizard::FinishButton, QStringLiteral("Закрити"));
-    wiz->setButtonText(QWizard::BackButton, QStringLiteral("Назад"));
+    wiz->setButtonText(QWizard::NextButton, tr7("Next"));
+    wiz->setButtonText(QWizard::CancelButton, tr7("Cancel"));
+    wiz->setButtonText(QWizard::FinishButton, tr7("Close"));
+    wiz->setButtonText(QWizard::BackButton, tr7("Back"));
     wiz->setOption(QWizard::NoBackButtonOnStartPage, true);
     wiz->resize(620, 460);
 
@@ -1856,7 +1855,7 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     };
 
     // 1. Choose a connection option
-    auto *choose = page(QStringLiteral("Виберіть варіант підключення"));
+    auto *choose = page(tr7("Choose a connection option"));
     auto *list = new QListWidget;
     list->setIconSize(QSize(32, 32));
     list->setItemDelegate(new OptionDelegate(list));
@@ -1866,10 +1865,10 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
         auto *item = new QListWidgetItem(QIcon::fromTheme(icon), title + QLatin1Char('\n') + desc, list);
         item->setData(Qt::UserRole, target);
     };
-    addOption(QStringLiteral("seven-net-wiz-internet"), QStringLiteral("Підключення до Інтернету"),
-              QStringLiteral("Високошвидкісне (PPPoE) підключення до Інтернету."), Internet);
+    addOption(QStringLiteral("seven-net-wiz-internet"), tr7("Connect to the Internet"),
+              tr7("Set up a broadband (PPPoE) connection to the Internet."), Internet);
     if (hasPptp()) {
-        addOption(QStringLiteral("network-vpn"), QStringLiteral("Підключення до робочого місця"), QStringLiteral("Налаштування VPN-підключення до робочого місця."), VpnHow);
+        addOption(QStringLiteral("network-vpn"), tr7("Connect to a workplace"), tr7("Set up a VPN connection to your workplace."), VpnHow);
     }
     list->setCurrentRow(0);
     choose->layout()->addWidget(list);
@@ -1882,9 +1881,9 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     wiz->setPage(Choose, choose);
 
     // 2. How do you want to connect? (Internet)
-    auto *internet = page(QStringLiteral("Як виконати підключення?"));
-    internet->layout()->addWidget(new CommandLink(QStringLiteral("network-modem"), QStringLiteral("Високошвидкісне (з PPPoE)"),
-                                                  QStringLiteral("Підключення через DSL або кабель, що потребує введення імені користувача та пароля."),
+    auto *internet = page(tr7("How do you want to connect?"));
+    internet->layout()->addWidget(new CommandLink(QStringLiteral("network-modem"), tr7("Broadband (PPPoE)"),
+                                                  tr7("Connect using DSL or cable that requires a user name and password."),
                                                   [wiz] {
                                                       wiz->next();
                                                   }));
@@ -1898,21 +1897,21 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     wiz->setPage(Internet, internet);
 
     // 3. PPPoE details
-    auto *pppoe = page(QStringLiteral("Введіть відомості, отримані від постачальника послуг Інтернету"));
+    auto *pppoe = page(tr7("Type the information from your Internet service provider (ISP)"));
     auto *pf = new QFormLayout;
     pf->setHorizontalSpacing(16);
     pf->setVerticalSpacing(8);
-    auto *pUser = hintEdit(QStringLiteral("[Ім'я, отримане від постачальника послуг Інтернету]"));
-    auto *pPass = hintEdit(QStringLiteral("[Пароль, отриманий від постачальника послуг Інтернету]"), true);
-    auto *pShow = new QCheckBox(QStringLiteral("Показувати символи, що вводяться"));
-    auto *pRemember = new QCheckBox(QStringLiteral("Запам'ятати цей пароль"));
-    auto *pName = new QLineEdit(QStringLiteral("Високошвидкісне підключення"));
-    auto *pOthers = new QCheckBox(QStringLiteral("Дозволити використовувати це підключення іншим користувачам"));
-    pf->addRow(QStringLiteral("Ім'я користувача:"), pUser);
-    pf->addRow(QStringLiteral("Пароль:"), pPass);
+    auto *pUser = hintEdit(tr7("[Name your ISP gave you]"));
+    auto *pPass = hintEdit(tr7("[Password your ISP gave you]"), true);
+    auto *pShow = new QCheckBox(tr7("Show characters"));
+    auto *pRemember = new QCheckBox(tr7("Remember this password"));
+    auto *pName = new QLineEdit(tr7("Broadband Connection"));
+    auto *pOthers = new QCheckBox(tr7("Allow other people to use this connection"));
+    pf->addRow(tr7("User name:"), pUser);
+    pf->addRow(tr7("Password:"), pPass);
     pf->addRow(QString(), pShow);
     pf->addRow(QString(), pRemember);
-    pf->addRow(QStringLiteral("Ім'я підключення:"), pName);
+    pf->addRow(tr7("Connection name:"), pName);
     static_cast<QVBoxLayout *>(pppoe->layout())->addLayout(pf);
     pppoe->layout()->addWidget(new QLabel);
     auto *othersRow = new QHBoxLayout;
@@ -1921,7 +1920,7 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     othersRow->addWidget(shield);
     othersRow->addWidget(pOthers, 1);
     static_cast<QVBoxLayout *>(pppoe->layout())->addLayout(othersRow);
-    auto *othersNote = plain(QStringLiteral("Цей параметр дозволяє будь-якому користувачеві, що має доступ до цього комп'ютера, використовувати це підключення."));
+    auto *othersNote = plain(tr7("This option allows anyone with access to this computer to use this connection."));
     othersNote->setContentsMargins(22, 0, 0, 0);
     pppoe->layout()->addWidget(othersNote);
     static_cast<QVBoxLayout *>(pppoe->layout())->addStretch(1);
@@ -1930,7 +1929,7 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     });
     pppoe->init = [wiz] {
         wiz->button(QWizard::NextButton)->show();
-        wiz->setButtonText(QWizard::NextButton, QStringLiteral("Підключити"));
+        wiz->setButtonText(QWizard::NextButton, tr7("Connect"));
     };
     pppoe->next = [] {
         return int(Result);
@@ -1938,11 +1937,11 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     pppoe->validate = [=] {
         const QString iface = wiredIface();
         if (iface.isEmpty()) {
-            QMessageBox::warning(wiz, wiz->windowTitle(), QStringLiteral("Не знайдено дротового мережевого адаптера для високошвидкісного підключення."));
+            QMessageBox::warning(wiz, wiz->windowTitle(), tr7("No wired network adapter was found for a broadband connection."));
             return false;
         }
         if (pUser->text().isEmpty()) {
-            QMessageBox::warning(wiz, wiz->windowTitle(), QStringLiteral("Введіть ім'я користувача."));
+            QMessageBox::warning(wiz, wiz->windowTitle(), tr7("Enter a user name."));
             return false;
         }
         QStringList args{QStringLiteral("con"), QStringLiteral("add"), QStringLiteral("type"), QStringLiteral("pppoe"), QStringLiteral("con-name"), pName->text(),
@@ -1958,7 +1957,7 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
         }
         const Win7Net::Result r = nmcli(args);
         if (!r.ok) {
-            QMessageBox::warning(wiz, wiz->windowTitle(), QStringLiteral("Не вдалося створити підключення.\n\n%1").arg(r.err));
+            QMessageBox::warning(wiz, wiz->windowTitle(), tr7("The connection could not be created.\n\n%1").arg(r.err));
             return false;
         }
         static const QRegularExpression uuidRe(QStringLiteral("\\(([0-9a-f-]{36})\\)"));
@@ -1972,9 +1971,9 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     wiz->setPage(Pppoe, pppoe);
 
     // VPN: how do you want to connect?
-    auto *vpnHow = page(QStringLiteral("Як виконати підключення?"));
-    vpnHow->layout()->addWidget(new CommandLink(QStringLiteral("seven-net-internet"), QStringLiteral("Використовувати моє підключення до Інтернету (VPN)"),
-                                                QStringLiteral("Підключення через Інтернет за допомогою віртуальної приватної мережі (VPN)."),
+    auto *vpnHow = page(tr7("How do you want to connect?"));
+    vpnHow->layout()->addWidget(new CommandLink(QStringLiteral("seven-net-internet"), tr7("Use my Internet connection (VPN)"),
+                                                tr7("Connect using a virtual private network (VPN) connection through the Internet."),
                                                 [wiz] {
                                                     wiz->next();
                                                 }));
@@ -1987,27 +1986,27 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     };
     wiz->setPage(VpnHow, vpnHow);
 
-    auto *vpnAddr = page(QStringLiteral("Введіть інтернет-адресу для підключення"));
-    vpnAddr->layout()->addWidget(plain(QStringLiteral("Адресу можна отримати в адміністратора мережі.")));
+    auto *vpnAddr = page(tr7("Type the Internet address to connect to"));
+    vpnAddr->layout()->addWidget(plain(tr7("Your network administrator can give you this address.")));
     auto *af = new QFormLayout;
-    auto *vHost = hintEdit(QStringLiteral("[Приклад: Contoso.com, 157.54.0.1 або 3ffe:1234::1111]"));
-    auto *vName = new QLineEdit(QStringLiteral("VPN-підключення"));
-    af->addRow(QStringLiteral("Інтернет-адреса:"), vHost);
-    af->addRow(QStringLiteral("Ім'я місця призначення:"), vName);
+    auto *vHost = hintEdit(tr7("[Example: Contoso.com, 157.54.0.1 or 3ffe:1234::1111]"));
+    auto *vName = new QLineEdit(tr7("VPN Connection"));
+    af->addRow(tr7("Internet address:"), vHost);
+    af->addRow(tr7("Destination name:"), vName);
     static_cast<QVBoxLayout *>(vpnAddr->layout())->addLayout(af);
-    auto *vOthers = new QCheckBox(QStringLiteral("Дозволити використовувати це підключення іншим користувачам"));
-    auto *vLater = new QCheckBox(QStringLiteral("Не підключатися зараз, лише виконати налаштування для подальшого підключення"));
+    auto *vOthers = new QCheckBox(tr7("Allow other people to use this connection"));
+    auto *vLater = new QCheckBox(tr7("Don't connect now; just set it up so I can connect later"));
     vpnAddr->layout()->addWidget(new QLabel);
     vpnAddr->layout()->addWidget(vOthers);
     vpnAddr->layout()->addWidget(vLater);
     static_cast<QVBoxLayout *>(vpnAddr->layout())->addStretch(1);
     vpnAddr->init = [wiz] {
         wiz->button(QWizard::NextButton)->show();
-        wiz->setButtonText(QWizard::NextButton, QStringLiteral("Далі"));
+        wiz->setButtonText(QWizard::NextButton, tr7("Next"));
     };
     vpnAddr->validate = [=] {
         if (vHost->text().trimmed().isEmpty()) {
-            QMessageBox::warning(wiz, wiz->windowTitle(), QStringLiteral("Введіть інтернет-адресу."));
+            QMessageBox::warning(wiz, wiz->windowTitle(), tr7("Enter an Internet address."));
             return false;
         }
         return true;
@@ -2017,26 +2016,26 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
     };
     wiz->setPage(VpnAddress, vpnAddr);
 
-    auto *vpnCred = page(QStringLiteral("Введіть ім'я користувача та пароль"));
+    auto *vpnCred = page(tr7("Type your user name and password"));
     auto *cf = new QFormLayout;
     auto *vUser = new QLineEdit;
     auto *vPass = new QLineEdit;
     vPass->setEchoMode(QLineEdit::Password);
-    auto *vShow = new QCheckBox(QStringLiteral("Показувати символи"));
-    auto *vRemember = new QCheckBox(QStringLiteral("Запам'ятати цей пароль"));
+    auto *vShow = new QCheckBox(tr7("Show characters", "vpn"));
+    auto *vRemember = new QCheckBox(tr7("Remember this password"));
     auto *vDomain = new QLineEdit;
-    cf->addRow(QStringLiteral("Ім'я користувача:"), vUser);
-    cf->addRow(QStringLiteral("Пароль:"), vPass);
+    cf->addRow(tr7("User name:"), vUser);
+    cf->addRow(tr7("Password:"), vPass);
     cf->addRow(QString(), vShow);
     cf->addRow(QString(), vRemember);
-    cf->addRow(QStringLiteral("Домен (необов'язково):"), vDomain);
+    cf->addRow(tr7("Domain (optional):"), vDomain);
     static_cast<QVBoxLayout *>(vpnCred->layout())->addLayout(cf);
     static_cast<QVBoxLayout *>(vpnCred->layout())->addStretch(1);
     QObject::connect(vShow, &QCheckBox::toggled, vPass, [vPass](bool on) {
         vPass->setEchoMode(on ? QLineEdit::Normal : QLineEdit::Password);
     });
     vpnCred->init = [=] {
-        wiz->setButtonText(QWizard::NextButton, vLater->isChecked() ? QStringLiteral("Створити") : QStringLiteral("Підключити"));
+        wiz->setButtonText(QWizard::NextButton, vLater->isChecked() ? tr7("Create") : tr7("Connect"));
     };
     vpnCred->next = [] {
         return int(Result);
@@ -2059,7 +2058,7 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
         }
         const Win7Net::Result r = nmcli(args);
         if (!r.ok) {
-            QMessageBox::warning(wiz, wiz->windowTitle(), QStringLiteral("Не вдалося створити підключення.\n\n%1").arg(r.err));
+            QMessageBox::warning(wiz, wiz->windowTitle(), tr7("The connection could not be created.\n\n%1").arg(r.err));
             return false;
         }
         static const QRegularExpression uuidRe(QStringLiteral("\\(([0-9a-f-]{36})\\)"));
@@ -2087,13 +2086,13 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
         auto *title = result->findChild<QLabel *>(QStringLiteral("win7wiztitle"));
         wiz->button(QWizard::BackButton)->setEnabled(false);
         if (!state->connectNow) {
-            title->setText(QStringLiteral("Підключення готове до використання"));
-            resultText->setText(QStringLiteral("Підключення «%1» створено. Його можна знайти в розділі «Мережеві підключення».").arg(state->name));
+            title->setText(tr7("The connection is ready to use"));
+            resultText->setText(tr7("The connection \"%1\" was created. You can find it in Network Connections.").arg(state->name));
             return;
         }
-        title->setText(state->vpn ? QStringLiteral("Підключення до %1...").arg(state->name) : QStringLiteral("Підключення до Інтернету..."));
+        title->setText(state->vpn ? tr7("Connecting to %1...").arg(state->name) : tr7("Connecting to the Internet..."));
         resultIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-computers")).pixmap(32, 32));
-        resultText->setText(QStringLiteral("Зачекайте, триває підключення..."));
+        resultText->setText(tr7("Please wait while connecting..."));
         result->setComplete(false);
         QTimer::singleShot(100, result, [=] {
             QProcess proc;
@@ -2113,16 +2112,16 @@ inline void newConnectionWizard(QWidget *parent, const std::function<void()> &ch
             const bool ok = proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0;
             changed();
             if (ok) {
-                title->setText(state->vpn ? QStringLiteral("Підключення «%1» готове до використання").arg(state->name)
-                                          : QStringLiteral("Підключення до Інтернету готове до використання"));
+                title->setText(state->vpn ? tr7("The connection to %1 is ready to use").arg(state->name)
+                                          : tr7("The connection to the Internet is ready to use"));
                 resultIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-internet")).pixmap(32, 32));
                 resultText->setText(QString());
             } else {
                 QString err = QString::fromUtf8(proc.readAllStandardError()).trimmed();
                 err.remove(QRegularExpression(QStringLiteral("^Error: ")));
-                title->setText(QStringLiteral("Не вдалося підключитися"));
+                title->setText(tr7("The connection failed"));
                 resultIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-warn")).pixmap(32, 32));
-                resultText->setText(QStringLiteral("%1\n\nПідключення «%2» збережено. Спробувати ще раз можна в розділі «Мережеві підключення».").arg(err, state->name));
+                resultText->setText(tr7("%1\n\nThe connection \"%2\" was saved. You can try again in Network Connections.").arg(err, state->name));
             }
             result->setComplete(true);
         });
@@ -2272,7 +2271,7 @@ protected:
         setFocus();
         if (e->button() == Qt::RightButton) {
             QMenu menu(this);
-            menu.addAction(QStringLiteral("Оновити"), this, [this] {
+            menu.addAction(tr7("Refresh"), this, [this] {
                 reload();
             });
             menu.exec(e->globalPosition().toPoint());
@@ -2381,13 +2380,13 @@ private:
         if (t.isAdapter()) {
             return;
         }
-        if (!askYesNo(this, QStringLiteral("Підтвердження видалення підключення"), QStringLiteral("Ви дійсно бажаєте видалити підключення «%1»?").arg(t.name),
+        if (!askYesNo(this, tr7("Confirm Connection Delete"), tr7("Are you sure you want to delete the connection \"%1\"?").arg(t.name),
                       QMessageBox::Warning)) {
             return;
         }
         const Result r = nmcli({QStringLiteral("con"), QStringLiteral("delete"), t.uuid});
         if (!r.ok) {
-            QMessageBox::warning(this, QStringLiteral("Мережеві підключення"), r.err);
+            QMessageBox::warning(this, tr7("Network Connections"), r.err);
         }
         changed();
     }
@@ -2434,28 +2433,28 @@ private:
 
     void createShortcut(const Tile &t)
     {
-        if (!askYesNo(this, QStringLiteral("Ярлик"), QStringLiteral("Створити ярлик у цій папці неможливо.\nПомістити його на робочий стіл?"), QMessageBox::Warning)) {
+        if (!askYesNo(this, tr7("Shortcut"), tr7("Windows cannot create a shortcut here.\nDo you want the shortcut to be placed on the desktop instead?"), QMessageBox::Warning)) {
             return;
         }
         const QString desktop = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
         const QString exe = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QStringLiteral("/.local/bin/seven-control");
         const QString arg = t.isAdapter() ? QStringLiteral("--net-status %1").arg(t.iface) : QStringLiteral("--net-connect %1").arg(t.uuid);
         const QString icon = t.kind == Tile::Wifi ? QStringLiteral("seven-net-bars5") : t.kind == Tile::Ethernet ? QStringLiteral("seven-net-plug") : QStringLiteral("seven-net-computers");
-        QString file = desktop + QStringLiteral("/%1 - Ярлик.desktop").arg(QString(t.name).replace(QLatin1Char('/'), QLatin1Char('-')));
+        QString file = desktop + tr7("/%1 - Shortcut.desktop").arg(QString(t.name).replace(QLatin1Char('/'), QLatin1Char('-')));
         QFile f(file);
         if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             return;
         }
-        f.write(QStringLiteral("[Desktop Entry]\nType=Application\nName=%1 - Ярлик\nIcon=%2\nExec=%3 %4\nTerminal=false\n").arg(t.name, icon, exe, arg).toUtf8());
+        f.write(tr7("[Desktop Entry]\nType=Application\nName=%1 - Shortcut\nIcon=%2\nExec=%3 %4\nTerminal=false\n").arg(t.name, icon, exe, arg).toUtf8());
         f.close();
         f.setPermissions(f.permissions() | QFileDevice::ExeOwner | QFileDevice::ExeUser);
     }
 
     void cloneConnection(const Tile &t)
     {
-        const Result r = nmcli({QStringLiteral("con"), QStringLiteral("clone"), t.uuid, QStringLiteral("Копія %1").arg(t.name)});
+        const Result r = nmcli({QStringLiteral("con"), QStringLiteral("clone"), t.uuid, tr7("Copy of %1").arg(t.name)});
         if (!r.ok) {
-            QMessageBox::warning(this, QStringLiteral("Мережеві підключення"), r.err);
+            QMessageBox::warning(this, tr7("Network Connections"), r.err);
         }
         changed();
     }
@@ -2470,11 +2469,11 @@ private:
     QString toggleText(const Tile &t, bool menu) const
     {
         if (t.isAdapter()) {
-            return menu ? (t.grey ? QStringLiteral("Увімкнути") : QStringLiteral("Вимкнути"))
-                        : (t.grey ? QStringLiteral("Увімкнення мережевого пристрою") : QStringLiteral("Вимкнення мережевого пристрою"));
+            return menu ? (t.grey ? tr7("Turn on") : tr7("Disable"))
+                        : (t.grey ? tr7("Enable this network device") : tr7("Disable this network device"));
         }
-        return menu ? (t.active ? QStringLiteral("Відключити") : QStringLiteral("Підключити"))
-                    : (t.active ? QStringLiteral("Відключення") : QStringLiteral("Запуск підключення"));
+        return menu ? (t.active ? tr7("Disconnect") : tr7("Connect"))
+                    : (t.active ? tr7("Disconnect", "network") : tr7("Start the connection"));
     }
 
     void contextMenu(TileWidget *w, QPoint pos)
@@ -2486,7 +2485,7 @@ private:
             toggle(t);
         });
         menu.setDefaultAction(def);
-        QAction *status = menu.addAction(QStringLiteral("Стан"), this, [this, t] {
+        QAction *status = menu.addAction(tr7("Status"), this, [this, t] {
             showStatus(this, t, [this] {
                 changed();
             });
@@ -2494,24 +2493,24 @@ private:
         status->setEnabled(t.active);
         menu.addSeparator();
         if (!t.isAdapter()) {
-            menu.addAction(QStringLiteral("Створити копію"), this, [this, t] {
+            menu.addAction(tr7("Create Copy"), this, [this, t] {
                 cloneConnection(t);
             });
             menu.addSeparator();
         }
-        menu.addAction(QStringLiteral("Створити ярлик"), this, [this, t] {
+        menu.addAction(tr7("Create Shortcut"), this, [this, t] {
             createShortcut(t);
         });
-        QAction *del = menu.addAction(shield, QStringLiteral("Видалити"), this, [this, t] {
+        QAction *del = menu.addAction(shield, tr7("Delete"), this, [this, t] {
             remove(t);
         });
         del->setEnabled(!t.isAdapter());
-        QAction *ren = menu.addAction(shield, QStringLiteral("Перейменувати"), this, [this, w] {
+        QAction *ren = menu.addAction(shield, tr7("Rename"), this, [this, w] {
             rename(w);
         });
         ren->setEnabled(!t.uuid.isEmpty() && t.kind != Tile::Wifi);
         menu.addSeparator();
-        QAction *props = menu.addAction(shield, QStringLiteral("Властивості"), this, [this, t] {
+        QAction *props = menu.addAction(shield, tr7("Properties"), this, [this, t] {
             properties(t);
         });
         props->setEnabled(!t.uuid.isEmpty());
@@ -2525,29 +2524,29 @@ private:
         }
         m_bar->clear();
         auto *organize = new QToolButton(m_bar);
-        organize->setText(QStringLiteral("Упорядкувати"));
+        organize->setText(tr7("Organize"));
         organize->setToolButtonStyle(Qt::ToolButtonTextOnly);
         organize->setPopupMode(QToolButton::InstantPopup);
         auto *om = new QMenu(organize);
         TileWidget *w = m_selected;
-        QAction *del = om->addAction(QStringLiteral("Видалити"), this, [this, w] {
+        QAction *del = om->addAction(tr7("Delete"), this, [this, w] {
             if (w) {
                 remove(w->tile);
             }
         });
-        QAction *ren = om->addAction(QStringLiteral("Перейменувати"), this, [this, w] {
+        QAction *ren = om->addAction(tr7("Rename"), this, [this, w] {
             if (w) {
                 rename(w);
             }
         });
         om->addSeparator();
-        QAction *props = om->addAction(QStringLiteral("Властивості"), this, [this, w] {
+        QAction *props = om->addAction(tr7("Properties"), this, [this, w] {
             if (w) {
                 properties(w->tile);
             }
         });
         om->addSeparator();
-        om->addAction(QStringLiteral("Закрити"), this, [this] {
+        om->addAction(tr7("Close"), this, [this] {
             m_close();
         });
         del->setEnabled(w && !w->tile.isAdapter());
@@ -2563,24 +2562,24 @@ private:
             toggle(t);
         });
         if (!t.uuid.isEmpty() && t.kind != Tile::Wifi) {
-            m_bar->addAction(QStringLiteral("Перейменування підключення"), this, [this, w] {
+            m_bar->addAction(tr7("Rename this connection"), this, [this, w] {
                 rename(w);
             });
         }
         if (t.active) {
-            m_bar->addAction(QStringLiteral("Перегляд стану підключення"), this, [this, t] {
+            m_bar->addAction(tr7("View status of this connection"), this, [this, t] {
                 showStatus(this, t, [this] {
                     changed();
                 });
             });
         }
         if (!t.isAdapter()) {
-            m_bar->addAction(QStringLiteral("Видалення підключення"), this, [this, t] {
+            m_bar->addAction(tr7("Delete this connection"), this, [this, t] {
                 remove(t);
             });
         }
         if (!t.uuid.isEmpty()) {
-            m_bar->addAction(QStringLiteral("Змінення параметрів цього підключення"), this, [this, t] {
+            m_bar->addAction(tr7("Change settings of this connection"), this, [this, t] {
                 properties(t);
             });
         }
@@ -2692,13 +2691,13 @@ inline QString networkLocation(const QString &uuid)
 }
 inline QString locationName(const QString &loc)
 {
-    return loc == QLatin1String("work") ? QStringLiteral("Робоча мережа")
-         : loc == QLatin1String("public") ? QStringLiteral("Загальнодоступна мережа") : QStringLiteral("Домашня мережа");
+    return loc == QLatin1String("work") ? tr7("Work network")
+         : loc == QLatin1String("public") ? tr7("Public network") : tr7("Home network");
 }
 /** Windows 7 calls a wired network "Мережа" (the Wi-Fi one by its name) */
 inline QString networkName(const QString &type, const QString &connection)
 {
-    return type == QLatin1String("wifi") ? connection : QStringLiteral("Мережа");
+    return type == QLatin1String("wifi") ? connection : tr7("Network");
 }
 
 /** One option of the "Set Network Location" window: big icon, blue title, grey text; a light blue box under the mouse */
@@ -2777,7 +2776,7 @@ inline void chooseNetworkLocation(QWidget *parent, const QString &uuid, const QS
     // parented to the top window: the page that opened it is rebuilt after the choice
     auto *dlg = new QDialog(parent ? parent->window() : nullptr);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setWindowTitle(QStringLiteral("Вибір розташування мережі"));
+    dlg->setWindowTitle(tr7("Set Network Location"));
     dlg->setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-network")));
 
     auto *outer = new QVBoxLayout(dlg);
@@ -2790,8 +2789,8 @@ inline void chooseNetworkLocation(QWidget *parent, const QString &uuid, const QS
     auto *v = new QVBoxLayout(page);
     v->setContentsMargins(32, 16, 32, 14);
     v->setSpacing(8);
-    v->addWidget(blueTitle(QStringLiteral("Виберіть розташування для мережі «%1»").arg(netName), 15));
-    v->addWidget(plain(QStringLiteral("Цей комп'ютер підключено до мережі. Windows автоматично застосує правильні параметри мережі відповідно до її розташування.")));
+    v->addWidget(blueTitle(tr7("Select a location for the '%1' network").arg(netName), 15));
+    v->addWidget(plain(tr7("This computer is connected to a network. Windows will automatically apply the correct network settings based on the network's location.")));
     auto choose = [dlg, uuid, done](const QString &loc) {
         netStore().setValue(QStringLiteral("Locations/") + uuid, loc);
         netStore().sync();
@@ -2804,17 +2803,14 @@ inline void chooseNetworkLocation(QWidget *parent, const QString &uuid, const QS
             done();
         });
     };
-    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-home"), QStringLiteral("Домашня мережа"),
-                                    QStringLiteral("Якщо всі комп'ютери в цій мережі розташовані у вас удома і ви їх знаєте, це надійна домашня мережа. "
-                                                   "Не вибирайте цей варіант для громадських місць, як-от кафе чи аеропорти."),
+    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-home"), tr7("Home network"),
+                                    tr7("If all the computers on this network are at your home, and you recognize them, this is a trusted home network. Don't choose this for public places such as coffee shops or airports."),
                                     [choose] { choose(QStringLiteral("home")); }));
-    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-work"), QStringLiteral("Робоча мережа"),
-                                    QStringLiteral("Якщо всі комп'ютери в цій мережі розташовані на вашому робочому місці і ви їх знаєте, це надійна робоча мережа. "
-                                                   "Не вибирайте цей варіант для громадських місць, як-от кафе чи аеропорти."),
+    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-work"), tr7("Work network"),
+                                    tr7("If all the computers on this network are at your workplace, and you recognize them, this is a trusted work network. Don't choose this for public places such as coffee shops or airports."),
                                     [choose] { choose(QStringLiteral("work")); }));
-    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-public"), QStringLiteral("Загальнодоступна мережа"),
-                                    QStringLiteral("Якщо ви не знаєте всіх комп'ютерів у мережі (наприклад, ви в кафе чи аеропорту або використовуєте "
-                                                   "мобільний широкосмуговий зв'язок), це загальнодоступна мережа, і вона не є надійною."),
+    v->addWidget(new LocationOption(QStringLiteral("seven-netloc-public"), tr7("Public network"),
+                                    tr7("If you don't recognize all the computers on the network (for example, you're in a coffee shop or airport, or you have mobile broadband), this is a public network and is not trusted."),
                                     [choose] { choose(QStringLiteral("public")); }));
     // QCheckBox does not wrap: box + wrapping label that toggles it
     auto *alwaysRow = new QHBoxLayout;
@@ -2823,16 +2819,15 @@ inline void chooseNetworkLocation(QWidget *parent, const QString &uuid, const QS
     QObject::connect(always, &QCheckBox::toggled, [](bool on) {
         netStore().setValue(QStringLiteral("AlwaysPublic"), on);
     });
-    auto *alwaysText = new QLabel(QStringLiteral("Вважати всі майбутні мережі, до яких я підключаюся, загальнодоступними і більше не питати."));
+    auto *alwaysText = new QLabel(tr7("Treat all future networks that I connect to as public, and don't ask me again."));
     alwaysText->setWordWrap(true);
     alwaysText->setBuddy(always);
     alwaysRow->addWidget(always, 0, Qt::AlignTop);
     alwaysRow->addWidget(alwaysText, 1);
     v->addLayout(alwaysRow);
-    v->addWidget(new Link(QStringLiteral("Допомога у виборі"), [dlg] {
-        QMessageBox::information(dlg, QStringLiteral("Вибір розташування мережі"),
-                                 QStringLiteral("Домашня та робоча мережі — надійні: комп'ютери в них бачать один одного і можуть спільно використовувати файли й принтери.\n\n"
-                                                "У загальнодоступній мережі ваш комп'ютер приховано від інших, а спільний доступ вимкнуто."));
+    v->addWidget(new Link(tr7("Help me choose"), [dlg] {
+        QMessageBox::information(dlg, tr7("Set Network Location"),
+                                 tr7("Home and work networks are trusted: computers on them can see each other and share files and printers.\n\nOn a public network your computer is hidden from others, and sharing is turned off."));
     }));
     outer->addWidget(page, 1);
     auto *bar = new QWidget;
@@ -2842,7 +2837,7 @@ inline void chooseNetworkLocation(QWidget *parent, const QString &uuid, const QS
     auto *bh = new QHBoxLayout(bar);
     bh->setContentsMargins(10, 10, 12, 10);
     bh->addStretch(1);
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     cancel->setMinimumWidth(75);
     QObject::connect(cancel, &QPushButton::clicked, dlg, &QDialog::reject);
     bh->addWidget(cancel);
@@ -2859,14 +2854,13 @@ inline void diagnoseNetwork(QWidget *parent)
     const QString c = nmcli({QStringLiteral("networking"), QStringLiteral("connectivity"), QStringLiteral("check")}).out.trimmed();
     QString msg;
     if (c == QLatin1String("full")) {
-        msg = QStringLiteral("Засобу діагностики не вдалося виявити проблем.\n\nКомп'ютер підключено до Інтернету.");
+        msg = tr7("Troubleshooting couldn't identify the problem.\n\nThe computer is connected to the Internet.");
     } else if (c == QLatin1String("limited") || c == QLatin1String("portal")) {
-        msg = QStringLiteral("Підключення обмежене: мережа працює, але доступу до Інтернету немає.\n\n"
-                             "Перевірте маршрутизатор або модем, а якщо це мережа в кафе чи готелі — відкрийте браузер і увійдіть на її сторінку.");
+        msg = tr7("Limited connectivity: the network works, but there is no Internet access.\n\nCheck your router or modem, and if this is the network of a coffee shop or hotel, open a browser and sign in on its page.");
     } else {
-        msg = QStringLiteral("Комп'ютер не підключено до жодної мережі.\n\nПідключіть мережевий кабель або виберіть бездротову мережу, клацнувши значок мережі в області сповіщень.");
+        msg = tr7("This computer is not connected to any network.\n\nPlug in a network cable or choose a wireless network by clicking the network icon in the notification area.");
     }
-    QMessageBox::information(parent, QStringLiteral("Діагностика мереж Windows"), msg);
+    QMessageBox::information(parent, tr7("Windows Network Diagnostics"), msg);
 }
 
 inline QWidget *buildCenterPage(const Nav &nav)
@@ -2890,23 +2884,23 @@ inline QWidget *buildCenterPage(const Nav &nav)
     sv->setContentsMargins(22, 16, 10, 14);
     sv->setSpacing(7);
     const QString sideColor = QStringLiteral("#1e3a5f");
-    sv->addWidget(new Link(QStringLiteral("Панель керування — домашня сторінка"), nav.home, sideColor));
+    sv->addWidget(new Link(tr7("Control Panel Home"), nav.home, sideColor));
     sv->addSpacing(9);
-    sv->addWidget(new Link(QStringLiteral("Змінення параметрів адаптера"), [nav] {
+    sv->addWidget(new Link(tr7("Change adapter settings"), [nav] {
         nav.open(ConnectionsView);
     }, sideColor));
-    sv->addWidget(new Link(QStringLiteral("Змінення додаткових параметрів спільного доступу"), [nav] {
+    sv->addWidget(new Link(tr7("Change advanced sharing settings"), [nav] {
         nav.open(SharingView);
     }, sideColor));
     sv->addStretch(1);
-    sv->addWidget(grey(QStringLiteral("Див. також")));
-    sv->addWidget(new Link(QStringLiteral("Домашня група"), [] {
+    sv->addWidget(grey(tr7("See also")));
+    sv->addWidget(new Link(tr7("HomeGroup"), [] {
         launch(QStringLiteral("dolphin"), {QStringLiteral("smb:/")});
     }, sideColor));
-    sv->addWidget(new Link(QStringLiteral("Властивості оглядача"), [] {
+    sv->addWidget(new Link(tr7("Internet Options"), [] {
         launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_proxy")});
     }, sideColor));
-    sv->addWidget(new Link(QStringLiteral("Брандмауер Windows"), [] {
+    sv->addWidget(new Link(tr7("Windows Firewall", "link"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--firewall")});
     }, sideColor));
     h->addWidget(side);
@@ -2921,7 +2915,7 @@ inline QWidget *buildCenterPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(blueTitle(QStringLiteral("Перегляд основних відомостей про мережу та налаштування підключень")));
+    cv->addWidget(blueTitle(tr7("View your basic network information and set up connections")));
     cv->addSpacing(14);
 
     // who is connected
@@ -2944,18 +2938,18 @@ inline QWidget *buildCenterPage(const Nav &nav)
     // mini map: this computer — network — Internet
     auto *map = new QHBoxLayout;
     map->setSpacing(0);
-    map->addWidget(mapNode(QStringLiteral("seven-net-computer"), QStringLiteral("%1\n(цей комп'ютер)").arg(QHostInfo::localHostName())));
+    map->addWidget(mapNode(QStringLiteral("seven-net-computer"), tr7("%1\n(This computer)").arg(QHostInfo::localHostName())));
     if (active.isEmpty()) {
         map->addWidget(mapLine(true), 0, Qt::AlignTop);
     } else {
         map->addWidget(mapLine(false), 0, Qt::AlignTop);
         map->addWidget(mapNode(active.size() == 1 ? QStringLiteral("seven-netloc-%1-map").arg(networkLocation(active.first().uuid)) : QStringLiteral("seven-net-network"),
-                               active.size() == 1 ? networkName(active.first().type, active.first().name) : QStringLiteral("Кілька мереж")));
+                               active.size() == 1 ? networkName(active.first().type, active.first().name) : tr7("Multiple networks")));
         map->addWidget(mapLine(!internet), 0, Qt::AlignTop);
     }
-    map->addWidget(mapNode(internet ? QStringLiteral("seven-net-internet") : QStringLiteral("seven-net-internet-off"), QStringLiteral("Інтернет")));
+    map->addWidget(mapNode(internet ? QStringLiteral("seven-net-internet") : QStringLiteral("seven-net-internet-off"), tr7("Internet")));
     map->addStretch(1);
-    auto *fullMap = new Link(QStringLiteral("Переглянути повну карту"), [] {
+    auto *fullMap = new Link(tr7("See full map"), [] {
         launch(QStringLiteral("dolphin"), {QStringLiteral("network:/")});
     });
     fullMap->setWordWrap(false);
@@ -2965,8 +2959,8 @@ inline QWidget *buildCenterPage(const Nav &nav)
 
     // active networks
     auto *activeHeader = new QHBoxLayout;
-    activeHeader->addWidget(new SectionHeader(QStringLiteral("Перегляд активних мереж")), 1);
-    auto *connectLink = new Link(active.isEmpty() ? QStringLiteral("Підключення до мережі") : QStringLiteral("Підключення або відключення"), [] {
+    activeHeader->addWidget(new SectionHeader(tr7("View your active networks")), 1);
+    auto *connectLink = new Link(active.isEmpty() ? tr7("Connect to a network") : tr7("Connect or disconnect"), [] {
         openNetworkFlyout();
     });
     connectLink->setWordWrap(false);
@@ -2974,7 +2968,7 @@ inline QWidget *buildCenterPage(const Nav &nav)
     cv->addLayout(activeHeader);
     cv->addSpacing(6);
     if (active.isEmpty()) {
-        auto *none = plain(QStringLiteral("Наразі ви не підключені до жодної мережі."));
+        auto *none = plain(tr7("You are currently not connected to any networks."));
         none->setContentsMargins(16, 0, 0, 0);
         cv->addWidget(none);
     }
@@ -3014,14 +3008,14 @@ inline QWidget *buildCenterPage(const Nav &nav)
         auto *grid = new QGridLayout;
         grid->setHorizontalSpacing(12);
         grid->setVerticalSpacing(4);
-        grid->addWidget(grey(QStringLiteral("Тип доступу:")), 0, 0);
+        grid->addWidget(grey(tr7("Access type:")), 0, 0);
         grid->addWidget(new QLabel(connectivityText(a.v4)), 0, 1);
-        grid->addWidget(grey(QStringLiteral("Підключення:")), 1, 0);
+        grid->addWidget(grey(tr7("Connections:")), 1, 0);
         Tile t;
         t.kind = a.type == QLatin1String("wifi") ? Tile::Wifi : a.type == QLatin1String("ethernet") ? Tile::Ethernet : a.type == QLatin1String("ppp") ? Tile::Dialup : Tile::Vpn;
         t.iface = a.iface;
         t.uuid = a.uuid;
-        t.name = t.kind == Tile::Wifi ? QStringLiteral("Бездротове мережеве з'єднання") : a.name;
+        t.name = t.kind == Tile::Wifi ? tr7("Wireless Network Connection") : a.name;
         t.active = true;
         t.description = productOf(a.iface);
         auto *conRow = new QHBoxLayout;
@@ -3042,27 +3036,27 @@ inline QWidget *buildCenterPage(const Nav &nav)
     cv->addSpacing(10);
 
     // change settings
-    cv->addWidget(new SectionHeader(QStringLiteral("Змінення мережевих параметрів")));
+    cv->addWidget(new SectionHeader(tr7("Change your networking settings")));
     cv->addSpacing(8);
-    cv->addWidget(task(QStringLiteral("seven-net-new"), QStringLiteral("Налаштування нового підключення або мережі"),
-                       hasPptp() ? QStringLiteral("Налаштування високошвидкісного (PPPoE) або VPN-підключення.")
-                                 : QStringLiteral("Налаштування високошвидкісного (PPPoE) підключення."),
+    cv->addWidget(task(QStringLiteral("seven-net-new"), tr7("Set up a new connection or network"),
+                       hasPptp() ? tr7("Set up a broadband (PPPoE) or VPN connection.")
+                                 : tr7("Set up a broadband (PPPoE) connection."),
                        [root] {
                            newConnectionWizard(root->window(), [] {});
                        }));
     cv->addSpacing(12);
-    cv->addWidget(task(QStringLiteral("seven-net-connect"), QStringLiteral("Підключитися до мережі"),
-                       QStringLiteral("Підключення або повторне підключення до бездротового, дротового або VPN-з'єднання."), [] {
+    cv->addWidget(task(QStringLiteral("seven-net-connect"), tr7("Connect to a network", "task"),
+                       tr7("Connect or reconnect to a wireless, wired or VPN network connection."), [] {
                            openNetworkFlyout();
                        }));
     cv->addSpacing(12);
-    cv->addWidget(task(QStringLiteral("seven-hg"), QStringLiteral("Вибір домашньої групи та параметрів спільного доступу"),
-                       QStringLiteral("Доступ до файлів і принтерів, розташованих на інших мережевих комп'ютерах."), [] {
+    cv->addWidget(task(QStringLiteral("seven-hg"), tr7("Choose homegroup and sharing options", "task"),
+                       tr7("Access files and printers located on other network computers."), [] {
                            launch(QStringLiteral("dolphin"), {QStringLiteral("smb:/")});
                        }));
     cv->addSpacing(12);
-    cv->addWidget(task(QStringLiteral("seven-net-troubleshoot"), QStringLiteral("Виправлення неполадок"),
-                       QStringLiteral("Діагностика та виправлення неполадок мережі або отримання відомостей про усунення несправностей."), [root] {
+    cv->addWidget(task(QStringLiteral("seven-net-troubleshoot"), tr7("Troubleshoot problems"),
+                       tr7("Diagnose and repair network problems, or get troubleshooting information."), [root] {
                            diagnoseNetwork(root->window());
                        }));
     mv->addWidget(content);

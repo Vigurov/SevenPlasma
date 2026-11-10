@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include <QCollator>
 #include <QDir>
@@ -135,38 +136,38 @@ struct ScriptInfo {
 inline const QList<ScriptInfo> &scriptTable()
 {
     static const QList<ScriptInfo> t{
-        {"uk", "Кирилиця", "Абф"},
-        {"en", "Латиниця", "Abg"},
-        {"el", "Грецька", "Αβγ"},
-        {"hy", "Вірменська", "Աբգ"},
-        {"he", "Іврит", "אגץ"},
-        {"ar", "Арабська", "أ​ب​ج"},
-        {"syr", "Сирійська", "ܐ​ܒ​ܓ"},
-        {"dv", "Тана", "ހބޗ"},
-        {"hi", "Деванагарі", "अबक"},
-        {"bn", "Бенгальська", "অবক"},
-        {"pa", "Гурмукхі", "ਅਬਕ"},
-        {"gu", "Гуджараті", "અબક"},
-        {"or", "Орія", "ଅବକ"},
-        {"ta", "Тамільська", "அஇஉ"},
-        {"te", "Телугу", "అబక"},
-        {"kn", "Каннада", "ಅಬಕ"},
-        {"ml", "Малаялам", "അബക"},
-        {"si", "Сингальська", "අබක"},
-        {"th", "Тайська", "กคฎ"},
-        {"lo", "Лаоська", "ກຂຄ"},
-        {"bo", "Тибетська", "ཀཁག"},
-        {"my", "М'янма", "အဗက"},
-        {"ka", "Грузинська", "აბგ"},
-        {"am", "Ефіопська", "ግዕዝ"},
-        {"chr", "Черокі", "ᏣᎳᎩ"},
-        {"iu", "Канадське складове письмо", "ᐊᕕᒋ"},
-        {"km", "Кхмерська", "កខគ"},
-        {"mn-cn", "Монгольська", "ᠠ​ᠡ​ᠢ"},
-        {"ja", "Японська", "あいう"},
-        {"ko", "Корейська", "한글"},
-        {"zh-cn", "Китайська (спрощене письмо)", "简体字"},
-        {"zh-tw", "Китайська (традиційне письмо)", "繁體字"},
+        {"uk", "Cyrillic", "Абф"},
+        {"en", "Latin", "Abg"},
+        {"el", "Greek", "Αβγ"},
+        {"hy", "Armenian", "Աբգ"},
+        {"he", "Hebrew", "אגץ"},
+        {"ar", "Arabic", "أ​ب​ج"},
+        {"syr", "Syriac", "ܐ​ܒ​ܓ"},
+        {"dv", "Thaana", "ހބޗ"},
+        {"hi", "Devanagari", "अबक"},
+        {"bn", "Bengali", "অবক"},
+        {"pa", "Gurmukhi", "ਅਬਕ"},
+        {"gu", "Gujarati", "અબક"},
+        {"or", "Oriya", "ଅବକ"},
+        {"ta", "Tamil", "அஇஉ"},
+        {"te", "Telugu", "అబక"},
+        {"kn", "Kannada", "ಅಬಕ"},
+        {"ml", "Malayalam", "അബക"},
+        {"si", "Sinhala", "අබක"},
+        {"th", "Thai", "กคฎ"},
+        {"lo", "Lao", "ກຂຄ"},
+        {"bo", "Tibetan", "ཀཁག"},
+        {"my", "Myanmar", "အဗက"},
+        {"ka", "Georgian", "აბგ"},
+        {"am", "Ethiopic", "ግዕዝ"},
+        {"chr", "Cherokee", "ᏣᎳᎩ"},
+        {"iu", "Canadian Syllabics", "ᐊᕕᒋ"},
+        {"km", "Khmer", "កខគ"},
+        {"mn-cn", "Mongolian", "ᠠ​ᠡ​ᠢ"},
+        {"ja", "Japanese", "あいう"},
+        {"ko", "Korean", "한글"},
+        {"zh-cn", "Chinese (Simplified)", "简体字"},
+        {"zh-tw", "Chinese (Traditional)", "繁體字"},
     };
     return t;
 }
@@ -293,30 +294,30 @@ inline QString embeddability(int fsType)
         return {};
     }
     if (fsType & 0x0002) {
-        return QStringLiteral("Обмежена ліцензія");
+        return tr7("Restricted");
     }
     if (fsType & 0x0004) {
-        return QStringLiteral("Друк і попередній перегляд");
+        return tr7("Print & Preview");
     }
     if (fsType & 0x0008) {
-        return QStringLiteral("Можна редагувати");
+        return tr7("Editable");
     }
-    return QStringLiteral("Можна встановлювати");
+    return tr7("Installable");
 }
 
 /** "Regular" -> "звичайний", like the captions of the Ukrainian Fonts folder */
 inline QString styleName(const QString &style)
 {
     static const QList<QPair<QString, QString>> words{
-        {QStringLiteral("Bold Italic"), QStringLiteral("напівжирний курсив")}, {QStringLiteral("Bold Oblique"), QStringLiteral("напівжирний похилий")},
-        {QStringLiteral("SemiBold"), QStringLiteral("напівжирний (середній)")}, {QStringLiteral("Semibold"), QStringLiteral("напівжирний (середній)")},
-        {QStringLiteral("ExtraBold"), QStringLiteral("наджирний")}, {QStringLiteral("Black"), QStringLiteral("чорний")},
-        {QStringLiteral("Bold"), QStringLiteral("напівжирний")}, {QStringLiteral("Italic"), QStringLiteral("курсив")},
-        {QStringLiteral("Oblique"), QStringLiteral("похилий")}, {QStringLiteral("Regular"), QStringLiteral("звичайний")},
-        {QStringLiteral("Normal"), QStringLiteral("звичайний")}, {QStringLiteral("Book"), QStringLiteral("звичайний")},
-        {QStringLiteral("ExtraLight"), QStringLiteral("надсвітлий")}, {QStringLiteral("Light"), QStringLiteral("світлий")},
-        {QStringLiteral("Thin"), QStringLiteral("тонкий")}, {QStringLiteral("Medium"), QStringLiteral("середній")},
-        {QStringLiteral("Condensed"), QStringLiteral("вузький")}, {QStringLiteral("Narrow"), QStringLiteral("вузький")},
+        {QStringLiteral("Bold Italic"), tr7("Bold Italic")}, {QStringLiteral("Bold Oblique"), tr7("Bold Oblique")},
+        {QStringLiteral("SemiBold"), tr7("Semibold")}, {QStringLiteral("Semibold"), tr7("Semibold")},
+        {QStringLiteral("ExtraBold"), tr7("Black")}, {QStringLiteral("Black"), tr7("black")},
+        {QStringLiteral("Bold"), tr7("Bold")}, {QStringLiteral("Italic"), tr7("Italic")},
+        {QStringLiteral("Oblique"), tr7("Oblique")}, {QStringLiteral("Regular"), tr7("Regular", "font style")},
+        {QStringLiteral("Normal"), tr7("Regular", "font style")}, {QStringLiteral("Book"), tr7("Regular", "font style")},
+        {QStringLiteral("ExtraLight"), tr7("Extra Light")}, {QStringLiteral("Light"), tr7("Light")},
+        {QStringLiteral("Thin"), tr7("Thin")}, {QStringLiteral("Medium"), tr7("Medium")},
+        {QStringLiteral("Condensed"), tr7("Narrow")}, {QStringLiteral("Narrow"), tr7("Narrow")},
     };
     QString s = style;
     for (const auto &w : words) {
@@ -354,7 +355,7 @@ inline void fillFace(Face &f, FcPattern *p)
             if (FcLangSetHasLang(ls, reinterpret_cast<const FcChar8 *>(si.lang)) != FcLangEqual) {
                 continue;
             }
-            f.scripts << QString::fromUtf8(si.name);
+            f.scripts << tr7(si.name);
             const QString lang = QString::fromLatin1(si.lang);
             QString &slot = (lang == QLatin1String("ja") || lang == QLatin1String("ko") || lang.startsWith(QLatin1String("zh"))) ? cjk
                 : lang == QLatin1String("uk")                                                                                 ? cyrillic
@@ -451,7 +452,7 @@ inline QList<Family> families(const QList<Face> &faces)
         }
         out[*it].faces << f;
     }
-    QCollator c(QLocale(QLocale::Ukrainian));
+    QCollator c(QLocale{});
     c.setNumericMode(true);
     std::sort(out.begin(), out.end(), [&c](const Family &a, const Family &b) {
         return c.compare(a.name, b.name) < 0;

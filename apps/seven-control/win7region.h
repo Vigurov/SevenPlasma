@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7datetime.h"
 
@@ -118,8 +119,8 @@ inline QString territoryName(const QString &code)
                 names.insert(o.value(QLatin1String("alpha_2")).toString(), tr.value(en, tr.value(o.value(QLatin1String("name")).toString(), en)));
             }
         }
-        names.insert(QStringLiteral("US"), QStringLiteral("США"));
-        names.insert(QStringLiteral("GB"), QStringLiteral("Великобританія"));
+        names.insert(QStringLiteral("US"), tr7("US"));
+        names.insert(QStringLiteral("GB"), tr7("United Kingdom"));
     }
     return names.value(code, code);
 }
@@ -131,7 +132,7 @@ inline QString localeName(const QString &locale)
     const QString lang = base.section(QLatin1Char('_'), 0, 0);
     const QString terr = base.section(QLatin1Char('_'), 1, 1);
     if (lang == QLatin1String("C") || lang == QLatin1String("POSIX")) {
-        return QStringLiteral("Стандартний (C)");
+        return tr7("Standard (C)");
     }
     return terr.isEmpty() ? capital(languageName(lang)) : QStringLiteral("%1 (%2)").arg(capital(languageName(lang)), territoryName(terr));
 }
@@ -161,7 +162,7 @@ inline void fillLocales(QComboBox *box, const QString &select)
     for (const QString &l : supportedLocales()) {
         items.append({localeName(l), l});
     }
-    QCollator c(QLocale(QLocale::Ukrainian));
+    QCollator c(QLocale{});
     std::sort(items.begin(), items.end(), [&c](const auto &a, const auto &b) {
         return c.compare(a.first, b.first) < 0;
     });
@@ -292,7 +293,7 @@ inline QString inputLanguage(const Layout &l)
 inline QString keyboardName(const Layout &l)
 {
     if (l.layout == QLatin1String("us") && l.variant.isEmpty()) {
-        return QStringLiteral("США");
+        return tr7("US");
     }
     return l.description;
 }
@@ -381,10 +382,10 @@ inline QIcon badgeIcon(const QString &code)
 
 inline const QList<QPair<QString, QString>> &switchKeys()
 {
-    static const QList<QPair<QString, QString>> keys{{QString(), QStringLiteral("Не призначено")},
+    static const QList<QPair<QString, QString>> keys{{QString(), tr7("Not scheduled")},
                                                      {QStringLiteral("grp:ctrl_shift_toggle"), QStringLiteral("CTRL + SHIFT")},
-                                                     {QStringLiteral("grp:alt_shift_toggle"), QStringLiteral("ALT ліворуч + SHIFT")},
-                                                     {QStringLiteral("grp:grave_toggle"), QStringLiteral("Ё або знак наголосу (`)")}};
+                                                     {QStringLiteral("grp:alt_shift_toggle"), tr7("Left ALT + SHIFT")},
+                                                     {QStringLiteral("grp:grave_toggle"), tr7("Grave Accent (`)")}};
     return keys;
 }
 
@@ -412,10 +413,10 @@ public:
         : QDialog(parent)
         , choice(current)
     {
-        fixedDialog(this, QStringLiteral("Змінення сполучення клавіш"), QStringLiteral("seven-textservices"));
+        fixedDialog(this, tr7("Change Key Sequence"), QStringLiteral("seven-textservices"));
         auto *h = new QHBoxLayout(this);
         h->setContentsMargins(12, 12, 12, 12);
-        auto *box = new QGroupBox(QStringLiteral("Зміна мови введення"));
+        auto *box = new QGroupBox(tr7("Switch Input Language"));
         auto *bv = new QVBoxLayout(box);
         auto *group = new QButtonGroup(this);
         for (int i = 0; i < switchKeys().size(); ++i) {
@@ -427,7 +428,7 @@ public:
         h->addWidget(box);
         auto *btns = new QVBoxLayout;
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         ok->setDefault(true);
         btns->addSpacing(14);
@@ -454,12 +455,12 @@ public:
     AddLanguageDialog(const KeyboardConfig &k, QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Додавання мови введення"), QStringLiteral("seven-textservices"));
+        fixedDialog(this, tr7("Add Input Language"), QStringLiteral("seven-textservices"));
         setFixedSize(440, 420);
         auto *h = new QHBoxLayout(this);
         h->setContentsMargins(12, 12, 12, 12);
         auto *left = new QVBoxLayout;
-        auto *intro = new QLabel(QStringLiteral("Виберіть мову, яку потрібно додати, установивши відповідні прапорці."));
+        auto *intro = new QLabel(tr7("Use the checkbox to select the languages to add."));
         intro->setWordWrap(true);
         left->addWidget(intro);
         m_tree = new QTreeWidget;
@@ -469,7 +470,7 @@ public:
         h->addLayout(left, 1);
         auto *btns = new QVBoxLayout;
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         ok->setDefault(true);
         btns->addSpacing(22);
@@ -484,13 +485,13 @@ public:
             byLanguage[inputLanguage(l)].append(l);
         }
         QStringList languages = byLanguage.keys();
-        QCollator c(QLocale(QLocale::Ukrainian));
+        QCollator c(QLocale{});
         std::sort(languages.begin(), languages.end(), [&c](const QString &a, const QString &b) {
             return c.compare(a, b) < 0;
         });
         for (const QString &lang : std::as_const(languages)) {
             auto *li = new QTreeWidgetItem(m_tree, {lang});
-            auto *kb = new QTreeWidgetItem(li, {QStringLiteral("Клавіатура")});
+            auto *kb = new QTreeWidgetItem(li, {tr7("Keyboard")});
             kb->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-keyboard")));
             for (const Layout &l : byLanguage.value(lang)) {
                 auto *it = new QTreeWidgetItem(kb, {keyboardName(l)});
@@ -532,23 +533,23 @@ public:
         , m_k(readKeyboard())
         , m_old(m_k)
     {
-        fixedDialog(this, QStringLiteral("Мови та служби текстового введення"), QStringLiteral("seven-textservices"));
+        fixedDialog(this, tr7("Text Services and Input Languages"), QStringLiteral("seven-textservices"));
         setFixedWidth(430);
         readLanguageBar();
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(generalTab(), QStringLiteral("Загальні"));
-        tabs->addTab(barTab(), QStringLiteral("Мовна панель"));
-        tabs->addTab(switchTab(), QStringLiteral("Перемикання клавіатури"));
+        tabs->addTab(generalTab(), tr7("General"));
+        tabs->addTab(barTab(), tr7("Language Bar"));
+        tabs->addTab(switchTab(), tr7("Advanced Key Settings"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -605,7 +606,7 @@ private:
             if (!lastLang || lang != lastName) { // neighbours with the same language share a node
                 lastLang = new QTreeWidgetItem(m_tree, {lang});
                 lastLang->setIcon(0, badgeIcon(badge(m_k, i)));
-                auto *kb = new QTreeWidgetItem(lastLang, {QStringLiteral("Клавіатура")});
+                auto *kb = new QTreeWidgetItem(lastLang, {tr7("Keyboard")});
                 kb->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-keyboard")));
                 lastName = lang;
             }
@@ -649,15 +650,15 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *def = new QGroupBox(QStringLiteral("Мова введення за замовчуванням"));
+        auto *def = new QGroupBox(tr7("Default input language"));
         auto *dv = new QVBoxLayout(def);
-        dv->addWidget(text(QStringLiteral("Виберіть одну з установлених мов введення, яку буде використано за замовчуванням.")));
+        dv->addWidget(text(tr7("Select one of the installed input languages to use as the default for all input fields.")));
         m_default = new QComboBox;
         dv->addWidget(m_default);
         v->addWidget(def);
-        auto *inst = new QGroupBox(QStringLiteral("Установлені служби"));
+        auto *inst = new QGroupBox(tr7("Installed services"));
         auto *iv = new QVBoxLayout(inst);
-        iv->addWidget(text(QStringLiteral("Виберіть потрібні служби для кожної мови введення зі списку. Для змінення списку використовуйте кнопки «Додати» та «Видалити».")));
+        iv->addWidget(text(tr7("Select the services that you want for each input language shown in the list. Use the Add and Remove buttons to modify this list.")));
         auto *row = new QHBoxLayout;
         m_tree = new QTreeWidget;
         m_tree->setHeaderHidden(true);
@@ -665,12 +666,12 @@ private:
         m_tree->setMinimumHeight(170);
         row->addWidget(m_tree, 1);
         auto *col = new QVBoxLayout;
-        auto *add = new QPushButton(QStringLiteral("Додати..."));
-        m_remove = new QPushButton(QStringLiteral("Видалити"));
-        auto *props = new QPushButton(QStringLiteral("Властивості..."));
+        auto *add = new QPushButton(tr7("Add..."));
+        m_remove = new QPushButton(tr7("Delete"));
+        auto *props = new QPushButton(tr7("Properties..."));
         props->setEnabled(false);
-        m_up = new QPushButton(QStringLiteral("Вгору"));
-        m_down = new QPushButton(QStringLiteral("Вниз"));
+        m_up = new QPushButton(tr7("Move Up"));
+        m_down = new QPushButton(tr7("Move Down"));
         col->addSpacing(50);
         for (QPushButton *b : {add, m_remove, props, m_up, m_down}) {
             b->setMinimumWidth(96);
@@ -744,16 +745,16 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *box = new QGroupBox(QStringLiteral("Мовна панель"));
+        auto *box = new QGroupBox(tr7("Language Bar"));
         auto *bv = new QVBoxLayout(box);
-        auto *docked = new QRadioButton(QStringLiteral("Закріплена на панелі завдань"));
-        auto *hidden = new QRadioButton(QStringLiteral("Прихована"));
+        auto *docked = new QRadioButton(tr7("Docked in the taskbar"));
+        auto *hidden = new QRadioButton(tr7("Hidden", "language bar"));
         (m_barShown ? docked : hidden)->setChecked(true);
         bv->addWidget(docked);
         bv->addWidget(hidden);
         v->addWidget(box);
         v->addSpacing(6);
-        auto *labels = new QCheckBox(QStringLiteral("Відображати текстові мітки на мовній панелі"));
+        auto *labels = new QCheckBox(tr7("Show text labels on the Language bar"));
         labels->setChecked(m_barLabels);
         v->addWidget(labels);
         v->addStretch(1);
@@ -771,7 +772,7 @@ private:
     void fillSwitchList()
     {
         m_keys->clear();
-        auto *it = new QTreeWidgetItem(m_keys, {QStringLiteral("Перемкнути мову введення"), switchKeyIndex(m_k.options) == 0 ? QStringLiteral("(Немає)") : switchKeys().at(switchKeyIndex(m_k.options)).second});
+        auto *it = new QTreeWidgetItem(m_keys, {tr7("Switch input language"), switchKeyIndex(m_k.options) == 0 ? tr7("(None)") : switchKeys().at(switchKeyIndex(m_k.options)).second});
         it->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         m_keys->setCurrentItem(it);
     }
@@ -781,26 +782,26 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *caps = new QGroupBox(QStringLiteral("Вимкнення режиму Caps Lock"));
+        auto *caps = new QGroupBox(tr7("To turn off Caps Lock"));
         auto *ch = new QHBoxLayout(caps);
-        auto *byCaps = new QRadioButton(QStringLiteral("Клавішею CAPS LOCK"));
-        auto *byShift = new QRadioButton(QStringLiteral("Клавішею SHIFT"));
+        auto *byCaps = new QRadioButton(tr7("Press the CAPS LOCK key"));
+        auto *byShift = new QRadioButton(tr7("Press the SHIFT key"));
         (m_k.options.contains(QStringLiteral("shift:breaks_caps")) ? byShift : byCaps)->setChecked(true);
         ch->addWidget(byCaps);
         ch->addWidget(byShift);
         v->addWidget(caps);
-        auto *keys = new QGroupBox(QStringLiteral("Сполучення клавіш для мов введення"));
+        auto *keys = new QGroupBox(tr7("Hot keys for input languages"));
         auto *kv = new QVBoxLayout(keys);
         m_keys = new QTreeWidget;
         m_keys->setColumnCount(2);
-        m_keys->setHeaderLabels({QStringLiteral("Дія"), QStringLiteral("Сполучення клавіш")});
+        m_keys->setHeaderLabels({tr7("Action"), tr7("Keyboard shortcuts")});
         m_keys->setRootIsDecorated(false);
         m_keys->header()->setStretchLastSection(false);
         m_keys->header()->setSectionResizeMode(0, QHeaderView::Stretch);
         m_keys->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
         m_keys->setMinimumHeight(200);
         kv->addWidget(m_keys, 1);
-        auto *change = new QPushButton(QStringLiteral("Змінити сполучення клавіш..."));
+        auto *change = new QPushButton(tr7("Change Key Sequence..."));
         kv->addWidget(change, 0, Qt::AlignRight);
         v->addWidget(keys, 1);
         fillSwitchList();
@@ -998,20 +999,20 @@ public:
         : QDialog(parent)
         , result(f)
     {
-        fixedDialog(this, QStringLiteral("Настроювання формату"), QStringLiteral("seven-region"));
+        fixedDialog(this, tr7("Customize Format"), QStringLiteral("seven-region"));
         setFixedWidth(470);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(timeTab(), QStringLiteral("Час"));
-        tabs->addTab(dateTab(), QStringLiteral("Дата"));
+        tabs->addTab(timeTab(), tr7("Time"));
+        tabs->addTab(dateTab(), tr7("Date"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        auto *apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        auto *apply = new QPushButton(tr7("Apply"));
         apply->setEnabled(false);
         for (QPushButton *b : {ok, cancel, apply}) {
             b->setMinimumWidth(75);
@@ -1054,10 +1055,10 @@ private:
         auto *w = new QWidget;
         auto *h = new QHBoxLayout(w);
         h->setContentsMargins(0, 0, 0, 0);
-        auto *t = new QLabel(QStringLiteral("Натисніть кнопку «Скинути», щоб відновити параметри за замовчуванням."));
+        auto *t = new QLabel(tr7("Click Reset to restore the system default settings."));
         t->setWordWrap(true);
         h->addWidget(t, 1);
-        auto *b = new QPushButton(QStringLiteral("Скинути"));
+        auto *b = new QPushButton(tr7("Reset"));
         b->setMinimumWidth(85);
         h->addWidget(b, 0, Qt::AlignBottom);
         connect(b, &QPushButton::clicked, this, std::move(reset));
@@ -1069,17 +1070,17 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *ex = new QGroupBox(QStringLiteral("Приклади"));
+        auto *ex = new QGroupBox(tr7("Example"));
         auto *eg = new QGridLayout(ex);
         m_shortTimeSample = sampleBox();
         m_longTimeSample = sampleBox();
-        eg->addWidget(new QLabel(QStringLiteral("Короткий формат часу:")), 0, 0);
+        eg->addWidget(new QLabel(tr7("Short time:")), 0, 0);
         eg->addWidget(m_shortTimeSample, 0, 1);
-        eg->addWidget(new QLabel(QStringLiteral("Повний формат часу:")), 1, 0);
+        eg->addWidget(new QLabel(tr7("Long time:")), 1, 0);
         eg->addWidget(m_longTimeSample, 1, 1);
         eg->setColumnStretch(2, 1);
         v->addWidget(ex);
-        auto *fm = new QGroupBox(QStringLiteral("Формати часу"));
+        auto *fm = new QGroupBox(tr7("Time formats"));
         auto *fg = new QGridLayout(fm);
         m_shortTime = combo({QStringLiteral("H:mm"), QStringLiteral("HH:mm"), QStringLiteral("h:mm tt"), QStringLiteral("hh:mm tt")}, result.shortTime);
         m_longTime = combo({QStringLiteral("H:mm:ss"), QStringLiteral("HH:mm:ss"), QStringLiteral("h:mm:ss tt"), QStringLiteral("hh:mm:ss tt")}, result.longTime);
@@ -1090,18 +1091,17 @@ private:
             l->setWordWrap(true);
             return l;
         };
-        fg->addWidget(label(QStringLiteral("Короткий формат часу:")), 0, 0);
+        fg->addWidget(label(tr7("Short time:")), 0, 0);
         fg->addWidget(m_shortTime, 0, 1);
-        fg->addWidget(label(QStringLiteral("Повний формат часу:")), 1, 0);
+        fg->addWidget(label(tr7("Long time:")), 1, 0);
         fg->addWidget(m_longTime, 1, 1);
-        fg->addWidget(label(QStringLiteral("Позначення часу до полудня (AM):")), 2, 0);
+        fg->addWidget(label(tr7("AM symbol:")), 2, 0);
         fg->addWidget(m_am, 2, 1);
-        fg->addWidget(label(QStringLiteral("Позначення часу після полудня (PM):")), 3, 0);
+        fg->addWidget(label(tr7("PM symbol:")), 3, 0);
         fg->addWidget(m_pm, 3, 1);
         fg->setColumnStretch(0, 1);
         v->addWidget(fm);
-        auto *legend = new QLabel(QStringLiteral("Позначення формату:\n\nh = година   m = хвилина   s = секунда (лише повний формат)\ntt = AM або PM\n\nh/H = 12/24-годинний формат\n\n"
-                                                 "hh, mm, ss = з нулем на початку\nh, m, s = без нуля на початку"));
+        auto *legend = new QLabel(tr7("What the notations mean:\n\nh = hour   m = minute   s = second (long time only)\ntt = A.M. or P.M.\n\nh/H = 12/24 hour\n\nhh, mm, ss = display leading zero\nh, m, s = do not display leading zero"));
         v->addWidget(legend);
         v->addStretch(1);
         v->addWidget(resetRow([this] {
@@ -1125,29 +1125,29 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *ex = new QGroupBox(QStringLiteral("Приклади"));
+        auto *ex = new QGroupBox(tr7("Example"));
         auto *eg = new QGridLayout(ex);
         m_shortDateSample = sampleBox();
         m_longDateSample = sampleBox();
         m_longDateSample->setFixedWidth(220);
-        eg->addWidget(new QLabel(QStringLiteral("Короткий формат дати:")), 0, 0);
+        eg->addWidget(new QLabel(tr7("Short date:")), 0, 0);
         eg->addWidget(m_shortDateSample, 0, 1);
-        eg->addWidget(new QLabel(QStringLiteral("Повний формат дати:")), 1, 0);
+        eg->addWidget(new QLabel(tr7("Long date:")), 1, 0);
         eg->addWidget(m_longDateSample, 1, 1);
         eg->setColumnStretch(2, 1);
         v->addWidget(ex);
-        auto *fm = new QGroupBox(QStringLiteral("Формати дати"));
+        auto *fm = new QGroupBox(tr7("Date formats"));
         auto *fg = new QGridLayout(fm);
         m_shortDate = combo({QStringLiteral("dd.MM.yyyy"), QStringLiteral("dd.MM.yy"), QStringLiteral("d.M.yy"), QStringLiteral("d.MM.yy"), QStringLiteral("yyyy-MM-dd")}, result.shortDate);
-        m_longDate = combo({QStringLiteral("d MMMM yyyy 'р.'"), QStringLiteral("dddd, d MMMM yyyy 'р.'"), QStringLiteral("d MMMM yyyy")}, result.longDate);
+        m_longDate = combo({tr7("MMMM d, yyyy"), tr7("dddd, MMMM d, yyyy"), QStringLiteral("d MMMM yyyy")}, result.longDate);
         m_longDate->setFixedWidth(200);
-        fg->addWidget(new QLabel(QStringLiteral("Короткий формат дати:")), 0, 0);
+        fg->addWidget(new QLabel(tr7("Short date:")), 0, 0);
         fg->addWidget(m_shortDate, 0, 1);
-        fg->addWidget(new QLabel(QStringLiteral("Повний формат дати:")), 1, 0);
+        fg->addWidget(new QLabel(tr7("Long date:")), 1, 0);
         fg->addWidget(m_longDate, 1, 1);
         fg->setColumnStretch(0, 1);
         v->addWidget(fm);
-        auto *legend = new QLabel(QStringLiteral("Позначення формату:\n\nd, dd = день;  ddd, dddd = день тижня;  M = місяць;  y = рік"));
+        auto *legend = new QLabel(tr7("What the notations mean:\n\nd, dd = day;  ddd, dddd = day of week;  M = month;  y = year"));
         v->addWidget(legend);
         v->addStretch(1);
         v->addWidget(resetRow([this] {
@@ -1239,11 +1239,11 @@ public:
     explicit CopySettingsDialog(QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Параметри екрана привітання та облікових записів нових користувачів"), QStringLiteral("seven-region"));
+        fixedDialog(this, tr7("Welcome screen and new user accounts settings"), QStringLiteral("seven-region"));
         setFixedWidth(500);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
-        auto *intro = new QLabel(QStringLiteral("Нижче показано параметри поточного користувача, екрана привітання (системні облікові записи) і нових облікових записів користувачів."));
+        auto *intro = new QLabel(tr7("Display the current settings of the current user, the welcome screen (system accounts) and new user accounts."));
         intro->setWordWrap(true);
         v->addWidget(intro);
         auto *box = new QFrame;
@@ -1261,30 +1261,30 @@ public:
             auto *h = new QLabel(title);
             h->setStyleSheet(QStringLiteral("color: #1e3287; border-bottom: 1px solid #d5dfe5;"));
             grid->addWidget(h, row++, 0, 1, 2);
-            const QList<QPair<QString, QString>> lines{{QStringLiteral("Мова інтерфейсу:"), ui}, {QStringLiteral("Мова введення:"), input}, {QStringLiteral("Формат:"), format}};
+            const QList<QPair<QString, QString>> lines{{tr7("Display language:"), ui}, {tr7("Input language:"), input}, {tr7("Format:"), format}};
             for (const auto &l : lines) {
                 grid->addWidget(new QLabel(l.first), row, 0);
                 grid->addWidget(new QLabel(l.second), row++, 1);
             }
         };
-        section(QStringLiteral("Поточний користувач"), displayLanguage(), inputLanguage(userLayout) + QStringLiteral(" - ") + keyboardName(userLayout), localeName(formatsLocale()));
+        section(tr7("Current user"), displayLanguage(), inputLanguage(userLayout) + QStringLiteral(" - ") + keyboardName(userLayout), localeName(formatsLocale()));
         const QString sysLang = languageName(sys.lang.section(QLatin1Char('_'), 0, 0));
         const QString sysInput = inputLanguage(sysLayout) + QStringLiteral(" - ") + keyboardName(sysLayout);
-        section(QStringLiteral("Екран привітання"), sysLang, sysInput, localeName(sys.lang));
-        section(QStringLiteral("Нові облікові записи користувачів"), sysLang, sysInput, localeName(sys.lang));
+        section(tr7("Welcome screen"), sysLang, sysInput, localeName(sys.lang));
+        section(tr7("New user accounts"), sysLang, sysInput, localeName(sys.lang));
         grid->setColumnStretch(1, 1);
         grid->setColumnMinimumWidth(0, 140);
         v->addWidget(box);
         v->addSpacing(10);
-        v->addWidget(new QLabel(QStringLiteral("Копіювати поточні параметри до:")));
-        auto *welcome = new QCheckBox(QStringLiteral("Екран привітання та системні облікові записи"));
-        auto *newUsers = new QCheckBox(QStringLiteral("Нові облікові записи користувачів"));
+        v->addWidget(new QLabel(tr7("Copy your current settings to:")));
+        auto *welcome = new QCheckBox(tr7("Welcome screen and system accounts"));
+        auto *newUsers = new QCheckBox(tr7("New user accounts"));
         auto *wrap = new QVBoxLayout;
         wrap->setContentsMargins(16, 0, 0, 0);
         wrap->addWidget(welcome);
         wrap->addWidget(newUsers);
         v->addLayout(wrap);
-        auto *note = new QLabel(QStringLiteral("На Linux екран привітання та нові облікові записи використовують ті самі системні параметри."));
+        auto *note = new QLabel(tr7("On Linux the welcome screen and new accounts use the same system settings."));
         note->setWordWrap(true);
         note->setStyleSheet(QStringLiteral("color: #555555;"));
         v->addWidget(note);
@@ -1292,7 +1292,7 @@ public:
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         ok->setDefault(true);
@@ -1332,15 +1332,15 @@ public:
     explicit SystemLanguageDialog(QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Регіональні параметри мови системи"), QStringLiteral("seven-region"));
+        fixedDialog(this, tr7("Language for non-Unicode programs"), QStringLiteral("seven-region"));
         setFixedWidth(420);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
-        auto *intro = new QLabel(QStringLiteral("Виберіть мову, яку система використовуватиме за замовчуванням для всіх облікових записів і програм, що не підтримують Юнікод."));
+        auto *intro = new QLabel(tr7("Select the language that the system uses by default for all accounts and for programs that do not support Unicode."));
         intro->setWordWrap(true);
         v->addWidget(intro);
         v->addSpacing(8);
-        v->addWidget(new QLabel(QStringLiteral("Поточна мова системи:")));
+        v->addWidget(new QLabel(tr7("Current system locale:")));
         const QString current = systemLocale().lang;
         auto *box = new QComboBox;
         fillLocales(box, current);
@@ -1349,7 +1349,7 @@ public:
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         ok->setDefault(true);
@@ -1368,10 +1368,10 @@ public:
                 if (code != 0) {
                     return;
                 }
-                QMessageBox ask(QMessageBox::Information, QStringLiteral("Змінення мови системи"),
-                                QStringLiteral("Щоб нова мова системи набула чинності, потрібно перезавантажити комп'ютер."), QMessageBox::NoButton, this);
-                QPushButton *now = ask.addButton(QStringLiteral("Перезавантажити зараз"), QMessageBox::AcceptRole);
-                ask.addButton(QStringLiteral("Не перезавантажувати"), QMessageBox::RejectRole);
+                QMessageBox ask(QMessageBox::Information, tr7("Change System Locale"),
+                                tr7("You must restart your computer in order for the new system locale to take effect."), QMessageBox::NoButton, this);
+                QPushButton *now = ask.addButton(tr7("Restart now"), QMessageBox::AcceptRole);
+                ask.addButton(tr7("Cancel", "restart"), QMessageBox::RejectRole);
                 ask.exec();
                 if (ask.clickedButton() == now) {
                     QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.Shutdown"), QStringLiteral("/Shutdown"), QStringLiteral("logoutAndReboot")});
@@ -1393,23 +1393,23 @@ public:
         , m_old(readFormats())
         , m_f(m_old)
     {
-        fixedDialog(this, QStringLiteral("Мова та регіональні стандарти"), QStringLiteral("seven-region"));
+        fixedDialog(this, tr7("Region and Language"), QStringLiteral("seven-region"));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedWidth(470);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(formatsTab(), QStringLiteral("Формати"));
-        tabs->addTab(keyboardsTab(), QStringLiteral("Мови та клавіатури"));
-        tabs->addTab(advancedTab(), QStringLiteral("Додатково"));
+        tabs->addTab(formatsTab(), tr7("Formats"));
+        tabs->addTab(keyboardsTab(), tr7("Keyboards and Languages"));
+        tabs->addTab(advancedTab(), tr7("Advanced"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -1452,8 +1452,8 @@ private:
         m_old = m_f;
         changed();
         if (localeChanged) {
-            QMessageBox::information(this, QStringLiteral("Мова та регіональні стандарти"),
-                                     QStringLiteral("Новий формат буде застосовано до всіх програм після наступного входу в систему."));
+            QMessageBox::information(this, tr7("Region and Language"),
+                                     tr7("The new format applies to all programs at the next logon."));
         }
     }
 
@@ -1505,18 +1505,18 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        v->addWidget(new QLabel(QStringLiteral("Формат:")));
+        v->addWidget(new QLabel(tr7("Format:")));
         auto *format = new QComboBox;
         fillLocales(format, m_f.locale);
         v->addWidget(format);
         v->addSpacing(8);
-        auto *box = new QGroupBox(QStringLiteral("Формати дати й часу"));
+        auto *box = new QGroupBox(tr7("Date and time formats"));
         auto *g = new QGridLayout(box);
         g->setVerticalSpacing(8);
         m_shortDate = formatCombo({QStringLiteral("dd.MM.yyyy"), QStringLiteral("dd.MM.yy"), QStringLiteral("d.M.yy"), QStringLiteral("yyyy-MM-dd")}, m_f.shortDate, [this](const QString &t) {
             m_f.shortDate = t;
         });
-        m_longDate = formatCombo({QStringLiteral("d MMMM yyyy 'р.'"), QStringLiteral("dddd, d MMMM yyyy 'р.'"), QStringLiteral("d MMMM yyyy")}, m_f.longDate, [this](const QString &t) {
+        m_longDate = formatCombo({tr7("MMMM d, yyyy"), tr7("dddd, MMMM d, yyyy"), QStringLiteral("d MMMM yyyy")}, m_f.longDate, [this](const QString &t) {
             m_f.longDate = t;
         });
         m_shortTime = formatCombo({QStringLiteral("H:mm"), QStringLiteral("HH:mm"), QStringLiteral("h:mm tt")}, m_f.shortTime, [this](const QString &t) {
@@ -1527,7 +1527,7 @@ private:
         });
         m_firstDay = new QComboBox;
         for (int d = 1; d <= 7; ++d) {
-            m_firstDay->addItem(QLocale(QLocale::Ukrainian).standaloneDayName(d));
+            m_firstDay->addItem(QLocale{}.standaloneDayName(d));
         }
         m_firstDay->setCurrentIndex((m_f.firstDay + 6) % 7);
         m_firstDay->setFixedWidth(220);
@@ -1535,27 +1535,27 @@ private:
             m_f.firstDay = (i + 1) % 7;
             changed();
         });
-        const QList<QPair<QString, QWidget *>> rows{{QStringLiteral("Короткий формат дати:"), m_shortDate},
-                                                   {QStringLiteral("Повний формат дати:"), m_longDate},
-                                                   {QStringLiteral("Короткий формат часу:"), m_shortTime},
-                                                   {QStringLiteral("Повний формат часу:"), m_longTime},
-                                                   {QStringLiteral("Перший день тижня:"), m_firstDay}};
+        const QList<QPair<QString, QWidget *>> rows{{tr7("Short date:"), m_shortDate},
+                                                   {tr7("Long date:"), m_longDate},
+                                                   {tr7("Short time:"), m_shortTime},
+                                                   {tr7("Long time:"), m_longTime},
+                                                   {tr7("First day of week:"), m_firstDay}};
         for (int i = 0; i < rows.size(); ++i) {
             g->addWidget(new QLabel(rows.at(i).first), i, 0);
             g->addWidget(rows.at(i).second, i, 1);
         }
         g->setColumnStretch(0, 1);
         v->addWidget(box);
-        auto *samples = new QGroupBox(QStringLiteral("Зразки"));
+        auto *samples = new QGroupBox(tr7("Examples of how data is displayed using this format:"));
         auto *sg = new QGridLayout(samples);
         m_sShortDate = new QLabel;
         m_sLongDate = new QLabel;
         m_sShortTime = new QLabel;
         m_sLongTime = new QLabel;
-        const QList<QPair<QString, QLabel *>> srows{{QStringLiteral("Короткий формат дати:"), m_sShortDate},
-                                                   {QStringLiteral("Повний формат дати:"), m_sLongDate},
-                                                   {QStringLiteral("Короткий формат часу:"), m_sShortTime},
-                                                   {QStringLiteral("Повний формат часу:"), m_sLongTime}};
+        const QList<QPair<QString, QLabel *>> srows{{tr7("Short date:"), m_sShortDate},
+                                                   {tr7("Long date:"), m_sLongDate},
+                                                   {tr7("Short time:"), m_sShortTime},
+                                                   {tr7("Long time:"), m_sLongTime}};
         for (int i = 0; i < srows.size(); ++i) {
             sg->addWidget(new QLabel(srows.at(i).first), i, 0);
             sg->addWidget(srows.at(i).second, i, 1);
@@ -1564,7 +1564,7 @@ private:
         sg->setColumnStretch(1, 1);
         v->addWidget(samples);
         v->addSpacing(4);
-        auto *more = new QPushButton(QStringLiteral("Додаткові параметри..."));
+        auto *more = new QPushButton(tr7("Additional settings..."));
         more->setMinimumWidth(more->sizeHint().width() + 30);
         v->addWidget(more, 0, Qt::AlignRight);
         v->addStretch(1);
@@ -1597,10 +1597,10 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *box = new QGroupBox(QStringLiteral("Клавіатури та інші мови введення"));
+        auto *box = new QGroupBox(tr7("Keyboards and other input languages"));
         auto *bv = new QVBoxLayout(box);
-        bv->addWidget(text(QStringLiteral("Щоб змінити клавіатуру або мову введення тексту, натисніть кнопку «Змінити клавіатуру».")));
-        auto *change = new QPushButton(QStringLiteral("Змінити клавіатуру..."));
+        bv->addWidget(text(tr7("To change your keyboard or input language click Change keyboards.")));
+        auto *change = new QPushButton(tr7("Change keyboards..."));
         change->setMinimumWidth(190);
         bv->addWidget(change, 0, Qt::AlignRight);
         v->addWidget(box);
@@ -1618,33 +1618,33 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *welcome = new QGroupBox(QStringLiteral("Екран привітання та облікові записи нових користувачів"));
+        auto *welcome = new QGroupBox(tr7("Welcome screen and new user accounts"));
         auto *wv = new QVBoxLayout(welcome);
-        wv->addWidget(text(QStringLiteral("Перегляд і копіювання міжнародних параметрів на екран привітання, у системні облікові записи та облікові записи нових користувачів.")));
-        auto *copy = shieldButton(QStringLiteral("Копіювати параметри..."));
+        wv->addWidget(text(tr7("View and copy your international settings to the welcome screen, system accounts and new user accounts.")));
+        auto *copy = shieldButton(tr7("Copy settings..."));
         copy->setMinimumWidth(210);
         wv->addWidget(copy, 0, Qt::AlignRight);
         v->addWidget(welcome);
-        auto *system = new QGroupBox(QStringLiteral("Мова програм, що не підтримують Юнікод"));
+        auto *system = new QGroupBox(tr7("Language for non-Unicode programs", "section"));
         auto *sv = new QVBoxLayout(system);
-        sv->addWidget(text(QStringLiteral("Цей параметр (мова системи) визначає мову відображення тексту в програмах, які не підтримують Юнікод.")));
+        sv->addWidget(text(tr7("This setting (system locale) controls the language used when displaying text in programs that do not support Unicode.")));
         sv->addSpacing(6);
-        sv->addWidget(new QLabel(QStringLiteral("Поточна мова програм, що не підтримують Юнікод:")));
+        sv->addWidget(new QLabel(tr7("Current language for non-Unicode programs:")));
         auto *current = new QLabel(localeName(systemLocale().lang));
         current->setContentsMargins(20, 4, 0, 4);
         sv->addWidget(current);
-        auto *changeSys = shieldButton(QStringLiteral("Змінити мову системи..."));
+        auto *changeSys = shieldButton(tr7("Change system locale..."));
         changeSys->setMinimumWidth(210);
         sv->addWidget(changeSys, 0, Qt::AlignRight);
         v->addWidget(system);
         v->addStretch(1);
         connect(copy, &QPushButton::clicked, this, [this] {
             if (!(m_f == m_old)) {
-                QMessageBox ask(QMessageBox::NoIcon, QStringLiteral("Змінення мови та стандартів"), QStringLiteral("Застосувати зміни мови та регіональних стандартів?"),
+                QMessageBox ask(QMessageBox::NoIcon, tr7("Change Regional and Language Options"), tr7("Apply the regional and language changes?"),
                                 QMessageBox::NoButton, this);
-                ask.setInformativeText(QStringLiteral("Щоб ці зміни точно збереглися, радимо застосувати їх зараз, до внесення додаткових системних змін."));
-                QPushButton *yes = ask.addButton(QStringLiteral("Застосувати"), QMessageBox::AcceptRole);
-                ask.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+                ask.setInformativeText(tr7("To make sure these changes are kept, it's recommended to apply them now, before making other system changes."));
+                QPushButton *yes = ask.addButton(tr7("Apply"), QMessageBox::AcceptRole);
+                ask.addButton(tr7("Cancel"), QMessageBox::RejectRole);
                 ask.exec();
                 if (ask.clickedButton() != yes) {
                     return;

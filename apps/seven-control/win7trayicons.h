@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -230,9 +231,9 @@ inline QString volumeDetail()
     const QRegularExpressionMatch m = QRegularExpression(QStringLiteral("(\\d+)%")).match(out);
     const QString mute = run(QStringLiteral("pactl"), {QStringLiteral("get-sink-mute"), QStringLiteral("@DEFAULT_SINK@")});
     if (mute.contains(QLatin1String("yes"))) {
-        return QStringLiteral("Динаміки: вимкнуто звук");
+        return tr7("Speakers: Muted");
     }
-    return m.hasMatch() ? QStringLiteral("Динаміки: %1%").arg(m.captured(1)) : QStringLiteral("Динаміки");
+    return m.hasMatch() ? tr7("Speakers: %1%").arg(m.captured(1)) : tr7("Speakers");
 }
 
 inline QString networkDetail()
@@ -245,10 +246,10 @@ inline QString networkDetail()
         }
     }
     if (name.isEmpty()) {
-        return QStringLiteral("Немає підключень");
+        return tr7("Not connected", "tray");
     }
     const bool internet = run(QStringLiteral("nmcli"), {QStringLiteral("networking"), QStringLiteral("connectivity")}) == QLatin1String("full");
-    return QStringLiteral("%1: %2").arg(name, internet ? QStringLiteral("доступ до Інтернету") : QStringLiteral("без доступу до Інтернету"));
+    return QStringLiteral("%1: %2").arg(name, internet ? tr7("Internet access") : tr7("No Internet access", "tray"));
 }
 
 inline QString batteryDetail()
@@ -259,10 +260,10 @@ inline QString batteryDetail()
             return file.open(QIODevice::ReadOnly) ? QString::fromLatin1(file.readAll()).trimmed() : QString();
         };
         const QString status = read("status");
-        const QString state = status == QLatin1String("Charging") ? QStringLiteral(" (підключено, заряджається)")
+        const QString state = status == QLatin1String("Charging") ? tr7(" (plugged in, charging)")
             : status == QLatin1String("Discharging")              ? QString()
-                                                                  : QStringLiteral(" (підключено)");
-        return QStringLiteral("Доступно %1%%2").arg(read("capacity"), state);
+                                                                  : tr7(" (plugged in)");
+        return tr7("%1% available%2").arg(read("capacity"), state);
     }
     return {};
 }
@@ -424,22 +425,22 @@ inline QList<Item> trayItems(const TrayState &st)
         it.detail = localized(meta, QStringLiteral("Description"));
         it.icon = QIcon::fromTheme(meta.value(QLatin1String("Icon")).toString(), QIcon::fromTheme(QStringLiteral("plasma")));
         if (id == kVolume) {
-            it.name = QStringLiteral("Гучність");
+            it.name = tr7("Volume", "tray");
             it.detail = volumeDetail();
             it.icon = QIcon::fromTheme(QStringLiteral("seven-tray-volume"));
         } else if (id == kNetwork) {
-            it.name = QStringLiteral("Мережа");
+            it.name = tr7("Network");
             it.detail = networkDetail();
             it.icon = QIcon::fromTheme(QStringLiteral("seven-tray-network"));
         } else if (id == kBattery) {
-            it.name = QStringLiteral("Живлення");
+            it.name = tr7("Power");
             it.detail = batteryDetail();
             it.icon = QIcon::fromTheme(QStringLiteral("seven-tray-power"));
         }
         items << it;
     }
     items += statusNotifiers(st);
-    QCollator c(QLocale(QLocale::Ukrainian));
+    QCollator c(QLocale{});
     std::sort(items.begin(), items.end(), [&c](const Item &a, const Item &b) {
         return c.compare(a.name, b.name) < 0;
     });
@@ -585,7 +586,7 @@ inline Page makePage()
     bl->setContentsMargins(12, 12, 14, 12);
     bl->addStretch(1);
     p.ok = new QPushButton(QStringLiteral("OK"));
-    p.cancel = new QPushButton(QStringLiteral("Скасувати"));
+    p.cancel = new QPushButton(tr7("Cancel"));
     p.ok->setMinimumWidth(88);
     p.cancel->setMinimumWidth(88);
     p.ok->setDefault(true);
@@ -605,8 +606,8 @@ inline Link *link(const QString &text, std::function<void()> action)
 
 inline const QStringList &behaviours()
 {
-    static const QStringList b{QStringLiteral("Показувати значок і сповіщення"), QStringLiteral("Приховати значок і сповіщення"),
-                               QStringLiteral("Показувати лише сповіщення")};
+    static const QStringList b{tr7("Show icon and notifications"), tr7("Hide icon and notifications"),
+                               tr7("Only show notifications")};
     return b;
 }
 
@@ -614,16 +615,15 @@ inline QWidget *buildIconsPage(const Nav &nav)
 {
     const TrayState st = readTray();
     Page pg = makePage();
-    pg.col->addWidget(title(QStringLiteral("Виберіть значки та сповіщення, які відображатимуться на панелі завдань")));
+    pg.col->addWidget(title(tr7("Select which icons and notifications appear on the taskbar")));
     pg.col->addSpacing(14);
-    pg.col->addWidget(plain(QStringLiteral("Якщо приховати значки та сповіщення, ви не отримуватимете сповіщень про зміни та оновлення. "
-                                           "Щоб будь-коли переглянути приховані значки, клацніть стрілку поруч з областю сповіщень на панелі завдань.")));
+    pg.col->addWidget(plain(tr7("If you choose to hide icons and notifications, you won't be notified about changes or updates. To view hidden icons at any time, click the arrow next to the notification area on the taskbar.")));
     pg.col->addSpacing(14);
-    ListBox box = makeListBox(QStringLiteral("Значки"), QStringLiteral("Поведінка"), 316);
+    ListBox box = makeListBox(tr7("Icons"), tr7("Behaviors"), 316);
     box.frame->setMinimumHeight(230);
     QList<QPair<QString, QComboBox *>> combos;
     if (!st.valid) {
-        box.grid->addWidget(plain(QStringLiteral("Не вдалося зв'язатися з панеллю завдань.")), box.row++, 0, 1, 2);
+        box.grid->addWidget(plain(tr7("Could not contact the taskbar.")), box.row++, 0, 1, 2);
     }
     for (const Item &it : trayItems(st)) {
         auto *combo = new QComboBox;
@@ -639,17 +639,17 @@ inline QWidget *buildIconsPage(const Nav &nav)
     box.grid->setRowStretch(box.row, 1);
     pg.col->addWidget(box.frame, 1);
     pg.col->addSpacing(16);
-    pg.col->addWidget(link(QStringLiteral("Увімкнути або вимкнути системні значки"), [nav] {
+    pg.col->addWidget(link(tr7("Turn system icons on or off"), [nav] {
         nav.open(SystemView);
     }), 0, Qt::AlignLeft);
     pg.col->addSpacing(12);
-    pg.col->addWidget(link(QStringLiteral("Відновити поведінку значків за замовчуванням"), [combos] {
+    pg.col->addWidget(link(tr7("Restore default icon behaviors"), [combos] {
         for (const auto &c : combos) { // system icons are shown, programs only notify
             c.second->setCurrentIndex(c.first == kVolume || c.first == kNetwork || c.first == kBattery ? 0 : 2);
         }
     }), 0, Qt::AlignLeft);
     pg.col->addSpacing(12);
-    auto *all = new QCheckBox(QStringLiteral("Завжди показувати всі значки та сповіщення на панелі завдань"));
+    auto *all = new QCheckBox(tr7("Always show all icons and notifications on the taskbar"));
     all->setChecked(st.showAll);
     pg.col->addWidget(all);
     auto syncEnabled = [combos, all] {
@@ -687,11 +687,11 @@ inline QWidget *buildSystemPage(const Nav &nav)
     const TrayState st = readTray();
     const bool battery = hasBattery();
     Page pg = makePage();
-    pg.col->addWidget(title(QStringLiteral("Увімкнути або вимкнути системні значки")));
+    pg.col->addWidget(title(tr7("Turn system icons on or off")));
     pg.col->addSpacing(14);
-    pg.col->addWidget(plain(QStringLiteral("Вимкнення системного значка видаляє його та вимикає сповіщення.")));
+    pg.col->addWidget(plain(tr7("Turning off a system icon removes it from the notification area and turns off notifications.")));
     pg.col->addSpacing(14);
-    ListBox box = makeListBox(QStringLiteral("Системні значки"), QStringLiteral("Поведінка"), 316);
+    ListBox box = makeListBox(tr7("System Icons"), tr7("Behaviors"), 316);
     box.frame->setMinimumHeight(230);
     struct Row {
         QString id;
@@ -700,7 +700,7 @@ inline QWidget *buildSystemPage(const Nav &nav)
     QList<Row> rows;
     auto add = [&](const QString &icon, const QString &name, const QString &id, bool on, bool enabled) {
         auto *combo = new QComboBox;
-        combo->addItems({QStringLiteral("Увімк."), QStringLiteral("Вимк.")});
+        combo->addItems({tr7("On"), tr7("Off")});
         combo->setCurrentIndex(on ? 0 : 1);
         combo->setFixedWidth(70);
         combo->setEnabled(enabled);
@@ -710,19 +710,19 @@ inline QWidget *buildSystemPage(const Nav &nav)
         ++box.row;
         rows.append({id, combo});
     };
-    add(QStringLiteral("seven-tray-clock"), QStringLiteral("Годинник"), kClock, st.clock, st.valid);
-    add(QStringLiteral("seven-tray-volume"), QStringLiteral("Гучність"), kVolume, st.extra.contains(kVolume), st.valid);
-    add(QStringLiteral("seven-tray-network"), QStringLiteral("Мережа"), kNetwork, st.extra.contains(kNetwork), st.valid);
+    add(QStringLiteral("seven-tray-clock"), tr7("Clock"), kClock, st.clock, st.valid);
+    add(QStringLiteral("seven-tray-volume"), tr7("Volume", "tray"), kVolume, st.extra.contains(kVolume), st.valid);
+    add(QStringLiteral("seven-tray-network"), tr7("Network"), kNetwork, st.extra.contains(kNetwork), st.valid);
     // like Windows 7 on a desktop without a battery: greyed out and off
-    add(QStringLiteral("seven-tray-power"), QStringLiteral("Живлення"), kBattery, battery && st.extra.contains(kBattery), st.valid && battery);
+    add(QStringLiteral("seven-tray-power"), tr7("Power"), kBattery, battery && st.extra.contains(kBattery), st.valid && battery);
     box.grid->setRowStretch(box.row, 1);
     pg.col->addWidget(box.frame, 1);
     pg.col->addSpacing(16);
-    pg.col->addWidget(link(QStringLiteral("Настроїти значки сповіщень"), [nav] {
+    pg.col->addWidget(link(tr7("Customize notification icons"), [nav] {
         nav.open(IconsView);
     }), 0, Qt::AlignLeft);
     pg.col->addSpacing(12);
-    pg.col->addWidget(link(QStringLiteral("Відновити поведінку значків за замовчуванням"), [rows] {
+    pg.col->addWidget(link(tr7("Restore default icon behaviors"), [rows] {
         for (const Row &r : rows) {
             if (r.combo->isEnabled()) {
                 r.combo->setCurrentIndex(0);

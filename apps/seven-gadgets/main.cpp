@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Windows 7 Desktop Gadgets: the gadget gallery window and the Weather gadget.
  *
@@ -188,52 +189,52 @@ QString conditionText(int code)
 {
     switch (code) {
     case 0:
-        return QStringLiteral("Ясно");
+        return tr7("Clear");
     case 1:
-        return QStringLiteral("Переважно ясно");
+        return tr7("Mostly Clear");
     case 2:
-        return QStringLiteral("Мінлива хмарність");
+        return tr7("Partly Cloudy");
     case 3:
-        return QStringLiteral("Хмарно");
+        return tr7("Cloudy");
     case 45:
     case 48:
-        return QStringLiteral("Туман");
+        return tr7("Fog");
     case 51:
     case 53:
     case 55:
-        return QStringLiteral("Мряка");
+        return tr7("Drizzle");
     case 56:
     case 57:
-        return QStringLiteral("Крижана мряка");
+        return tr7("Freezing Drizzle");
     case 61:
-        return QStringLiteral("Невеликий дощ");
+        return tr7("Light Rain");
     case 63:
-        return QStringLiteral("Дощ");
+        return tr7("Rain");
     case 65:
-        return QStringLiteral("Сильний дощ");
+        return tr7("Heavy Rain");
     case 66:
     case 67:
-        return QStringLiteral("Крижаний дощ");
+        return tr7("Freezing Rain");
     case 71:
-        return QStringLiteral("Невеликий сніг");
+        return tr7("Light Snow");
     case 73:
-        return QStringLiteral("Сніг");
+        return tr7("Snow");
     case 75:
-        return QStringLiteral("Сильний сніг");
+        return tr7("Heavy Snow");
     case 77:
-        return QStringLiteral("Снігова крупа");
+        return tr7("Snow Grains");
     case 80:
     case 81:
-        return QStringLiteral("Зливи");
+        return tr7("Showers");
     case 82:
-        return QStringLiteral("Сильні зливи");
+        return tr7("Heavy Showers");
     case 85:
     case 86:
-        return QStringLiteral("Снігопад");
+        return tr7("Snow Showers");
     case 95:
-        return QStringLiteral("Гроза");
+        return tr7("Thunderstorm");
     default:
-        return QStringLiteral("Гроза з градом");
+        return tr7("Thunderstorm with Hail");
     }
 }
 
@@ -443,9 +444,7 @@ void paintSmallIcon(QPainter &p, const QRectF &r, Sky sky)
 
 QString dayName(const QDate &d)
 {
-    static const QStringList names{QStringLiteral("понеділок"), QStringLiteral("вівторок"), QStringLiteral("середа"), QStringLiteral("четвер"),
-                                   QStringLiteral("пʼятниця"), QStringLiteral("субота"), QStringLiteral("неділя")};
-    return names.value(d.dayOfWeek() - 1);
+    return QLocale().standaloneDayName(d.dayOfWeek(), QLocale::LongFormat); // in the user's language
 }
 
 /* ---------------- gadget base ---------------- */
@@ -763,7 +762,7 @@ public:
         , place(current)
         , celsius(useCelsius)
     {
-        setWindowTitle(QStringLiteral("Погода"));
+        setWindowTitle(tr7("Weather"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("gadgets")));
         setFixedWidth(340);
         auto *v = new QVBoxLayout(this);
@@ -771,7 +770,7 @@ public:
         v->setSpacing(0);
 
         // dark header with the gadget name, like Windows 7 gadget settings
-        auto *header = new QLabel(QStringLiteral("Погода"));
+        auto *header = new QLabel(tr7("Weather"));
         header->setFixedHeight(44);
         header->setContentsMargins(16, 0, 0, 0);
         QFont hf = header->font();
@@ -784,19 +783,19 @@ public:
         auto *bv = new QVBoxLayout(body);
         bv->setContentsMargins(14, 12, 14, 8);
         bv->setSpacing(4);
-        bv->addWidget(new QLabel(QStringLiteral("Поточне розташування:")));
-        m_current = new QLabel(place.name.isEmpty() ? QStringLiteral("Не вибрано") : place.name);
+        bv->addWidget(new QLabel(tr7("Current location:")));
+        m_current = new QLabel(place.name.isEmpty() ? tr7("Not selected") : place.name);
         bv->addWidget(m_current);
         bv->addSpacing(12);
-        bv->addWidget(new QLabel(QStringLiteral("Вибрати поточне розташування")));
+        bv->addWidget(new QLabel(tr7("Select current location")));
         auto *row = new QHBoxLayout;
         row->setSpacing(0);
         m_search = new QLineEdit;
-        m_search->setPlaceholderText(QStringLiteral("Пошук розташування"));
+        m_search->setPlaceholderText(tr7("Search for location"));
         row->addWidget(m_search, 1);
         auto *find = new QToolButton;
         find->setIcon(QIcon::fromTheme(QStringLiteral("seven-explorer-search"), QIcon::fromTheme(QStringLiteral("gtk-search"))));
-        find->setToolTip(QStringLiteral("Пошук"));
+        find->setToolTip(tr7("Search"));
         find->setFixedSize(26, 24);
         row->addWidget(find);
         bv->addLayout(row);
@@ -805,9 +804,9 @@ public:
         m_results->hide();
         bv->addWidget(m_results);
         bv->addSpacing(14);
-        bv->addWidget(new QLabel(QStringLiteral("Показувати температуру в:")));
-        auto *f = new QRadioButton(QStringLiteral("градусах Фаренгейта"));
-        auto *c = new QRadioButton(QStringLiteral("градусах Цельсія"));
+        bv->addWidget(new QLabel(tr7("Show temperature in:")));
+        auto *f = new QRadioButton(tr7("Fahrenheit"));
+        auto *c = new QRadioButton(tr7("Celsius"));
         (celsius ? c : f)->setChecked(true);
         bv->addWidget(f);
         bv->addWidget(c);
@@ -827,7 +826,7 @@ public:
         btns->setContentsMargins(14, 0, 14, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(86);
         cancel->setMinimumWidth(86);
         btns->addWidget(ok);
@@ -858,7 +857,7 @@ private:
         if (text.isEmpty()) {
             return;
         }
-        m_status->setText(QStringLiteral("Пошук..."));
+        m_status->setText(tr7("Searching..."));
         QUrl url(QStringLiteral("https://geocoding-api.open-meteo.com/v1/search"));
         QUrlQuery q;
         q.addQueryItem(QStringLiteral("name"), text);
@@ -871,11 +870,11 @@ private:
             const QJsonArray results = QJsonDocument::fromJson(reply->readAll()).object().value(QStringLiteral("results")).toArray();
             m_results->clear();
             if (reply->error() != QNetworkReply::NoError) {
-                m_status->setText(QStringLiteral("Немає зв'язку з Інтернетом. Спробуйте пізніше."));
+                m_status->setText(tr7("No Internet connection. Try again later."));
                 return;
             }
             if (results.isEmpty()) {
-                m_status->setText(QStringLiteral("«%1» не знайдено.").arg(text));
+                m_status->setText(tr7("\"%1\" not found.").arg(text));
                 m_results->hide();
                 return;
             }
@@ -897,7 +896,7 @@ private:
                 choose(m_results->item(0));
             } else {
                 m_results->show();
-                m_status->setText(QStringLiteral("Виберіть розташування зі списку."));
+                m_status->setText(tr7("Select a location from the list."));
             }
         });
     }
@@ -910,7 +909,7 @@ private:
         m_current->setText(place.name);
         m_results->hide();
         m_search->clear();
-        m_status->setText(QStringLiteral("«%1» знайдено.\nНатисніть кнопку OK, щоб застосувати.").arg(place.name));
+        m_status->setText(tr7("\"%1\" found.\nClick OK to apply.").arg(place.name));
     }
 
     QLabel *m_current;
@@ -1059,7 +1058,7 @@ public:
     explicit WeatherGadget(const QString &gadgetId)
         : Gadget(gadgetId)
     {
-        m_place.name = store().value(id + QStringLiteral("/Place"), QStringLiteral("Київ, Місто Київ")).toString();
+        m_place.name = store().value(id + QStringLiteral("/Place"), tr7("Kyiv, Kyiv City")).toString();
         m_place.lat = store().value(id + QStringLiteral("/Lat"), 50.45466).toDouble();
         m_place.lon = store().value(id + QStringLiteral("/Lon"), 30.5238).toDouble();
         m_celsius = store().value(id + QStringLiteral("/Celsius"), true).toBool();
@@ -1114,7 +1113,7 @@ protected:
 
         if (!m_weather.valid) {
             text(isBig() ? QRectF(15, 15, 234, 164) : QRectF(6, 4, 115, 57), Qt::AlignCenter | Qt::TextWordWrap,
-                 m_error ? QStringLiteral("Служба недоступна") : QStringLiteral("Отримання даних..."), QColor(0xf0, 0xf0, 0xf0), font(12));
+                 m_error ? tr7("Service not available") : tr7("Retrieving data..."), QColor(0xf0, 0xf0, 0xf0), font(12));
             return;
         }
         if (!isBig()) {
@@ -1272,7 +1271,7 @@ QString capitalized(QString s)
 
 QString shortMonth(int m)
 {
-    QString n = QLocale(QLocale::Ukrainian).standaloneMonthName(m, QLocale::ShortFormat);
+    QString n = QLocale{}.standaloneMonthName(m, QLocale::ShortFormat);
     n.remove(QLatin1Char('.'));
     return capitalized(n);
 }
@@ -1399,7 +1398,7 @@ protected:
         p.setPen(QPen(QColor(255, 170, 110, 120), 1));
         p.drawLine(r.topLeft() + QPointF(3, 1), r.topRight() + QPointF(-3, 1));
 
-        const QLocale uk(QLocale::Ukrainian);
+        const QLocale uk;
         auto text = [&](const QRectF &rect, const QFont &f, const QString &t) {
             p.setFont(f);
             p.setPen(QColor(120, 35, 0, 110));
@@ -1514,8 +1513,12 @@ protected:
         p.drawText(headerRect(), Qt::AlignCenter, QStringLiteral("%1 %2").arg(shortMonth(m_shown.month()), m_shown.toString(QStringLiteral("yy"))));
 
         // weekday letters, today's column in orange
-        static const QStringList letters{QStringLiteral("П"), QStringLiteral("В"), QStringLiteral("С"), QStringLiteral("Ч"),
-                                         QStringLiteral("П"), QStringLiteral("С"), QStringLiteral("Н")};
+        static QStringList letters; // M T W T F S S - the day letters of the user's language
+        if (letters.isEmpty()) {
+            for (int d = 1; d <= 7; ++d) {
+                letters << QLocale().standaloneDayName(d, QLocale::NarrowFormat).toUpper();
+            }
+        }
         QFont wf = font();
         wf.setPixelSize(11);
         wf.setBold(true);
@@ -1848,7 +1851,7 @@ QString zoneLabel(const QByteArray &zid)
         .arg(sign)
         .arg(qAbs(off) / 60, 2, 10, QLatin1Char('0'))
         .arg(qAbs(off) % 60, 2, 10, QLatin1Char('0'))
-        .arg(city, z.displayName(QTimeZone::GenericTime, QTimeZone::LongName, QLocale(QLocale::Ukrainian)));
+        .arg(city, z.displayName(QTimeZone::GenericTime, QTimeZone::LongName, QLocale{}));
 }
 
 QTime zoneTime(const QByteArray &zone)
@@ -1892,13 +1895,13 @@ public:
     ClockSettings(int theme, const QString &name, const QByteArray &zone, bool seconds, QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Годинник"));
+        setWindowTitle(tr7("Clock"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("gadgets")));
         setFixedWidth(300);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(0, 0, 0, 10);
         v->setSpacing(0);
-        auto *header = new QLabel(QStringLiteral("Годинник"));
+        auto *header = new QLabel(tr7("Clock"));
         header->setFixedHeight(44);
         header->setContentsMargins(16, 0, 0, 0);
         QFont hf = header->font();
@@ -1923,8 +1926,8 @@ public:
         auto *next = new QToolButton;
         prev->setArrowType(Qt::LeftArrow);
         next->setArrowType(Qt::RightArrow);
-        prev->setToolTip(QStringLiteral("Попередній"));
-        next->setToolTip(QStringLiteral("Далі"));
+        prev->setToolTip(tr7("Previous", "clock"));
+        next->setToolTip(tr7("Next"));
         m_count = new QLabel;
         nav->addWidget(prev);
         nav->addSpacing(8);
@@ -1934,14 +1937,14 @@ public:
         nav->addStretch(1);
         bv->addLayout(nav);
         bv->addSpacing(10);
-        bv->addWidget(new QLabel(QStringLiteral("Назва годинника:")));
+        bv->addWidget(new QLabel(tr7("Clock name:")));
         m_name = new QLineEdit(name);
         m_name->setMaxLength(24);
         bv->addWidget(m_name);
         bv->addSpacing(8);
-        bv->addWidget(new QLabel(QStringLiteral("Часовий пояс:")));
+        bv->addWidget(new QLabel(tr7("Time zone:")));
         m_zone = new QComboBox;
-        m_zone->addItem(QStringLiteral("Поточний час комп'ютера"), QByteArray());
+        m_zone->addItem(tr7("Current computer time"), QByteArray());
         QList<QPair<int, QByteArray>> zones;
         const QDateTime now = QDateTime::currentDateTimeUtc();
         for (const QByteArray &zid : QTimeZone::availableTimeZoneIds()) {
@@ -1960,7 +1963,7 @@ public:
         m_zone->setMinimumContentsLength(20);
         bv->addWidget(m_zone);
         bv->addSpacing(8);
-        m_seconds = new QCheckBox(QStringLiteral("Показувати секундну стрілку"));
+        m_seconds = new QCheckBox(tr7("Show the second hand"));
         m_seconds->setChecked(seconds);
         bv->addWidget(m_seconds);
         bv->addStretch(1);
@@ -1975,7 +1978,7 @@ public:
         btns->setContentsMargins(14, 0, 14, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(86);
         cancel->setMinimumWidth(86);
         ok->setDefault(true);
@@ -2028,7 +2031,7 @@ public:
 private:
     void updateCount()
     {
-        m_count->setText(QStringLiteral("%1 з %2").arg(m_preview->theme + 1).arg(kClockThemes));
+        m_count->setText(tr7("%1 of %2").arg(m_preview->theme + 1).arg(kClockThemes));
         m_preview->update();
     }
 
@@ -2122,14 +2125,14 @@ struct GadgetInfo {
 QList<GadgetInfo> catalog()
 {
     QList<GadgetInfo> list{
-        {QStringLiteral("calendar"), QStringLiteral("Календар"), QStringLiteral("Переглядайте календар, щоб дізнатися дату.")},
-        {QStringLiteral("clock"), QStringLiteral("Годинник"), QStringLiteral("Показує час. Можна вибрати один із восьми годинників, дати йому назву та вказати часовий пояс.")},
-        {QStringLiteral("cpu"), QStringLiteral("Індикатор ЦП"), QStringLiteral("Показує поточне використання центрального процесора та системної пам'яті (ОЗП).")},
-        {QStringLiteral("currency"), QStringLiteral("Валюта"), QStringLiteral("Перераховує суми з однієї валюти в іншу за курсами з Інтернету.")},
-        {QStringLiteral("feeds"), QStringLiteral("Заголовки веб-каналів"), QStringLiteral("Показує заголовки з веб-каналів (RSS), що часто оновлюються, на робочому столі.")},
-        {QStringLiteral("puzzle"), QStringLiteral("Головоломка"), QStringLiteral("Переміщуйте фрагменти, щоб скласти зображення.")},
-        {QStringLiteral("slideshow"), QStringLiteral("Показ слайдів"), QStringLiteral("Показує безперервний показ слайдів із ваших зображень.")},
-        {QStringLiteral("weather"), QStringLiteral("Погода"), QStringLiteral("Показує поточні погодні умови для вибраних розташувань.")},
+        {QStringLiteral("calendar"), tr7("Calendar"), tr7("Browse the calendar to see the date.")},
+        {QStringLiteral("clock"), tr7("Clock"), tr7("Shows the time. You can choose one of eight clocks, name it and set its time zone.")},
+        {QStringLiteral("cpu"), tr7("CPU Meter"), tr7("Shows the current usage of the central processor and system memory (RAM).")},
+        {QStringLiteral("currency"), tr7("Currency"), tr7("Converts amounts from one currency to another at rates from the Internet.")},
+        {QStringLiteral("feeds"), tr7("Feed Headlines"), tr7("Shows headlines from frequently updated feeds (RSS) on the desktop.")},
+        {QStringLiteral("puzzle"), tr7("Picture Puzzle"), tr7("Move the pieces to put the picture together.")},
+        {QStringLiteral("slideshow"), tr7("Slide Show"), tr7("Shows a continuous slide show of your pictures.")},
+        {QStringLiteral("weather"), tr7("Weather"), tr7("Shows the current weather conditions for the locations you choose.")},
     };
     return list;
 }
@@ -2264,7 +2267,7 @@ public:
 protected:
     QString text() const
     {
-        return QStringLiteral("Сторінка %1 з %2").arg(m_page + 1).arg(m_count);
+        return tr7("Page %1 of %2").arg(m_page + 1).arg(m_count);
     }
     int partAt(QPoint pos) const
     {
@@ -2348,7 +2351,7 @@ public:
         QFont f = font();
         f.setPixelSize(12);
         setFont(f);
-        setFixedSize(19 + 6 + QFontMetrics(f).horizontalAdvance(QStringLiteral("Показати подробиці")) + 4, 21);
+        setFixedSize(19 + 6 + QFontMetrics(f).horizontalAdvance(tr7("Show details")) + 4, 21);
     }
 
 protected:
@@ -2359,7 +2362,7 @@ protected:
         const int state = (expanded ? 3 : 0) + (underMouse() ? (m_down ? 2 : 1) : 0);
         p.drawPixmap(0, 1, stripFrame(gadgetPixmap(QStringLiteral("gallery/details.png")), 6, state));
         drawGlowText(p, QRect(25, 0, width() - 25, height()), Qt::AlignVCenter | Qt::AlignLeft,
-                     expanded ? QStringLiteral("Сховати подробиці") : QStringLiteral("Показати подробиці"));
+                     expanded ? tr7("Hide details") : tr7("Show details"));
     }
     void enterEvent(QEnterEvent *) override
     {
@@ -2397,7 +2400,7 @@ public:
         : QWidget(nullptr, Qt::Window)
     {
         // the caption and the icon are hidden by the smod exception for this title, like the real gallery
-        setWindowTitle(QStringLiteral("Гаджети"));
+        setWindowTitle(tr7("Gadgets"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("gadgets")));
         setAttribute(Qt::WA_TranslucentBackground);
         setMinimumSize(380, 300);
@@ -2409,7 +2412,7 @@ public:
         };
         m_search = new QLineEdit(this);
         m_search->setFixedSize(210, 23);
-        new Win7SearchBox(m_search, QStringLiteral("Пошук гаджетів"));
+        new Win7SearchBox(m_search, tr7("Search gadgets"));
         m_search->setStyleSheet(QStringLiteral("QLineEdit { border-image: url(:/AeroQt/transpbg/entry/normal.png) 4 4 4 4 repeat; border-width: 4px; }"
                                                "QLineEdit:hover, QLineEdit:focus { border-image: url(:/AeroQt/transpbg/entry/hover.png) 4 4 4 4 repeat; }"));
         connect(m_search, &QLineEdit::textChanged, this, [this] {
@@ -2560,7 +2563,7 @@ private:
             tile->setContextMenuPolicy(Qt::CustomContextMenu);
             connect(tile, &QWidget::customContextMenuRequested, tile, [this, tile](QPoint pos) {
                 QMenu menu;
-                QAction *a = menu.addAction(QStringLiteral("Додати"));
+                QAction *a = menu.addAction(tr7("Add"));
                 QFont f = a->font();
                 f.setBold(true);
                 a->setFont(f);
@@ -2578,13 +2581,10 @@ private:
     void updateDetails()
     {
         if (m_selected.type.isEmpty()) {
-            m_details->setText(QStringLiteral("Виберіть гаджет, щоб переглянути відомості про нього."));
+            m_details->setText(tr7("Select a gadget to see information about it."));
             return;
         }
-        m_details->setText(QStringLiteral("<table width='100%' cellspacing='0' cellpadding='0'><tr>"
-                                          "<td width='38%' valign='top'><span style='font-size:15px'>%1</span><br>Версія: 1.0.0.0<br>"
-                                          "<span style='color:#1e3287'>Корпорація Майкрософт</span></td>"
-                                          "<td valign='top'>%2</td></tr></table>")
+        m_details->setText(tr7("<table width='100%' cellspacing='0' cellpadding='0'><tr><td width='38%' valign='top'><span style='font-size:15px'>%1</span><br>Version: 1.0.0.0<br><span style='color:#1e3287'>Microsoft Corporation</span></td><td valign='top'>%2</td></tr></table>")
                                .arg(m_selected.name.toHtmlEscaped(), m_selected.description.toHtmlEscaped()));
     }
 
@@ -2699,8 +2699,9 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-gadgets"));
-    app.setApplicationDisplayName(QStringLiteral("Гаджети"));
+    app.setApplicationDisplayName(tr7("Gadgets"));
     app.setDesktopFileName(QStringLiteral("seven-gadgets"));
     app.setQuitOnLastWindowClosed(false);
     Aero::registerStylesheet(&app);

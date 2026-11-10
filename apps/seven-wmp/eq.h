@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Graphic equalizer (Now Playing > Enhancements > Graphic equalizer).
  * Sound: a PipeWire filter-chain (10 biquads: low shelf 31 Hz, peaking 62 Hz..8 kHz, high shelf 16 kHz) run as our
@@ -40,7 +41,7 @@ public:
     {
         QSettings s;
         m_on = s.value(QStringLiteral("eq/on"), false).toBool();
-        m_preset = s.value(QStringLiteral("eq/preset"), QStringLiteral("Типово")).toString();
+        m_preset = s.value(QStringLiteral("eq/preset"), tr7("Default")).toString();
         const QStringList g = s.value(QStringLiteral("eq/gains")).toStringList();
         for (int i = 0; i < Bands; ++i) {
             m_gains[i] = i < g.size() ? g[i].toDouble() : 0.0;
@@ -72,23 +73,23 @@ public:
     {
         // WMP's presets (dB, -12..+12)
         static const QList<QPair<QString, QList<double>>> p{
-            {QStringLiteral("Типово"), {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-            {QStringLiteral("Рок"), {5, 3, 1, -1, -2, -1, 1, 3, 4, 5}},
-            {QStringLiteral("Реп"), {6, 5, 2, 0, -1, -1, 1, 2, 3, 4}},
-            {QStringLiteral("Гранж"), {4, 3, 0, -2, -1, 1, 3, 4, 3, 2}},
-            {QStringLiteral("Метал"), {5, 4, 2, 0, -2, 0, 2, 4, 5, 5}},
-            {QStringLiteral("Танцювальна"), {7, 5, 2, 0, 0, -2, -1, 1, 3, 4}},
-            {QStringLiteral("Кантрі"), {2, 1, 0, 1, 2, 2, 2, 3, 3, 2}},
-            {QStringLiteral("Джаз"), {3, 2, 1, 2, -1, -1, 0, 1, 2, 3}},
-            {QStringLiteral("Мова"), {-4, -3, -1, 2, 4, 4, 3, 1, -1, -3}},
-            {QStringLiteral("Класика"), {3, 2, 1, 0, 0, 0, -1, -1, 1, 3}},
-            {QStringLiteral("Блюз"), {3, 2, 1, 0, -1, 0, 1, 2, 2, 1}},
-            {QStringLiteral("Ретро"), {-1, 1, 3, 4, 3, 2, 1, 0, -2, -4}},
-            {QStringLiteral("Реггі"), {5, 4, 1, -1, -2, 0, 1, 3, 3, 2}},
-            {QStringLiteral("Опера"), {-2, -1, 0, 2, 4, 4, 3, 2, 0, -1}},
-            {QStringLiteral("Свінг"), {2, 1, 0, 1, 2, 3, 2, 1, 1, 2}},
-            {QStringLiteral("Акустична"), {3, 2, 1, 1, 2, 2, 3, 3, 2, 1}},
-            {QStringLiteral("Нью-ейдж"), {3, 2, 0, -1, 0, 1, 2, 3, 3, 3}},
+            {tr7("Default"), {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+            {tr7("Rock"), {5, 3, 1, -1, -2, -1, 1, 3, 4, 5}},
+            {tr7("Rap"), {6, 5, 2, 0, -1, -1, 1, 2, 3, 4}},
+            {tr7("Grunge"), {4, 3, 0, -2, -1, 1, 3, 4, 3, 2}},
+            {tr7("Metal"), {5, 4, 2, 0, -2, 0, 2, 4, 5, 5}},
+            {tr7("Dance"), {7, 5, 2, 0, 0, -2, -1, 1, 3, 4}},
+            {tr7("Country"), {2, 1, 0, 1, 2, 2, 2, 3, 3, 2}},
+            {tr7("Jazz"), {3, 2, 1, 2, -1, -1, 0, 1, 2, 3}},
+            {tr7("Speech"), {-4, -3, -1, 2, 4, 4, 3, 1, -1, -3}},
+            {tr7("Classical"), {3, 2, 1, 0, 0, 0, -1, -1, 1, 3}},
+            {tr7("Blues"), {3, 2, 1, 0, -1, 0, 1, 2, 2, 1}},
+            {tr7("Oldies"), {-1, 1, 3, 4, 3, 2, 1, 0, -2, -4}},
+            {tr7("Reggae"), {5, 4, 1, -1, -2, 0, 1, 3, 3, 2}},
+            {tr7("Opera"), {-2, -1, 0, 2, 4, 4, 3, 2, 0, -1}},
+            {tr7("Swing"), {2, 1, 0, 1, 2, 3, 2, 1, 1, 2}},
+            {tr7("Acoustic"), {3, 2, 1, 1, 2, 2, 3, 3, 2, 1}},
+            {tr7("New Age"), {3, 2, 0, -1, 0, 1, 2, 3, 3, 3}},
         };
         return p;
     }
@@ -118,7 +119,7 @@ public:
     void setGain(int i, double g)
     {
         m_gains[i] = qBound(-12.0, g, 12.0);
-        m_preset = QStringLiteral("Настроюване");
+        m_preset = tr7("Custom");
         m_push.start();
         Q_EMIT changed();
     }
@@ -173,24 +174,7 @@ private:
         }
         QFile f(confPath());
         if (f.open(QIODevice::WriteOnly)) {
-            f.write(QStringLiteral(
-                        "context.properties = { log.level = 0 }\n"
-                        "context.spa-libs = { audio.convert.* = audioconvert/libspa-audioconvert support.* = support/libspa-support }\n"
-                        "context.modules = [\n"
-                        "  { name = libpipewire-module-rt flags = [ ifexists nofail ] }\n"
-                        "  { name = libpipewire-module-protocol-native }\n"
-                        "  { name = libpipewire-module-client-node }\n"
-                        "  { name = libpipewire-module-adapter }\n"
-                        "  { name = libpipewire-module-filter-chain args = {\n"
-                        "      node.description = \"Програвач Windows Media - еквалайзер\"\n"
-                        "      media.name = \"Програвач Windows Media - еквалайзер\"\n"
-                        "      filter.graph = { nodes = [ %1] links = [ %2] }\n"
-                        "      audio.channels = 2\n"
-                        "      audio.position = [ FL FR ]\n"
-                        "      capture.props = { node.name = \"seven_wmp_eq\" media.class = Audio/Sink }\n"
-                        "      playback.props = { node.name = \"seven_wmp_eq_out\" node.passive = true }\n"
-                        "  } }\n"
-                        "]\n")
+            f.write(tr7("context.properties = { log.level = 0 }\ncontext.spa-libs = { audio.convert.* = audioconvert/libspa-audioconvert support.* = support/libspa-support }\ncontext.modules = [\n  { name = libpipewire-module-rt flags = [ ifexists nofail ] }\n  { name = libpipewire-module-protocol-native }\n  { name = libpipewire-module-client-node }\n  { name = libpipewire-module-adapter }\n  { name = libpipewire-module-filter-chain args = {\n      node.description = \"Windows Media Player - equalizer\"\n      media.name = \"Windows Media Player - equalizer\"\n      filter.graph = { nodes = [ %1] links = [ %2] }\n      audio.channels = 2\n      audio.position = [ FL FR ]\n      capture.props = { node.name = \"seven_wmp_eq\" media.class = Audio/Sink }\n      playback.props = { node.name = \"seven_wmp_eq_out\" node.passive = true }\n  } }\n]\n")
                         .arg(nodes, links)
                         .toUtf8());
         }
@@ -320,7 +304,7 @@ public:
     {
         setFixedSize(448, 168);
         setMouseTracking(true);
-        setWindowTitle(QStringLiteral("Графічний еквалайзер"));
+        setWindowTitle(tr7("Graphic equalizer"));
         m_mode = QSettings().value(QStringLiteral("eq/link"), 1).toInt();
         connect(eq, &Equalizer::changed, this, qOverload<>(&QWidget::update));
     }
@@ -355,7 +339,7 @@ protected:
         b.setBold(true);
         p.setFont(b);
         p.setPen(Qt::white);
-        p.drawText(QRect(50, 7, 300, 18), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Графічний еквалайзер"));
+        p.drawText(QRect(50, 7, 300, 18), Qt::AlignLeft | Qt::AlignVCenter, tr7("Graphic equalizer"));
         p.setRenderHint(QPainter::SmoothPixmapTransform);
         p.drawPixmap(QRect(8, 7, 38, 19), Res::px(5350));
         // close button
@@ -367,7 +351,7 @@ protected:
         QFont u = font();
         u.setUnderline(true);
         p.setFont(u);
-        const QStringList links{m_eq->isOn() ? QStringLiteral("Вимкнути") : QStringLiteral("Увімкнути"), QStringLiteral("Скинути"), m_eq->preset()};
+        const QStringList links{m_eq->isOn() ? tr7("Turn off") : tr7("Turn on"), tr7("Reset"), m_eq->preset()};
         for (int i = 0; i < 3; ++i) {
             const QRect r = linkRect(i);
             p.setPen(m_hot == 50 + i ? QColor(0xd8, 0xec, 0xff) : QColor(0x8c, 0xc4, 0xff));
@@ -394,7 +378,7 @@ protected:
         p.drawPixmap(48, 48, pic(2136));
         const bool on = m_eq->isOn();
         static const QStringList labels{QStringLiteral("31"), QStringLiteral("62"), QStringLiteral("125"), QStringLiteral("250"), QStringLiteral("500"),
-                                        QStringLiteral("1к"), QStringLiteral("2к"), QStringLiteral("4к"), QStringLiteral("8к"), QStringLiteral("16к")};
+                                        tr7("1K"), tr7("2K"), tr7("4K"), tr7("8K"), tr7("16K")};
         QFont small = font();
         small.setPixelSize(10);
         for (int i = 0; i < Equalizer::Bands; ++i) {
@@ -474,7 +458,7 @@ protected:
         } else if (h == 50) {
             m_eq->setOn(!m_eq->isOn());
         } else if (h == 51) {
-            m_eq->applyPreset(QStringLiteral("Типово"));
+            m_eq->applyPreset(tr7("Default"));
         } else if (h == 52) {
             QMenu m(this);
             for (const auto &pr : Equalizer::presets()) {

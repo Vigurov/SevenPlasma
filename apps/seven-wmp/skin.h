@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Skin mode (View > Skin, Ctrl+2) with the "Revert" skin of Windows 7 (Revert.wmz, converted to
  * ~/.local/share/seven-wmp/skins/revert/*.png). The layout follows its netgen.wms: one 256x130 view, a button
@@ -30,7 +31,7 @@ public:
         , m_engine(engine)
         , m_lib(lib)
     {
-        setWindowTitle(QStringLiteral("Програвач Windows Media"));
+        setWindowTitle(tr7("Windows Media Player"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-wmp")));
         setAttribute(Qt::WA_TranslucentBackground);
         setMouseTracking(true);
@@ -253,7 +254,7 @@ protected:
         f.setBold(true);
         p.setFont(f);
         p.setPen(QColor(0x60, 0x64, 0x7F));
-        p.drawText(QRect(19, 2, 150, 13), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Програвач Windows Media"));
+        p.drawText(QRect(19, 2, 150, 13), Qt::AlignLeft | Qt::AlignVCenter, tr7("Windows Media Player"));
         // metadata lines (artist / title / album)
         if (hasMedia) {
             QString artist, album;
@@ -492,37 +493,37 @@ private:
     {
         switch (e) {
         case Quick:
-            return QStringLiteral("Швидкий доступ");
+            return tr7("Quick access");
         case Return:
-            return QStringLiteral("Перейти до повного режиму");
+            return tr7("Switch to Library");
         case Minimize:
-            return QStringLiteral("Згорнути");
+            return tr7("Minimize");
         case Close:
-            return QStringLiteral("Закрити");
+            return tr7("Close");
         case Play:
-            return QStringLiteral("Відтворити");
+            return tr7("Play");
         case Pause:
-            return QStringLiteral("Призупинити");
+            return tr7("Pause");
         case Stop:
-            return QStringLiteral("Зупинити");
+            return tr7("Stop");
         case Prev:
-            return QStringLiteral("Попередня");
+            return tr7("Previous");
         case Next:
-            return QStringLiteral("Наступна");
+            return tr7("Next");
         case Mute:
-            return m_engine->audio()->isMuted() ? QStringLiteral("Увімкнути звук") : QStringLiteral("Вимкнути звук");
+            return m_engine->audio()->isMuted() ? tr7("Unmute") : tr7("Mute");
         case VolumeBtn:
-            return QStringLiteral("Гучність");
+            return tr7("Volume");
         case Shuffle:
-            return m_engine->shuffle() ? QStringLiteral("Вимкнути перемішування") : QStringLiteral("Увімкнути перемішування");
+            return m_engine->shuffle() ? tr7("Turn shuffle off") : tr7("Turn shuffle on");
         case Repeat:
-            return m_engine->repeat() ? QStringLiteral("Вимкнути повторення") : QStringLiteral("Увімкнути повторення");
+            return m_engine->repeat() ? tr7("Turn repeat off") : tr7("Turn repeat on");
         case Eq:
-            return QStringLiteral("Графічний еквалайзер");
+            return tr7("Graphic equalizer");
         case Playlist:
-            return QStringLiteral("Показати список відтворення");
+            return tr7("Show list", "now playing");
         case Seek:
-            return QStringLiteral("Пошук");
+            return tr7("Search");
         default:
             return {};
         }
@@ -823,29 +824,29 @@ private:
     {
         switch (p) {
         case Captions:
-            return QStringLiteral("Підписи");
+            return tr7("Captions");
         case Full:
-            return QStringLiteral("Перегляд у повноекранному режимі");
+            return tr7("View full screen");
         case Library:
-            return QStringLiteral("Перейти до бібліотеки");
+            return tr7("Go to Library");
         case Play:
-            return m_engine->player()->playbackState() == QMediaPlayer::PlayingState ? QStringLiteral("Призупинити") : QStringLiteral("Відтворити");
+            return m_engine->player()->playbackState() == QMediaPlayer::PlayingState ? tr7("Pause") : tr7("Play");
         case Stop:
-            return QStringLiteral("Зупинити");
+            return tr7("Stop");
         case Prev:
-            return QStringLiteral("Попередня");
+            return tr7("Previous");
         case Next:
-            return QStringLiteral("Наступна");
+            return tr7("Next");
         case Rew:
-            return QStringLiteral("Перемотати назад");
+            return tr7("Rewind");
         case Ffw:
-            return QStringLiteral("Перемотати вперед");
+            return tr7("Fast forward");
         case Mute:
-            return QStringLiteral("Вимкнути звук");
+            return tr7("Mute");
         case Seek:
-            return QStringLiteral("Пошук");
+            return tr7("Search");
         case Volume:
-            return QStringLiteral("Гучність");
+            return tr7("Volume");
         default:
             return {};
         }
@@ -864,7 +865,7 @@ public:
     CorporateWindow(Engine *engine, const QList<QMenu *> &menus)
         : QWidget(nullptr, Qt::Window)
     {
-        setWindowTitle(QStringLiteral("Програвач Windows Media"));
+        setWindowTitle(tr7("Windows Media Player"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-wmp")));
         auto *l = new QVBoxLayout(this);
         l->setContentsMargins(0, 0, 0, 0);

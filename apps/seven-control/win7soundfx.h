@@ -16,6 +16,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -69,9 +70,9 @@ struct PhonesMode {
 inline const QList<PhonesMode> &phonesModes()
 {
     static const QList<PhonesMode> m{
-        {QStringLiteral("Легка"), 700, 4.5},
-        {QStringLiteral("Середня"), 700, 6.0},
-        {QStringLiteral("Сильна"), 650, 9.5},
+        {tr7("Light", "bass boost"), 700, 4.5},
+        {tr7("Medium", "slide show"), 700, 6.0},
+        {tr7("Strong"), 650, 9.5},
     };
     return m;
 }
@@ -204,7 +205,7 @@ inline QString moduleFor(const QString &node, const QString &title, const QStrin
                "        }\n"
                "      }\n"
                "    }\n")
-        .arg(quoted(title + QStringLiteral(" (покращення)")), nodes.join(QStringLiteral("\n            ")), links.join(QLatin1Char(' ')),
+        .arg(quoted(title + tr7(" (enhancement)")), nodes.join(QStringLiteral("\n            ")), links.join(QLatin1Char(' ')),
              quoted(stages.first().l), quoted(stages.first().r), quoted(stages.last().outL), quoted(stages.last().outR), quoted(name), target,
              quoted(name + QStringLiteral(".out")));
 }
@@ -332,7 +333,7 @@ inline QDialog *settingsDialog(QWidget *parent, const QString &title, const QRec
 inline void okCancel(QDialog *d, int x1, int x2, int y)
 {
     auto *ok = place(d, new QPushButton(QStringLiteral("OK")), dlu(x1, y, 50, 14));
-    auto *cancel = place(d, new QPushButton(QStringLiteral("Скасувати")), dlu(x2, y, 50, 14));
+    auto *cancel = place(d, new QPushButton(tr7("Cancel")), dlu(x2, y, 50, 14));
     ok->setDefault(true);
     QObject::connect(ok, &QPushButton::clicked, d, &QDialog::accept);
     QObject::connect(cancel, &QPushButton::clicked, d, &QDialog::reject);
@@ -341,17 +342,17 @@ inline void okCancel(QDialog *d, int x1, int x2, int y)
 /** "Bass Boost Settings": Frequency / Boost Level (dialog 202) */
 inline bool bassDialog(QWidget *parent, Fx &f)
 {
-    QDialog *d = settingsDialog(parent, QStringLiteral("Параметри посилення низьких частот"), dlu(0, 0, 216, 80));
-    place(d, new QLabel(QStringLiteral("Частота:")), dlu(8, 14, 54, 10));
+    QDialog *d = settingsDialog(parent, tr7("Bass Boost Settings"), dlu(0, 0, 216, 80));
+    place(d, new QLabel(tr7("Frequency:")), dlu(8, 14, 54, 10));
     auto *freq = place(d, new QComboBox, dlu(70, 12, 140, 12));
     for (int hz : {50, 60, 70, 80, 90, 100, 120, 150, 200, 250, 300}) {
-        freq->addItem(QStringLiteral("%1 Гц").arg(hz), hz);
+        freq->addItem(tr7("%1 Hertz").arg(hz), hz);
     }
     freq->setCurrentIndex(qMax(0, freq->findData(f.bassFreq)));
-    place(d, new QLabel(QStringLiteral("Рівень посилення:")), dlu(8, 35, 62, 8));
+    place(d, new QLabel(tr7("Boost Level:")), dlu(8, 35, 62, 8));
     auto *level = place(d, new QComboBox, dlu(70, 32, 140, 12));
     for (int db = 3; db <= 12; db += 3) {
-        level->addItem(QStringLiteral("%1 дБ").arg(db), db);
+        level->addItem(tr7("%1 dB").arg(db), db);
     }
     level->setCurrentIndex(qMax(0, level->findData(f.bassLevel)));
     okCancel(d, 100, 158, 60);
@@ -367,13 +368,13 @@ inline bool bassDialog(QWidget *parent, Fx &f)
 /** "Headphone Virtualization Settings" (dialog 204) */
 inline bool phonesDialog(QWidget *parent, Fx &f)
 {
-    QDialog *d = settingsDialog(parent, QStringLiteral("Параметри віртуалізації навушників"), dlu(0, 0, 260, 92));
-    auto *head = place(d, new QLabel(QStringLiteral("Налаштування віртуалізації навушників")), dlu(8, 8, 249, 18));
+    QDialog *d = settingsDialog(parent, tr7("Virtual Surround Settings"), dlu(0, 0, 260, 92));
+    auto *head = place(d, new QLabel(tr7("Virtual Surround setup")), dlu(8, 8, 249, 18));
     QFont hf = head->font();
     hf.setPixelSize(15);
     head->setFont(hf);
     head->setStyleSheet(QStringLiteral("color: #1e3287;"));
-    auto *l = place(d, new QLabel(QStringLiteral("Віртуалізація навушників:")), dlu(8, 34, 112, 8));
+    auto *l = place(d, new QLabel(tr7("Headphone virtualization:")), dlu(8, 34, 112, 8));
     l->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     auto *mode = place(d, new QComboBox, dlu(124, 32, 111, 12));
     for (const PhonesMode &m : phonesModes()) {
@@ -392,13 +393,13 @@ inline bool phonesDialog(QWidget *parent, Fx &f)
 /** "Loudness Equalization Settings": Release Time, Short - Long (dialog 210) */
 inline bool loudDialog(QWidget *parent, Fx &f)
 {
-    QDialog *d = settingsDialog(parent, QStringLiteral("Параметри вирівнювання гучності"), dlu(0, 0, 216, 106));
-    auto *head = place(d, new QLabel(QStringLiteral("Налаштування вирівнювання гучності")), dlu(8, 8, 208, 18));
+    QDialog *d = settingsDialog(parent, tr7("Loudness Equalization Settings"), dlu(0, 0, 216, 106));
+    auto *head = place(d, new QLabel(tr7("Loudness Equalization setup")), dlu(8, 8, 208, 18));
     QFont hf = head->font();
     hf.setPixelSize(15);
     head->setFont(hf);
     head->setStyleSheet(QStringLiteral("color: #1e3287;"));
-    auto *t = place(d, new QLabel(QStringLiteral("Час відновлення")), dlu(52, 30, 112, 8));
+    auto *t = place(d, new QLabel(tr7("Release Time")), dlu(52, 30, 112, 8));
     t->setAlignment(Qt::AlignCenter);
     auto *slider = place(d, new QSlider(Qt::Horizontal), dlu(62, 40, 92, 24));
     slider->setRange(0, 4);
@@ -406,9 +407,9 @@ inline bool loudDialog(QWidget *parent, Fx &f)
     slider->setTickPosition(QSlider::TicksBelow);
     slider->setTickInterval(1);
     slider->setValue(f.loudRelease);
-    auto *s = place(d, new QLabel(QStringLiteral("Короткий")), dlu(46, 68, 50, 10));
+    auto *s = place(d, new QLabel(tr7("Short", "release")), dlu(46, 68, 50, 10));
     s->setAlignment(Qt::AlignCenter);
-    auto *lg = place(d, new QLabel(QStringLiteral("Довгий")), dlu(120, 68, 50, 10));
+    auto *lg = place(d, new QLabel(tr7("Long", "release")), dlu(120, 68, 50, 10));
     lg->setAlignment(Qt::AlignCenter);
     okCancel(d, 100, 158, 84);
     const bool ok = d->exec() == QDialog::Accepted;
@@ -435,11 +436,10 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
         v->setSpacing(8);
-        auto *intro = new QLabel(QStringLiteral("Виберіть покращення, які потрібно застосувати до поточної конфігурації динаміків. "
-                                                "Зміни можуть набути чинності лише під час наступного відтворення."));
+        auto *intro = new QLabel(tr7("Select the enhancements to apply for your current speaker configuration. Changes may not take effect until the next time you start playback."));
         intro->setWordWrap(true);
         v->addWidget(intro);
-        m_disable = new QCheckBox(QStringLiteral("Вимкнути всі покращення"));
+        m_disable = new QCheckBox(tr7("Disable all enhancements"));
         m_disable->setChecked(m_fx.disabled);
         v->addWidget(m_disable);
         m_list = new QListWidget;
@@ -449,15 +449,15 @@ public:
             QString key, title, description;
             bool available;
         };
-        QList<Row> rows{{QStringLiteral("bass"), QStringLiteral("Посилення низьких частот"), QStringLiteral("Підсилює найнижчі частоти, які може відтворити пристрій."), true}};
+        QList<Row> rows{{QStringLiteral("bass"), tr7("Bass Boost"), tr7("Boosts the lowest frequencies that can be played by the device."), true}};
         // Windows offers Headphone Virtualization for headphones; crossfeed only makes sense there
         if (headphones) {
-            rows.append({QStringLiteral("phones"), QStringLiteral("Віртуалізація навушників"),
-                         QStringLiteral("Віртуалізація навушників за допомогою спеціальної обробки створює ілюзію домашнього кінотеатру під час використання стереонавушників."),
+            rows.append({QStringLiteral("phones"), tr7("Headphone Virtualization"),
+                         tr7("Headphone Virtualization creates the illusion of a home theater while you are wearing stereo headphones, using special processing."),
                          QFileInfo::exists(bs2bPlugin)});
         }
-        rows.append({QStringLiteral("loud"), QStringLiteral("Вирівнювання гучності"),
-                     QStringLiteral("Вирівнювання гучності враховує особливості людського слуху, щоб зменшити помітну різницю в гучності."), QFileInfo::exists(sc4Plugin)});
+        rows.append({QStringLiteral("loud"), tr7("Loudness Equalization"),
+                     tr7("Loudness Equalization uses understanding of human hearing to reduce perceived volume differences."), QFileInfo::exists(sc4Plugin)});
         for (const Row &r : rows) {
             auto *it = new QListWidgetItem(r.title, m_list);
             it->setData(Qt::UserRole, r.key);
@@ -469,7 +469,7 @@ public:
                 it->setForeground(QColor(0x80, 0x80, 0x80));
             }
         }
-        auto *props = new QGroupBox(QStringLiteral("Властивості покращення"));
+        auto *props = new QGroupBox(tr7("Enhancement Properties"));
         auto *g = new QGridLayout(props);
         g->setHorizontalSpacing(10);
         auto label = [](const QString &t) {
@@ -477,29 +477,29 @@ public:
             l->setAlignment(Qt::AlignRight | Qt::AlignTop);
             return l;
         };
-        g->addWidget(label(QStringLiteral("Опис:")), 0, 0);
+        g->addWidget(label(tr7("Description:")), 0, 0);
         m_desc = new QLabel;
         m_desc->setWordWrap(true);
         m_desc->setAlignment(Qt::AlignLeft | Qt::AlignTop);
         m_desc->setMinimumHeight(dlu(0, 0, 0, 34).height());
         g->addWidget(m_desc, 0, 1, 1, 2);
-        g->addWidget(label(QStringLiteral("Постачальник:")), 1, 0);
+        g->addWidget(label(tr7("Provider:")), 1, 0);
         m_provider = new QLabel;
         g->addWidget(m_provider, 1, 1, 1, 2);
-        g->addWidget(label(QStringLiteral("Стан:")), 2, 0);
+        g->addWidget(label(tr7("Status:")), 2, 0);
         m_status = new QLabel;
         g->addWidget(m_status, 2, 1);
-        m_settings = new QPushButton(QStringLiteral("Параметри..."));
+        m_settings = new QPushButton(tr7("Options..."));
         g->addWidget(m_settings, 2, 2, Qt::AlignRight);
         g->setColumnStretch(1, 1);
         v->addWidget(props);
         v->addStretch(1);
         auto *bottom = new QHBoxLayout;
-        auto *restore = new QPushButton(QStringLiteral("Відновити стандартні"));
+        auto *restore = new QPushButton(tr7("Restore Defaults", "sound"));
         bottom->addWidget(restore);
         bottom->addStretch(1);
         // split button: the left part plays, the arrow picks the sample
-        m_preview = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), QStringLiteral("Попередній перегляд"));
+        m_preview = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), tr7("Preview", "button"));
         auto *arrow = new QPushButton(QStringLiteral("▾"));
         arrow->setFixedWidth(20);
         auto *menu = new QMenu(arrow);
@@ -513,9 +513,9 @@ public:
             }
         }
         menu->addSeparator();
-        menu->addAction(QStringLiteral("Огляд..."), this, [this] {
-            const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Пошук файлу мультимедіа"), QDir::homePath() + QStringLiteral("/Music"),
-                                                           QStringLiteral("Аудіофайли (*.wav *.mp3 *.ogg *.oga *.flac *.m4a)"));
+        menu->addAction(tr7("Browse..."), this, [this] {
+            const QString f = QFileDialog::getOpenFileName(this, tr7("Locate Media File"), QDir::homePath() + QStringLiteral("/Music"),
+                                                           tr7("Audio files (*.wav *.mp3 *.ogg *.oga *.flac *.m4a)"));
             if (!f.isEmpty()) {
                 m_sample = f;
                 preview();
@@ -620,9 +620,9 @@ private:
         m_desc->setText(it->data(Qt::UserRole + 1).toString());
         m_provider->setText(QStringLiteral("PipeWire"));
         if (!available) {
-            m_status->setText(QStringLiteral("Не встановлено (пакет %1)").arg(currentKey() == QLatin1String("phones") ? QStringLiteral("bs2b-ladspa") : QStringLiteral("swh-plugins")));
+            m_status->setText(tr7("Not installed (package %1)").arg(currentKey() == QLatin1String("phones") ? QStringLiteral("bs2b-ladspa") : QStringLiteral("swh-plugins")));
         } else {
-            m_status->setText(on(currentKey()) && !m_fx.disabled ? QStringLiteral("Увімкнуто") : QStringLiteral("Вимкнуто"));
+            m_status->setText(on(currentKey()) && !m_fx.disabled ? tr7("Enabled") : tr7("Off", "state"));
         }
         m_settings->setEnabled(available && !m_fx.disabled);
     }

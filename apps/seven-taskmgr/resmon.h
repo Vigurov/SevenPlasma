@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 
 namespace ResMon
@@ -34,12 +35,12 @@ inline QString keyValue(const QString &text, const QString &key, QChar sep)
 
 inline QString num(double v, int prec = 0)
 {
-    return QLocale(QLocale::Ukrainian).toString(v, 'f', prec);
+    return QLocale{}.toString(v, 'f', prec);
 }
 
 inline QString group(qint64 v)
 {
-    return QLocale(QLocale::Ukrainian).toString(v);
+    return QLocale{}.toString(v);
 }
 
 /* ---------------- samples ---------------- */
@@ -70,7 +71,7 @@ struct Proc {
     }
     QString status() const
     {
-        return state == 'T' || state == 't' ? QStringLiteral("Призупинено") : state == 'Z' ? QStringLiteral("Завершується") : QStringLiteral("Виконується");
+        return state == 'T' || state == 't' ? tr7("Paused") : state == 'Z' ? tr7("Not Responding") : tr7("Running", "service");
     }
 };
 
@@ -213,15 +214,15 @@ inline QString ioPriority(int pid)
     const int cls = int(v >> 13);
     const int data = int(v & 0xff);
     if (cls == 1) {
-        return QStringLiteral("Висока");
+        return tr7("High", "speed");
     }
     if (cls == 3) {
-        return QStringLiteral("Фонова");
+        return tr7("Background");
     }
     if (cls == 2 && data >= 6) {
-        return QStringLiteral("Низька");
+        return tr7("Low", "speed");
     }
-    return QStringLiteral("Звичайна");
+    return tr7("Normal", "speed");
 }
 
 struct DiskStat {
@@ -386,14 +387,14 @@ inline QList<Listener> readListeners()
         QString host;
         splitAddress(f.at(4), host, l.port);
         l.address = host.contains(QLatin1Char(':')) || host == QLatin1String("*") && f.at(4).startsWith(QLatin1Char('['))
-            ? QStringLiteral("IPv6 ") + (host == QLatin1String("::") || host == QLatin1String("*") ? QStringLiteral("не вказано") : host)
-            : QStringLiteral("IPv4 ") + (host == QLatin1String("0.0.0.0") || host == QLatin1String("*") ? QStringLiteral("не вказано") : host);
+            ? QStringLiteral("IPv6 ") + (host == QLatin1String("::") || host == QLatin1String("*") ? tr7("not specified") : host)
+            : QStringLiteral("IPv4 ") + (host == QLatin1String("0.0.0.0") || host == QLatin1String("*") ? tr7("not specified") : host);
         const auto m = user.match(line);
         if (m.hasMatch()) {
             l.image = m.captured(1);
             l.pid = m.captured(2).toInt();
         } else {
-            l.image = QStringLiteral("Система");
+            l.image = tr7("System");
         }
         list.append(l);
     }
@@ -502,7 +503,7 @@ public:
         if (m_checkable) {
             m_all = new QCheckBox(m_view->header()->viewport());
             m_all->move(5, (m_view->header()->sizeHint().height() - 13) / 2);
-            m_all->setToolTip(QStringLiteral("Вибрати всі"));
+            m_all->setToolTip(tr7("Select all"));
             connect(m_all, &QCheckBox::clicked, this, [this](bool on) {
                 QSet<QString> keys;
                 if (on) {
@@ -972,7 +973,7 @@ protected:
         p.setRenderHint(QPainter::Antialiasing, false);
         p.setPen(Qt::black);
         const QRect bottom(4, g.bottom() + 1, labelsRight - 4, 16);
-        p.drawText(bottom, Qt::AlignLeft | Qt::AlignVCenter, m_showSeconds ? QStringLiteral("60 секунд") : QString());
+        p.drawText(bottom, Qt::AlignLeft | Qt::AlignVCenter, m_showSeconds ? tr7("60 Seconds") : QString());
         p.drawText(bottom, Qt::AlignRight | Qt::AlignVCenter, m_bottom);
     }
 
@@ -1011,13 +1012,13 @@ public:
         v->setSpacing(4);
         auto *top = new QHBoxLayout;
         hide = new RoundButton(RoundButton::Right);
-        hide->setToolTip(QStringLiteral("Приховати графіки"));
+        hide->setToolTip(tr7("Hide Graphs"));
         top->addWidget(hide);
         top->addStretch(1);
-        views = new QPushButton(QStringLiteral("Подання"));
+        views = new QPushButton(tr7("Views"));
         auto *menu = new QMenu(views);
         auto *grp = new QActionGroup(menu);
-        const QList<QPair<QString, int>> sizes{{QStringLiteral("Великий"), 160}, {QStringLiteral("Середній"), 100}, {QStringLiteral("Малий"), 60}};
+        const QList<QPair<QString, int>> sizes{{tr7("Large"), 160}, {tr7("Medium"), 100}, {tr7("Small"), 60}};
         for (const auto &s : sizes) {
             QAction *a = menu->addAction(s.first);
             a->setCheckable(true);
@@ -1138,11 +1139,11 @@ protected:
             QColor color;
             QString name;
         };
-        const QList<Part> parts{{m_m.reserved, QColor(0x9a, 0x9a, 0x9a), QStringLiteral("Зарезервовано\nобладнанням")},
-                                {m_m.inUse, QColor(0x8c, 0xb4, 0x1e), QStringLiteral("Використовується")},
-                                {m_m.modified, QColor(0xf0, 0x9c, 0x1e), QStringLiteral("Змінено")},
-                                {m_m.standby, QColor(0x4a, 0x86, 0xd6), QStringLiteral("Очікування")},
-                                {m_m.free, QColor(0xc4, 0xdc, 0xf6), QStringLiteral("Вільно")}};
+        const QList<Part> parts{{m_m.reserved, QColor(0x9a, 0x9a, 0x9a), tr7("Hardware\nReserved")},
+                                {m_m.inUse, QColor(0x8c, 0xb4, 0x1e), tr7("In Use")},
+                                {m_m.modified, QColor(0xf0, 0x9c, 0x1e), tr7("Modified")},
+                                {m_m.standby, QColor(0x4a, 0x86, 0xd6), tr7("Standby")},
+                                {m_m.free, QColor(0xc4, 0xdc, 0xf6), tr7("Free")}};
         p.setPen(QColor(0x80, 0x80, 0x80));
         p.drawRect(bar.adjusted(0, 0, -1, -1));
         qreal x = bar.left() + 1;
@@ -1159,18 +1160,18 @@ protected:
             p.fillRect(QRect(lx + 1, bar.bottom() + 11, 10, 10), parts.at(i).color);
             p.setPen(Qt::black);
             const QRect tr(lx + 16, bar.bottom() + 8, lw - 16, 60);
-            p.drawText(tr, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, parts.at(i).name + QLatin1Char('\n') + QStringLiteral("%1 МБ").arg(group(parts.at(i).kb / 1024)));
+            p.drawText(tr, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, parts.at(i).name + QLatin1Char('\n') + tr7("%1 MB").arg(group(parts.at(i).kb / 1024)));
         }
         // totals
-        const QList<QPair<QString, qint64>> totals{{QStringLiteral("Доступно"), m_m.available},
-                                                  {QStringLiteral("Кешовано"), m_m.cached},
-                                                  {QStringLiteral("Усього"), m_m.total},
-                                                  {QStringLiteral("Установлено"), m_m.installed}};
+        const QList<QPair<QString, qint64>> totals{{tr7("Available"), m_m.available},
+                                                  {tr7("Cached"), m_m.cached},
+                                                  {tr7("Total", "memory"), m_m.total},
+                                                  {tr7("Installed"), m_m.installed}};
         int y = bar.bottom() + 80;
         const int cx = width() * 2 / 5 + 40;
         for (const auto &t : totals) {
             p.drawText(QRect(cx - 100, y, 95, 16), Qt::AlignRight | Qt::AlignVCenter, t.first);
-            p.drawText(QRect(cx + 5, y, 150, 16), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("%1 МБ").arg(group(t.second / 1024)));
+            p.drawText(QRect(cx + 5, y, 150, 16), Qt::AlignLeft | Qt::AlignVCenter, tr7("%1 MB").arg(group(t.second / 1024)));
             y += 16;
         }
     }
@@ -1186,29 +1187,29 @@ class ResourceMonitor : public QMainWindow
 public:
     ResourceMonitor()
     {
-        setWindowTitle(QStringLiteral("Монітор ресурсів"));
+        setWindowTitle(tr7("Resource Monitor"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-resmon")));
         resize(1600, 1000);
         m_ncpu = qMax(1, int(sysconf(_SC_NPROCESSORS_ONLN)));
         m_hz = qMax(1L, sysconf(_SC_CLK_TCK));
 
-        auto *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QStringLiteral("Ви&хід"), this, &QWidget::close);
-        auto *monitor = menuBar()->addMenu(QStringLiteral("&Монітор"));
-        m_stop = monitor->addAction(QStringLiteral("&Зупинити моніторинг"), this, [this] {
+        auto *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(tr7("E&xit"), this, &QWidget::close);
+        auto *monitor = menuBar()->addMenu(tr7("&Monitor"));
+        m_stop = monitor->addAction(tr7("&Stop Monitoring"), this, [this] {
             setMonitoring(false);
         });
-        m_start = monitor->addAction(QStringLiteral("&Запустити моніторинг"), this, [this] {
+        m_start = monitor->addAction(tr7("&Start Monitoring"), this, [this] {
             setMonitoring(true);
         });
         m_start->setEnabled(false);
-        auto *help = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        help->addAction(QStringLiteral("Про &програму"), this, [this] {
+        auto *help = menuBar()->addMenu(tr7("&Help"));
+        help->addAction(tr7("&About"), this, [this] {
             QMessageBox about(this);
-            about.setWindowTitle(QStringLiteral("Про програму «Монітор ресурсів»"));
+            about.setWindowTitle(tr7("About Resource Monitor"));
             about.setIconPixmap(QIcon::fromTheme(QStringLiteral("seven-resmon")).pixmap(48, 48));
-            about.setText(QStringLiteral("<b>Монітор ресурсів</b>"));
-            about.setInformativeText(QStringLiteral("Відстежує використання процесора, пам'яті, дисків і мережі процесами та службами комп'ютера."));
+            about.setText(tr7("<b>Resource Monitor</b>"));
+            about.setInformativeText(tr7("Monitors the usage of the processor, memory, disks and network by the processes and services of the computer."));
             about.exec();
         });
         win7WrapMenuBar(this); // Windows 7: the menu bar wraps instead of showing a "»" arrow
@@ -1222,8 +1223,8 @@ public:
         m_tabs->setElideMode(Qt::ElideNone);
         m_tabs->setUsesScrollButtons(false);
         m_tabs->setExpanding(false);
-        for (const char *t : {"Огляд", "ЦП", "Пам'ять", "Диск", "Мережа"}) {
-            m_tabs->addTab(QString::fromUtf8(t));
+        for (const char *t : {"Overview", "CPU", "Memory", "Disk", "Networking"}) {
+            m_tabs->addTab(tr7(t));
         }
         auto *tabRow = new QHBoxLayout;
         tabRow->setContentsMargins(4, 0, 0, 0);
@@ -1246,7 +1247,7 @@ public:
         m_split->setStretchFactor(0, 1);
         m_split->setSizes({700, 270});
         m_showGraphs = new RoundButton(RoundButton::Left);
-        m_showGraphs->setToolTip(QStringLiteral("Показати графіки"));
+        m_showGraphs->setToolTip(tr7("Show Graphs"));
         m_showGraphs->hide();
         pv->addWidget(m_split, 1);
         pv->addWidget(m_showGraphs, 0, Qt::AlignTop);
@@ -1353,48 +1354,48 @@ private:
         }
         names.sort();
         names.removeDuplicates();
-        return QStringLiteral("Відфільтровано за: ") + names.join(QStringLiteral(", "));
+        return tr7("Filtered by: ") + names.join(QStringLiteral(", "));
     }
 
     /* ---- tabs ---- */
 
     static QString L(const char *t)
     {
-        return QString::fromUtf8(t);
+        return tr7(t);
     }
 
     void buildOverview()
     {
-        const QStringList cpuCols{L("Образ"), L("ІД процесу"), L("Опис"), L("Стан"), L("Потоки"), L("ЦП"), L("Середнє для ЦП")};
+        const QStringList cpuCols{L("Image"), L("PID"), L("Description"), L("Status"), L("Threads"), L("CPU"), L("Average CPU")};
         const QList<int> cpuW{190, 80, 300, 110, 70, 50, 110};
         m_ovCpu = processTable(cpuCols, cpuW, 2);
-        auto *sCpu = new Section(L("ЦП"), m_ovCpu, 230);
+        auto *sCpu = new Section(L("CPU"), m_ovCpu, 230);
         m_iOvCpu = sCpu->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iOvFreq = sCpu->addIndicator(QColor(0x70, 0xa8, 0xff));
-        m_ovDisk = new Table({L("Образ"), L("ІД процесу"), L(""), L("Читання (байт/с)"), L("Запис (байт/с)"), L("Усього (байт/с)"), L("Пріоритет вводу-виводу")},
+        m_ovDisk = new Table({L("Image"), L("PID"), L(""), L("Read (B/sec)"), L("Write (B/sec)"), L("Total (B/sec)"), L("I/O Priority")},
                              {190, 80, 300, 130, 130, 130, 160}, false, 2);
-        auto *sDisk = new Section(L("Диск"), m_ovDisk, 230);
+        auto *sDisk = new Section(L("Disk"), m_ovDisk, 230);
         m_iOvDisk = sDisk->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iOvDiskTime = sDisk->addIndicator(QColor(0x00, 0x00, 0xe0));
         sDisk->setExpanded(false);
-        m_ovNet = new Table({L("Образ"), L("ІД процесу"), L("Адреса"), L("Надіслано (байт/с)"), L("Отримано (байт/с)"), L("Усього (байт/с)")},
+        m_ovNet = new Table({L("Image"), L("PID"), L("Address"), L("Send (B/sec)"), L("Receive (B/sec)"), L("Total (B/sec)")},
                             {190, 80, 300, 140, 140, 130}, false, 2);
-        auto *sNet = new Section(L("Мережа"), m_ovNet, 230);
+        auto *sNet = new Section(L("Networking"), m_ovNet, 230);
         m_iOvNet = sNet->addIndicator(QColor(0x00, 0x80, 0x00));
         m_iOvNetUse = sNet->addIndicator(QColor(0x00, 0x00, 0xb0));
         sNet->setExpanded(false);
-        const QStringList memCols{L("Образ"), L("ІД процесу"), L("Помилок сторінок/с"), L("Виділено (КБ)"), L("Робочий набір (КБ)"), L("Спільний (КБ)"), L("Приватний (КБ)")};
+        const QStringList memCols{L("Image"), L("PID"), L("Hard Faults/sec"), L("Commit (KB)"), L("Working Set (KB)"), L("Shareable (KB)"), L("Private (KB)")};
         const QList<int> memW{190, 80, 300, 120, 130, 110, 110};
         m_ovMem = processTable(memCols, memW, 2);
-        auto *sMem = new Section(L("Пам'ять"), m_ovMem, 230);
+        auto *sMem = new Section(L("Memory"), m_ovMem, 230);
         m_iOvFaults = sMem->addIndicator(QColor(0x00, 0x80, 0x00));
         m_iOvMemUse = sMem->addIndicator(QColor(0x70, 0xa8, 0xff));
         sMem->setExpanded(false);
         m_left->addWidget(column({sCpu, sDisk, sNet, sMem}));
-        m_gOvCpu = new ResGraph(L("ЦП"));
-        m_gOvDisk = new ResGraph(L("Диск"));
-        m_gOvNet = new ResGraph(L("Мережа"));
-        m_gOvMem = new ResGraph(L("Пам'ять"));
+        m_gOvCpu = new ResGraph(L("CPU"));
+        m_gOvDisk = new ResGraph(L("Disk"));
+        m_gOvNet = new ResGraph(L("Networking"));
+        m_gOvMem = new ResGraph(L("Memory"));
         m_graphs->addPage({m_gOvCpu, m_gOvDisk, m_gOvNet, m_gOvMem});
         m_ovCpu->sortBy(6, Qt::DescendingOrder);
         m_ovDisk->sortBy(5, Qt::DescendingOrder);
@@ -1404,11 +1405,11 @@ private:
 
     void buildCpu()
     {
-        m_cpuProcs = processTable({L("Образ"), L("ІД процесу"), L("Опис"), L("Стан"), L("Потоки"), L("ЦП"), L("Середнє для ЦП")}, {190, 80, 300, 110, 70, 50, 110}, 2);
-        auto *sProcs = new Section(L("Процеси"), m_cpuProcs, 230);
+        m_cpuProcs = processTable({L("Image"), L("PID"), L("Description"), L("Status"), L("Threads"), L("CPU"), L("Average CPU")}, {190, 80, 300, 110, 70, 50, 110}, 2);
+        auto *sProcs = new Section(L("Processes"), m_cpuProcs, 230);
         m_iCpuProcs = sProcs->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iCpuFreq = sProcs->addIndicator(QColor(0x70, 0xa8, 0xff));
-        m_services = new Table({L("Ім'я"), L("ІД процесу"), L("Опис"), L("Стан"), L("Група"), L("ЦП"), L("Середнє для ЦП")}, {190, 80, 300, 110, 140, 50, 110}, false, 2);
+        m_services = new Table({L("Name"), L("PID"), L("Description"), L("Status"), L("Group"), L("CPU"), L("Average CPU")}, {190, 80, 300, 110, 140, 50, 110}, false, 2);
         m_services->view()->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(m_services->view(), &QWidget::customContextMenuRequested, this, [this](QPoint pos) {
             const QModelIndex idx = m_services->view()->indexAt(pos);
@@ -1416,28 +1417,28 @@ private:
                 serviceMenu(idx.siblingAtColumn(0).data(Qt::UserRole).toString(), m_services->view()->viewport()->mapToGlobal(pos));
             }
         });
-        m_sServices = new Section(L("Служби"), m_services, 230);
+        m_sServices = new Section(L("Services"), m_services, 230);
         m_iServices = m_sServices->addIndicator(QColor(0x00, 0x80, 0x00));
-        m_handles = new Table({L("Образ"), L("ІД процесу"), L("Тип"), L("Ім'я дескриптора")}, {190, 80, 110, 400}, false, 3);
-        m_handles->setPlaceholder(L("Для перегляду результатів виберіть процес або дескриптори пошуку."));
-        m_sHandles = new Section(L("Пов'язані дескриптори"), m_handles, 230);
+        m_handles = new Table({L("Image"), L("PID"), L("Type"), L("Handle Name")}, {190, 80, 110, 400}, false, 3);
+        m_handles->setPlaceholder(L("Select a process or search handles to view results."));
+        m_sHandles = new Section(L("Associated Handles"), m_handles, 230);
         m_sHandles->setExpanded(false);
         m_search = new QLineEdit;
-        m_search->setPlaceholderText(L("Пошук дескрипторів"));
+        m_search->setPlaceholderText(L("Search Handles"));
         m_search->setClearButtonEnabled(true);
         connect(m_search, &QLineEdit::returnPressed, this, [this] {
             refreshHandles();
         });
-        m_modules = new Table({L("Образ"), L("ІД процесу"), L("Ім'я модуля"), L("Версія"), L("Повний шлях")}, {190, 80, 200, 90, 400}, false, 4);
-        m_modules->setPlaceholder(L("Для перегляду результатів виберіть процес."));
-        m_sModules = new Section(L("Пов'язані модулі"), m_modules, 230);
+        m_modules = new Table({L("Image"), L("PID"), L("Module Name"), L("Version"), L("Full Path")}, {190, 80, 200, 90, 400}, false, 4);
+        m_modules->setPlaceholder(L("Select a process to view results."));
+        m_sModules = new Section(L("Associated Modules"), m_modules, 230);
         m_sModules->setExpanded(false);
         m_left->addWidget(column({sProcs, m_sServices, m_sHandles, m_sModules}));
-        m_gCpuTotal = new ResGraph(L("ЦП — загалом"));
-        m_gCpuServices = new ResGraph(L("Використання ЦП службами"));
+        m_gCpuTotal = new ResGraph(L("CPU - Total"));
+        m_gCpuServices = new ResGraph(L("Service CPU Usage"));
         QList<ResGraph *> graphs{m_gCpuTotal, m_gCpuServices};
         for (int i = 0; i < m_ncpu; ++i) {
-            m_gCpuCores << new ResGraph(L("ЦП %1").arg(i));
+            m_gCpuCores << new ResGraph(L("CPU %1").arg(i));
             graphs << m_gCpuCores.last();
         }
         m_graphs->addPage(graphs);
@@ -1447,41 +1448,41 @@ private:
 
     void buildMemory()
     {
-        m_memProcs = processTable({L("Образ"), L("ІД процесу"), L("Помилок сторінок/с"), L("Виділено (КБ)"), L("Робочий набір (КБ)"), L("Спільний (КБ)"), L("Приватний (КБ)")},
+        m_memProcs = processTable({L("Image"), L("PID"), L("Hard Faults/sec"), L("Commit (KB)"), L("Working Set (KB)"), L("Shareable (KB)"), L("Private (KB)")},
                                   {190, 80, 300, 120, 130, 110, 110}, 2);
-        auto *sProcs = new Section(L("Процеси"), m_memProcs, 230);
+        auto *sProcs = new Section(L("Processes"), m_memProcs, 230);
         m_iMemUsed = sProcs->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_memBar = new MemoryBar;
-        auto *sPhys = new Section(L("Фізична пам'ять"), m_memBar, 240);
+        auto *sPhys = new Section(L("Physical Memory"), m_memBar, 240);
         m_iMemInUse = sPhys->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iMemAvail = sPhys->addIndicator(QColor(0x00, 0x00, 0xe0));
         m_left->addWidget(column({sProcs, sPhys}));
-        m_gMemUsed = new ResGraph(L("Використання фізичної пам'яті"));
-        m_gMemCommit = new ResGraph(L("Виділення пам'яті"));
-        m_gMemFaults = new ResGraph(L("Помилок відсутності сторінок/с"));
+        m_gMemUsed = new ResGraph(L("Used Physical Memory"));
+        m_gMemCommit = new ResGraph(L("Commit Charge"));
+        m_gMemFaults = new ResGraph(tr7("Hard Faults/sec", "graph"));
         m_graphs->addPage({m_gMemUsed, m_gMemCommit, m_gMemFaults});
         m_memProcs->sortBy(6, Qt::DescendingOrder);
     }
 
     void buildDisk()
     {
-        m_diskProcs = processTable({L("Образ"), L("ІД процесу"), L(""), L("Читання (байт/с)"), L("Запис (байт/с)"), L("Усього (байт/с)")}, {190, 80, 300, 130, 130, 130}, 2);
-        auto *sProcs = new Section(L("Процеси з дисковою активністю"), m_diskProcs, 230);
-        m_diskActivity = new Table({L("Образ"), L("ІД процесу"), L(""), L("Читання (байт/с)"), L("Запис (байт/с)"), L("Усього (байт/с)"), L("Пріоритет вводу-виводу")},
+        m_diskProcs = processTable({L("Image"), L("PID"), L(""), L("Read (B/sec)"), L("Write (B/sec)"), L("Total (B/sec)")}, {190, 80, 300, 130, 130, 130}, 2);
+        auto *sProcs = new Section(L("Processes with Disk Activity"), m_diskProcs, 230);
+        m_diskActivity = new Table({L("Image"), L("PID"), L(""), L("Read (B/sec)"), L("Write (B/sec)"), L("Total (B/sec)"), L("I/O Priority")},
                                    {190, 80, 300, 130, 130, 130, 160}, false, 2);
-        m_sDiskActivity = new Section(L("Робота диска"), m_diskActivity, 230);
+        m_sDiskActivity = new Section(L("Disk Activity"), m_diskActivity, 230);
         m_iDiskIo = m_sDiskActivity->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iDiskTime = m_sDiskActivity->addIndicator(QColor(0x00, 0x00, 0xe0));
-        m_storage = new Table({L("Логічний диск"), L("Фізичний диск"), L("Активний час (%)"), L("Вільно (МБ)"), L("Усього (МБ)"), L("Довжина черги диска")},
+        m_storage = new Table({L("Logical Disk"), L("Physical Disk"), L("Active Time (%)"), L("Available Space (MB)"), L("Total Space (MB)"), L("Disk Queue Length")},
                               {190, 300, 130, 120, 120, 150}, false, 1);
-        auto *sStorage = new Section(L("Запам'ятовуючі пристрої"), m_storage, 180);
+        auto *sStorage = new Section(L("Storage"), m_storage, 180);
         m_left->addWidget(column({sProcs, m_sDiskActivity, sStorage}));
-        m_gDisk = new ResGraph(L("Диск"));
+        m_gDisk = new ResGraph(L("Disk"));
         QList<ResGraph *> graphs{m_gDisk};
         int i = 0;
         for (const DiskStat &d : readDisks()) {
             const QString mount = mountOf(d.name);
-            auto *g = new ResGraph(L("Довжина черги диска %1 (%2)").arg(i++).arg(mount.isEmpty() ? d.name : mount));
+            auto *g = new ResGraph(L("Disk %1 (%2) Queue Length").arg(i++).arg(mount.isEmpty() ? d.name : mount));
             m_gQueues.insert(d.name, g);
             graphs << g;
         }
@@ -1492,23 +1493,23 @@ private:
 
     void buildNetwork()
     {
-        m_netProcs = processTable({L("Образ"), L("ІД процесу"), L(""), L("Надіслано (байт/с)"), L("Отримано (байт/с)"), L("Усього (байт/с)")}, {190, 80, 300, 140, 140, 130}, 2);
-        auto *sProcs = new Section(L("Процеси з мережевою активністю"), m_netProcs, 230);
-        m_netActivity = new Table({L("Образ"), L("ІД процесу"), L("Адреса"), L("Надіслано (байт/с)"), L("Отримано (байт/с)"), L("Усього (байт/с)")},
+        m_netProcs = processTable({L("Image"), L("PID"), L(""), L("Send (B/sec)"), L("Receive (B/sec)"), L("Total (B/sec)")}, {190, 80, 300, 140, 140, 130}, 2);
+        auto *sProcs = new Section(L("Processes with Network Activity"), m_netProcs, 230);
+        m_netActivity = new Table({L("Image"), L("PID"), L("Address"), L("Send (B/sec)"), L("Receive (B/sec)"), L("Total (B/sec)")},
                                   {190, 80, 300, 140, 140, 130}, false, 2);
-        m_sNetActivity = new Section(L("Мережева активність"), m_netActivity, 230);
+        m_sNetActivity = new Section(L("Network Activity"), m_netActivity, 230);
         m_iNetIo = m_sNetActivity->addIndicator(QColor(0x00, 0xc0, 0x00));
         m_iNetUse = m_sNetActivity->addIndicator(QColor(0x00, 0x00, 0xe0));
-        m_tcp = new Table({L("Образ"), L("ІД процесу"), L("Локальна адреса"), L("Локальний порт"), L("Віддалена адреса"), L("Віддалений порт"), L("Втрата пакетів (%)"), L("Затримка (мс)")},
+        m_tcp = new Table({L("Image"), L("PID"), L("Local Address"), L("Local Port"), L("Remote Address"), L("Remote Port"), L("Packet Loss (%)"), L("Latency (ms)")},
                           {190, 80, 200, 110, 200, 120, 130, 110}, false, 4);
-        m_sTcp = new Section(L("TCP-підключення"), m_tcp, 230);
+        m_sTcp = new Section(L("TCP Connections"), m_tcp, 230);
         m_sTcp->setExpanded(false);
-        m_listen = new Table({L("Образ"), L("ІД процесу"), L("Адреса"), L("Порт"), L("Протокол"), L("Стан брандмауера")}, {190, 80, 300, 80, 90, 260}, false, 2);
-        m_sListen = new Section(L("Порти прослуховування"), m_listen, 230);
+        m_listen = new Table({L("Image"), L("PID"), L("Address"), L("Port"), L("Protocol"), L("Firewall Status")}, {190, 80, 300, 80, 90, 260}, false, 2);
+        m_sListen = new Section(L("Listening Ports"), m_listen, 230);
         m_sListen->setExpanded(false);
         m_left->addWidget(column({sProcs, m_sNetActivity, m_sTcp, m_sListen}));
-        m_gNet = new ResGraph(L("Мережа"));
-        m_gTcp = new ResGraph(L("TCP-підключення"));
+        m_gNet = new ResGraph(L("Networking"));
+        m_gTcp = new ResGraph(L("TCP Connections"));
         QList<ResGraph *> graphs{m_gNet, m_gTcp};
         for (const NetDev &d : readNet()) {
             auto *g = new ResGraph(netTitle(d.name));
@@ -1523,9 +1524,9 @@ private:
     static QString netTitle(const QString &iface)
     {
         if (QFileInfo::exists(QStringLiteral("/sys/class/net/%1/wireless").arg(iface))) {
-            return QStringLiteral("Бездротове мережне підключення (%1)").arg(iface);
+            return tr7("Wireless Network Connection (%1)").arg(iface);
         }
-        return QStringLiteral("Підключення по локальній мережі (%1)").arg(iface);
+        return tr7("Local Area Connection (%1)").arg(iface);
     }
 
     static QString mountOf(const QString &disk)
@@ -1699,30 +1700,30 @@ private:
         freq = nf ? freq / nf : 1;
 
         // header indicators
-        const QString cpuText = QStringLiteral("%1% — використання ЦП").arg(qRound(total * 100));
-        const QString freqText = QStringLiteral("%1% максимальної частоти").arg(qRound(freq * 100));
+        const QString cpuText = tr7("%1% CPU Usage").arg(qRound(total * 100));
+        const QString freqText = tr7("%1% Maximum Frequency").arg(qRound(freq * 100));
         m_iOvCpu->setText(cpuText);
         m_iCpuProcs->setText(cpuText);
         m_iOvFreq->setText(freqText);
         m_iCpuFreq->setText(freqText);
-        const QString diskText = diskBytes >= 1024 * 1024 ? QStringLiteral("%1 КБ/с — дисковий ввід-вивід").arg(group(qRound64(diskBytes / 1024)))
-                                                          : QStringLiteral("%1 байт/с — дисковий ввід-вивід").arg(group(qRound64(diskBytes)));
-        const QString timeText = QStringLiteral("%1% активного часу (максимально)").arg(qRound(busiest * 100));
+        const QString diskText = diskBytes >= 1024 * 1024 ? tr7("%1 KB/sec Disk I/O").arg(group(qRound64(diskBytes / 1024)))
+                                                          : tr7("%1 B/sec Disk I/O").arg(group(qRound64(diskBytes)));
+        const QString timeText = tr7("%1% Highest Active Time").arg(qRound(busiest * 100));
         m_iOvDisk->setText(diskText);
         m_iDiskIo->setText(diskText);
         m_iOvDiskTime->setText(timeText);
         m_iDiskTime->setText(timeText);
-        const QString netText = QStringLiteral("%1 кбіт/с — мережевий ввід-вивід").arg(group(qRound64(netBits / 1000)));
-        const QString useText = QStringLiteral("Використання мережі: %1%").arg(qRound(netUse * 100));
+        const QString netText = tr7("%1 Kbps Network I/O").arg(group(qRound64(netBits / 1000)));
+        const QString useText = tr7("%1% Network Utilization").arg(qRound(netUse * 100));
         m_iOvNet->setText(netText);
         m_iNetIo->setText(netText);
         m_iOvNetUse->setText(useText);
         m_iNetUse->setText(useText);
-        m_iOvFaults->setText(QStringLiteral("%1 помилок сторінок (диск)/с").arg(qRound(faults)));
-        m_iOvMemUse->setText(QStringLiteral("Використання фізичної пам'яті: %1%").arg(qRound(usedPhys * 100)));
-        m_iMemUsed->setText(QStringLiteral("Використання фізичної пам'яті: %1%").arg(qRound(usedPhys * 100)));
-        m_iMemInUse->setText(QStringLiteral("Використовується: %1 МБ").arg(group(mem.inUse / 1024)));
-        m_iMemAvail->setText(QStringLiteral("Доступно: %1 МБ").arg(group(mem.available / 1024)));
+        m_iOvFaults->setText(tr7("%1 Hard Faults/sec").arg(qRound(faults)));
+        m_iOvMemUse->setText(tr7("%1% Used Physical Memory").arg(qRound(usedPhys * 100)));
+        m_iMemUsed->setText(tr7("%1% Used Physical Memory").arg(qRound(usedPhys * 100)));
+        m_iMemInUse->setText(tr7("In Use: %1 MB").arg(group(mem.inUse / 1024)));
+        m_iMemAvail->setText(tr7("Available: %1 MB").arg(group(mem.available / 1024)));
         m_memBar->setInfo(mem);
 
         // graphs
@@ -1735,7 +1736,7 @@ private:
             }
             m_gCpuServices->add(m_servicesCpu / 100.0);
             const double diskScale = autoScale(diskBytes, {100e3, 1e6, 10e6, 100e6, 1e9});
-            const QString diskLabel = diskScale >= 1e6 ? QStringLiteral("%1 МБ/с").arg(diskScale / 1e6) : QStringLiteral("%1 КБ/с").arg(diskScale / 1e3);
+            const QString diskLabel = diskScale >= 1e6 ? tr7("%1 MB/sec").arg(diskScale / 1e6) : tr7("%1 KB/sec").arg(diskScale / 1e3);
             for (ResGraph *g : {m_gOvDisk, m_gDisk}) {
                 g->setScale(diskLabel, QStringLiteral("0"));
                 g->add(diskBytes / diskScale, busiest);
@@ -1747,7 +1748,7 @@ private:
                 it.value()->add(q / scale);
             }
             const double netScale = autoScale(netBits, {100e3, 1e6, 10e6, 100e6, 1e9});
-            const QString netLabel = netScale >= 1e6 ? QStringLiteral("%1 Мбіт/с").arg(netScale / 1e6) : QStringLiteral("%1 кбіт/с").arg(netScale / 1e3);
+            const QString netLabel = netScale >= 1e6 ? tr7("%1 Mbps").arg(netScale / 1e6) : tr7("%1 Kbps").arg(netScale / 1e3);
             for (ResGraph *g : {m_gOvNet, m_gNet}) {
                 g->setScale(netLabel, QStringLiteral("0"));
                 g->add(netBits / netScale, netUse);
@@ -1760,7 +1761,7 @@ private:
             }
             const double faultScale = autoScale(faults, {100, 1000, 10000, 100000});
             for (ResGraph *g : {m_gOvMem, m_gMemFaults}) {
-                g->setScale(QStringLiteral("%1 помилок сторінок (диск)/с").arg(group(qint64(faultScale))), QStringLiteral("0"));
+                g->setScale(tr7("%1 Hard Faults/sec").arg(group(qint64(faultScale))), QStringLiteral("0"));
                 if (g == m_gOvMem) {
                     g->add(faults / faultScale, usedPhys);
                 } else {
@@ -1873,9 +1874,9 @@ private:
                 continue;
             }
             auto loop = [](const QString &a) {
-                return a.startsWith(QLatin1String("127.")) ? QStringLiteral("Петлева адреса IPv4") : a == QLatin1String("::1") ? QStringLiteral("Петлева адреса IPv6") : a;
+                return a.startsWith(QLatin1String("127.")) ? tr7("IPv4 loopback") : a == QLatin1String("::1") ? tr7("IPv6 loopback") : a;
             };
-            tcpRows.append({s.key, {cell(s.image.isEmpty() ? QStringLiteral("Система") : s.image), ncell(s.pid), cell(loop(s.local)), ncell(s.localPort.toDouble()), cell(loop(s.peer)),
+            tcpRows.append({s.key, {cell(s.image.isEmpty() ? tr7("System") : s.image), ncell(s.pid), cell(loop(s.local)), ncell(s.localPort.toDouble()), cell(loop(s.peer)),
                                     ncell(s.peerPort.toDouble()), ncell(s.loss), s.rtt < 0 ? cell(QString()) : ncell(s.rtt)}});
         }
         m_tcp->update(tcpRows);
@@ -1931,7 +1932,7 @@ private:
             s.cpuAvg = avg / hist.size();
             sum += s.cpu;
             rows.append({s.name, {{s.name, 0, false}, {s.pid ? QString::number(s.pid) : QString(), double(s.pid), true}, {s.description, 0, false},
-                                  {s.running ? QStringLiteral("Виконується") : QStringLiteral("Зупинено"), 0, false}, {s.group, 0, false},
+                                  {s.running ? tr7("Running", "service") : tr7("Stopped"), 0, false}, {s.group, 0, false},
                                   {num(s.cpu), s.cpu, true}, {num(s.cpuAvg, 2), s.cpuAvg, true}}});
         }
         m_prevServices.clear();
@@ -1940,27 +1941,27 @@ private:
         }
         m_servicesCpu = sum;
         m_services->update(rows);
-        m_iServices->setText(QStringLiteral("%1% — використання ЦП").arg(qRound(sum)));
+        m_iServices->setText(tr7("%1% CPU Usage").arg(qRound(sum)));
     }
 
     static QString fdType(const QString &target)
     {
         if (target.startsWith(QLatin1String("socket:"))) {
-            return QStringLiteral("Сокет");
+            return tr7("Socket");
         }
         if (target.startsWith(QLatin1String("pipe:"))) {
-            return QStringLiteral("Канал");
+            return tr7("Pipe");
         }
         if (target.startsWith(QLatin1String("anon_inode:"))) {
-            return QStringLiteral("Подія");
+            return tr7("Event");
         }
         if (target.startsWith(QLatin1String("/dev/"))) {
-            return QStringLiteral("Пристрій");
+            return tr7("Device");
         }
         if (QFileInfo(target).isDir()) {
-            return QStringLiteral("Папка");
+            return tr7("Folder");
         }
-        return QStringLiteral("Файл");
+        return tr7("File");
     }
 
     void refreshHandles()
@@ -1998,7 +1999,7 @@ private:
             }
         }
         m_handles->update(rows);
-        m_sHandles->setFilter(needle.isEmpty() ? filterText() : QStringLiteral("Результати пошуку для «%1»").arg(needle));
+        m_sHandles->setFilter(needle.isEmpty() ? filterText() : tr7("Search results for \"%1\"").arg(needle));
     }
 
     void refreshModules()
@@ -2074,9 +2075,9 @@ private:
                 continue;
             }
             const bool local = l.address.contains(QLatin1String("127.")) || l.address.endsWith(QLatin1String("::1"));
-            const QString fw = local ? QStringLiteral("Дозволено, не обмежено (лише цей комп'ютер)")
-                : ufwOn          ? QStringLiteral("Обмежено правилами брандмауера")
-                                 : QStringLiteral("Дозволено, не обмежено");
+            const QString fw = local ? tr7("Allowed, not restricted (this computer only)")
+                : ufwOn          ? tr7("Restricted by firewall rules")
+                                 : tr7("Allowed, not restricted");
             rows.append({l.protocol + l.address + l.port + QString::number(l.pid),
                          {{l.image, 0, false}, {l.pid ? QString::number(l.pid) : QString(), double(l.pid), true}, {l.address, 0, false}, {l.port, l.port.toDouble(), true},
                           {l.protocol, 0, false}, {fw, 0, false}}});
@@ -2092,13 +2093,13 @@ private:
         QMenu menu(this);
         const QString name = m_names.value(pid);
         const bool stopped = readFile(QStringLiteral("/proc/%1/stat").arg(pid)).section(QLatin1Char(')'), 1).trimmed().startsWith(QLatin1Char('T'));
-        menu.addAction(QStringLiteral("Завершити процес"), this, [this, pid, name] {
-            if (QMessageBox::question(this, QStringLiteral("Монітор ресурсів"), QStringLiteral("Завершити процес «%1»?").arg(name)) == QMessageBox::Yes) {
+        menu.addAction(tr7("End Process"), this, [this, pid, name] {
+            if (QMessageBox::question(this, tr7("Resource Monitor"), tr7("End process \"%1\"?").arg(name)) == QMessageBox::Yes) {
                 ::kill(pid, SIGTERM);
             }
         });
-        menu.addAction(QStringLiteral("Завершити дерево процесів"), this, [this, pid, name] {
-            if (QMessageBox::question(this, QStringLiteral("Монітор ресурсів"), QStringLiteral("Завершити «%1» і всі процеси, які він запустив?").arg(name)) == QMessageBox::Yes) {
+        menu.addAction(tr7("End Process Tree"), this, [this, pid, name] {
+            if (QMessageBox::question(this, tr7("Resource Monitor"), tr7("End \"%1\" and all the processes it started?").arg(name)) == QMessageBox::Yes) {
                 QList<int> todo{pid};
                 QList<int> all;
                 while (!todo.isEmpty()) {
@@ -2116,11 +2117,11 @@ private:
             }
         });
         menu.addSeparator();
-        menu.addAction(stopped ? QStringLiteral("Відновити процес") : QStringLiteral("Призупинити процес"), this, [pid, stopped] {
+        menu.addAction(stopped ? tr7("Resume Process") : tr7("Suspend Process"), this, [pid, stopped] {
             ::kill(pid, stopped ? SIGCONT : SIGSTOP);
         });
         menu.addSeparator();
-        menu.addAction(QStringLiteral("Пошук в Інтернеті"), this, [name] {
+        menu.addAction(tr7("Search Online"), this, [name] {
             QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.google.com/search?q=") + QUrl::toPercentEncoding(name)));
         });
         menu.exec(pos);
@@ -2135,21 +2136,21 @@ private:
                 refreshServices();
             });
         };
-        const bool running = m_services->rowText(name, 3) == QLatin1String("Виконується");
-        QAction *start = menu.addAction(QStringLiteral("Запустити службу"), this, [ctl] {
+        const bool running = m_services->rowText(name, 3) == tr7("Running", "service");
+        QAction *start = menu.addAction(tr7("Start Service"), this, [ctl] {
             ctl(QStringLiteral("start"));
         });
-        QAction *stop = menu.addAction(QStringLiteral("Зупинити службу"), this, [ctl] {
+        QAction *stop = menu.addAction(tr7("Stop Service"), this, [ctl] {
             ctl(QStringLiteral("stop"));
         });
-        QAction *restart = menu.addAction(QStringLiteral("Перезапустити службу"), this, [ctl] {
+        QAction *restart = menu.addAction(tr7("Restart Service"), this, [ctl] {
             ctl(QStringLiteral("restart"));
         });
         start->setEnabled(!running);
         stop->setEnabled(running);
         restart->setEnabled(running);
         menu.addSeparator();
-        menu.addAction(QStringLiteral("Пошук в Інтернеті"), this, [name] {
+        menu.addAction(tr7("Search Online"), this, [name] {
             QDesktopServices::openUrl(QUrl(QStringLiteral("https://www.google.com/search?q=") + QUrl::toPercentEncoding(name + QStringLiteral(" service"))));
         });
         menu.exec(pos);

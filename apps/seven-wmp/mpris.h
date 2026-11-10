@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * MPRIS 2 for the player: Plasma's taskbar shows Previous / Play-Pause / Next in the window's tooltip (our
  * counterpart of WMP's taskbar thumbnail toolbar), and the media keys / lock screen controls work.
@@ -39,7 +40,7 @@ public:
     }
     QString identity() const
     {
-        return QStringLiteral("Програвач Windows Media");
+        return tr7("Windows Media Player");
     }
     QString desktopEntry() const
     {

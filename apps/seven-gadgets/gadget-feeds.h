@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Feed Headlines: RSSFeeds.Gadget (RSSFeeds.js / RSSFeeds.css / flyout.css) — four headlines at a time,
  * the up/down pager on hover and the flyout with the article. Windows 7 read the feeds IE subscribed to;
@@ -79,9 +80,9 @@ class FeedsSettings : public GadgetDialog
 {
 public:
     FeedsSettings(const QStringList &feeds, int count)
-        : GadgetDialog(QStringLiteral("Заголовки веб-каналів"), 380)
+        : GadgetDialog(tr7("Feed Headlines"), 380)
     {
-        body->addWidget(new QLabel(QStringLiteral("Веб-канали (RSS або Atom):")));
+        body->addWidget(new QLabel(tr7("Feeds (RSS or Atom):")));
         m_list = new QListWidget;
         m_list->addItems(feeds);
         m_list->setMinimumHeight(110);
@@ -89,17 +90,17 @@ public:
         auto *row = new QHBoxLayout;
         m_url = new QLineEdit;
         m_url->setPlaceholderText(QStringLiteral("https://..."));
-        auto *add = new QPushButton(QStringLiteral("Додати"));
-        auto *remove = new QPushButton(QStringLiteral("Видалити"));
+        auto *add = new QPushButton(tr7("Add"));
+        auto *remove = new QPushButton(tr7("Delete"));
         row->addWidget(m_url, 1);
         row->addWidget(add);
         row->addWidget(remove);
         body->addLayout(row);
         body->addSpacing(8);
-        body->addWidget(new QLabel(QStringLiteral("Показувати останні:")));
+        body->addWidget(new QLabel(tr7("Show the latest:")));
         m_count = new QComboBox;
         for (int n : {10, 20, 40, 100}) {
-            m_count->addItem(QStringLiteral("%1 заголовків").arg(n), n);
+            m_count->addItem(tr7("%1 headlines").arg(n), n);
         }
         m_count->setCurrentIndex(qMax(0, m_count->findData(count)));
         body->addWidget(m_count);
@@ -161,7 +162,7 @@ public:
     void setItem(const FeedItem &item)
     {
         m_item = item;
-        m_text->setText(QStringLiteral("<a style='color:#ffffff; text-decoration:none' href='%1'><b>Читати в Інтернеті...</b></a><br><br>%2")
+        m_text->setText(tr7("<a style='color:#ffffff; text-decoration:none' href='%1'><b>Read online...</b></a><br><br>%2")
                             .arg(item.link.toHtmlEscaped(), item.description.toHtmlEscaped()));
         update();
     }
@@ -184,7 +185,7 @@ protected:
         p.setPen(Qt::white);
         QString sub = m_item.feed;
         if (m_item.date.isValid()) {
-            sub += QStringLiteral(", ") + QLocale(QLocale::Ukrainian).toString(m_item.date.toLocalTime(), QStringLiteral("d MMMM yyyy, HH:mm"));
+            sub += QStringLiteral(", ") + QLocale{}.toString(m_item.date.toLocalTime(), QStringLiteral("d MMMM yyyy, HH:mm"));
         }
         p.drawText(QRect(10, 19, 280, 18), Qt::AlignLeft | Qt::AlignVCenter, QFontMetrics(p.font()).elidedText(sub, Qt::ElideRight, 280));
     }
@@ -287,9 +288,9 @@ protected:
         p.setRenderHint(QPainter::TextAntialiasing);
         if (m_items.isEmpty()) {
             p.setFont(gadgetFont(12));
-            QString msg = m_loading ? QStringLiteral("Завантаження...") : QStringLiteral("Немає заголовків для показу.");
+            QString msg = m_loading ? tr7("Loading...") : tr7("No headlines to display.");
             if (m_feeds.isEmpty()) {
-                msg = QStringLiteral("Цей гаджет показує веб-канали, які ви додасте в його параметрах.");
+                msg = tr7("This gadget shows the feeds you add in its options.");
             }
             p.setPen(Qt::white);
             p.drawText(QRect(10, int(height() * 0.3), width() - 20, height() / 2), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, msg);
@@ -498,13 +499,13 @@ private:
         }
         const qint64 mins = d.secsTo(QDateTime::currentDateTime()) / 60;
         if (mins < 1) {
-            return QStringLiteral("щойно");
+            return tr7("just now");
         }
         if (mins < 60) {
-            return QStringLiteral("%1 хв тому").arg(mins);
+            return tr7("%1 min ago").arg(mins);
         }
         if (mins < 24 * 60) {
-            return QStringLiteral("%1 год тому").arg(mins / 60);
+            return tr7("%1 hours ago").arg(mins / 60);
         }
         return d.toLocalTime().toString(QStringLiteral("dd.MM.yyyy"));
     }

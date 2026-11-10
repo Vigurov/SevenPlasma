@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7sysprops.h"
 
@@ -39,13 +40,13 @@ struct Item {
 inline const QList<Item> &items()
 {
     static const QList<Item> list{
-        {Controls, QStringLiteral("Анімація елементів керування та елементів усередині вікна"), {}},
-        {Windows, QStringLiteral("Анімація вікон під час згортання й розгортання"), {QStringLiteral("squashaero"), QStringLiteral("aeroglide")}},
-        {Peek, QStringLiteral("Увімкнути Aero Peek"), {QStringLiteral("smodpeekeffect")}},
-        {Composition, QStringLiteral("Увімкнути композицію робочого столу"), {}},
-        {Glass, QStringLiteral("Увімкнути прозорість"), {QStringLiteral("aeroglassblur")}},
-        {Menus, QStringLiteral("Згасання або ковзання меню й підказок під час появи"), {QStringLiteral("fadingpopupsaero")}},
-        {Fonts, QStringLiteral("Згладжування нерівностей екранних шрифтів"), {}},
+        {Controls, tr7("Animate controls and elements inside windows"), {}},
+        {Windows, tr7("Animate windows when minimizing and maximizing"), {QStringLiteral("squashaero"), QStringLiteral("aeroglide")}},
+        {Peek, tr7("Enable Aero Peek"), {QStringLiteral("smodpeekeffect")}},
+        {Composition, tr7("Enable desktop composition"), {}},
+        {Glass, tr7("Enable transparent glass"), {QStringLiteral("aeroglassblur")}},
+        {Menus, tr7("Fade or slide menus and ToolTips into view"), {QStringLiteral("fadingpopupsaero")}},
+        {Fonts, tr7("Smooth edges of screen fonts"), {}},
     };
     return list;
 }
@@ -219,7 +220,7 @@ public:
         : QDialog(parent)
         , m_was(current())
     {
-        setWindowTitle(QStringLiteral("Параметри швидкодії"));
+        setWindowTitle(tr7("Performance Options"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cps-system")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
@@ -228,14 +229,14 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(8, 8, 8, 8);
         auto *tabs = new QTabWidget;
-        tabs->addTab(effectsPage(), QStringLiteral("Візуальні ефекти"));
-        tabs->addTab(advancedPage(), QStringLiteral("Додатково"));
+        tabs->addTab(effectsPage(), tr7("Visual Effects"));
+        tabs->addTab(advancedPage(), tr7("Advanced"));
         v->addWidget(tabs, 1);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             row->addWidget(b);
@@ -257,9 +258,9 @@ private:
     QWidget *effectsPage()
     {
         auto *p = new QWidget;
-        Win7SysProps::text(p, QStringLiteral("Виберіть параметри, які потрібно використовувати для оформлення та швидкодії Windows на цьому комп'ютері."), dlu(7, 6, 208, 18));
-        const QStringList radios{QStringLiteral("Дозволити Windows вибирати найкращі параметри"), QStringLiteral("Забезпечити найкращий вигляд"),
-                                 QStringLiteral("Забезпечити найкращу швидкодію"), QStringLiteral("Особливі ефекти:")};
+        Win7SysProps::text(p, tr7("Select the settings you want to use for the appearance and performance of Windows on this computer."), dlu(7, 6, 208, 18));
+        const QStringList radios{tr7("Let Windows choose what's best for my computer"), tr7("Adjust for best appearance"),
+                                 tr7("Adjust for best performance"), tr7("Custom:")};
         for (int i = 0; i < radios.size(); ++i) {
             m_radio[i] = place(p, new QRadioButton(radios[i]), dlu(7, 30 + 12 * i, 200, 12));
             connect(m_radio[i], &QRadioButton::clicked, this, [this, i] {
@@ -299,11 +300,11 @@ private:
     QWidget *advancedPage()
     {
         auto *p = new QWidget;
-        auto *box = place(p, new QGroupBox(QStringLiteral("Віртуальна пам'ять")), dlu(7, 8, 213, 52));
+        auto *box = place(p, new QGroupBox(tr7("Virtual memory")), dlu(7, 8, 213, 52));
         Q_UNUSED(box)
-        Win7SysProps::text(p, QStringLiteral("Файл підкачки – це область на жорсткому диску, яку Windows використовує як оперативну пам'ять."), dlu(14, 20, 199, 16));
-        Win7SysProps::text(p, QStringLiteral("Загальний розмір файлу підкачки для всіх дисків:"), dlu(14, 40, 172, 8));
-        Win7SysProps::text(p, QStringLiteral("%1 МБ").arg(QLocale(QLocale::Ukrainian).toString(swapMegabytes())), dlu(187, 40, 32, 8));
+        Win7SysProps::text(p, tr7("A paging file is an area on the hard disk that Windows uses as if it were RAM."), dlu(14, 20, 199, 16));
+        Win7SysProps::text(p, tr7("Total paging file size for all drives:"), dlu(14, 40, 172, 8));
+        Win7SysProps::text(p, tr7("%1 MB").arg(QLocale{}.toString(swapMegabytes())), dlu(187, 40, 32, 8));
         return p;
     }
 

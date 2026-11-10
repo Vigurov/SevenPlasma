@@ -6,6 +6,7 @@
  * are taken from the decompiled WPF resources of CCC (Dashboard.Shared.Private dictionaries, red colour set).
  */
 #pragma once
+#include "win7i18n.h"
 
 #include <QApplication>
 #include <QEvent>
@@ -189,9 +190,9 @@ public:
         setMouseTracking(true);
         minimize = new RoundButton(RoundButton::Minimize, this);
         close = new RoundButton(RoundButton::Close, this);
-        minimize->setToolTip(QStringLiteral("Згорнути"));
-        close->setToolTip(QStringLiteral("Закрити"));
-        preferences = new PillButton(QStringLiteral("Параметри"), this);
+        minimize->setToolTip(tr7("Minimize"));
+        close->setToolTip(tr7("Close"));
+        preferences = new PillButton(tr7("Preferences"), this);
     }
     RoundButton *minimize, *close;
     PillButton *preferences;
@@ -314,7 +315,7 @@ public:
         : QAbstractButton(p)
     {
         setAttribute(Qt::WA_Hover);
-        setToolTip(QStringLiteral("Згорнути область переходів"));
+        setToolTip(tr7("Collapse the navigation pane"));
     }
 
 protected:
@@ -356,7 +357,7 @@ public:
         th->setContentsMargins(5, 4, 3, 3);
         th->setSpacing(4);
         search = new QLineEdit(top);
-        search->setPlaceholderText(QStringLiteral("Пошук"));
+        search->setPlaceholderText(tr7("Search"));
         search->setFixedHeight(20);
         QFont f = uiFont(12);
         search->setFont(f);
@@ -372,7 +373,7 @@ public:
         th->addWidget(search);
         collapse = new CollapseButton(top);
         collapse->setFixedSize(17, 20);
-        collapse->setToolTip(QStringLiteral("Згорнути область переходів"));
+        collapse->setToolTip(tr7("Collapse the navigation pane"));
         th->addWidget(collapse);
         v->addWidget(top);
         m_scroll = new QScrollArea(this);
@@ -611,7 +612,7 @@ inline void Navigation::rebuild()
     int at = 0;
     if (!q.isEmpty()) {
         // search results: every page whose name (or section name) contains the text
-        auto *hdr = new NavRow(this, NavSection{QStringLiteral("search"), QStringLiteral("Результати пошуку"), QStringLiteral("IconSearchResults"), {}}, true, false);
+        auto *hdr = new NavRow(this, NavSection{QStringLiteral("search"), tr7("Search Results"), QStringLiteral("IconSearchResults"), {}}, true, false);
         m_list->insertWidget(at++, hdr);
         for (const NavSection &s : m_sections) {
             for (const NavItem &i : s.items) {
@@ -658,7 +659,7 @@ public:
         help = new QToolButton(this);
         help->setAutoRaise(true);
         help->setFixedSize(22, 22);
-        help->setToolTip(QStringLiteral("Довідка"));
+        help->setToolTip(tr7("Help"));
         h->addWidget(help);
     }
     QLabel *title;
@@ -666,7 +667,7 @@ public:
     void setPinned(bool on)
     {
         pin->setIcon(QIcon(QPixmap(assets() + (on ? QStringLiteral("pin.png") : QStringLiteral("pin_add.png")))));
-        pin->setToolTip(on ? QStringLiteral("Відкріпити цю сторінку") : QStringLiteral("Закріпити цю сторінку"));
+        pin->setToolTip(on ? tr7("Unpin this page") : tr7("Pin this page"));
     }
 
 protected:
@@ -702,12 +703,12 @@ public:
         auto *h = new QHBoxLayout(this);
         h->setContentsMargins(10, 9, 10, 9);
         h->setSpacing(8);
-        defaults = new QPushButton(QStringLiteral("За замовчуванням"), this);
+        defaults = new QPushButton(tr7("Defaults"), this);
         defaults->setMinimumWidth(85);
         h->addWidget(defaults);
         h->addStretch(1);
-        discard = new QPushButton(QStringLiteral("Скасувати"), this);
-        apply = new QPushButton(QStringLiteral("Застосувати"), this);
+        discard = new QPushButton(tr7("Discard"), this);
+        apply = new QPushButton(tr7("Apply"), this);
         for (QPushButton *b : {discard, apply}) {
             b->setMinimumWidth(85);
             h->addWidget(b);

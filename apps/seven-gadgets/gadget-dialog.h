@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Shared parts of the gadgets: the options sheet. Included inside main.cpp's namespace.
  *
@@ -42,7 +43,7 @@ public:
         btns->setContentsMargins(14, 0, 14, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(86);
         cancel->setMinimumWidth(86);
         ok->setDefault(true);

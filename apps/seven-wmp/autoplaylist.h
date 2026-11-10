@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Auto playlists ("Автоматичний список відтворення"): rules over the music library, saved as JSON
  * (~/Music/Playlists/<name>.autopl) and evaluated whenever the list is opened.
@@ -23,13 +24,13 @@ struct Rule {
 
 inline const QList<QPair<QString, QString>> &fields()
 {
-    static const QList<QPair<QString, QString>> f{{QStringLiteral("rating"), QStringLiteral("Оцінка (зірок)")},
-                                                  {QStringLiteral("genre"), QStringLiteral("Жанр")},
-                                                  {QStringLiteral("artist"), QStringLiteral("Учасник")},
-                                                  {QStringLiteral("album"), QStringLiteral("Альбом")},
-                                                  {QStringLiteral("year"), QStringLiteral("Рік випуску")},
-                                                  {QStringLiteral("added"), QStringLiteral("Додано за останні (днів)")},
-                                                  {QStringLiteral("length"), QStringLiteral("Тривалість (хвилин)")}};
+    static const QList<QPair<QString, QString>> f{{QStringLiteral("rating"), tr7("Rating (stars)")},
+                                                  {QStringLiteral("genre"), tr7("Genre")},
+                                                  {QStringLiteral("artist"), tr7("Contributing Artist")},
+                                                  {QStringLiteral("album"), tr7("Album")},
+                                                  {QStringLiteral("year"), tr7("Release Year")},
+                                                  {QStringLiteral("added"), tr7("Date Added in the last (days)")},
+                                                  {QStringLiteral("length"), tr7("Length (minutes)")}};
     return f;
 }
 inline bool numeric(const QString &field)
@@ -118,16 +119,16 @@ public:
     explicit Dialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Новий автоматичний список відтворення"));
+        setWindowTitle(tr7("New Auto Playlist"));
         auto *l = new QVBoxLayout(this);
-        l->addWidget(new QLabel(QStringLiteral("Назва автоматичного списку відтворення:"), this));
-        m_name = new QLineEdit(QStringLiteral("Новий автоматичний список відтворення"), this);
+        l->addWidget(new QLabel(tr7("Auto Playlist name:"), this));
+        m_name = new QLineEdit(tr7("New Auto Playlist"), this);
         l->addWidget(m_name);
-        auto *crit = new QLabel(QStringLiteral("<b>Створити автоматичний список відтворення, який містить:</b><br>Музика в моїй бібліотеці"), this);
+        auto *crit = new QLabel(tr7("<b>Create an auto playlist that includes the following:</b><br>Music in my library"), this);
         l->addWidget(crit);
         m_rows = new QVBoxLayout;
         l->addLayout(m_rows);
-        auto *add = new QPushButton(QStringLiteral("Клацніть тут, щоб додати критерій"), this);
+        auto *add = new QPushButton(tr7("Click here to add criteria"), this);
         add->setFlat(true);
         add->setStyleSheet(QStringLiteral("QPushButton { color: #3366cc; text-align: left; }"));
         l->addWidget(add);
@@ -138,7 +139,7 @@ public:
         l->addStretch(1);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
         bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         l->addWidget(bb);
         connect(bb, &QDialogButtonBox::accepted, this, &QDialog::accept);
         connect(bb, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -176,13 +177,13 @@ private:
         auto fillOps = [op, field] {
             op->clear();
             if (numeric(field->currentData().toString())) {
-                op->addItem(QStringLiteral("не менше"), QStringLiteral(">="));
-                op->addItem(QStringLiteral("не більше"), QStringLiteral("<="));
-                op->addItem(QStringLiteral("дорівнює"), QStringLiteral("="));
+                op->addItem(tr7("Is At Least"), QStringLiteral(">="));
+                op->addItem(tr7("Is At Most"), QStringLiteral("<="));
+                op->addItem(tr7("Is"), QStringLiteral("="));
             } else {
-                op->addItem(QStringLiteral("містить"), QStringLiteral("contains"));
-                op->addItem(QStringLiteral("не містить"), QStringLiteral("notcontains"));
-                op->addItem(QStringLiteral("дорівнює"), QStringLiteral("="));
+                op->addItem(tr7("Contains"), QStringLiteral("contains"));
+                op->addItem(tr7("Does Not Contain"), QStringLiteral("notcontains"));
+                op->addItem(tr7("Is"), QStringLiteral("="));
             }
         };
         fillOps();

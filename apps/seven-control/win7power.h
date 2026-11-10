@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -46,12 +47,12 @@ struct Plan {
 inline const QList<Plan> &plans()
 {
     static const QList<Plan> list{
-        {QStringLiteral("balanced"), QStringLiteral("Збалансований"),
-         QStringLiteral("Автоматичне підтримання балансу між продуктивністю та енергоспоживанням на відповідному обладнанні."), 10, 30},
-        {QStringLiteral("performance"), QStringLiteral("Висока продуктивність"),
-         QStringLiteral("Максимальна продуктивність, але може знадобитися більше енергії."), 15, 0},
-        {QStringLiteral("power-saver"), QStringLiteral("Економія енергії"),
-         QStringLiteral("Мінімальне енергоспоживання за рахунок зниження продуктивності комп'ютера, коли це можливо."), 5, 15},
+        {QStringLiteral("balanced"), tr7("Balanced"),
+         tr7("Automatically balances performance with energy consumption on capable hardware."), 10, 30},
+        {QStringLiteral("performance"), tr7("High performance"),
+         tr7("Favors performance, but may use more energy."), 15, 0},
+        {QStringLiteral("power-saver"), tr7("Power saver"),
+         tr7("Saves energy by reducing your computer's performance where possible."), 5, 15},
     };
     return list;
 }
@@ -245,13 +246,13 @@ inline QList<TimeoutChoice> timeoutChoices()
 {
     QList<TimeoutChoice> list;
     for (int m : {1, 2, 3, 5, 10, 15, 20, 25, 30, 45}) {
-        list.append({m, QStringLiteral("%1 хв.").arg(m)});
+        list.append({m, tr7("%1 minutes").arg(m)});
     }
-    list.append({60, QStringLiteral("1 год.")});
+    list.append({60, tr7("1 hour", "short")});
     for (int h : {2, 3, 4, 5}) {
-        list.append({h * 60, QStringLiteral("%1 год.").arg(h)});
+        list.append({h * 60, tr7("%1 hours").arg(h)});
     }
-    list.append({0, QStringLiteral("Ніколи")});
+    list.append({0, tr7("Never")});
     return list;
 }
 
@@ -265,7 +266,7 @@ inline QComboBox *timeoutCombo(int minutes)
     }
     int idx = c->findData(minutes);
     if (idx < 0) {
-        c->insertItem(c->count() - 1, QStringLiteral("%1 хв.").arg(minutes), minutes);
+        c->insertItem(c->count() - 1, tr7("%1 minutes").arg(minutes), minutes);
         idx = c->findData(minutes);
     }
     c->setCurrentIndex(idx);
@@ -291,8 +292,8 @@ inline QWidget *saveCancelBar(QPushButton **save, QPushButton **cancel, int cont
     bh->setContentsMargins(0, 0, 0, 0);
     bh->setSpacing(8);
     bh->addStretch(1);
-    *save = new QPushButton(QStringLiteral("Зберегти зміни"));
-    *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    *save = new QPushButton(tr7("Save changes"));
+    *cancel = new QPushButton(tr7("Cancel"));
     (*save)->setMinimumWidth(150);
     (*cancel)->setMinimumWidth(75);
     (*save)->setEnabled(false);
@@ -349,9 +350,9 @@ inline QWidget *buildEditPage(int planIdx, const Nav &nav)
     auto *cv = new QVBoxLayout(col);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(pageTitle(QStringLiteral("Змінення параметрів для плану: \"%1\"").arg(plan.name)));
+    cv->addWidget(pageTitle(tr7("Change settings for the plan: \"%1\"").arg(plan.name)));
     cv->addSpacing(6);
-    cv->addWidget(bodyText(QStringLiteral("Виберіть параметри режиму сну та дисплея для цього комп'ютера.")));
+    cv->addWidget(bodyText(tr7("Choose the sleep and display settings that you want your computer to use.")));
     cv->addSpacing(28);
 
     auto *grid = new QGridLayout;
@@ -361,8 +362,8 @@ inline QWidget *buildEditPage(int planIdx, const Nav &nav)
     auto *display = timeoutCombo(displayMin);
     auto *sleep = timeoutCombo(sleepMin);
     const QList<std::tuple<QString, QString, QComboBox *>> rows{
-        {QStringLiteral("seven-power-display"), QStringLiteral("Вимикати дисплей:"), display},
-        {QStringLiteral("seven-power-moon"), QStringLiteral("Переводити комп'ютер у режим сну:"), sleep},
+        {QStringLiteral("seven-power-display"), tr7("Turn off the display:"), display},
+        {QStringLiteral("seven-power-moon"), tr7("Put the computer to sleep:"), sleep},
     };
     int r = 0;
     for (const auto &[icon, text, combo] : rows) {
@@ -378,11 +379,11 @@ inline QWidget *buildEditPage(int planIdx, const Nav &nav)
     cv->addLayout(grid);
     cv->addSpacing(32);
 
-    cv->addWidget(new Link(QStringLiteral("Змінити додаткові параметри живлення"), [] {
+    cv->addWidget(new Link(tr7("Change advanced power settings"), [] {
         launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_powerdevilprofilesconfig")});
     }));
     cv->addSpacing(12);
-    auto *restore = new Link(QStringLiteral("Відновити стандартні параметри для цього плану"), nullptr);
+    auto *restore = new Link(tr7("Restore default settings for this plan"), nullptr);
     cv->addWidget(restore);
     v->addWidget(centeredColumn(col, width));
     v->addSpacing(18);
@@ -426,8 +427,8 @@ inline QWidget *buildEditPage(int planIdx, const Nav &nav)
     auto *filter = new RestoreFilter;
     filter->setParent(restore);
     filter->fn = [=] {
-        if (QMessageBox::question(page->window(), QStringLiteral("Електроживлення"),
-                                  QStringLiteral("Відновити стандартні параметри для цього плану?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+        if (QMessageBox::question(page->window(), tr7("Power Options"),
+                                  tr7("Restore this plan's default settings?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
             != QMessageBox::Yes) {
             return;
         }
@@ -473,12 +474,11 @@ inline QWidget *buildButtonsPage(const Nav &nav)
     auto *cv = new QVBoxLayout(col);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(pageTitle(QStringLiteral("Визначення кнопок живлення та ввімкнення захисту паролем")));
+    cv->addWidget(pageTitle(tr7("Define power buttons and turn on password protection")));
     cv->addSpacing(6);
-    cv->addWidget(bodyText(QStringLiteral("Виберіть параметри живлення для цього комп'ютера. Зміни параметрів, внесені на цій сторінці, "
-                                          "застосовуються до всіх планів живлення.")));
+    cv->addWidget(bodyText(tr7("Choose the power settings that you want for your computer. The changes you make to the settings on this page apply to all of your power plans.")));
     cv->addSpacing(14);
-    cv->addWidget(sectionLine(lid ? QStringLiteral("Параметри кнопок живлення та кришки") : QStringLiteral("Параметри кнопки живлення")));
+    cv->addWidget(sectionLine(lid ? tr7("Power and lid button settings") : tr7("Power button settings")));
     cv->addSpacing(10);
 
     auto *btnRow = new QHBoxLayout;
@@ -487,20 +487,20 @@ inline QWidget *buildButtonsPage(const Nav &nav)
     auto *ic = new QLabel;
     ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-power-button")).pixmap(32, 32));
     btnRow->addWidget(ic);
-    auto *btnLabel = new QLabel(QStringLiteral("У разі натискання кнопки живлення:"));
+    auto *btnLabel = new QLabel(tr7("When I press the power button:"));
     btnRow->addWidget(btnLabel);
     auto *combo = new QComboBox;
     combo->setFixedWidth(170);
-    combo->addItem(QStringLiteral("Нічого не робити"), 0);
-    combo->addItem(QStringLiteral("Сон"), 1);
+    combo->addItem(tr7("Do nothing"), 0);
+    combo->addItem(tr7("Sleep"), 1);
     if (canHibernate()) {
-        combo->addItem(QStringLiteral("Гібернація"), 2);
+        combo->addItem(tr7("Hibernate"), 2);
     }
-    combo->addItem(QStringLiteral("Завершення роботи"), 8);
+    combo->addItem(tr7("Shut down"), 8);
     if (combo->findData(buttonAction) < 0) {
         // KDE's own choices (e.g. the "leave" dialog) stay selectable so nothing changes by accident
-        combo->addItem(buttonAction == 16 ? QStringLiteral("Запитати, що зробити")
-                                          : buttonAction == 32 ? QStringLiteral("Заблокувати") : QStringLiteral("Інша дія"),
+        combo->addItem(buttonAction == 16 ? tr7("Ask me what to do")
+                                          : buttonAction == 32 ? tr7("Lock") : tr7("Other action"),
                        buttonAction);
     }
     combo->setCurrentIndex(combo->findData(buttonAction));
@@ -517,18 +517,18 @@ inline QWidget *buildButtonsPage(const Nav &nav)
         auto *lidIcon = new QLabel;
         lidIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-power-lid")).pixmap(32, 32));
         lidRow->addWidget(lidIcon);
-        auto *lidLabel = new QLabel(QStringLiteral("У разі закриття кришки:"));
+        auto *lidLabel = new QLabel(tr7("When I close the lid:"));
         lidLabel->setMinimumWidth(btnLabel->sizeHint().width());
         lidRow->addWidget(lidLabel);
         lidCombo->setFixedWidth(170);
-        lidCombo->addItem(QStringLiteral("Нічого не робити"), 0);
-        lidCombo->addItem(QStringLiteral("Сон"), 1);
+        lidCombo->addItem(tr7("Do nothing"), 0);
+        lidCombo->addItem(tr7("Sleep"), 1);
         if (canHibernate()) {
-            lidCombo->addItem(QStringLiteral("Гібернація"), 2);
+            lidCombo->addItem(tr7("Hibernate"), 2);
         }
-        lidCombo->addItem(QStringLiteral("Завершення роботи"), 8);
+        lidCombo->addItem(tr7("Shut down"), 8);
         if (lidCombo->findData(lidAction) < 0) {
-            lidCombo->addItem(lidAction == 32 ? QStringLiteral("Заблокувати") : lidAction == 64 ? QStringLiteral("Вимкнути екран") : QStringLiteral("Інша дія"), lidAction);
+            lidCombo->addItem(lidAction == 32 ? tr7("Lock") : lidAction == 64 ? tr7("Turn off the display") : tr7("Other action"), lidAction);
         }
         lidCombo->setCurrentIndex(lidCombo->findData(lidAction));
         lidRow->addWidget(lidCombo);
@@ -537,10 +537,10 @@ inline QWidget *buildButtonsPage(const Nav &nav)
     }
     cv->addSpacing(16);
 
-    cv->addWidget(sectionLine(QStringLiteral("Захист паролем під час пробудження")));
+    cv->addWidget(sectionLine(tr7("Password protection on wakeup")));
     cv->addSpacing(8);
-    auto *ask = new QRadioButton(QStringLiteral("Запитувати пароль (рекомендовано)"));
-    auto *dontAsk = new QRadioButton(QStringLiteral("Не запитувати пароль"));
+    auto *ask = new QRadioButton(tr7("Require a password (recommended)"));
+    auto *dontAsk = new QRadioButton(tr7("Don't require a password"));
     auto *group = new QButtonGroup(page);
     group->addButton(ask);
     group->addButton(dontAsk);
@@ -557,9 +557,7 @@ inline QWidget *buildButtonsPage(const Nav &nav)
         wrap->addLayout(d);
         cv->addLayout(wrap);
     };
-    auto *askDesc = bodyText(QStringLiteral("Під час виходу комп'ютера зі сплячого режиму для доступу до даних необхідно ввести пароль, "
-                                            "щоб розблокувати комп'ютер. <a href=\"users\" style=\"color:#0066cc;\">Створення або зміна пароля "
-                                            "облікового запису користувача</a>"));
+    auto *askDesc = bodyText(tr7("When your computer wakes from sleep, no one can access your data without entering the correct password to unlock the computer. <a href=\"users\" style=\"color:#0066cc;\">Create or change your user account password</a>"));
     askDesc->setOpenExternalLinks(false);
     QObject::connect(askDesc, &QLabel::linkActivated, askDesc, [nav] {
         nav.open(20); // Win7Users::HomeView
@@ -567,8 +565,7 @@ inline QWidget *buildButtonsPage(const Nav &nav)
     addChoice(ask, askDesc);
     cv->addSpacing(14);
     addChoice(dontAsk,
-              bodyText(QStringLiteral("Під час виходу комп'ютера зі сплячого режиму будь-який користувач може отримати доступ до даних, "
-                                      "оскільки комп'ютер не заблоковано.")));
+              bodyText(tr7("When your computer wakes from sleep, anyone can access your data because the computer isn't locked.")));
     v->addWidget(centeredColumn(col, width));
     v->addSpacing(22);
 
@@ -623,7 +620,7 @@ inline QWidget *planRow(int idx, bool checked, QButtonGroup *group, const Nav &n
     v->setSpacing(2);
     auto *top = new QHBoxLayout;
     top->setSpacing(4);
-    auto *radio = new QRadioButton(idx == 0 ? p.name + QStringLiteral(" (рекомендовано)") : p.name);
+    auto *radio = new QRadioButton(idx == 0 ? p.name + tr7(" (Recommended)") : p.name);
     if (idx == 0) {
         QFont f = radio->font();
         f.setBold(true);
@@ -633,7 +630,7 @@ inline QWidget *planRow(int idx, bool checked, QButtonGroup *group, const Nav &n
     group->addButton(radio, idx);
     top->addWidget(radio);
     top->addStretch(1);
-    auto *change = new Link(QStringLiteral("Змінити параметри плану"), [nav, idx] {
+    auto *change = new Link(tr7("Edit Plan Settings"), [nav, idx] {
         nav.open(EditView + idx);
     });
     change->setWordWrap(false);
@@ -684,35 +681,35 @@ inline QWidget *buildPlansPage(const Nav &nav)
         sv->addLayout(row);
     };
     const int activeIdx = planIndex(active);
-    addRow({}, new Link(QStringLiteral("Панель керування — домашня сторінка"), nav.home, sideColor));
+    addRow({}, new Link(tr7("Control Panel Home"), nav.home, sideColor));
     sv->addSpacing(9);
-    addRow({}, new Link(QStringLiteral("Запит пароля під час пробудження"), [nav] {
+    addRow({}, new Link(tr7("Require a password on wakeup"), [nav] {
         nav.open(ButtonsView);
     }, sideColor));
-    addRow({}, new Link(QStringLiteral("Дії кнопок живлення"), [nav] {
+    addRow({}, new Link(tr7("Choose what the power buttons do"), [nav] {
         nav.open(ButtonsView);
     }, sideColor));
     if (hasLid()) {
-        addRow({}, new Link(QStringLiteral("Дія під час закриття кришки"), [nav] {
+        addRow({}, new Link(tr7("Choose what closing the lid does"), [nav] {
             nav.open(ButtonsView);
         }, sideColor));
     }
-    addRow(QStringLiteral("seven-power-display"), new Link(QStringLiteral("Налаштування вимкнення дисплея"), [nav, activeIdx] {
+    addRow(QStringLiteral("seven-power-display"), new Link(tr7("Choose when to turn off the display"), [nav, activeIdx] {
         nav.open(EditView + activeIdx);
     }, sideColor));
-    addRow(QStringLiteral("seven-power-moon"), new Link(QStringLiteral("Налаштування переходу в режим сну"), [nav, activeIdx] {
+    addRow(QStringLiteral("seven-power-moon"), new Link(tr7("Change when the computer sleeps", "task"), [nav, activeIdx] {
         nav.open(EditView + activeIdx);
     }, sideColor));
     sv->addStretch(1);
-    auto *seeAlso = grey(QStringLiteral("Див. також"));
+    auto *seeAlso = grey(tr7("See also"));
     auto *seeRow = new QHBoxLayout;
     seeRow->setContentsMargins(22, 0, 0, 0);
     seeRow->addWidget(seeAlso);
     sv->addLayout(seeRow);
-    addRow({}, new Link(QStringLiteral("Персоналізація"), [nav] {
+    addRow({}, new Link(tr7("Personalization"), [nav] {
         nav.open(80); // Win7Display::PersonalizeView
     }, sideColor));
-    addRow({}, new Link(QStringLiteral("Облікові записи користувачів"), [nav] {
+    addRow({}, new Link(tr7("User Accounts"), [nav] {
         nav.open(20); // Win7Users::HomeView
     }, sideColor));
     h->addWidget(side);
@@ -727,10 +724,9 @@ inline QWidget *buildPlansPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(pageTitle(QStringLiteral("Вибір плану живлення")));
+    cv->addWidget(pageTitle(tr7("Select a power plan")));
     cv->addSpacing(8);
-    cv->addWidget(bodyText(QStringLiteral("Плани живлення допомагають максимально підвищити продуктивність комп'ютера або заощадити енергію. "
-                                          "Щоб активувати план, виберіть його, або виберіть план і налаштуйте його, змінивши параметри живлення.")));
+    cv->addWidget(bodyText(tr7("Power plans can help you maximize your computer's performance or conserve energy. Make a plan active by selecting it, or choose a plan and customize it by changing its power settings.")));
     cv->addSpacing(16);
 
     // Balanced and High performance are the preferred plans, Power saver is under "additional plans"
@@ -745,7 +741,7 @@ inline QWidget *buildPlansPage(const Nav &nav)
     }
 
     auto *group = new QButtonGroup(root);
-    cv->addWidget(sectionLine(hasBattery() ? QStringLiteral("Плани, що відображаються на індикаторі батареї") : QStringLiteral("Основні плани")));
+    cv->addWidget(sectionLine(hasBattery() ? tr7("Plans shown on the battery meter") : tr7("Preferred plans")));
     cv->addSpacing(8);
     for (int i : preferred) {
         cv->addWidget(planRow(i, i == activeIdx, group, nav));
@@ -755,7 +751,7 @@ inline QWidget *buildPlansPage(const Nav &nav)
         const bool shown = store().value(QStringLiteral("General/ShowExtraPlans"), false).toBool();
         auto *expand = new ExpandButton;
         expand->setChecked(shown);
-        auto *header = new SectionHeader(shown ? QStringLiteral("Приховати додаткові плани") : QStringLiteral("Показати додаткові плани"));
+        auto *header = new SectionHeader(shown ? tr7("Hide additional plans") : tr7("Show additional plans"));
         header->setCursor(Qt::PointingHandCursor);
         auto *hw = new QWidget;
         auto *hh = new QHBoxLayout(hw);
@@ -816,7 +812,7 @@ inline QWidget *buildPlansPage(const Nav &nav)
         auto *bl = new QHBoxLayout(bar);
         bl->setContentsMargins(0, 8, 0, 4);
         bl->addStretch(1);
-        bl->addWidget(new QLabel(QStringLiteral("Яскравість екрана:")));
+        bl->addWidget(new QLabel(tr7("Screen brightness:")));
         auto *dim = new QLabel;
         dim->setPixmap(QIcon::fromTheme(QStringLiteral("seven-sun-dim")).pixmap(16, 16));
         bl->addWidget(dim);

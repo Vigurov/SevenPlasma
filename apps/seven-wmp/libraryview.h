@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Library mode of WMP 12: address band (◀▶, breadcrumbs, Play/Burn/Sync tabs), command bar (Organize, Stream,
  * Create playlist, view options, search), navigation pane, the details/icon views and the list pane.
@@ -147,7 +148,7 @@ Q_SIGNALS:
 protected:
     QRect tabRect(int i) const
     {
-        static const QStringList tabs{QStringLiteral("Відтворити"), QStringLiteral("Записати"), QStringLiteral("Синхронізувати")};
+        static const QStringList tabs{tr7("Play"), tr7("Burn"), tr7("Sync")};
         auto w = [&](int k) {
             return qMax(82, fontMetrics().horizontalAdvance(tabs[k]) + 26);
         };
@@ -221,7 +222,7 @@ protected:
         }
 
         // tabs
-        const QStringList tabs{QStringLiteral("Відтворити"), QStringLiteral("Записати"), QStringLiteral("Синхронізувати")};
+        const QStringList tabs{tr7("Play"), tr7("Burn"), tr7("Sync")};
         for (int i = 0; i < 3; ++i) {
             const QRect r = tabRect(i);
             const bool active = m_tab == i;
@@ -277,9 +278,9 @@ protected:
         const int h = hitTest(e->pos());
         if (h != m_hover) {
             m_hover = h;
-            setToolTip(h == -10 ? QStringLiteral("Назад") : h == -11 ? QStringLiteral("Вперед") : h == 100 ? QStringLiteral("Створення списків відтворення, керування вмістом і обмін ним")
-                       : h == 101 ? QStringLiteral("Запис аудіо-компакт-дисків або дисків даних")
-                       : h == 102 ? QStringLiteral("Синхронізація з переносними пристроями") : QString());
+            setToolTip(h == -10 ? tr7("Back") : h == -11 ? tr7("Forward") : h == 100 ? tr7("Create playlists, manage and share your content")
+                       : h == 101 ? tr7("Burn audio CDs or data discs")
+                       : h == 102 ? tr7("Sync with portable devices") : QString());
             update();
         }
     }
@@ -323,7 +324,7 @@ public:
         l->setContentsMargins(0, 2, 6, 2);
         l->addStretch(1);
         m_search = new QLineEdit(this);
-        m_search->setPlaceholderText(QStringLiteral("Пошук"));
+        m_search->setPlaceholderText(tr7("Search"));
         m_search->setFixedSize(240, 22);
         m_search->setStyleSheet(QStringLiteral("QLineEdit { border: 1px solid #a3b5ca; background: rgba(255,255,255,0.75); padding-left: 3px; font-style: italic; }"
                                                "QLineEdit:focus { background: white; font-style: normal; }"));
@@ -335,7 +336,7 @@ public:
         m_help->setAutoRaise(true);
         m_help->setIcon(Res::icon(29601));
         m_help->setIconSize(QSize(16, 16));
-        m_help->setToolTip(QStringLiteral("Довідка"));
+        m_help->setToolTip(tr7("Help"));
         l->addWidget(m_help);
     }
     QLineEdit *search() const
@@ -348,7 +349,7 @@ public:
     }
     void setPlaylistMode(bool on)
     {
-        m_items[2] = on ? QStringLiteral("Створити список відтворення") : QStringLiteral("Створити список відтворення");
+        m_items[2] = on ? tr7("Create playlist") : tr7("Create playlist");
         update();
     }
 Q_SIGNALS:
@@ -429,7 +430,7 @@ protected:
         const int h = hitTest(e->pos());
         if (h != m_hover) {
             m_hover = h;
-            setToolTip(h == 3 ? QStringLiteral("Параметри перегляду") : QString());
+            setToolTip(h == 3 ? tr7("View options") : QString());
             update();
         }
     }
@@ -458,7 +459,7 @@ protected:
     }
 
 private:
-    QStringList m_items{QStringLiteral("Упорядкувати"), QStringLiteral("Потік"), QStringLiteral("Створити список відтворення")};
+    QStringList m_items{tr7("Organize"), tr7("Stream"), tr7("Create playlist")};
     QLineEdit *m_search;
     QToolButton *m_help;
     int m_hover = -1;
@@ -667,7 +668,7 @@ public:
             p->drawText(QRect(tx, r.y() + 30, r.right() - tx, 16), Qt::AlignLeft | Qt::AlignVCenter, idx.data(Qt::UserRole + 2).toString());
             const int rating = idx.data(Qt::UserRole + 3).toInt();
             p->drawText(QRect(tx, r.y() + 46, r.right() - tx, 16), Qt::AlignLeft | Qt::AlignVCenter,
-                        rating ? QString(rating, QChar(0x2605)) : QStringLiteral("Без оцінки"));
+                        rating ? QString(rating, QChar(0x2605)) : tr7("Unrated"));
         } else {
             const QRect pic(r.x() + 5, r.y() + 5, r.width() - 10, r.height() - 28);
             if (!thumb.isNull()) {

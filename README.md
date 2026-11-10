@@ -83,7 +83,9 @@ To remove: `./uninstall.sh`.
 
 - X11 and Plasma 6.6 only; other Plasma versions are not supported yet.
 - A few dozen small interface pictures have no extraction recipe yet (see `extract/TODO-assets.txt`).
-- The programs' user interface is in Ukrainian for now. English is planned.
+- Translations of the programs: English and Ukrainian (the language follows the system, like the display language of
+  Windows 7). More languages are welcome: add `apps/<program>/i18n/<lang>.ts` (Qt Linguist).
+- Parts of Explorer and the file dialogs (library header, address bar tooltips) are still Ukrainian only.
 
 ## Credits and licence
 

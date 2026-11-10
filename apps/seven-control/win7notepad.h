@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 
@@ -200,61 +201,61 @@ private:
 
     void buildMenus()
     {
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        add(file, QStringLiteral("&Створити"), QKeySequence(QStringLiteral("Ctrl+N")), [this] { newFile(); });
-        add(file, QStringLiteral("&Відкрити..."), QKeySequence(QStringLiteral("Ctrl+O")), [this] { openFile(); });
-        add(file, QStringLiteral("&Зберегти"), QKeySequence(QStringLiteral("Ctrl+S")), [this] { save(); });
-        add(file, QStringLiteral("Зберегти &як..."), {}, [this] { saveAs(); });
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        add(file, tr7("&New"), QKeySequence(QStringLiteral("Ctrl+N")), [this] { newFile(); });
+        add(file, tr7("&Open..."), QKeySequence(QStringLiteral("Ctrl+O")), [this] { openFile(); });
+        add(file, tr7("&Save"), QKeySequence(QStringLiteral("Ctrl+S")), [this] { save(); });
+        add(file, tr7("Save &As..."), {}, [this] { saveAs(); });
         file->addSeparator();
-        add(file, QStringLiteral("&Параметри сторінки..."), {}, [this] { pageSetup(); });
-        add(file, QStringLiteral("&Друк..."), QKeySequence(QStringLiteral("Ctrl+P")), [this] { print(); });
+        add(file, tr7("Page Set&up..."), {}, [this] { pageSetup(); });
+        add(file, tr7("&Print..."), QKeySequence(QStringLiteral("Ctrl+P")), [this] { print(); });
         file->addSeparator();
-        add(file, QStringLiteral("В&ихід"), {}, [this] { close(); });
+        add(file, tr7("E&xit"), {}, [this] { close(); });
 
-        QMenu *edit = menuBar()->addMenu(QStringLiteral("&Редагування"));
-        m_undo = add(edit, QStringLiteral("&Скасувати"), QKeySequence(QStringLiteral("Ctrl+Z")), [this] { m_edit->undo(); });
+        QMenu *edit = menuBar()->addMenu(tr7("&Edit"));
+        m_undo = add(edit, tr7("&Undo"), QKeySequence(QStringLiteral("Ctrl+Z")), [this] { m_edit->undo(); });
         edit->addSeparator();
-        m_cut = add(edit, QStringLiteral("&Вирізати"), QKeySequence(QStringLiteral("Ctrl+X")), [this] { m_edit->cut(); });
-        m_copy = add(edit, QStringLiteral("&Копіювати"), QKeySequence(QStringLiteral("Ctrl+C")), [this] { m_edit->copy(); });
-        m_paste = add(edit, QStringLiteral("Вст&авити"), QKeySequence(QStringLiteral("Ctrl+V")), [this] { m_edit->paste(); });
-        m_delete = add(edit, QStringLiteral("В&идалити"), QKeySequence(QStringLiteral("Del")), [this] { m_edit->textCursor().removeSelectedText(); });
+        m_cut = add(edit, tr7("Cu&t"), QKeySequence(QStringLiteral("Ctrl+X")), [this] { m_edit->cut(); });
+        m_copy = add(edit, tr7("&Copy"), QKeySequence(QStringLiteral("Ctrl+C")), [this] { m_edit->copy(); });
+        m_paste = add(edit, tr7("&Paste"), QKeySequence(QStringLiteral("Ctrl+V")), [this] { m_edit->paste(); });
+        m_delete = add(edit, tr7("De&lete"), QKeySequence(QStringLiteral("Del")), [this] { m_edit->textCursor().removeSelectedText(); });
         m_delete->setShortcutContext(Qt::WidgetShortcut); // Del keeps deleting characters in the text
         edit->addSeparator();
-        m_find = add(edit, QStringLiteral("&Знайти..."), QKeySequence(QStringLiteral("Ctrl+F")), [this] { findDialog(false); });
-        m_findNext = add(edit, QStringLiteral("Знайти &далі"), QKeySequence(QStringLiteral("F3")), [this] {
+        m_find = add(edit, tr7("&Find..."), QKeySequence(QStringLiteral("Ctrl+F")), [this] { findDialog(false); });
+        m_findNext = add(edit, tr7("Find &Next"), QKeySequence(QStringLiteral("F3")), [this] {
             if (m_findText.isEmpty()) {
                 findDialog(false);
             } else {
                 findNext(true);
             }
         });
-        add(edit, QStringLiteral("За&мінити..."), QKeySequence(QStringLiteral("Ctrl+H")), [this] { findDialog(true); });
-        m_goTo = add(edit, QStringLiteral("&Перейти..."), QKeySequence(QStringLiteral("Ctrl+G")), [this] { goToLine(); });
+        add(edit, tr7("&Replace..."), QKeySequence(QStringLiteral("Ctrl+H")), [this] { findDialog(true); });
+        m_goTo = add(edit, tr7("&Go To..."), QKeySequence(QStringLiteral("Ctrl+G")), [this] { goToLine(); });
         edit->addSeparator();
-        add(edit, QStringLiteral("Виді&лити все"), QKeySequence(QStringLiteral("Ctrl+A")), [this] { m_edit->selectAll(); });
-        add(edit, QStringLiteral("&Час і дата"), QKeySequence(QStringLiteral("F5")), [this] { m_edit->insertPlainText(timeStamp()); });
+        add(edit, tr7("Select &All"), QKeySequence(QStringLiteral("Ctrl+A")), [this] { m_edit->selectAll(); });
+        add(edit, tr7("Time/&Date"), QKeySequence(QStringLiteral("F5")), [this] { m_edit->insertPlainText(timeStamp()); });
 
-        QMenu *format = menuBar()->addMenu(QStringLiteral("Фор&мат"));
-        m_wrap = add(format, QStringLiteral("&Перенесення за словами"), {}, [this] { setWrap(m_wrap->isChecked()); });
+        QMenu *format = menuBar()->addMenu(tr7("F&ormat"));
+        m_wrap = add(format, tr7("&Word Wrap"), {}, [this] { setWrap(m_wrap->isChecked()); });
         m_wrap->setCheckable(true);
-        add(format, QStringLiteral("&Шрифт..."), {}, [this] { chooseFont(); });
+        add(format, tr7("&Font..."), {}, [this] { chooseFont(); });
 
-        QMenu *view = menuBar()->addMenu(QStringLiteral("&Вигляд"));
-        m_status = add(view, QStringLiteral("&Рядок стану"), {}, [this] {
+        QMenu *view = menuBar()->addMenu(tr7("&View"));
+        m_status = add(view, tr7("&Status Bar"), {}, [this] {
             settings().setValue(QStringLiteral("StatusBar"), m_status->isChecked());
             statusBar()->setVisible(m_status->isChecked());
         });
         m_status->setCheckable(true);
 
-        QMenu *help = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        add(help, QStringLiteral("Перегляд &довідки"), {}, [] { QProcess::startDetached(QStringLiteral("khelpcenter"), {}); });
+        QMenu *help = menuBar()->addMenu(tr7("&Help"));
+        add(help, tr7("View &Help"), {}, [] { QProcess::startDetached(QStringLiteral("khelpcenter"), {}); });
         help->addSeparator();
-        add(help, QStringLiteral("&Про програму"), {}, [this] {
+        add(help, tr7("&About Notepad"), {}, [this] {
             QMessageBox box(this);
-            box.setWindowTitle(QStringLiteral("Про програму «Блокнот»"));
+            box.setWindowTitle(tr7("About Notepad"));
             box.setIconPixmap(QIcon::fromTheme(QStringLiteral("seven-notepad")).pixmap(48, 48));
-            box.setText(QStringLiteral("<b>Блокнот</b>"));
-            box.setInformativeText(QStringLiteral("Простий текстовий редактор у стилі Windows 7.\nПрацює на Linux із KDE Plasma."));
+            box.setText(tr7("<b>Notepad</b>"));
+            box.setInformativeText(tr7("A simple text editor in the Windows 7 style.\nRuns on Linux with KDE Plasma."));
             box.exec();
         });
     }
@@ -281,7 +282,7 @@ private:
     void chooseFont()
     {
         bool ok = false;
-        const QFont f = QFontDialog::getFont(&ok, m_edit->font(), this, QStringLiteral("Шрифт"));
+        const QFont f = QFontDialog::getFont(&ok, m_edit->font(), this, tr7("Font"));
         if (ok) {
             m_edit->setFont(f);
             m_edit->setTabStopDistance(QFontMetricsF(f).horizontalAdvance(QLatin1Char(' ')) * 8);
@@ -292,7 +293,7 @@ private:
     void updatePosition()
     {
         const QTextCursor c = m_edit->textCursor();
-        m_position->setText(QStringLiteral("   Рядок %1, стовпець %2").arg(c.blockNumber() + 1).arg(c.positionInBlock() + 1));
+        m_position->setText(tr7("   Ln %1, Col %2").arg(c.blockNumber() + 1).arg(c.positionInBlock() + 1));
     }
 
     void updateEditActions()
@@ -309,12 +310,12 @@ private:
 
     QString shownName() const
     {
-        return m_file.isEmpty() ? QStringLiteral("Без назви") : QFileInfo(m_file).fileName();
+        return m_file.isEmpty() ? tr7("Untitled") : QFileInfo(m_file).fileName();
     }
 
     void updateTitle()
     {
-        setWindowTitle(QStringLiteral("%1 - Блокнот").arg(shownName()));
+        setWindowTitle(tr7("%1 - Notepad").arg(shownName()));
     }
 
     /* ---------------- files ---------------- */
@@ -323,7 +324,7 @@ private:
     {
         QFile f(path);
         if (!f.open(QIODevice::ReadOnly)) {
-            QMessageBox::warning(this, QStringLiteral("Блокнот"), QStringLiteral("Не вдається знайти файл «%1».\n\nПеревірте правильність імені файлу й повторіть спробу.").arg(path));
+            QMessageBox::warning(this, tr7("Notepad"), tr7("Cannot find the %1 file.\n\nCheck the file name and try again.").arg(path));
             return;
         }
         const QByteArray data = f.readAll();
@@ -396,7 +397,7 @@ private:
         }
         QFile f(path);
         if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate) || f.write(out) != out.size()) {
-            QMessageBox::warning(this, QStringLiteral("Блокнот"), QStringLiteral("Не вдається зберегти файл «%1».\n\nМожливо, немає дозволу на запис у цю папку.").arg(path));
+            QMessageBox::warning(this, tr7("Notepad"), tr7("Cannot save the file %1.\n\nYou may not have permission to write to this folder.").arg(path));
             return false;
         }
         m_file = QFileInfo(path).absoluteFilePath();
@@ -414,9 +415,9 @@ private:
     /** Save As with Notepad's "Encoding" box under the file name */
     bool saveAs()
     {
-        QFileDialog dlg(this, QStringLiteral("Зберегти як"), m_file.isEmpty() ? QDir::homePath() + QStringLiteral("/*.txt") : m_file);
+        QFileDialog dlg(this, tr7("Save As"), m_file.isEmpty() ? QDir::homePath() + QStringLiteral("/*.txt") : m_file);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
-        dlg.setNameFilters({QStringLiteral("Текстові документи (*.txt)"), QStringLiteral("Усі файли (*)")});
+        dlg.setNameFilters({tr7("Text Documents (*.txt)"), tr7("All Files (*)")});
         dlg.setDefaultSuffix(QStringLiteral("txt"));
         if (m_file.isEmpty()) {
             dlg.selectFile(QStringLiteral("*.txt"));
@@ -427,18 +428,18 @@ private:
         // the encoding: kept from the opened file, chosen here for a new one
         Encoding enc = m_encoding;
         QDialog ask(this);
-        ask.setWindowTitle(QStringLiteral("Кодування"));
+        ask.setWindowTitle(tr7("Encoding"));
         auto *v = new QVBoxLayout(&ask);
         auto *row = new QHBoxLayout;
-        row->addWidget(new QLabel(QStringLiteral("Кодування:")));
+        row->addWidget(new QLabel(tr7("Encoding:")));
         auto *combo = new QComboBox;
-        combo->addItems({QStringLiteral("ANSI"), QStringLiteral("Юнікод"), QStringLiteral("Юнікод (зворотний порядок байтів)"), QStringLiteral("UTF-8")});
+        combo->addItems({QStringLiteral("ANSI"), tr7("Unicode"), tr7("Unicode big endian"), QStringLiteral("UTF-8")});
         combo->setCurrentIndex(enc);
         row->addWidget(combo, 1);
         v->addLayout(row);
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
-        auto *ok = new QPushButton(QStringLiteral("Зберегти"));
+        auto *ok = new QPushButton(tr7("Save"));
         ok->setDefault(true);
         bar->addWidget(ok);
         v->addLayout(bar);
@@ -456,11 +457,11 @@ private:
             return true;
         }
         QMessageBox box(this);
-        box.setWindowTitle(QStringLiteral("Блокнот"));
-        box.setText(QStringLiteral("Зберегти зміни у файлі «%1»?").arg(m_file.isEmpty() ? shownName() : m_file));
-        QPushButton *yes = box.addButton(QStringLiteral("Зберегти"), QMessageBox::AcceptRole);
-        QPushButton *no = box.addButton(QStringLiteral("Не зберігати"), QMessageBox::DestructiveRole);
-        box.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+        box.setWindowTitle(tr7("Notepad"));
+        box.setText(tr7("Do you want to save changes to %1?").arg(m_file.isEmpty() ? shownName() : m_file));
+        QPushButton *yes = box.addButton(tr7("Save"), QMessageBox::AcceptRole);
+        QPushButton *no = box.addButton(tr7("Don't Save"), QMessageBox::DestructiveRole);
+        box.addButton(tr7("Cancel"), QMessageBox::RejectRole);
         box.setDefaultButton(yes);
         box.exec();
         if (box.clickedButton() == yes) {
@@ -488,8 +489,8 @@ private:
         if (!maybeSave()) {
             return;
         }
-        const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Відкрити"), m_file.isEmpty() ? QDir::homePath() : QFileInfo(m_file).absolutePath(),
-                                                          QStringLiteral("Текстові документи (*.txt);;Усі файли (*)"));
+        const QString path = QFileDialog::getOpenFileName(this, tr7("Open"), m_file.isEmpty() ? QDir::homePath() : QFileInfo(m_file).absolutePath(),
+                                                          tr7("Text Documents (*.txt);;All Files (*)"));
         if (!path.isEmpty()) {
             load(path);
         }
@@ -509,7 +510,7 @@ private:
     void pageSetup()
     {
         QPageSetupDialog dlg(&printer(), this);
-        dlg.setWindowTitle(QStringLiteral("Параметри сторінки"));
+        dlg.setWindowTitle(tr7("Page Setup"));
         dlg.exec();
     }
 
@@ -517,7 +518,7 @@ private:
     void print()
     {
         QPrintDialog dlg(&printer(), this);
-        dlg.setWindowTitle(QStringLiteral("Друк"));
+        dlg.setWindowTitle(tr7("Print"));
         if (dlg.exec() != QDialog::Accepted) {
             return;
         }
@@ -533,7 +534,7 @@ private:
         int y = top, number = 1;
         auto header = [&] {
             painter.drawText(QRect(0, 0, area.width(), lineH), Qt::AlignHCenter, shownName());
-            painter.drawText(QRect(0, area.height() - lineH, area.width(), lineH), Qt::AlignHCenter, QStringLiteral("Сторінка %1").arg(number));
+            painter.drawText(QRect(0, area.height() - lineH, area.width(), lineH), Qt::AlignHCenter, tr7("Page %1").arg(number));
         };
         header();
         for (QTextBlock b = m_edit->document()->begin(); b.isValid(); b = b.next()) {
@@ -572,8 +573,8 @@ private:
             return true;
         }
         if (wrapMessage) {
-            QMessageBox::information(m_findDialog ? static_cast<QWidget *>(m_findDialog) : this, QStringLiteral("Блокнот"),
-                                     QStringLiteral("Не вдається знайти «%1»").arg(m_findText));
+            QMessageBox::information(m_findDialog ? static_cast<QWidget *>(m_findDialog) : this, tr7("Notepad"),
+                                     tr7("Cannot find \"%1\"").arg(m_findText));
         }
         return false;
     }
@@ -587,23 +588,23 @@ private:
         auto *d = new QDialog(this);
         m_findDialog = d;
         d->setAttribute(Qt::WA_DeleteOnClose);
-        d->setWindowTitle(replace ? QStringLiteral("Заміна") : QStringLiteral("Пошук"));
+        d->setWindowTitle(replace ? tr7("Replace") : tr7("Search"));
         const QString selected = m_edit->textCursor().selectedText();
         if (!selected.isEmpty() && !selected.contains(QChar::ParagraphSeparator)) {
             m_findText = selected;
         }
         if (!replace) {
             d->setFixedSize(dlu(0, 0, 250, 62).size());
-            place(d, new QLabel(QStringLiteral("Що:")), dlu(4, 8, 42, 8));
+            place(d, new QLabel(tr7("Find what:", "notepad")), dlu(4, 8, 42, 8));
             auto *what = place(d, new QLineEdit(m_findText), dlu(47, 7, 136, 12));
-            auto *mc = place(d, new QCheckBox(QStringLiteral("З урахуванням регістру")), dlu(4, 42, 100, 12));
+            auto *mc = place(d, new QCheckBox(tr7("Match case")), dlu(4, 42, 100, 12));
             mc->setChecked(m_matchCase);
-            place(d, new QGroupBox(QStringLiteral("Напрямок")), dlu(107, 26, 76, 28));
-            auto *up = place(d, new QRadioButton(QStringLiteral("Угору")), dlu(111, 38, 32, 12));
-            auto *dn = place(d, new QRadioButton(QStringLiteral("Униз")), dlu(145, 38, 34, 12));
+            place(d, new QGroupBox(tr7("Direction")), dlu(107, 26, 76, 28));
+            auto *up = place(d, new QRadioButton(tr7("Up")), dlu(111, 38, 32, 12));
+            auto *dn = place(d, new QRadioButton(tr7("Down")), dlu(145, 38, 34, 12));
             (m_down ? dn : up)->setChecked(true);
-            auto *next = place(d, new QPushButton(QStringLiteral("Знайти далі")), dlu(190, 5, 56, 14));
-            auto *cancel = place(d, new QPushButton(QStringLiteral("Скасувати")), dlu(190, 23, 56, 14));
+            auto *next = place(d, new QPushButton(tr7("Find Next")), dlu(190, 5, 56, 14));
+            auto *cancel = place(d, new QPushButton(tr7("Cancel")), dlu(190, 23, 56, 14));
             next->setDefault(true);
             next->setEnabled(!what->text().isEmpty());
             connect(what, &QLineEdit::textChanged, next, [next](const QString &t) { next->setEnabled(!t.isEmpty()); });
@@ -616,16 +617,16 @@ private:
             connect(cancel, &QPushButton::clicked, d, &QDialog::close);
         } else {
             d->setFixedSize(dlu(0, 0, 240, 94).size());
-            place(d, new QLabel(QStringLiteral("Що:")), dlu(4, 9, 48, 8));
+            place(d, new QLabel(tr7("Find what:", "notepad")), dlu(4, 9, 48, 8));
             auto *what = place(d, new QLineEdit(m_findText), dlu(54, 7, 122, 12));
-            place(d, new QLabel(QStringLiteral("Чим:")), dlu(4, 26, 48, 8));
+            place(d, new QLabel(tr7("Replace with:")), dlu(4, 26, 48, 8));
             auto *with = place(d, new QLineEdit(m_replaceText), dlu(54, 24, 122, 12));
-            auto *mc = place(d, new QCheckBox(QStringLiteral("З урахуванням регістру")), dlu(5, 62, 110, 12));
+            auto *mc = place(d, new QCheckBox(tr7("Match case")), dlu(5, 62, 110, 12));
             mc->setChecked(m_matchCase);
-            auto *next = place(d, new QPushButton(QStringLiteral("Знайти далі")), dlu(182, 4, 54, 14));
-            auto *one = place(d, new QPushButton(QStringLiteral("Замінити")), dlu(182, 21, 54, 14));
-            auto *all = place(d, new QPushButton(QStringLiteral("Замінити все")), dlu(182, 38, 54, 14));
-            auto *cancel = place(d, new QPushButton(QStringLiteral("Скасувати")), dlu(182, 55, 54, 14));
+            auto *next = place(d, new QPushButton(tr7("Find Next")), dlu(182, 4, 54, 14));
+            auto *one = place(d, new QPushButton(tr7("Replace", "button")), dlu(182, 21, 54, 14));
+            auto *all = place(d, new QPushButton(tr7("Replace All")), dlu(182, 38, 54, 14));
+            auto *cancel = place(d, new QPushButton(tr7("Cancel")), dlu(182, 55, 54, 14));
             next->setDefault(true);
             auto sync = [this, what, with, mc] {
                 m_findText = what->text();
@@ -667,14 +668,14 @@ private:
     void goToLine()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Перехід до рядка"));
+        d.setWindowTitle(tr7("Go To Line"));
         d.setFixedSize(dlu(0, 0, 166, 60).size());
-        place(&d, new QLabel(QStringLiteral("Номер рядка:")), dlu(7, 7, 115, 8));
+        place(&d, new QLabel(tr7("Line number:")), dlu(7, 7, 115, 8));
         auto *line = place(&d, new QLineEdit(QString::number(m_edit->textCursor().blockNumber() + 1)), dlu(7, 18, 151, 14));
         line->setValidator(new QIntValidator(1, 1 << 30, line));
         line->selectAll();
-        auto *go = place(&d, new QPushButton(QStringLiteral("Перейти")), dlu(55, 39, 50, 14));
-        auto *cancel = place(&d, new QPushButton(QStringLiteral("Скасувати")), dlu(109, 39, 50, 14));
+        auto *go = place(&d, new QPushButton(tr7("Go To")), dlu(55, 39, 50, 14));
+        auto *cancel = place(&d, new QPushButton(tr7("Cancel")), dlu(109, 39, 50, 14));
         go->setDefault(true);
         connect(go, &QPushButton::clicked, &d, &QDialog::accept);
         connect(cancel, &QPushButton::clicked, &d, &QDialog::reject);
@@ -685,7 +686,7 @@ private:
                 m_edit->setTextCursor(c);
                 return;
             }
-            QMessageBox::information(&d, QStringLiteral("Блокнот - перехід до рядка"), QStringLiteral("Номер рядка перевищує загальну кількість рядків"));
+            QMessageBox::information(&d, tr7("Notepad - Goto Line"), tr7("The line number is beyond the total number of lines"));
         }
     }
 

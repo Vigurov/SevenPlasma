@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -86,8 +87,8 @@ inline bool runAsRoot(QWidget *parent, const QString &commands)
     loop.exec();
     // 126/127: the password dialog was dismissed
     if (p.exitCode() != 0 && p.exitCode() != 126 && p.exitCode() != 127) {
-        QMessageBox::warning(parent, QStringLiteral("Брандмауер"),
-                             QStringLiteral("Не вдалося змінити параметри брандмауера.\n\n%1").arg(QString::fromUtf8(p.readAllStandardError()).trimmed()));
+        QMessageBox::warning(parent, tr7("Windows Firewall"),
+                             tr7("The firewall settings could not be changed.\n\n%1").arg(QString::fromUtf8(p.readAllStandardError()).trimmed()));
     }
     return p.exitCode() == 0;
 }
@@ -197,27 +198,27 @@ inline KConfigGroup namesConfig()
 inline QList<Feature> features()
 {
     QList<Feature> f{
-        {QStringLiteral("Спільний доступ до файлів і принтерів"), QStringLiteral("Дає змогу іншим комп'ютерам мережі відкривати ваші спільні папки та принтери (Samba)."),
+        {tr7("File and Printer Sharing"), tr7("Lets other computers on the network open your shared folders and printers (Samba)."),
          QString(), {QStringLiteral("137,138/udp"), QStringLiteral("139,445/tcp")}},
-        {QStringLiteral("Виявлення мережі"), QStringLiteral("Дає змогу комп'ютеру знаходити інші пристрої мережі та бути видимим для них (mDNS)."),
+        {tr7("Network Discovery"), tr7("Lets this computer find other network devices and be visible to them (mDNS)."),
          QString(), {QStringLiteral("5353/udp")}},
-        {QStringLiteral("Віддалений робочий стіл"), QStringLiteral("Дає змогу підключатися до цього комп'ютера через «Підключення до віддаленого робочого стола» (RDP)."),
+        {tr7("Remote Desktop"), tr7("Lets people connect to this computer with Remote Desktop Connection (RDP)."),
          QString(), {QStringLiteral("3389/tcp")}},
-        {QStringLiteral("Віддалене керування (SSH)"), QStringLiteral("Дає змогу входити на цей комп'ютер через захищену оболонку SSH."), QString(), {QStringLiteral("22/tcp")}},
-        {QStringLiteral("Steam (Remote Play та завантаження з локальної мережі)"), QStringLiteral("Потокова гра та передавання ігор між комп'ютерами вашої мережі."),
+        {tr7("Remote Management (SSH)"), tr7("Lets people log on to this computer through the SSH secure shell."), QString(), {QStringLiteral("22/tcp")}},
+        {tr7("Steam (Remote Play and local network transfers)"), tr7("Game streaming and transferring games between the computers on your network."),
          QString(), {QStringLiteral("27036/tcp"), QStringLiteral("27031:27036/udp")}},
     };
     const QHash<QString, QPair<QString, QString>> known{
-        {QStringLiteral("CUPS"), {QStringLiteral("Служба друку (CUPS)"), QStringLiteral("Дає змогу іншим комп'ютерам друкувати на принтерах цього комп'ютера.")}},
-        {QStringLiteral("KDEConnect"), {QStringLiteral("KDE Connect"), QStringLiteral("Зв'язок із телефоном: сповіщення, файли, буфер обміну.")}},
+        {QStringLiteral("CUPS"), {tr7("Print Service (CUPS)"), tr7("Lets other computers print on the printers of this computer.")}},
+        {QStringLiteral("KDEConnect"), {QStringLiteral("KDE Connect"), tr7("Connection with your phone: notifications, files, clipboard.")}},
     };
     for (const QString &app : appProfiles()) {
-        const auto k = known.value(app, {app, QStringLiteral("Профіль програми ufw «%1».").arg(app)});
+        const auto k = known.value(app, {app, tr7("ufw application profile \"%1\".").arg(app)});
         f.append({k.first, k.second, app, {}});
     }
     const KConfigGroup names = namesConfig();
     for (const QString &spec : names.keyList()) {
-        f.append({names.readEntry(spec, spec), QStringLiteral("Програма, додана вручну."), QString(), spec.split(QLatin1Char(' ')), true});
+        f.append({names.readEntry(spec, spec), tr7("A program added manually."), QString(), spec.split(QLatin1Char(' ')), true});
     }
     return f;
 }
@@ -275,32 +276,32 @@ inline QStringList featureCommands(const Feature &f, bool allow)
 inline bool addProgramDialog(QWidget *parent, QString *name, QString *spec)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Додавання програми"));
+    dlg.setWindowTitle(tr7("Add a Program"));
     dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-firewall")));
     dlg.setFixedWidth(430);
     auto *v = new QVBoxLayout(&dlg);
-    auto *intro = new QLabel(QStringLiteral("Укажіть назву програми та порти, на яких вона приймає підключення. Порти програми можна знайти в її документації."));
+    auto *intro = new QLabel(tr7("Enter the name of the program and the ports it accepts connections on. The ports of a program can be found in its documentation."));
     intro->setWordWrap(true);
     v->addWidget(intro);
     auto *g = new QGridLayout;
     auto *nameEdit = new QLineEdit;
     auto *ports = new QLineEdit;
-    ports->setPlaceholderText(QStringLiteral("наприклад: 8080 або 6000:6010"));
+    ports->setPlaceholderText(tr7("for example: 8080 or 6000:6010"));
     auto *proto = new QComboBox;
     proto->addItem(QStringLiteral("TCP"), QStringLiteral("tcp"));
     proto->addItem(QStringLiteral("UDP"), QStringLiteral("udp"));
-    proto->addItem(QStringLiteral("TCP і UDP"), QString());
-    g->addWidget(new QLabel(QStringLiteral("Програма:")), 0, 0);
+    proto->addItem(tr7("TCP and UDP"), QString());
+    g->addWidget(new QLabel(tr7("Program:")), 0, 0);
     g->addWidget(nameEdit, 0, 1);
-    g->addWidget(new QLabel(QStringLiteral("Порти:")), 1, 0);
+    g->addWidget(new QLabel(tr7("Ports:")), 1, 0);
     g->addWidget(ports, 1, 1);
-    g->addWidget(new QLabel(QStringLiteral("Протокол:")), 2, 0);
+    g->addWidget(new QLabel(tr7("Protocol:")), 2, 0);
     g->addWidget(proto, 2, 1);
     v->addLayout(g);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
-    auto *ok = new QPushButton(QStringLiteral("Додати"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *ok = new QPushButton(tr7("Add"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setEnabled(false);
     row->addWidget(ok);
     row->addWidget(cancel);
@@ -381,12 +382,12 @@ inline QWidget *networkSection(bool on)
     auto *shield = new QLabel;
     shield->setPixmap(QIcon::fromTheme(on ? QStringLiteral("seven-shield-green") : QStringLiteral("seven-shield-red")).pixmap(24, 24));
     hh->addWidget(shield);
-    hh->addWidget(title(QStringLiteral("Усі мережі"), 15), 1);
-    auto *connected = title(activeNetworks().isEmpty() ? QStringLiteral("Не підключено") : QStringLiteral("Підключено"), 15);
+    hh->addWidget(title(tr7("All networks"), 15), 1);
+    auto *connected = title(activeNetworks().isEmpty() ? tr7("Not connected") : tr7("Connected"), 15);
     hh->addWidget(connected);
     v->addWidget(head);
 
-    auto *desc = plain(QStringLiteral("Брандмауер діє однаково для всіх мереж, до яких підключено цей комп'ютер."));
+    auto *desc = plain(tr7("The firewall works the same way for all networks this computer is connected to."));
     desc->setContentsMargins(8, 8, 8, 8);
     v->addWidget(desc);
     auto *line = new QFrame;
@@ -406,11 +407,11 @@ inline QWidget *networkSection(bool on)
         grid->addWidget(val, r, 1, Qt::AlignTop);
         ++r;
     };
-    row(QStringLiteral("Стан брандмауера:"), new QLabel(on ? QStringLiteral("Увімкнено") : QStringLiteral("Вимкнено")));
+    row(tr7("Windows Firewall state:"), new QLabel(on ? tr7("On", "state") : tr7("Off", "firewall state")));
     if (on) {
-        row(QStringLiteral("Вхідні підключення:"),
-            plain(blocksIncoming() ? QStringLiteral("Блокувати всі підключення до програм, яких немає у списку дозволених програм")
-                                   : QStringLiteral("Дозволяти всі вхідні підключення")));
+        row(tr7("Incoming connections:"),
+            plain(blocksIncoming() ? tr7("Block all connections to programs that are not on the list of allowed programs")
+                                   : tr7("Allow all incoming connections")));
     }
     auto *nets = new QWidget;
     auto *nv = new QVBoxLayout(nets);
@@ -426,9 +427,9 @@ inline QWidget *networkSection(bool on)
         nv->addLayout(nr);
     }
     if (active.isEmpty()) {
-        nv->addWidget(new QLabel(QStringLiteral("Немає")));
+        nv->addWidget(new QLabel(tr7("None")));
     }
-    row(QStringLiteral("Активні мережі:"), nets);
+    row(tr7("Active networks:"), nets);
     grid->setColumnStretch(1, 1);
     v->addLayout(grid);
     return box;
@@ -458,35 +459,35 @@ inline QWidget *sidePane(const Nav &nav, QWidget *page)
         row->addWidget(new Link(text, std::move(open), color), 1);
         sv->addLayout(row);
     };
-    addRow(QStringLiteral("Панель керування — домашня сторінка"), nav.home, false);
+    addRow(tr7("Control Panel Home"), nav.home, false);
     sv->addSpacing(9);
-    addRow(QStringLiteral("Дозволити запуск програми або компонента через брандмауер"), [nav] {
+    addRow(tr7("Allow a program or feature through Windows Firewall"), [nav] {
         nav.open(AllowedView);
     }, false);
-    addRow(QStringLiteral("Увімкнути або вимкнути брандмауер"), [nav] {
+    addRow(tr7("Turn Windows Firewall on or off"), [nav] {
         nav.open(SettingsView);
     }, true);
-    addRow(QStringLiteral("Відновити стандартні параметри"), [nav, page] {
-        QMessageBox box(QMessageBox::Warning, QStringLiteral("Відновлення стандартних параметрів"),
-                        QStringLiteral("Відновити стандартні параметри брандмауера?"), QMessageBox::NoButton, page);
-        box.setInformativeText(QStringLiteral("Усі додані вами правила буде видалено, брандмауер буде ввімкнено та блокуватиме вхідні підключення."));
-        QPushButton *yes = box.addButton(QStringLiteral("Так"), QMessageBox::YesRole);
-        box.addButton(QStringLiteral("Ні"), QMessageBox::NoRole);
+    addRow(tr7("Restore defaults"), [nav, page] {
+        QMessageBox box(QMessageBox::Warning, tr7("Restore default settings"),
+                        tr7("Restore the default firewall settings?"), QMessageBox::NoButton, page);
+        box.setInformativeText(tr7("All rules you added will be removed; the firewall will be turned on and will block incoming connections."));
+        QPushButton *yes = box.addButton(tr7("Yes"), QMessageBox::YesRole);
+        box.addButton(tr7("No"), QMessageBox::NoRole);
         box.exec();
         if (box.clickedButton() == yes
             && runAsRoot(page, QStringLiteral("ufw --force reset && ufw default deny incoming && ufw default allow outgoing && ufw --force enable"))) {
             nav.open(StatusView);
         }
     }, true);
-    addRow(QStringLiteral("Додаткові параметри"), [] {
+    addRow(tr7("More Options"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--wf")});
     }, true);
     sv->addStretch(1);
     auto *seeRow = new QHBoxLayout;
     seeRow->setContentsMargins(22, 0, 0, 0);
-    seeRow->addWidget(grey(QStringLiteral("Див. також")));
+    seeRow->addWidget(grey(tr7("See also")));
     sv->addLayout(seeRow);
-    addRow(QStringLiteral("Центр мереж і спільного доступу"), nav.networkCenter, false);
+    addRow(tr7("Network and Sharing Center"), nav.networkCenter, false);
     return side;
 }
 
@@ -518,9 +519,9 @@ inline QWidget *buildStatusPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(title(QStringLiteral("Захист комп'ютера за допомогою брандмауера")));
+    cv->addWidget(title(tr7("Help protect your computer with Windows Firewall")));
     cv->addSpacing(8);
-    cv->addWidget(plain(QStringLiteral("Брандмауер допомагає запобігти доступу хакерів або зловмисних програм до комп'ютера через Інтернет або мережу.")));
+    cv->addWidget(plain(tr7("Windows Firewall can help prevent hackers or malicious software from gaining access to your computer through the Internet or a network.")));
     cv->addSpacing(14);
 
     if (!on) {
@@ -540,10 +541,10 @@ inline QWidget *buildStatusPage(const Nav &nav)
         wh->addWidget(shield, 0, Qt::AlignTop);
         auto *wv = new QVBoxLayout;
         wv->setContentsMargins(4, 10, 0, 10);
-        wv->addWidget(title(QStringLiteral("Оновіть параметри брандмауера"), 15));
-        wv->addWidget(plain(QStringLiteral("Брандмауер не використовує рекомендовані параметри для захисту комп'ютера.")));
+        wv->addWidget(title(tr7("Update your Firewall settings"), 15));
+        wv->addWidget(plain(tr7("Windows Firewall is not using the recommended settings to protect your computer.")));
         wh->addLayout(wv, 1);
-        auto *use = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Використовувати рекомендовані параметри"));
+        auto *use = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), tr7("Use recommended settings"));
         wh->addWidget(use, 0, Qt::AlignVCenter);
         QObject::connect(use, &QPushButton::clicked, main, [main, nav] {
             if (runAsRoot(main, QStringLiteral("ufw default deny incoming && ufw default allow outgoing && ufw --force enable"))) {
@@ -576,11 +577,11 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *cv = new QVBoxLayout(col);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(title(QStringLiteral("Налаштування параметрів брандмауера")));
+    cv->addWidget(title(tr7("Customize settings for each type of network")));
     cv->addSpacing(6);
-    cv->addWidget(plain(QStringLiteral("Тут можна ввімкнути або вимкнути брандмауер для мереж, до яких підключено цей комп'ютер.")));
+    cv->addWidget(plain(tr7("You can turn the firewall on or off for the networks this computer is connected to.")));
     cv->addSpacing(16);
-    cv->addWidget(new SectionHeader(QStringLiteral("Параметри для всіх мереж")));
+    cv->addWidget(new SectionHeader(tr7("Settings for all networks")));
     cv->addSpacing(10);
     auto *group = new QButtonGroup(page);
     auto addChoice = [&](const QString &icon, const QString &text, bool checked, int id) {
@@ -596,8 +597,8 @@ inline QWidget *buildSettingsPage(const Nav &nav)
         cv->addLayout(row);
         cv->addSpacing(10);
     };
-    addChoice(QStringLiteral("seven-shield-green"), QStringLiteral("Увімкнути брандмауер"), on, 1);
-    addChoice(QStringLiteral("seven-shield-red"), QStringLiteral("Вимкнути брандмауер (не рекомендовано)"), !on, 0);
+    addChoice(QStringLiteral("seven-shield-green"), tr7("Turn on Windows Firewall", "option"), on, 1);
+    addChoice(QStringLiteral("seven-shield-red"), tr7("Turn off Windows Firewall (not recommended)"), !on, 0);
     outer->addWidget(col, 0, Qt::AlignHCenter);
     outer->addSpacing(16);
     auto *line = new QFrame;
@@ -611,7 +612,7 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     bl->setContentsMargins(0, 0, 0, 0);
     bl->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setMinimumWidth(80);
     cancel->setMinimumWidth(80);
     bl->addWidget(ok);
@@ -646,30 +647,29 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     auto *cv = new QVBoxLayout(col);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(title(QStringLiteral("Дозволити програмам обмінюватися даними через брандмауер")));
+    cv->addWidget(title(tr7("Allow programs to communicate through Windows Firewall")));
     cv->addSpacing(6);
-    cv->addWidget(plain(QStringLiteral("Щоб додати, змінити або видалити дозволені програми та порти, натисніть кнопку «Змінити параметри».")));
+    cv->addWidget(plain(tr7("To add, change, or remove allowed programs and ports, click Change settings.")));
     cv->addSpacing(8);
     auto *riskRow = new QHBoxLayout;
-    auto *risk = new Link(QStringLiteral("Які ризики пов'язані з дозволом програмі обмінюватися даними?"), [page] {
-        QMessageBox::information(page, QStringLiteral("Брандмауер"),
-                                 QStringLiteral("Кожна дозволена програма або порт відкриває ще один шлях до комп'ютера з мережі. Дозволяйте лише ті програми, "
-                                                "яким довіряєте, і видаляйте дозвіл, коли він більше не потрібен."));
+    auto *risk = new Link(tr7("What are the risks of allowing a program to communicate?"), [page] {
+        QMessageBox::information(page, tr7("Windows Firewall"),
+                                 tr7("Each allowed program or port opens one more way into your computer from the network. Allow only the programs you trust, and remove the permission when it is no longer needed."));
     });
     risk->setWordWrap(false);
     riskRow->addWidget(risk);
     riskRow->addStretch(1);
-    auto *change = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Змінити параметри"));
+    auto *change = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), tr7("Change settings"));
     riskRow->addWidget(change);
     cv->addLayout(riskRow);
     cv->addSpacing(10);
 
     const Ufw u = queryUfw();
-    cv->addWidget(new QLabel(QStringLiteral("Дозволені програми та компоненти:")));
+    cv->addWidget(new QLabel(tr7("Allowed programs and features:")));
     cv->addSpacing(4);
     auto *list = new QTreeWidget;
     list->setRootIsDecorated(false);
-    list->setHeaderLabels({QStringLiteral("Назва"), QStringLiteral("Усі мережі")});
+    list->setHeaderLabels({tr7("Name", "firewall"), tr7("All networks")});
     list->header()->setStretchLastSection(false);
     list->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     list->setColumnWidth(1, 110);
@@ -695,15 +695,15 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     });
     cv->addWidget(list);
     if (!u.ok) {
-        auto *warn = plain(QStringLiteral("Не вдалося прочитати правила брандмауера."));
+        auto *warn = plain(tr7("The firewall rules could not be read."));
         warn->setStyleSheet(QStringLiteral("color: #8d1414;"));
         cv->addWidget(warn);
     }
     cv->addSpacing(8);
     auto *btnRow = new QHBoxLayout;
     btnRow->addStretch(1);
-    auto *details = new QPushButton(QStringLiteral("Відомості..."));
-    auto *remove = new QPushButton(QStringLiteral("Видалити"));
+    auto *details = new QPushButton(tr7("Details..."));
+    auto *remove = new QPushButton(tr7("Delete"));
     for (QPushButton *b : {details, remove}) {
         b->setMinimumWidth(90);
         b->setEnabled(false);
@@ -713,7 +713,7 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     cv->addSpacing(14);
     auto *addRow = new QHBoxLayout;
     addRow->addStretch(1);
-    auto *add = new QPushButton(QStringLiteral("Дозволити іншу програму..."));
+    auto *add = new QPushButton(tr7("Allow another program..."));
     add->setEnabled(false);
     addRow->addWidget(add);
     cv->addLayout(addRow);
@@ -737,7 +737,7 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     bl->setContentsMargins(0, 0, 0, 0);
     bl->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setMinimumWidth(80);
     cancel->setMinimumWidth(80);
     bl->addWidget(ok);
@@ -764,15 +764,15 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     QObject::connect(list, &QTreeWidget::currentItemChanged, page, updateButtons);
     QObject::connect(details, &QPushButton::clicked, page, [=] {
         const Feature f = feats.value(list->currentItem()->data(0, Qt::UserRole).toInt());
-        QString what = f.app.isEmpty() ? QStringLiteral("Порти: ") + f.portSpecs.join(QStringLiteral(", ")).toUpper() : QStringLiteral("Профіль ufw: ") + f.app;
-        QMessageBox box(QMessageBox::Information, QStringLiteral("Змінення програми"), f.name, QMessageBox::Ok, page);
+        QString what = f.app.isEmpty() ? tr7("Ports: ") + f.portSpecs.join(QStringLiteral(", ")).toUpper() : tr7("ufw profile: ") + f.app;
+        QMessageBox box(QMessageBox::Information, tr7("Edit a Program"), f.name, QMessageBox::Ok, page);
         box.setInformativeText(f.description + QStringLiteral("\n\n") + what);
         box.exec();
     });
     QObject::connect(remove, &QPushButton::clicked, page, [=] {
         QTreeWidgetItem *it = list->currentItem();
         const Feature f = feats.value(it->data(0, Qt::UserRole).toInt());
-        if (QMessageBox::question(page, QStringLiteral("Видалення програми"), QStringLiteral("Видалити програму «%1» зі списку?").arg(f.name)) != QMessageBox::Yes) {
+        if (QMessageBox::question(page, tr7("Uninstall a program"), tr7("Remove the program \"%1\" from the list?").arg(f.name)) != QMessageBox::Yes) {
             return;
         }
         removed->append(f.portSpecs.join(QLatin1Char(' ')));

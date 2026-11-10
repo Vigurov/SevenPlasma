@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Slide Show: SlideShow.Gadget (slideShow.js / slideShow.css) — pictures from a folder in the glass frame,
  * with the prev / pause / next / view bar on hover. Included inside main.cpp's namespace.
@@ -19,8 +20,8 @@ QString picturesDir()
 const QList<QPair<QString, int>> &slideTimes()
 {
     static const QList<QPair<QString, int>> times{
-        {QStringLiteral("5 секунд"), 5},   {QStringLiteral("10 секунд"), 10}, {QStringLiteral("15 секунд"), 15}, {QStringLiteral("30 секунд"), 30},
-        {QStringLiteral("1 хвилина"), 60}, {QStringLiteral("2 хвилини"), 120}, {QStringLiteral("5 хвилин"), 300},
+        {tr7("5 seconds"), 5},   {tr7("10 seconds"), 10}, {tr7("15 seconds"), 15}, {tr7("30 seconds"), 30},
+        {tr7("1 minute"), 60}, {tr7("2 minutes"), 120}, {tr7("5 minutes"), 300},
     };
     return times;
 }
@@ -31,15 +32,15 @@ QString slideEffectName(int e)
 {
     switch (SlideEffect(e)) {
     case SlideEffect::None:
-        return QStringLiteral("Немає");
+        return tr7("None");
     case SlideEffect::Fade:
-        return QStringLiteral("Згасання");
+        return tr7("Fade");
     case SlideEffect::Slide:
-        return QStringLiteral("Зсув");
+        return tr7("Slide");
     case SlideEffect::Wipe:
-        return QStringLiteral("Витирання");
+        return tr7("Wipe");
     case SlideEffect::Iris:
-        return QStringLiteral("Ірис");
+        return tr7("Iris");
     default:
         return {};
     }
@@ -49,13 +50,13 @@ class SlideShowSettings : public GadgetDialog
 {
 public:
     SlideShowSettings(const QString &folder, bool subdirs, int seconds, int effect, bool shuffle)
-        : GadgetDialog(QStringLiteral("Показ слайдів"), 340)
+        : GadgetDialog(tr7("Slide Show"), 340)
     {
-        body->addWidget(new QLabel(QStringLiteral("Папка:")));
+        body->addWidget(new QLabel(tr7("Folder:")));
         auto *row = new QHBoxLayout;
         m_folder = new QComboBox;
-        m_folder->addItem(QStringLiteral("Зразки зображень"), samplePicturesDir());
-        m_folder->addItem(QStringLiteral("Зображення"), picturesDir());
+        m_folder->addItem(tr7("Sample Pictures"), samplePicturesDir());
+        m_folder->addItem(tr7("Pictures"), picturesDir());
         if (m_folder->findData(folder) < 0) {
             m_folder->addItem(QDir(folder).dirName(), folder);
         }
@@ -65,11 +66,11 @@ public:
         row->addWidget(m_folder, 1);
         row->addWidget(browse);
         body->addLayout(row);
-        m_subdirs = new QCheckBox(QStringLiteral("Включити вкладені папки"));
+        m_subdirs = new QCheckBox(tr7("Include subfolders"));
         m_subdirs->setChecked(subdirs);
         body->addWidget(m_subdirs);
         body->addSpacing(8);
-        body->addWidget(new QLabel(QStringLiteral("Показувати кожне зображення:")));
+        body->addWidget(new QLabel(tr7("Show each picture:")));
         m_time = new QComboBox;
         for (const auto &t : slideTimes()) {
             m_time->addItem(t.first, t.second);
@@ -77,7 +78,7 @@ public:
         m_time->setCurrentIndex(qMax(0, m_time->findData(seconds)));
         body->addWidget(m_time);
         body->addSpacing(8);
-        body->addWidget(new QLabel(QStringLiteral("Перехід між зображеннями:")));
+        body->addWidget(new QLabel(tr7("Transition between pictures:")));
         m_effect = new QComboBox;
         for (int e = 0; e < int(SlideEffect::Count); ++e) {
             m_effect->addItem(slideEffectName(e), e);
@@ -85,13 +86,13 @@ public:
         m_effect->setCurrentIndex(qBound(0, effect, int(SlideEffect::Count) - 1));
         body->addWidget(m_effect);
         body->addSpacing(8);
-        m_shuffle = new QCheckBox(QStringLiteral("Перемішати зображення"));
+        m_shuffle = new QCheckBox(tr7("Shuffle pictures"));
         m_shuffle->setChecked(shuffle);
         body->addWidget(m_shuffle);
         body->addStretch(1);
 
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Огляд папок"), m_folder->currentData().toString());
+            const QString dir = QFileDialog::getExistingDirectory(this, tr7("Browse For Folder"), m_folder->currentData().toString());
             if (dir.isEmpty()) {
                 return;
             }
@@ -220,7 +221,7 @@ protected:
         if (m_pictures.isEmpty()) {
             p.setFont(gadgetFont(big ? 13 : 11));
             p.setPen(Qt::white);
-            p.drawText(pr.adjusted(6, 6, -6, -6), Qt::AlignCenter | Qt::TextWordWrap, QStringLiteral("У цій папці немає зображень."));
+            p.drawText(pr.adjusted(6, 6, -6, -6), Qt::AlignCenter | Qt::TextWordWrap, tr7("There are no pictures in this folder."));
         }
         if (underMouse()) {
             p.drawPixmap(barPos(), gadgetPixmap(QStringLiteral("slideshow/in_sidebar/bg_sidebar.png")));

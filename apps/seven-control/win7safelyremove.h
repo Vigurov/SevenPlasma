@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * "Безпечне видалення пристрою та виймання носія" (hotplug.dll) in the notification area, run inside the AutoPlay
  * watcher (`seven-control --autoplay-watch`). Like Windows 7: the icon exists only while a removable drive is
@@ -114,7 +115,7 @@ inline QString volumeName(const Solid::Device &v)
     const auto *vol = v.as<Solid::StorageVolume>();
     QString label = vol ? vol->label() : QString();
     if (label.isEmpty()) {
-        label = QStringLiteral("Знімний диск");
+        label = tr7("Removable Disk");
     }
     QString dev;
     if (const auto *b = v.as<Solid::Block>()) {
@@ -285,8 +286,8 @@ private:
             m_sni = new KStatusNotifierItem(QStringLiteral("seven-safely-remove"), this);
             m_sni->setCategory(KStatusNotifierItem::Hardware);
             m_sni->setIconByName(QStringLiteral("seven-safely-remove"));
-            m_sni->setTitle(QStringLiteral("Безпечне видалення пристрою та виймання носія"));
-            m_sni->setToolTip(QStringLiteral("seven-safely-remove"), QStringLiteral("Безпечне видалення пристрою та виймання носія"), QString());
+            m_sni->setTitle(tr7("Safely Remove Hardware and Eject Media"));
+            m_sni->setToolTip(QStringLiteral("seven-safely-remove"), tr7("Safely Remove Hardware and Eject Media"), QString());
             // Windows 7 keeps it among the hidden icons (under ▲)
             m_sni->setStatus(KStatusNotifierItem::Passive);
             m_sni->setStandardActionsEnabled(false);
@@ -315,7 +316,7 @@ private:
     void fillMenu()
     {
         m_menu->clear();
-        QAction *open = m_menu->addAction(QIcon::fromTheme(QStringLiteral("seven-cpi-printers")), QStringLiteral("Відкрити пристрої та принтери"));
+        QAction *open = m_menu->addAction(QIcon::fromTheme(QStringLiteral("seven-cpi-printers")), tr7("Open Devices and Printers"));
         QFont bold = open->font();
         bold.setBold(true);
         open->setFont(bold);
@@ -326,7 +327,7 @@ private:
             m_menu->addSeparator();
             const bool optical = r.drive.is<Solid::OpticalDrive>();
             QAction *ej = m_menu->addAction(QIcon::fromTheme(optical ? QStringLiteral("seven-bk-dvd") : QStringLiteral("drive-removable-media-usb")),
-                                            QStringLiteral("Вийняти %1").arg(r.name));
+                                            tr7("Eject %1").arg(r.name));
             const QString udi = r.drive.udi();
             connect(ej, &QAction::triggered, this, [this, udi] {
                 eject(udi);
@@ -363,8 +364,8 @@ private:
         const bool optical = target.drive.is<Solid::OpticalDrive>();
         auto finish = [this, pending, failed, name, block, optical, driveUdi] {
             if (*failed) {
-                balloon(QStringLiteral("Проблема з вийманням пристрою \"%1\"").arg(name),
-                        QStringLiteral("Цей пристрій зараз використовується. Закрийте всі програми або вікна, які можуть використовувати пристрій, і повторіть спробу."));
+                balloon(tr7("Problem Ejecting \"%1\"").arg(name),
+                        tr7("This device is currently in use. Close any programs or windows that might be using the device, and then try again."));
                 return;
             }
             if (optical) {
@@ -376,8 +377,8 @@ private:
             if (!block.isEmpty()) {
                 QProcess::startDetached(QStringLiteral("udisksctl"), {QStringLiteral("power-off"), QStringLiteral("-b"), block, QStringLiteral("--no-user-interaction")});
             }
-            balloon(QStringLiteral("Обладнання можна видалити"),
-                    QStringLiteral("Тепер пристрій \"%1\" можна безпечно від'єднати від комп'ютера.").arg(optical ? name : QStringLiteral("Запам'ятовувальний пристрій USB")));
+            balloon(tr7("Safe To Remove Hardware"),
+                    tr7("The \"%1\" device can now be safely removed from the computer.").arg(optical ? name : tr7("USB Mass Storage Device", "safely remove")));
             scheduleUpdate();
         };
         if (mounted.isEmpty()) {
@@ -464,8 +465,8 @@ private:
     }
     void notify()
     {
-        balloon(QStringLiteral("Цей пристрій може працювати швидше"),
-                QStringLiteral("Цей USB-пристрій може працювати швидше, якщо підключити його до високошвидкісного порту USB 2.0.\nЩоб переглянути список доступних портів, клацніть тут."),
+        balloon(tr7("This device can perform faster"),
+                tr7("This USB device can perform faster if you connect it to a Hi-Speed USB 2.0 port.\nFor a list of available ports, click here."),
                 [] {
                     QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--devices")});
                 });

@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * What the NVIDIA Control Panel can change on Linux, and where it is kept:
  *  - 3D settings: the driver's application profiles, ~/.nv/nvidia-application-profiles-rc. One profile for
@@ -54,74 +55,74 @@ inline const QList<Feature> &features()
     static const QList<Feature> list = [] {
         const QJsonValue none(QJsonValue::Undefined);
         QList<Feature> l;
-        l.append({QStringLiteral("ao"), QStringLiteral("Затінення фонового освітлення"), {},
-                  {{QStringLiteral("Вимк."), none}, {QStringLiteral("Продуктивність"), none}, {QStringLiteral("Якість"), none}}, 0,
-                  QStringLiteral("Затінення фонового освітлення робить сцени реалістичнішими, затіняючи кути й місця дотику предметів."),
-                  QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("aniso"), QStringLiteral("Анізотропна фільтрація"), QStringLiteral("GLLogMaxAniso"),
-                  {{QStringLiteral("Керування від програми"), none}, {QStringLiteral("Вимк."), 0}, {QStringLiteral("2x"), 1}, {QStringLiteral("4x"), 2},
+        l.append({QStringLiteral("ao"), tr7("Ambient Occlusion"), {},
+                  {{tr7("Off"), none}, {tr7("Performance"), none}, {tr7("Quality"), none}}, 0,
+                  tr7("Ambient occlusion makes scenes more realistic by shading corners and places where objects touch."),
+                  tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("aniso"), tr7("Anisotropic filtering"), QStringLiteral("GLLogMaxAniso"),
+                  {{tr7("Application-controlled"), none}, {tr7("Off"), 0}, {QStringLiteral("2x"), 1}, {QStringLiteral("4x"), 2},
                    {QStringLiteral("8x"), 3}, {QStringLiteral("16x"), 4}},
                   0,
-                  QStringLiteral("Анізотропна фільтрація покращує чіткість текстур на поверхнях, що віддаляються від камери, наприклад на дорозі чи підлозі."),
-                  QStringLiteral("Вищі значення роблять текстури чіткішими, але трохи знижують продуктивність. Діє на програми OpenGL.")});
-        l.append({QStringLiteral("fxaa"), QStringLiteral("Згладжування — FXAA"), {}, {{QStringLiteral("Вимк."), none}, {QStringLiteral("Увімк."), none}}, 0,
-                  QStringLiteral("FXAA — швидкий спосіб згладжування, що обробляє вже готове зображення."),
-                  QStringLiteral("На цьому ноутбуці екран підключено до інтегрованої графіки, тому драйвер NVIDIA не може ввімкнути FXAA.")});
-        l.append({QStringLiteral("aamode"), QStringLiteral("Згладжування — режим"), QStringLiteral("GLFSAAMode"),
-                  {{QStringLiteral("Керування від програми"), none}, {QStringLiteral("Замінити будь-який параметр програми"), none}}, 0,
-                  QStringLiteral("Визначає, як згладжування застосовується до програм 3D."),
-                  QStringLiteral("Виберіть «Замінити будь-який параметр програми», щоб задати рівень згладжування в рядку «Згладжування — параметри».")});
-        l.append({QStringLiteral("aaset"), QStringLiteral("Згладжування — параметри"), QStringLiteral("GLFSAAMode"),
-                  {{QStringLiteral("Керування від програми"), none}, {QStringLiteral("Вимк."), 0}, {QStringLiteral("2x"), 1}, {QStringLiteral("4x"), 5},
+                  tr7("Anisotropic filtering improves the clarity of textures on surfaces going away from the camera, such as a road or a floor."),
+                  tr7("Higher values make textures sharper but lower performance slightly. Applies to OpenGL programs.")});
+        l.append({QStringLiteral("fxaa"), tr7("Antialiasing - FXAA"), {}, {{tr7("Off"), none}, {tr7("On"), none}}, 0,
+                  tr7("FXAA is a fast antialiasing method that works on the finished image."),
+                  tr7("On this laptop the screen is connected to the integrated graphics, so the NVIDIA driver cannot turn FXAA on.")});
+        l.append({QStringLiteral("aamode"), tr7("Antialiasing - Mode"), QStringLiteral("GLFSAAMode"),
+                  {{tr7("Application-controlled"), none}, {tr7("Override any application setting"), none}}, 0,
+                  tr7("Specifies how antialiasing is applied to 3D programs."),
+                  tr7("Choose \"Override any application setting\" to set the antialiasing level in the Antialiasing - Setting row.")});
+        l.append({QStringLiteral("aaset"), tr7("Antialiasing - Setting"), QStringLiteral("GLFSAAMode"),
+                  {{tr7("Application-controlled"), none}, {tr7("Off"), 0}, {QStringLiteral("2x"), 1}, {QStringLiteral("4x"), 5},
                    {QStringLiteral("8x"), 10}, {QStringLiteral("16x"), 12}},
-                  0, QStringLiteral("Згладжування зменшує нерівність («драбинки») на краях об’єктів."),
-                  QStringLiteral("Вищі значення дають плавніші краї, але знижують продуктивність. Діє на програми OpenGL.")});
-        l.append({QStringLiteral("aatr"), QStringLiteral("Згладжування — прозорість"), {}, {{QStringLiteral("Вимк."), none}}, 0,
-                  QStringLiteral("Згладжує краї прозорих текстур, наприклад листя чи огорож."), QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("cuda"), QStringLiteral("CUDA — графічні процесори"), {}, {{QStringLiteral("Усі"), none}}, 0,
-                  QStringLiteral("Визначає, які графічні процесори можуть використовувати програми CUDA."),
-                  QStringLiteral("На цьому комп’ютері один графічний процесор NVIDIA, і програми CUDA використовують його.")});
-        l.append({QStringLiteral("frames"), QStringLiteral("Максимальна кількість заздалегідь підготовлених кадрів"), {},
-                  {{QStringLiteral("Використовувати параметр 3D-програми"), none}}, 0,
-                  QStringLiteral("Обмежує кількість кадрів, які процесор готує наперед."), QStringLiteral("Драйвер NVIDIA для Linux не задає цього в профілях програм.")});
-        l.append({QStringLiteral("mixed"), QStringLiteral("Прискорення кількох дисплеїв/змішаних ГП"), {},
-                  {{QStringLiteral("Режим продуктивності для кількох дисплеїв"), none}}, 0, QStringLiteral("Керує роботою OpenGL із кількома дисплеями."),
-                  QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        Feature power{QStringLiteral("power"), QStringLiteral("Режим керування живленням"), {},
-                      {{QStringLiteral("Оптимальне енергоспоживання"), 2}, {QStringLiteral("Адаптивний"), 0},
-                       {QStringLiteral("Віддавати перевагу максимальній продуктивності"), 1}},
+                  0, tr7("Antialiasing reduces jaggedness (\"jaggies\") on the edges of objects."),
+                  tr7("Higher values give smoother edges but lower performance. Applies to OpenGL programs.")});
+        l.append({QStringLiteral("aatr"), tr7("Antialiasing - Transparency"), {}, {{tr7("Off"), none}}, 0,
+                  tr7("Smooths the edges of transparent textures, such as leaves or fences."), tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("cuda"), tr7("CUDA - GPUs"), {}, {{tr7("All"), none}}, 0,
+                  tr7("Specifies which graphics processors CUDA programs can use."),
+                  tr7("This computer has one NVIDIA graphics processor, and CUDA programs use it.")});
+        l.append({QStringLiteral("frames"), tr7("Maximum pre-rendered frames"), {},
+                  {{tr7("Use the 3D application setting"), none}}, 0,
+                  tr7("Limits the number of frames the processor prepares in advance."), tr7("The NVIDIA driver for Linux does not set this in program profiles.")});
+        l.append({QStringLiteral("mixed"), tr7("Multi-display/mixed-GPU acceleration"), {},
+                  {{tr7("Multiple display performance mode"), none}}, 0, tr7("Controls how OpenGL works with several displays."),
+                  tr7("The NVIDIA driver for Linux does not have this setting.")});
+        Feature power{QStringLiteral("power"), tr7("Power management mode"), {},
+                      {{tr7("Optimal power"), 2}, {tr7("Adaptive"), 0},
+                       {tr7("Prefer maximum performance"), 1}},
                       0,
-                      QStringLiteral("Визначає, як графічний процесор змінює частоти залежно від навантаження."),
-                      QStringLiteral("«Віддавати перевагу максимальній продуктивності» тримає високі частоти, але збільшує енергоспоживання та нагрівання.")};
+                      tr7("Specifies how the graphics processor changes clocks depending on the load."),
+                      tr7("\"Prefer maximum performance\" keeps high clocks, but increases power consumption and heat.")};
         power.globalOnly = true;
         l.append(power);
-        l.append({QStringLiteral("shadercache"), QStringLiteral("Кеш шейдерів"), QStringLiteral("GLShaderDiskCache"),
-                  {{QStringLiteral("Увімк."), none}, {QStringLiteral("Вимк."), false}}, 0,
-                  QStringLiteral("Зберігає скомпільовані шейдери на диску, щоб ігри наступного разу запускалися швидше."),
-                  QStringLiteral("Рекомендовано тримати ввімкненим.")});
-        l.append({QStringLiteral("tfaso"), QStringLiteral("Фільтрація текстур — оптимізація анізотропної вибірки"), {}, {{QStringLiteral("Вимк."), none}}, 0,
-                  QStringLiteral("Обмежує кількість вибірок анізотропної фільтрації."), QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("tflod"), QStringLiteral("Фільтрація текстур — від’ємне відхилення рівня деталізації"), {}, {{QStringLiteral("Дозволити"), none}}, 0,
-                  QStringLiteral("Керує різкістю текстур."), QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("tfq"), QStringLiteral("Фільтрація текстур — якість"), {}, {{QStringLiteral("Якість"), none}}, 0,
-                  QStringLiteral("Визначає співвідношення якості й швидкості фільтрації текстур."), QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("tftri"), QStringLiteral("Фільтрація текстур — трилінійна оптимізація"), {}, {{QStringLiteral("Вимк."), none}}, 0,
-                  QStringLiteral("Замінює трилінійну фільтрацію швидшою."), QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
-        l.append({QStringLiteral("threaded"), QStringLiteral("Потокова оптимізація"), QStringLiteral("GLThreadedOptimizations"),
-                  {{QStringLiteral("Автоматично"), none}, {QStringLiteral("Увімк."), true}, {QStringLiteral("Вимк."), false}}, 0,
-                  QStringLiteral("Дає змогу програмам OpenGL використовувати кілька ядер процесора."),
-                  QStringLiteral("Може пришвидшити ігри, які сильно навантажують процесор. Діє на програми OpenGL.")});
-        l.append({QStringLiteral("triple"), QStringLiteral("Потрійна буферизація"), {}, {{QStringLiteral("Вимк."), none}}, 0,
-                  QStringLiteral("Додає третій буфер кадрів, коли ввімкнено вертикальну синхронізацію."),
-                  QStringLiteral("У Linux цей параметр задається лише для всього X-сервера.")});
-        l.append({QStringLiteral("vsync"), QStringLiteral("Вертикальна синхронізація"), QStringLiteral("GLSyncToVblank"),
-                  {{QStringLiteral("Використовувати параметр 3D-програми"), none}, {QStringLiteral("Примусово вмикати"), true},
-                   {QStringLiteral("Примусово вимикати"), false}},
-                  0, QStringLiteral("Синхронізує кадри з частотою оновлення екрана, щоб не було розривів зображення."),
-                  QStringLiteral("Вимкніть, щоб отримати найвищу частоту кадрів; увімкніть, щоб прибрати розриви. Діє на програми OpenGL.")});
-        l.append({QStringLiteral("vr"), QStringLiteral("Кадри, підготовлені заздалегідь для віртуальної реальності"), {}, {{QStringLiteral("1"), none}}, 0,
-                  QStringLiteral("Кількість кадрів, які готуються наперед для шоломів віртуальної реальності."),
-                  QStringLiteral("Драйвер NVIDIA для Linux цього параметра не має.")});
+        l.append({QStringLiteral("shadercache"), tr7("Shader Cache"), QStringLiteral("GLShaderDiskCache"),
+                  {{tr7("On"), none}, {tr7("Off"), false}}, 0,
+                  tr7("Stores compiled shaders on the disk so games start faster the next time."),
+                  tr7("Recommended to keep on.")});
+        l.append({QStringLiteral("tfaso"), tr7("Texture filtering - Anisotropic sample optimization"), {}, {{tr7("Off"), none}}, 0,
+                  tr7("Limits the number of anisotropic filtering samples."), tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("tflod"), tr7("Texture filtering - Negative LOD bias"), {}, {{tr7("Allow"), none}}, 0,
+                  tr7("Controls the sharpness of textures."), tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("tfq"), tr7("Texture filtering - Quality"), {}, {{tr7("Quality"), none}}, 0,
+                  tr7("Sets the balance between quality and speed of texture filtering."), tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("tftri"), tr7("Texture filtering - Trilinear optimization"), {}, {{tr7("Off"), none}}, 0,
+                  tr7("Replaces trilinear filtering with a faster one."), tr7("The NVIDIA driver for Linux does not have this setting.")});
+        l.append({QStringLiteral("threaded"), tr7("Threaded optimization"), QStringLiteral("GLThreadedOptimizations"),
+                  {{tr7("Auto"), none}, {tr7("On"), true}, {tr7("Off"), false}}, 0,
+                  tr7("Lets OpenGL programs use several processor cores."),
+                  tr7("Can speed up games that load the processor heavily. Applies to OpenGL programs.")});
+        l.append({QStringLiteral("triple"), tr7("Triple buffering"), {}, {{tr7("Off"), none}}, 0,
+                  tr7("Adds a third frame buffer when vertical sync is on."),
+                  tr7("On Linux this setting is only set for the whole X server.")});
+        l.append({QStringLiteral("vsync"), tr7("Vertical sync"), QStringLiteral("GLSyncToVblank"),
+                  {{tr7("Use the 3D application setting"), none}, {tr7("Force on"), true},
+                   {tr7("Force off"), false}},
+                  0, tr7("Synchronizes frames with the refresh rate of the screen so there is no tearing."),
+                  tr7("Turn it off for the highest frame rate; turn it on to remove tearing. Applies to OpenGL programs.")});
+        l.append({QStringLiteral("vr"), tr7("Virtual Reality pre-rendered frames"), {}, {{QStringLiteral("1"), none}}, 0,
+                  tr7("The number of frames prepared in advance for virtual reality headsets."),
+                  tr7("The NVIDIA driver for Linux does not have this setting.")});
         return l;
     }();
     return list;
@@ -503,7 +504,7 @@ inline QString integratedName()
                 }
             }
         }
-        return QStringLiteral("Інтегрована графіка");
+        return tr7("Integrated graphics");
     }();
     return n;
 }

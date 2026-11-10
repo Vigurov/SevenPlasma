@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7fonts.h"
 
@@ -35,7 +36,7 @@ inline ViewerFace viewerFace(const QString &file, int index)
         fillFace(f, set->fonts[0]);
         v.family = f.family;
         v.style = f.style;
-        v.cyrillic = f.scripts.contains(QStringLiteral("Кирилиця"));
+        v.cyrillic = f.scripts.contains(tr7("Cyrillic"));
     }
     FcFontSetDestroy(set);
     SfntFile sf(file, index);
@@ -45,15 +46,15 @@ inline ViewerFace viewerFace(const QString &file, int index)
     }
     v.version = sf.name(5);
     if (sf.has("GSUB") || sf.has("GPOS")) {
-        v.traits << QStringLiteral("Макет OpenType");
+        v.traits << tr7("OpenType Layout");
     }
     if (sf.has("DSIG")) {
-        v.traits << QStringLiteral("Цифровий підпис");
+        v.traits << tr7("Digitally Signed");
     }
     if (sf.has("CFF ") || sf.has("CFF2")) {
-        v.traits << QStringLiteral("Контури PostScript");
+        v.traits << tr7("PostScript Outlines");
     } else if (sf.has("glyf")) {
-        v.traits << QStringLiteral("Контури TrueType");
+        v.traits << tr7("TrueType Outlines");
     }
     return v;
 }
@@ -93,9 +94,9 @@ public:
             p.drawText(x, y + fm.ascent(), text);
             y += fm.height() + int(2 * scale);
         };
-        line(QStringLiteral("Ім'я шрифту: %1").arg(m_face.fullName), false, 15);
+        line(tr7("Font name: %1").arg(m_face.fullName), false, 15);
         if (!m_face.version.isEmpty()) {
-            line(QStringLiteral("Версія: %1").arg(m_face.version.section(QLatin1Char(';'), 0, 0).trimmed()));
+            line(tr7("Version: %1").arg(m_face.version.section(QLatin1Char(';'), 0, 0).trimmed()));
         }
         if (!m_face.traits.isEmpty()) {
             line(m_face.traits.join(QStringLiteral(", ")));
@@ -103,7 +104,7 @@ public:
         y += int(8 * scale);
         p.fillRect(QRect(x, y, width - 2 * x, qMax(1, int(scale))), QColor(0xb0, 0xb0, 0xb0));
         y += int(12 * scale);
-        const QString alphabet = m_face.cyrillic ? QStringLiteral("абвгґдеєжзиіїйклмнопрстуфхцчшщьюя АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ")
+        const QString alphabet = m_face.cyrillic ? tr7("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ")
                                                  : QStringLiteral("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         for (const QString &s : {alphabet, QStringLiteral("1234567890.:,; ' \" (!?) +-*/=")}) {
             const QImage img = renderText(m_face.file, m_face.index, s, int(16 * scale));
@@ -113,7 +114,7 @@ public:
         y += int(8 * scale);
         p.fillRect(QRect(x, y, width - 2 * x, qMax(1, int(scale))), QColor(0xb0, 0xb0, 0xb0));
         y += int(12 * scale);
-        const QString pangram = m_face.cyrillic ? QStringLiteral("Чуєш їх, доцю, га? Кумедна ж ти, прощайся без ґольфів! 1234567890")
+        const QString pangram = m_face.cyrillic ? tr7("The quick brown fox jumps over the lazy dog. 1234567890")
                                                 : QStringLiteral("The quick brown fox jumps over the lazy dog. 1234567890");
         for (int pt : {12, 18, 24, 36, 48, 60, 72}) {
             QFont f = ui;
@@ -160,8 +161,8 @@ public:
         top->setStyleSheet(QStringLiteral("#win7fvbar { background: #f0f0f0; border-bottom: 1px solid #d5d5d5; }"));
         auto *h = new QHBoxLayout(top);
         h->setContentsMargins(8, 6, 8, 6);
-        auto *print = new QPushButton(QStringLiteral("Друк"));
-        m_install = new QPushButton(QStringLiteral("Установити"));
+        auto *print = new QPushButton(tr7("Print"));
+        m_install = new QPushButton(tr7("Install"));
         for (QPushButton *b : {print, m_install}) {
             b->setMinimumWidth(80);
             h->addWidget(b);
@@ -190,7 +191,7 @@ public:
         QPrinter printer(QPrinter::HighResolution);
         printer.setDocName(windowTitle());
         QPrintDialog dlg(&printer, this);
-        dlg.setWindowTitle(QStringLiteral("Друк"));
+        dlg.setWindowTitle(tr7("Print"));
         if (dlg.exec() != QDialog::Accepted) {
             return;
         }

@@ -8,6 +8,7 @@
  */
 
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7states.h"
@@ -247,17 +248,17 @@ private:
         const QSize s = r.size();
         QString type = fi.suffix().toUpper();
         if (type == QLatin1String("JPG") || type == QLatin1String("JPEG")) {
-            type = QStringLiteral("Зображення JPEG");
+            type = tr7("JPEG image");
         } else {
-            type = QStringLiteral("Зображення %1").arg(type);
+            type = tr7("%1 image").arg(type);
         }
-        QString text = fi.completeBaseName() + QStringLiteral("\nТип елемента: ") + type + QStringLiteral("\nОцінка: Без оцінки");
+        QString text = fi.completeBaseName() + tr7("\nItem type: ") + type + tr7("\nRating: Unrated");
         if (s.isValid()) {
-            text += QStringLiteral("\nРозміри: %1 x %2").arg(s.width()).arg(s.height());
+            text += tr7("\nDimensions: %1 x %2").arg(s.width()).arg(s.height());
         }
-        text += QStringLiteral("\nРозмір: ") + QLocale(QLocale::Ukrainian).formattedDataSize(fi.size(), 2, QLocale::DataSizeTraditionalFormat)
-                                                  .replace(QStringLiteral("MiB"), QStringLiteral("МБ"))
-                                                  .replace(QStringLiteral("KiB"), QStringLiteral("КБ"));
+        text += tr7("\nSize: ") + QLocale{}.formattedDataSize(fi.size(), 2, QLocale::DataSizeTraditionalFormat)
+                                                  .replace(QStringLiteral("MiB"), tr7("MB"))
+                                                  .replace(QStringLiteral("KiB"), tr7("KB"));
         QToolTip::showText(at, text, this);
     }
 
@@ -384,11 +385,11 @@ inline QComboBox *positionCombo()
         return strip.isNull() ? QIcon() : QIcon(strip.copy(i * 64, 0, 64, 44));
     };
     // Windows 7 order: Fill, Fit, Stretch, Tile, Center -> Qt fill modes 2, 1, 0, 3, 6
-    c->addItem(frame(4), QStringLiteral("Заповнення"), 2);
-    c->addItem(frame(2), QStringLiteral("За розміром"), 1);
-    c->addItem(frame(0), QStringLiteral("Розтягнути"), 0);
-    c->addItem(frame(3), QStringLiteral("Мозаїка"), 3);
-    c->addItem(frame(1), QStringLiteral("По центру"), 6);
+    c->addItem(frame(4), tr7("Fill"), 2);
+    c->addItem(frame(2), tr7("Fit"), 1);
+    c->addItem(frame(0), tr7("Stretch"), 0);
+    c->addItem(frame(3), tr7("Tile"), 3);
+    c->addItem(frame(1), tr7("Center"), 6);
     c->setIconSize(QSize(64, 44));
     c->setFixedSize(170, 50);
     // Windows 7's list: the picture and the name in rows as tall as the pictures, the chosen one in blue
@@ -454,32 +455,32 @@ public:
         auto *v = new QVBoxLayout(body);
         v->setContentsMargins(101, 14, 101, 0);
         v->setSpacing(0);
-        auto *title = new QLabel(QStringLiteral("Виберіть фоновий рисунок робочого столу"));
+        auto *title = new QLabel(tr7("Choose your desktop background"));
         QFont tf = title->font();
         tf.setPixelSize(16);
         title->setFont(tf);
         title->setStyleSheet(QStringLiteral("color: #1e3287;"));
         v->addWidget(title);
         v->addSpacing(6);
-        v->addWidget(new QLabel(QStringLiteral("Клацніть рисунок, щоб зробити його фоном робочого столу, або виберіть кілька рисунків для показу слайдів.")));
+        v->addWidget(new QLabel(tr7("Click a picture to make it your desktop background, or select more than one picture to create a slide show.")));
         v->addSpacing(19);
 
         auto *top = new QHBoxLayout;
         top->setSpacing(8);
-        top->addWidget(new QLabel(QStringLiteral("Розташування рисунка:")));
+        top->addWidget(new QLabel(tr7("Picture location:")));
         m_location = new QComboBox;
         m_location->setFixedSize(285, 23);
-        m_location->addItem(QStringLiteral("Фонові рисунки робочого столу Windows"), QStringLiteral(":windows"));
-        m_location->addItem(QStringLiteral("Бібліотека зображень"), QStringLiteral(":pictures"));
-        m_location->addItem(QStringLiteral("Фотографії з найвищим рейтингом"), QStringLiteral(":rated"));
-        m_location->addItem(QStringLiteral("Суцільні кольори"), QStringLiteral(":colors"));
+        m_location->addItem(tr7("Windows Desktop Backgrounds"), QStringLiteral(":windows"));
+        m_location->addItem(tr7("Pictures Library"), QStringLiteral(":pictures"));
+        m_location->addItem(tr7("Top Rated Photos"), QStringLiteral(":rated"));
+        m_location->addItem(tr7("Solid Colors"), QStringLiteral(":colors"));
         top->addWidget(m_location);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         browse->setFixedSize(77, 23);
         top->addWidget(browse);
         top->addStretch(1);
-        m_selectAll = new QPushButton(QStringLiteral("Вибрати всі"));
-        m_clearAll = new QPushButton(QStringLiteral("Очистити всі"));
+        m_selectAll = new QPushButton(tr7("Select all"));
+        m_clearAll = new QPushButton(tr7("Clear all"));
         for (QPushButton *b : {m_selectAll, m_clearAll}) {
             b->setMinimumSize(78, 23);
             top->addWidget(b);
@@ -502,26 +503,26 @@ public:
         bh->setSpacing(20);
         auto *posCol = new QVBoxLayout;
         posCol->setSpacing(7);
-        posCol->addWidget(new QLabel(QStringLiteral("Положення рисунка:")));
+        posCol->addWidget(new QLabel(tr7("Picture position:")));
         m_position = positionCombo();
         posCol->addWidget(m_position);
         bh->addLayout(posCol);
         auto *intCol = new QVBoxLayout;
         intCol->setSpacing(7);
-        intCol->addWidget(new QLabel(QStringLiteral("Змінювати рисунок кожні:")));
+        intCol->addWidget(new QLabel(tr7("Change picture every:")));
         auto *intRow = new QHBoxLayout;
         intRow->setSpacing(15);
         m_interval = new QComboBox;
         m_interval->setFixedSize(150, 23);
-        const QList<QPair<QString, int>> intervals{{QStringLiteral("10 секунд"), 10},   {QStringLiteral("30 секунд"), 30},  {QStringLiteral("1 хвилина"), 60},
-                                                   {QStringLiteral("3 хвилини"), 180},  {QStringLiteral("5 хвилин"), 300},  {QStringLiteral("10 хвилин"), 600},
-                                                   {QStringLiteral("15 хвилин"), 900},  {QStringLiteral("20 хвилин"), 1200}, {QStringLiteral("30 хвилин"), 1800},
-                                                   {QStringLiteral("1 година"), 3600},  {QStringLiteral("6 годин"), 21600}, {QStringLiteral("1 день"), 86400}};
+        const QList<QPair<QString, int>> intervals{{tr7("10 seconds"), 10},   {tr7("30 seconds"), 30},  {tr7("1 minute"), 60},
+                                                   {tr7("3 minutes"), 180},  {tr7("5 minutes"), 300},  {tr7("10 minutes"), 600},
+                                                   {tr7("15 minutes"), 900},  {tr7("20 minutes"), 1200}, {tr7("30 minutes"), 1800},
+                                                   {tr7("1 hour"), 3600},  {tr7("6 hours"), 21600}, {tr7("1 day"), 86400}};
         for (const auto &it : intervals) {
             m_interval->addItem(it.first, it.second);
         }
         intRow->addWidget(m_interval);
-        m_shuffle = new QCheckBox(QStringLiteral("Випадковий порядок"));
+        m_shuffle = new QCheckBox(tr7("Shuffle"));
         intRow->addWidget(m_shuffle);
         intRow->addStretch(1);
         intCol->addLayout(intRow);
@@ -537,8 +538,8 @@ public:
         m_moreSwatch = new QLabel;
         m_moreSwatch->setFixedSize(26, 26);
         mh->addWidget(m_moreSwatch);
-        mh->addWidget(new Link(QStringLiteral("Інші..."), [this] {
-            const QColor c = QColorDialog::getColor(m_color, this, QStringLiteral("Колір"));
+        mh->addWidget(new Link(tr7("More..."), [this] {
+            const QColor c = QColorDialog::getColor(m_color, this, tr7("Color"));
             if (c.isValid()) {
                 chooseColor(c);
             }
@@ -558,9 +559,9 @@ public:
         fh->setContentsMargins(101, 14, 101, 14);
         fh->setSpacing(12);
         fh->addStretch(1);
-        auto *save = new QPushButton(QStringLiteral("Зберегти зміни"));
+        auto *save = new QPushButton(tr7("Save changes"));
         save->setMinimumWidth(101);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         cancel->setMinimumWidth(74);
         fh->addWidget(save);
         fh->addWidget(cancel);
@@ -591,7 +592,7 @@ public:
             fill();
         });
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QString dir = Win7BrowseFolder::getFolder(this, QStringLiteral("Перейдіть до папки з рисунками, які потрібно використати як фон робочого столу."), QStandardPaths::writableLocation(QStandardPaths::PicturesLocation));
+            const QString dir = Win7BrowseFolder::getFolder(this, tr7("Go to the folder that contains the pictures you want to use as your desktop background."), QStandardPaths::writableLocation(QStandardPaths::PicturesLocation));
             if (dir.isEmpty()) {
                 return;
             }
@@ -687,11 +688,11 @@ private:
         QList<QPair<QString, QStringList>> out;
         if (loc == QLatin1String(":windows")) {
             const QString root = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/wallpapers/Windows7/");
-            const QList<QPair<QString, QString>> sets{{QStringLiteral("Architecture"), QStringLiteral("Архітектура")},
-                                                      {QStringLiteral("Characters"), QStringLiteral("Персонажі")},
-                                                      {QStringLiteral("Landscapes"), QStringLiteral("Пейзажі")},
-                                                      {QStringLiteral("Nature"), QStringLiteral("Природа")},
-                                                      {QStringLiteral("Scenes"), QStringLiteral("Сцени")},
+            const QList<QPair<QString, QString>> sets{{QStringLiteral("Architecture"), tr7("Architecture")},
+                                                      {QStringLiteral("Characters"), tr7("Characters")},
+                                                      {QStringLiteral("Landscapes"), tr7("Landscapes")},
+                                                      {QStringLiteral("Nature"), tr7("Nature")},
+                                                      {QStringLiteral("Scenes"), tr7("Scenes")},
                                                       {QStringLiteral("Windows"), QStringLiteral("Windows")}};
             for (const auto &s : sets) {
                 const QStringList files = images(root + s.first, false);

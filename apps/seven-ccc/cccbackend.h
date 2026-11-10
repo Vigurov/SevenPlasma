@@ -8,6 +8,7 @@
  * Settings that must survive a restart live in ~/.config/seven-cccrc.
  */
 #pragma once
+#include "win7i18n.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -359,21 +360,21 @@ inline QList<Row> softwareRows()
     QString core = gl.value(1);
     core = core.section(QLatin1Char(' '), 0, 0);
     return {
-        {QStringLiteral("Версія пакета драйверів"), mesa.isEmpty() ? QString() : QStringLiteral("Mesa ") + mesa},
-        {QStringLiteral("Версія Catalyst"), QStringLiteral("14.9 (вигляд), seven-ccc 1.0")},
-        {QStringLiteral("Постачальник"), QStringLiteral("Mesa / Advanced Micro Devices, Inc.")},
-        {QStringLiteral("Драйвер ядра"), QStringLiteral("amdgpu, Linux ") + QSysInfo::kernelVersion()},
-        {QStringLiteral("Драйвер OpenGL"), QStringLiteral("radeonsi")},
-        {QStringLiteral("Версія OpenGL"), core.isEmpty() ? gl.value(2) : core},
-        {QStringLiteral("Драйвер Vulkan"), QStringLiteral("RADV")},
-        {QStringLiteral("Версія Vulkan"), vulkanVersion()},
-        {QStringLiteral("Версія Catalyst Control Center"), QStringLiteral("2014.0915.1813.32737")},
+        {tr7("Driver Packaging Version"), mesa.isEmpty() ? QString() : QStringLiteral("Mesa ") + mesa},
+        {tr7("Catalyst Version"), tr7("14.9 (look), seven-ccc 1.0")},
+        {tr7("Provider"), QStringLiteral("Mesa / Advanced Micro Devices, Inc.")},
+        {tr7("Kernel Driver"), QStringLiteral("amdgpu, Linux ") + QSysInfo::kernelVersion()},
+        {tr7("OpenGL Driver"), QStringLiteral("radeonsi")},
+        {tr7("OpenGL Version"), core.isEmpty() ? gl.value(2) : core},
+        {tr7("Vulkan Driver"), QStringLiteral("RADV")},
+        {tr7("Vulkan Version"), vulkanVersion()},
+        {tr7("Catalyst Control Center Version"), QStringLiteral("2014.0915.1813.32737")},
     };
 }
 
 inline QString memSize(qint64 bytes)
 {
-    return bytes > 0 ? QStringLiteral("%1 МБ").arg(bytes / (1024 * 1024)) : QString();
+    return bytes > 0 ? tr7("%1 MB").arg(bytes / (1024 * 1024)) : QString();
 }
 
 inline QList<Row> hardwareRows(const Gpu &g)
@@ -393,7 +394,7 @@ inline QList<Row> hardwareRows(const Gpu &g)
     const qint64 gtt = readFile(dev + QStringLiteral("/mem_info_gtt_total")).toLongLong();
     QString memType = g.memType;
     if (g.integrated) {
-        memType = memType.isEmpty() ? QStringLiteral("Спільна системна пам'ять") : QStringLiteral("Спільна системна пам'ять (%1)").arg(memType);
+        memType = memType.isEmpty() ? tr7("Shared System Memory") : tr7("Shared System Memory (%1)").arg(memType);
     }
     const QString vramVendor = readFile(dev + QStringLiteral("/mem_info_vram_vendor"));
     if (!g.integrated && !vramVendor.isEmpty()) {
@@ -403,23 +404,23 @@ inline QList<Row> hardwareRows(const Gpu &g)
     }
     QString name = cardName(g);
     return {
-        {QStringLiteral("Назва графічної карти"), name},
-        {QStringLiteral("Графічний набір мікросхем"), g.name},
-        {QStringLiteral("Код пристрою"), g.deviceId},
-        {QStringLiteral("Код постачальника"), QStringLiteral("1002")},
-        {QStringLiteral("Код підсистеми"), g.subDevice},
-        {QStringLiteral("Код постачальника підсистеми"), g.subVendor},
-        {QStringLiteral("Код редакції"), g.revision},
-        {QStringLiteral("Тип шини"), bus},
-        {QStringLiteral("Поточні параметри шини"), speed.isEmpty() ? QString() : QStringLiteral("PCI Express %1 GT/s x%2").arg(speed.section(QLatin1Char(' '), 0, 0), width)},
-        {QStringLiteral("Версія BIOS"), readFile(dev + QStringLiteral("/vbios_version"))},
-        {QStringLiteral("Тип пам'яті"), memType},
-        {QStringLiteral("Розрядність шини пам'яті"), g.memWidth && !g.integrated ? QStringLiteral("%1 біт").arg(g.memWidth) : QString()},
-        {QStringLiteral("Обсяг пам'яті"), memSize(vram)},
-        {QStringLiteral("Загальна доступна графічна пам'ять"), memSize(vram + gtt)},
-        {QStringLiteral("Тактова частота ядра"), maxClock(dev + QStringLiteral("/pp_dpm_sclk")) ? QStringLiteral("%1 МГц").arg(maxClock(dev + QStringLiteral("/pp_dpm_sclk"))) : QString()},
-        {QStringLiteral("Тактова частота пам'яті"), maxClock(dev + QStringLiteral("/pp_dpm_mclk")) ? QStringLiteral("%1 МГц").arg(maxClock(dev + QStringLiteral("/pp_dpm_mclk"))) : QString()},
-        {QStringLiteral("Адреса PCI"), g.pci},
+        {tr7("Graphics Card Name"), name},
+        {tr7("Graphics Chipset"), g.name},
+        {tr7("Device ID"), g.deviceId},
+        {tr7("Vendor ID"), QStringLiteral("1002")},
+        {tr7("Subsystem ID"), g.subDevice},
+        {tr7("Subsystem Vendor ID"), g.subVendor},
+        {tr7("Revision ID"), g.revision},
+        {tr7("Bus Type"), bus},
+        {tr7("Current Bus Settings"), speed.isEmpty() ? QString() : QStringLiteral("PCI Express %1 GT/s x%2").arg(speed.section(QLatin1Char(' '), 0, 0), width)},
+        {tr7("BIOS Version"), readFile(dev + QStringLiteral("/vbios_version"))},
+        {tr7("Memory Type"), memType},
+        {tr7("Memory Bit Rate"), g.memWidth && !g.integrated ? tr7("%1-bit").arg(g.memWidth) : QString()},
+        {tr7("Memory Size"), memSize(vram)},
+        {tr7("Total Available Graphics Memory"), memSize(vram + gtt)},
+        {tr7("Core Clock"), maxClock(dev + QStringLiteral("/pp_dpm_sclk")) ? tr7("%1 MHz").arg(maxClock(dev + QStringLiteral("/pp_dpm_sclk"))) : QString()},
+        {tr7("Memory Clock"), maxClock(dev + QStringLiteral("/pp_dpm_mclk")) ? tr7("%1 MHz").arg(maxClock(dev + QStringLiteral("/pp_dpm_mclk"))) : QString()},
+        {tr7("PCI Address"), g.pci},
     };
 }
 
@@ -717,8 +718,7 @@ inline void setLoginApply(bool on)
     QDir().mkpath(QFileInfo(path).path());
     QFile f(path);
     if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        f.write("[Desktop Entry]\nType=Application\nName=Catalyst Control Center: колір робочого стола\nExec=seven-ccc --apply\n"
-                "NoDisplay=true\nX-KDE-autostart-phase=2\n");
+        f.write("[Desktop Entry]\nType=Application\nName=Catalyst Control Center: desktop color\nExec=seven-ccc --apply\nNoDisplay=true\nX-KDE-autostart-phase=2\n");
     }
 }
 

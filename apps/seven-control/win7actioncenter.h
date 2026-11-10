@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7backup.h"
 #include "win7firewall.h"
@@ -66,13 +67,13 @@ inline const QList<Kind> &kinds()
     static const QList<Kind> list = [] {
         QList<Kind> l{
         {"WindowsUpdate", QStringLiteral("Windows Update"), true},
-        {"InternetSecurity", QStringLiteral("Параметри безпеки Інтернету"), true},
-        {"Firewall", QStringLiteral("Мережевий брандмауер"), true},
-        {"UAC", QStringLiteral("Контроль облікових записів користувачів"), true},
-        {"Virus", QStringLiteral("Захист від вірусів"), true},
-        {"Backup", QStringLiteral("Архівація Windows"), false},
-        {"CheckUpdates", QStringLiteral("Перевірка оновлень"), false},
-        {"ProblemReports", QStringLiteral("Звіти про проблеми Windows"), false},
+        {"InternetSecurity", tr7("Internet security settings"), true},
+        {"Firewall", tr7("Network firewall"), true},
+        {"UAC", tr7("User Account Control"), true},
+        {"Virus", tr7("Virus protection"), true},
+        {"Backup", tr7("Windows Backup"), false},
+        {"CheckUpdates", tr7("Check for updates"), false},
+        {"ProblemReports", tr7("Windows Problem Reporting"), false},
     };
         if (!antivirusInstalled()) {
             l.removeIf([](const Kind &k) { return qstrcmp(k.key, "Virus") == 0; });
@@ -222,7 +223,7 @@ struct Group {
 /** "Not monitored" when the messages about it are turned off */
 inline QString notMonitoredText(const char *key, const QString &state)
 {
-    return watched(key) ? state : QStringLiteral("Не відстежується");
+    return watched(key) ? state : tr7("Not monitored");
 }
 
 inline void reportSettings(const std::function<void()> &done);
@@ -236,8 +237,8 @@ inline Group security(const Nav &nav, const std::function<void()> &refresh)
     const Win7Update::AutoSettings wu = Win7Update::readAuto();
 
     if (!fw && watched("Firewall")) {
-        g.messages.append({"Firewall", true, QStringLiteral("Мережевий брандмауер"), QStringLiteral("Брандмауер Windows вимкнуто або налаштовано неправильно."),
-                           QStringLiteral("Увімкнути зараз"), [refresh](QWidget *w) {
+        g.messages.append({"Firewall", true, tr7("Network firewall"), tr7("Windows Firewall is turned off or set up incorrectly."),
+                           tr7("Turn on now"), [refresh](QWidget *w) {
                                if (Win7Firewall::runAsRoot(w, QStringLiteral("ufw --force enable"))) {
                                    refresh();
                                }
@@ -245,36 +246,36 @@ inline Group security(const Nav &nav, const std::function<void()> &refresh)
     }
     if (wu.mode != 0 && watched("WindowsUpdate")) {
         g.messages.append({"WindowsUpdate", wu.mode == 3, QStringLiteral("Windows Update"),
-                           wu.mode == 3 ? QStringLiteral("Центр оновлення Windows вимкнуто. Виберіть, щоб оновлення встановлювалися автоматично.")
-                                        : QStringLiteral("Оновлення не встановлюються автоматично. Виберіть, щоб оновлення встановлювалися автоматично."),
-                           QStringLiteral("Змінити параметри..."), [nav](QWidget *) { nav.open(Win7Update::SettingsView); }});
+                           wu.mode == 3 ? tr7("Windows Update is turned off. Choose to install updates automatically.")
+                                        : tr7("Updates are not installed automatically. Choose to install updates automatically."),
+                           tr7("Change settings..."), [nav](QWidget *) { nav.open(Win7Update::SettingsView); }});
     }
     // Antivirus / antispyware: Linux needs neither, so they are only shown when ClamAV is installed
     // (then it is worth saying that it is switched off). No "find a program online" nagging.
     if (av && !avOn && watched("Virus")) {
-        g.messages.append({"Virus", true, QStringLiteral("Захист від вірусів"), QStringLiteral("Антивірусну програму ClamAV вимкнуто."), QString(), {}});
+        g.messages.append({"Virus", true, tr7("Virus protection"), tr7("The ClamAV antivirus program is turned off."), QString(), {}});
     }
 
     const auto notMonitored = notMonitoredText;
-    g.rows.append({QStringLiteral("Мережевий брандмауер"), notMonitored("Firewall", fw ? QStringLiteral("Увімкнено") : QStringLiteral("Вимкнуто")),
-                   fw ? QStringLiteral("Брандмауер Windows активно захищає комп'ютер.") : QStringLiteral("Брандмауер Windows вимкнуто."),
-                   {{QStringLiteral("Переглянути параметри брандмауера"), [nav] { nav.open(Win7Firewall::StatusView); }}}});
-    static const QString wuText[] = {QStringLiteral("Windows автоматично встановлюватиме оновлення, щойно вони стануть доступні."),
-                                     QStringLiteral("Windows завантажуватиме оновлення, але ви вибиратимете, чи встановлювати їх."),
-                                     QStringLiteral("Windows перевірятиме наявність оновлень, але ви вибиратимете, чи завантажувати й встановлювати їх."),
-                                     QStringLiteral("Windows ніколи не перевірятиме наявність оновлень.")};
-    g.rows.append({QStringLiteral("Windows Update"), notMonitored("WindowsUpdate", wu.mode == 0 ? QStringLiteral("Увімкнено") : (wu.mode == 3 ? QStringLiteral("Вимкнуто") : QStringLiteral("Не автоматично"))),
+    g.rows.append({tr7("Network firewall"), notMonitored("Firewall", fw ? tr7("On", "state") : tr7("Off", "state")),
+                   fw ? tr7("Windows Firewall is actively protecting your computer.") : tr7("Windows Firewall is turned off."),
+                   {{tr7("View firewall settings"), [nav] { nav.open(Win7Firewall::StatusView); }}}});
+    static const QString wuText[] = {tr7("Windows will install updates automatically as they become available."),
+                                     tr7("Windows will download updates, but you choose whether to install them."),
+                                     tr7("Windows will check for updates, but you choose whether to download and install them."),
+                                     tr7("Windows will never check for updates.")};
+    g.rows.append({QStringLiteral("Windows Update"), notMonitored("WindowsUpdate", wu.mode == 0 ? tr7("On", "state") : (wu.mode == 3 ? tr7("Off", "state") : tr7("Not automatic"))),
                    wuText[qBound(0, wu.mode, 3)], {}});
     if (av) {
-        g.rows.append({QStringLiteral("Захист від вірусів"), notMonitored("Virus", avOn ? QStringLiteral("Увімкнено") : QStringLiteral("Вимкнуто")),
-                       avOn ? QStringLiteral("ClamAV повідомляє, що програма оновлена, а перевірку на віруси ввімкнуто.") : QStringLiteral("ClamAV повідомляє, що програму вимкнуто."),
+        g.rows.append({tr7("Virus protection"), notMonitored("Virus", avOn ? tr7("On", "state") : tr7("Off", "state")),
+                       avOn ? tr7("ClamAV reports that it is up to date and virus scanning is on.") : tr7("ClamAV reports that it is turned off."),
                        {}});
     }
-    g.rows.append({QStringLiteral("Параметри безпеки Інтернету"), notMonitored("InternetSecurity", QStringLiteral("OK")),
-                   QStringLiteral("Для всіх параметрів безпеки Інтернету встановлено рекомендовані рівні."), {}});
-    g.rows.append({QStringLiteral("Контроль облікових записів користувачів"), notMonitored("UAC", QStringLiteral("Увімкнено")),
-                   QStringLiteral("Контроль облікових записів користувачів сповіщатиме, коли програми намагатимуться внести зміни до комп'ютера."), {}});
-    g.rows.append({QStringLiteral("Захист доступу до мережі"), QStringLiteral("Вимкнуто"), QStringLiteral("Службу агента захисту доступу до мережі не запущено"), {}});
+    g.rows.append({tr7("Internet security settings"), notMonitored("InternetSecurity", QStringLiteral("OK")),
+                   tr7("All Internet security settings are set to their recommended levels."), {}});
+    g.rows.append({tr7("User Account Control"), notMonitored("UAC", tr7("On", "state")),
+                   tr7("User Account Control will notify when programs try to make changes to the computer."), {}});
+    g.rows.append({tr7("Network Access Protection"), tr7("Off", "state"), tr7("Network Access Protection Agent service is not running"), {}});
     return g;
 }
 
@@ -288,40 +289,40 @@ inline Group maintenance(const Nav &nav, const std::function<void()> &refresh)
     }
     const Win7Backup::Settings b = Win7Backup::load();
     if (unsent > 0 && watched("ProblemReports")) {
-        g.messages.append({"ProblemReports", false, QStringLiteral("Перевірте наявність рішень для звітів про проблеми"),
-                           QStringLiteral("Деякі програми аварійно завершили роботу (звітів: %1). Переглянувши звіти, можна надіслати їх розробникам.").arg(unsent),
-                           QStringLiteral("Переглянути звіти"), [nav](QWidget *) { nav.open(ArchiveView); }});
+        g.messages.append({"ProblemReports", false, tr7("Check for solutions to problem reports"),
+                           tr7("Some programs have stopped working (reports: %1). Review the reports to send them to the developers.").arg(unsent),
+                           tr7("View reports"), [nav](QWidget *) { nav.open(ArchiveView); }});
     }
     if (watched("Backup")) {
         if (!b.configured) {
-            g.messages.append({"Backup", false, QStringLiteral("Налаштуйте архівацію"), QStringLiteral("Ваші файли не архівуються."), QStringLiteral("Налаштувати архівацію"),
+            g.messages.append({"Backup", false, tr7("Set up backup"), tr7("Your files are not being backed up."), tr7("Set up backup", "button"),
                                [nav](QWidget *) { nav.open(Win7Backup::BackupView); }});
         } else if (b.lastFailed) {
-            g.messages.append({"Backup", true, QStringLiteral("Перевірте результати останньої архівації"), QStringLiteral("Остання архівація не завершилася успішно."),
-                               QStringLiteral("Параметри"), [nav](QWidget *) { nav.open(Win7Backup::BackupView); }});
+            g.messages.append({"Backup", true, tr7("Check your backup results"), tr7("The last backup did not complete successfully."),
+                               tr7("Options"), [nav](QWidget *) { nav.open(Win7Backup::BackupView); }});
         }
     }
     const bool rep = reportingEnabled();
-    g.rows.append({QStringLiteral("Перевірка рішень для звітів про проблеми"), notMonitoredText("ProblemReports", rep ? QStringLiteral("Увімкнено") : QStringLiteral("Вимкнуто")),
+    g.rows.append({tr7("Check for solutions to problem reports", "task"), notMonitoredText("ProblemReports", rep ? tr7("On", "state") : tr7("Off", "state")),
                    QString(),
-                   {{QStringLiteral("Перевірити наявність рішень"), [] { QProcess::startDetached(QStringLiteral("drkonqi-coredump-gui"), {}); }},
-                    {QStringLiteral("Параметри"), [refresh] { reportSettings(refresh); }},
-                    {QStringLiteral("Переглянути архівовані повідомлення"), [nav] { nav.open(ArchiveView); }}}});
+                   {{tr7("Check for solutions"), [] { QProcess::startDetached(QStringLiteral("drkonqi-coredump-gui"), {}); }},
+                    {tr7("Options"), [refresh] { reportSettings(refresh); }},
+                    {tr7("View archived messages"), [nav] { nav.open(ArchiveView); }}}});
     QString backupState, backupText;
     if (!b.configured) {
-        backupState = QStringLiteral("Не налаштовано");
-        backupText = QStringLiteral("Архівацію Windows не налаштовано.");
+        backupState = tr7("Not set up");
+        backupText = tr7("Windows Backup has not been set up.");
     } else {
-        backupState = b.lastFailed ? QStringLiteral("Помилка") : QStringLiteral("Увімкнено");
-        backupText = QStringLiteral("Остання архівація: %1\nРозташування: %2")
-                         .arg(b.lastBackup > 0 ? Win7Update::whenText(QDateTime::fromSecsSinceEpoch(b.lastBackup)) : QStringLiteral("Ніколи"), b.label);
+        backupState = b.lastFailed ? tr7("Error") : tr7("On", "state");
+        backupText = tr7("Last backup: %1\nLocation: %2")
+                         .arg(b.lastBackup > 0 ? Win7Update::whenText(QDateTime::fromSecsSinceEpoch(b.lastBackup)) : tr7("Never"), b.label);
     }
-    g.rows.append({QStringLiteral("Архівація"), notMonitoredText("Backup", backupState), backupText,
-                   {{b.configured ? QStringLiteral("Змінити параметри") : QStringLiteral("Налаштувати архівацію"), [nav] { nav.open(Win7Backup::BackupView); }}}});
+    g.rows.append({tr7("Backup"), notMonitoredText("Backup", backupState), backupText,
+                   {{b.configured ? tr7("Change settings") : tr7("Set up backup", "button"), [nav] { nav.open(Win7Backup::BackupView); }}}});
     const QDateTime checked = QFileInfo(QStringLiteral("/var/lib/apt/periodic/update-success-stamp")).lastModified();
-    g.rows.append({QStringLiteral("Перевірка оновлень"), notMonitoredText("CheckUpdates", QStringLiteral("Увімкнено")),
-                   QStringLiteral("Остання перевірка: %1").arg(Win7Update::whenText(checked)),
-                   {{QStringLiteral("Перевірити наявність оновлень"), [nav] {
+    g.rows.append({tr7("Check for updates"), notMonitoredText("CheckUpdates", tr7("On", "state")),
+                   tr7("Last checked: %1").arg(Win7Update::whenText(checked)),
+                   {{tr7("Check for updates", "button"), [nav] {
                          Win7Update::Engine::self().check();
                          nav.open(Win7Update::UpdateView);
                      }}}});
@@ -336,16 +337,16 @@ inline QByteArray statusJson()
     for (const Group &g : {security(nav, [] {}), maintenance(nav, [] {})}) {
         for (const Message &m : g.messages) {
             // the flyout of the tray flag names what to do, like Windows 7's does
-            static const QHash<QString, QString> flyout{{QStringLiteral("Firewall"), QStringLiteral("Увімкніть брандмауер Windows")},
-                                                        {QStringLiteral("Virus"), QStringLiteral("Знайдіть антивірусну програму в Інтернеті")},
-                                                        {QStringLiteral("Spyware"), QStringLiteral("Знайдіть програму захисту від шпигунських програм в Інтернеті")},
-                                                        {QStringLiteral("WindowsUpdate"), QStringLiteral("Змініть параметри Windows Update")},
-                                                        {QStringLiteral("ProblemReports"), QStringLiteral("Перевірте наявність рішень для звітів про проблеми")},
-                                                        {QStringLiteral("Backup"), m.important ? QStringLiteral("Перевірте результати архівації") : QStringLiteral("Налаштуйте архівацію")}};
+            static const QHash<QString, QString> flyout{{QStringLiteral("Firewall"), tr7("Turn on Windows Firewall")},
+                                                        {QStringLiteral("Virus"), tr7("Find an antivirus program online")},
+                                                        {QStringLiteral("Spyware"), tr7("Find an antispyware program online")},
+                                                        {QStringLiteral("WindowsUpdate"), tr7("Change Windows Update settings")},
+                                                        {QStringLiteral("ProblemReports"), tr7("Check for solutions to problem reports")},
+                                                        {QStringLiteral("Backup"), m.important ? tr7("Check your backup results", "task") : tr7("Set up backup")}};
             const QString kind = QLatin1String(m.kind);
             list.append(QJsonObject{{QStringLiteral("title"), m.title},
                                     {QStringLiteral("text"), m.text},
-                                    {QStringLiteral("flyout"), flyout.value(kind, m.title) + (m.important ? QStringLiteral(" (Важливо)") : QString())},
+                                    {QStringLiteral("flyout"), flyout.value(kind, m.title) + (m.important ? tr7(" (Important)") : QString())},
                                     {QStringLiteral("important"), m.important}});
         }
     }
@@ -473,14 +474,14 @@ inline QLabel *grey(const QString &t)
 
 inline QList<Win7Display::SideItem> sideLinks(const Nav &nav)
 {
-    return {{QStringLiteral("Змінити параметри Центру підтримки"), [nav] { nav.open(SettingsView); }},
-            {QStringLiteral("Переглянути архівовані повідомлення"), [nav] { nav.open(ArchiveView); }}};
+    return {{tr7("Change Action Center settings"), [nav] { nav.open(SettingsView); }},
+            {tr7("View archived messages"), [nav] { nav.open(ArchiveView); }}};
 }
 
 inline QList<Win7Display::SideItem> seeAlso(const Nav &nav)
 {
-    return {{QStringLiteral("Архівація і відновлення"), [nav] { nav.open(Win7Backup::BackupView); }},
-            {QStringLiteral("Центр оновлення Windows"), [nav] { nav.open(Win7Update::UpdateView); }}};
+    return {{tr7("Backup and Restore"), [nav] { nav.open(Win7Backup::BackupView); }},
+            {tr7("Windows Update"), [nav] { nav.open(Win7Update::UpdateView); }}};
 }
 
 /** "Review recent messages and resolve problems" */
@@ -497,7 +498,7 @@ public:
         auto *v = new QVBoxLayout(m_content);
         v->setContentsMargins(32, 18, 30, 18);
         v->setSpacing(6);
-        v->addWidget(Win7Programs::pageTitle(QStringLiteral("Перегляд останніх повідомлень і вирішення проблем")));
+        v->addWidget(Win7Programs::pageTitle(tr7("Review recent messages and resolve problems")));
         m_summary = Win7Programs::wrapped(QString());
         v->addWidget(m_summary);
         v->addSpacing(10);
@@ -505,7 +506,7 @@ public:
         m_groups->setSpacing(4);
         v->addLayout(m_groups);
         v->addSpacing(16);
-        v->addWidget(new QLabel(QStringLiteral("Якщо проблема відсутня в списку, спробуйте виконати таку дію:")));
+        v->addWidget(new QLabel(tr7("If you don't see your problem listed, try one of these:")));
         auto *tile = new QHBoxLayout;
         tile->setContentsMargins(10, 4, 0, 0);
         auto *ic = new QLabel;
@@ -513,8 +514,8 @@ public:
         tile->addWidget(ic, 0, Qt::AlignTop);
         auto *tv = new QVBoxLayout;
         tv->setSpacing(1);
-        tv->addWidget(new Link(QStringLiteral("Відновлення"), [this] { m_nav.open(Win7Backup::RecoveryView); }));
-        auto *sub = grey(QStringLiteral("Відновлення попереднього стану комп'ютера"));
+        tv->addWidget(new Link(tr7("Recovery"), [this] { m_nav.open(Win7Backup::RecoveryView); }));
+        auto *sub = grey(tr7("Restore your computer to an earlier time"));
         sub->setWordWrap(false);
         tv->addWidget(sub);
         tile->addLayout(tv);
@@ -535,10 +536,10 @@ private:
         const Group sec = security(m_nav, refresh);
         const Group mnt = maintenance(m_nav, refresh);
         const int issues = sec.messages.size() + mnt.messages.size();
-        m_summary->setText(issues ? QStringLiteral("Центр підтримки виявив одну або кілька проблем, які потрібно переглянути.")
-                                  : QStringLiteral("Центр підтримки не виявив жодних проблем."));
-        m_groups->addWidget(group(QStringLiteral("Security"), QStringLiteral("Безпека"), sec, refresh));
-        m_groups->addWidget(group(QStringLiteral("Maintenance"), QStringLiteral("Обслуговування"), mnt, refresh));
+        m_summary->setText(issues ? tr7("Action Center has detected one or more issues for you to review.")
+                                  : tr7("No issues have been detected by Action Center."));
+        m_groups->addWidget(group(QStringLiteral("Security"), tr7("Security"), sec, refresh));
+        m_groups->addWidget(group(QStringLiteral("Maintenance"), tr7("Maintenance"), mnt, refresh));
     }
 
     QWidget *group(const QString &key, const QString &title, const Group &g, const std::function<void()> &refresh)
@@ -569,7 +570,7 @@ private:
             head->addWidget(orb);
             if (!g.messages.isEmpty()) {
                 const Message &m = g.messages.first();
-                head->addWidget(new QLabel(m.title + (m.important ? QStringLiteral(" (Важливо)") : QString())));
+                head->addWidget(new QLabel(m.title + (m.important ? tr7(" (Important)") : QString())));
             }
         }
         head->addWidget(new Rule, 1);
@@ -625,7 +626,7 @@ private:
         h->setSpacing(16);
         auto *col = new QVBoxLayout;
         col->setSpacing(3);
-        auto *t = new QLabel(m.title + (m.important ? QStringLiteral(" (Важливо)") : QString()));
+        auto *t = new QLabel(m.title + (m.important ? tr7(" (Important)") : QString()));
         QFont tf = t->font();
         tf.setBold(true);
         t->setFont(tf);
@@ -641,7 +642,7 @@ private:
             about[0] = QLatin1Char('W');
         }
         const char *kind = m.kind;
-        col->addWidget(link(QStringLiteral("Вимкнути повідомлення про «%1»").arg(about), [kind, refresh] {
+        col->addWidget(link(tr7("Turn off messages about \"%1\"").arg(about), [kind, refresh] {
                            setWatched(kind, false);
                            refresh();
                        }),
@@ -668,15 +669,14 @@ private:
 inline void reportSettings(const std::function<void()> &done)
 {
     QDialog d;
-    d.setWindowTitle(QStringLiteral("Параметри звітів про проблеми"));
+    d.setWindowTitle(tr7("Problem Reporting Settings"));
     auto *v = new QVBoxLayout(&d);
     v->setContentsMargins(16, 14, 16, 12);
-    auto *t = Win7Programs::pageTitle(QStringLiteral("Виберіть, як перевіряти наявність рішень для звітів про проблеми"));
+    auto *t = Win7Programs::pageTitle(tr7("Choose how to check for solutions to problem reports"));
     v->addWidget(t);
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Коли програма аварійно завершує роботу, Windows може зберегти звіт про проблему, щоб ви могли надіслати його "
-                                                      "розробникам і перевірити, чи є рішення.")));
-    auto *on = new QRadioButton(QStringLiteral("Автоматично зберігати звіти про проблеми (рекомендовано)"));
-    auto *off = new QRadioButton(QStringLiteral("Ніколи не перевіряти наявність рішень (не рекомендовано)"));
+    v->addWidget(Win7Programs::wrapped(tr7("When a program stops working, Windows can save a problem report so that you can send it to the developers and check whether there is a solution.")));
+    auto *on = new QRadioButton(tr7("Automatically save problem reports (recommended)"));
+    auto *off = new QRadioButton(tr7("Never check for solutions (not recommended)"));
     (reportingEnabled() ? on : off)->setChecked(true);
     v->addSpacing(6);
     v->addWidget(on);
@@ -684,7 +684,7 @@ inline void reportSettings(const std::function<void()> &done)
     v->addSpacing(10);
     auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("OK"));
-    bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+    bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
     QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
     QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
     v->addWidget(bb);
@@ -714,9 +714,8 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *v = new QVBoxLayout(w);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(6);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Увімкнення або вимкнення повідомлень")));
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Для кожного вибраного елемента Windows перевірятиме наявність проблем і надсилатиме повідомлення, "
-                                                      "якщо їх буде виявлено.")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Turn messages on or off")));
+    v->addWidget(Win7Programs::wrapped(tr7("For each selected item, Windows will check for problems and send you a message if problems are found.")));
     QList<QPair<const char *, QCheckBox *>> boxes;
     auto section = [&](const QString &title, bool sec) {
         auto *t = new QLabel(title);
@@ -745,9 +744,9 @@ inline QWidget *buildSettingsPage(const Nav &nav)
         grid->setColumnStretch(2, 1);
         v->addLayout(grid);
     };
-    section(QStringLiteral("Повідомлення безпеки"), true);
-    section(QStringLiteral("Повідомлення про обслуговування"), false);
-    auto *rel = new QLabel(QStringLiteral("Супутні параметри"));
+    section(tr7("Security messages"), true);
+    section(tr7("Maintenance messages"), false);
+    auto *rel = new QLabel(tr7("Related settings"));
     rel->setStyleSheet(QStringLiteral("color: #1e3287;"));
     QFont rf = rel->font();
     rf.setPixelSize(13);
@@ -757,14 +756,14 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     auto *links = new QVBoxLayout;
     links->setContentsMargins(16, 2, 0, 0);
     links->setSpacing(5);
-    links->addWidget(link(QStringLiteral("Параметри звітів про проблеми"), [] { reportSettings({}); }), 0, Qt::AlignLeft);
-    links->addWidget(link(QStringLiteral("Параметри Windows Update"), [nav] { nav.open(Win7Update::SettingsView); }), 0, Qt::AlignLeft);
+    links->addWidget(link(tr7("Problem Reporting Settings"), [] { reportSettings({}); }), 0, Qt::AlignLeft);
+    links->addWidget(link(tr7("Windows Update settings"), [nav] { nav.open(Win7Update::SettingsView); }), 0, Qt::AlignLeft);
     v->addLayout(links);
     v->addStretch(1);
     auto *bar = new QHBoxLayout;
     bar->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     for (QPushButton *b : {ok, cancel}) {
         b->setMinimumWidth(80);
         bar->addWidget(b);
@@ -785,19 +784,19 @@ inline QWidget *buildSettingsPage(const Nav &nav)
 inline void showReport(QWidget *parent, const Report &r)
 {
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Звіт про проблему"));
+    d.setWindowTitle(tr7("Problem report"));
     auto *v = new QVBoxLayout(&d);
     v->setContentsMargins(16, 14, 16, 12);
     v->addWidget(Win7Programs::pageTitle(r.program));
     auto *grid = new QGridLayout;
     grid->setHorizontalSpacing(20);
-    const QList<QPair<QString, QString>> rows{{QStringLiteral("Підсумок"), QStringLiteral("Припинено роботу")},
-                                              {QStringLiteral("Дата"), r.date.toString(QStringLiteral("dd.MM.yyyy HH:mm"))},
-                                              {QStringLiteral("Стан"), r.sent ? QStringLiteral("Звіт надіслано") : QStringLiteral("Звіт не надіслано")},
-                                              {QStringLiteral("Шлях до програми"), r.path},
-                                              {QStringLiteral("Пакет"), r.package},
-                                              {QStringLiteral("Сигнал"), r.signal},
-                                              {QStringLiteral("Файл звіту"), r.file}};
+    const QList<QPair<QString, QString>> rows{{tr7("Summary"), tr7("Stopped working")},
+                                              {tr7("Date"), r.date.toString(QStringLiteral("dd.MM.yyyy HH:mm"))},
+                                              {tr7("Status"), r.sent ? tr7("Report sent") : tr7("Report not sent")},
+                                              {tr7("Application Path"), r.path},
+                                              {tr7("Package"), r.package},
+                                              {tr7("Signal"), r.signal},
+                                              {tr7("Report file"), r.file}};
     int i = 0;
     for (const auto &row : rows) {
         grid->addWidget(grey(row.first), i, 0, Qt::AlignTop);
@@ -828,12 +827,11 @@ inline QWidget *buildArchivePage(const Nav &nav)
     auto *v = new QVBoxLayout(w);
     v->setContentsMargins(32, 18, 30, 16);
     v->setSpacing(6);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Перегляд архівованих повідомлень про проблеми комп'ютера")));
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Щоб переглянути відомості про проблему, двічі клацніть повідомлення. Тут показано звіти про "
-                                                      "аварійне завершення роботи програм, збережені на цьому комп'ютері.")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Review archived messages about computer problems")));
+    v->addWidget(Win7Programs::wrapped(tr7("To view details about a problem, double-click the message. These are the reports of programs that stopped working, saved on this computer.")));
     auto *tree = new QTreeWidget;
     tree->setRootIsDecorated(true);
-    tree->setHeaderLabels({QStringLiteral("Джерело"), QStringLiteral("Підсумок"), QStringLiteral("Дата"), QStringLiteral("Стан")});
+    tree->setHeaderLabels({tr7("Source"), tr7("Summary"), tr7("Date"), tr7("Status")});
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     Win7HeaderView::install(tree);
     const QList<Report> reps = reports();
@@ -846,8 +844,8 @@ inline QWidget *buildArchivePage(const Nav &nav)
             parent->setFirstColumnSpanned(false);
             groups.insert(r.program, parent);
         }
-        auto *it = new QTreeWidgetItem(parent, {QString(), QStringLiteral("Припинено роботу"), r.date.toString(QStringLiteral("dd.MM.yyyy HH:mm")),
-                                                r.sent ? QStringLiteral("Звіт надіслано") : QStringLiteral("Звіт не надіслано")});
+        auto *it = new QTreeWidgetItem(parent, {QString(), tr7("Stopped working"), r.date.toString(QStringLiteral("dd.MM.yyyy HH:mm")),
+                                                r.sent ? tr7("Report sent") : tr7("Report not sent")});
         it->setData(0, Qt::UserRole, r.file);
     }
     tree->expandAll();
@@ -855,7 +853,7 @@ inline QWidget *buildArchivePage(const Nav &nav)
     tree->setColumnWidth(1, 160);
     tree->setColumnWidth(2, 130);
     v->addWidget(tree, 1);
-    auto *count = grey(QStringLiteral("Кількість повідомлень: %1").arg(reps.size()));
+    auto *count = grey(tr7("Messages: %1").arg(reps.size()));
     v->addWidget(count);
     QObject::connect(tree, &QTreeWidget::itemDoubleClicked, w, [w, reps](QTreeWidgetItem *it) {
         const QString file = it->data(0, Qt::UserRole).toString();
@@ -866,8 +864,8 @@ inline QWidget *buildArchivePage(const Nav &nav)
         }
     });
     auto *bar = new QHBoxLayout;
-    auto *solutions = new QPushButton(QStringLiteral("Перевірити наявність рішень"));
-    auto *del = new QPushButton(QStringLiteral("Видалити"));
+    auto *solutions = new QPushButton(tr7("Check for solutions"));
+    auto *del = new QPushButton(tr7("Delete"));
     auto *ok = new QPushButton(QStringLiteral("OK"));
     bar->addWidget(solutions);
     bar->addStretch(1);
@@ -908,7 +906,7 @@ inline QWidget *buildArchivePage(const Nav &nav)
             top->setHidden(shown == 0);
             left += shown;
         }
-        count->setText(QStringLiteral("Кількість повідомлень: %1").arg(left));
+        count->setText(tr7("Messages: %1").arg(left));
     });
     return w;
 }
@@ -922,11 +920,11 @@ inline QString viewTitle(int v)
 {
     switch (v) {
     case SettingsView:
-        return QStringLiteral("Змінення параметрів Центру підтримки");
+        return tr7("Change Action Center settings", "page title");
     case ArchiveView:
-        return QStringLiteral("Перегляд архівованих повідомлень");
+        return tr7("View archived messages", "page title");
     default:
-        return QStringLiteral("Центр підтримки");
+        return tr7("Action Center");
     }
 }
 

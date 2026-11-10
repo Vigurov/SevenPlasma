@@ -15,6 +15,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7display.h"
 #include "win7programs.h"
@@ -54,8 +55,8 @@ inline bool isPerfView(int v)
 
 inline QString viewTitle(int v)
 {
-    return v == ToolsView ? QStringLiteral("Додаткові засоби") : v == DetailsView ? QStringLiteral("Докладні відомості про продуктивність і систему")
-                                                                                     : QStringLiteral("Лічильники та засоби продуктивності");
+    return v == ToolsView ? tr7("Advanced Tools") : v == DetailsView ? tr7("Performance Information and System Details")
+                                                                                     : tr7("Performance Information and Tools");
 }
 
 struct Nav {
@@ -315,22 +316,22 @@ inline bool onBattery()
 inline bool rate(QWidget *parent)
 {
     if (onBattery()) {
-        QMessageBox::information(parent, QStringLiteral("Лічильники та засоби продуктивності"),
-                                 QStringLiteral("Індекс продуктивності Windows не визначається під час роботи від батарей. Підключіть комп'ютер до мережі живлення."));
+        QMessageBox::information(parent, tr7("Performance Information and Tools"),
+                                 tr7("The Windows Experience Index cannot be assessed while running on batteries. Connect the computer to a power outlet."));
         return false;
     }
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Індекс продуктивності Windows"));
+    dlg.setWindowTitle(tr7("Windows Experience Index"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
     auto *v = new QVBoxLayout(&dlg);
     v->setContentsMargins(20, 18, 20, 18);
-    auto *head = new QLabel(QStringLiteral("Оцінювання цього комп'ютера..."));
+    auto *head = new QLabel(tr7("Rating this computer..."));
     QFont hf = head->font();
     hf.setPixelSize(15);
     head->setFont(hf);
     head->setStyleSheet(QStringLiteral("color: #1e3287;"));
     v->addWidget(head);
-    v->addWidget(new QLabel(QStringLiteral("Це може зайняти кілька хвилин. Під час оцінювання екран може блимати.")));
+    v->addWidget(new QLabel(tr7("This might take a few minutes. During the assessment, the screen might flicker.")));
     auto *step = new QLabel;
     v->addWidget(step);
     auto *bar = new QProgressBar;
@@ -361,23 +362,23 @@ inline bool rate(QWidget *parent)
     // WinSAT repeats every test and keeps the best pass, so a busy moment (another program, a background
     // update) does not lower the score: the same computer gets the same index every time
     const int passes = 3;
-    status(QStringLiteral("Оцінювання процесора..."), 0);
+    status(tr7("Assessing processor..."), 0);
     double cpu = 0, mem = 0, fill = 0, tris = 0;
     QPair<double, double> disk{0, 0};
     QString renderer;
     for (int i = 0; i < passes; ++i) {
         cpu = qMax(cpu, runAsync(cpuTest));
     }
-    status(QStringLiteral("Оцінювання пам'яті..."), 1);
+    status(tr7("Assessing memory..."), 1);
     for (int i = 0; i < passes; ++i) {
         mem = qMax(mem, runAsync(memoryTest));
     }
-    status(QStringLiteral("Оцінювання основного жорсткого диска..."), 2);
+    status(tr7("Assessing primary hard disk..."), 2);
     for (int i = 0; i < passes; ++i) {
         const auto d = runAsync(diskTest);
         disk = {qMax(disk.first, d.first), qMax(disk.second, d.second)};
     }
-    status(QStringLiteral("Оцінювання графіки..."), 3);
+    status(tr7("Assessing graphics..."), 3);
     for (int i = 0; i < passes; ++i) {
         const auto [f, t, r] = graphicsTest();
         fill = qMax(fill, f);
@@ -385,7 +386,7 @@ inline bool rate(QWidget *parent)
         renderer = r;
         QCoreApplication::processEvents();
     }
-    status(QStringLiteral("Обчислення індексу продуктивності..."), 5);
+    status(tr7("Calculating the Windows Experience Index..."), 5);
     const double sCpu = round1(scale(cpu, {{10, 2.0}, {40, 4.0}, {120, 5.9}, {300, 7.0}, {800, 7.9}}));
     const double sMem = round1(scale(mem, {{1, 2.0}, {3, 4.0}, {6, 5.9}, {10, 7.0}, {20, 7.9}}));
     const double sGfx = round1(scale(fill, {{0.1, 2.0}, {0.5, 4.0}, {2, 5.9}, {8, 7.0}, {30, 7.9}}));
@@ -416,7 +417,7 @@ inline bool rate(QWidget *parent)
 
 inline QString fmt(double v)
 {
-    return QLocale(QLocale::Ukrainian).toString(v, 'f', 1);
+    return QLocale{}.toString(v, 'f', 1);
 }
 
 /** the original WinSATAPI badge (bitmap 211/212 big, 221/222 small) with the score on top */
@@ -513,7 +514,7 @@ inline void helpText(QWidget *parent, const QString &title, const QString &text)
     t->setTextFormat(Qt::RichText);
     v->addWidget(t);
     auto *bb = new QDialogButtonBox(QDialogButtonBox::Close);
-    bb->button(QDialogButtonBox::Close)->setText(QStringLiteral("Закрити"));
+    bb->button(QDialogButtonBox::Close)->setText(tr7("Close"));
     QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
     v->addWidget(bb);
     d.resize(520, d.sizeHint().height());
@@ -522,16 +523,16 @@ inline void helpText(QWidget *parent, const QString &title, const QString &text)
 
 inline QList<Win7Display::SideItem> sideLinks(const Nav &nav)
 {
-    return {{QStringLiteral("Налаштування візуальних ефектів"), [] { Win7VisualFx::open(); }, QString(), true},
-            {QStringLiteral("Налаштування параметрів індексування"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--indexing")}); }},
-            {QStringLiteral("Налаштування параметрів живлення"), [nav] { nav.open(Win7Power::PlansView); }},
-            {QStringLiteral("Очищення диска"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cleanmgr")}); }},
-            {QStringLiteral("Додаткові засоби"), [nav] { nav.open(ToolsView); }}};
+    return {{tr7("Adjust visual effects"), [] { Win7VisualFx::open(); }, QString(), true},
+            {tr7("Adjust indexing options"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--indexing")}); }},
+            {tr7("Adjust power settings"), [nav] { nav.open(Win7Power::PlansView); }},
+            {tr7("Disk Cleanup"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cleanmgr")}); }},
+            {tr7("Advanced Tools"), [nav] { nav.open(ToolsView); }}};
 }
 
 inline QList<Win7Display::SideItem> seeAlso(const Nav &nav)
 {
-    return {{QStringLiteral("Центр підтримки"), [nav] { nav.open(Win7Action::CenterView); }}};
+    return {{tr7("Action Center"), [nav] { nav.open(Win7Action::CenterView); }}};
 }
 
 inline QLabel *bold(const QString &t)
@@ -550,12 +551,12 @@ inline QWidget *buildPerfPage(const Nav &nav)
     auto *v = new QVBoxLayout(content);
     v->setContentsMargins(32, 18, 30, 18);
     v->setSpacing(8);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Оцінювання й підвищення продуктивності комп'ютера")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Rate and improve your computer's performance")));
     QSettings &s = store();
     const bool rated = s.contains(QStringLiteral("LastUpdate"));
     if (!rated) {
-        v->addWidget(Win7Programs::wrapped(QStringLiteral("Індекс продуктивності Windows для цього комп'ютера ще не визначено.")));
-        auto *rateBtn = new QPushButton(QStringLiteral("Оцінити цей комп'ютер"));
+        v->addWidget(Win7Programs::wrapped(tr7("Your computer has not been rated yet.")));
+        auto *rateBtn = new QPushButton(tr7("Rate this computer"));
         v->addWidget(rateBtn, 0, Qt::AlignLeft);
         QObject::connect(rateBtn, &QPushButton::clicked, rateBtn, [nav, rateBtn] {
             if (rate(rateBtn->window())) {
@@ -565,7 +566,7 @@ inline QWidget *buildPerfPage(const Nav &nav)
         v->addStretch(1);
         return root;
     }
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Індекс продуктивності Windows оцінює основні компоненти системи за шкалою від 1,0 до 7,9.")));
+    v->addWidget(Win7Programs::wrapped(tr7("The Windows Experience Index assesses key system components on a scale of 1.0 to 7.9.")));
     v->addSpacing(8);
     // the table, as PerfCenterCPL draws it
     auto *table = new ScoreTable;
@@ -573,22 +574,22 @@ inline QWidget *buildPerfPage(const Nav &nav)
     g->setContentsMargins(2, 8, 0, 6);
     g->setHorizontalSpacing(14);
     g->setVerticalSpacing(12);
-    table->header = bold(QStringLiteral("Компонент"));
+    table->header = bold(tr7("Component"));
     g->addWidget(table->header, 0, 0);
-    g->addWidget(new QLabel(QStringLiteral("Що оцінюється")), 0, 1);
-    g->addWidget(new QLabel(QStringLiteral("Підоцінка")), 0, 2, Qt::AlignRight);
-    table->baseHeader = new QLabel(QStringLiteral("Базовий індекс"));
+    g->addWidget(new QLabel(tr7("What is rated")), 0, 1);
+    g->addWidget(new QLabel(tr7("Subscore")), 0, 2, Qt::AlignRight);
+    table->baseHeader = new QLabel(tr7("Base score"));
     table->baseHeader->setMinimumWidth(170);
     qobject_cast<QLabel *>(table->baseHeader)->setAlignment(Qt::AlignCenter);
     g->addWidget(table->baseHeader, 0, 3);
     struct Row {
         QString name, what, key;
     };
-    const QList<Row> rows{{QStringLiteral("Процесор:"), QStringLiteral("Кількість обчислень за секунду"), QStringLiteral("Processor")},
-                          {QStringLiteral("Пам'ять (ОЗП):"), QStringLiteral("Кількість операцій з пам'яттю за секунду"), QStringLiteral("Memory")},
-                          {QStringLiteral("Графіка:"), QStringLiteral("Продуктивність робочого столу для Windows Aero"), QStringLiteral("Graphics")},
-                          {QStringLiteral("Ігрова графіка:"), QStringLiteral("Продуктивність тривимірної графіки для роботи й ігор"), QStringLiteral("Gaming")},
-                          {QStringLiteral("Основний жорсткий диск:"), QStringLiteral("Швидкість передачі даних на диску"), QStringLiteral("Disk")}};
+    const QList<Row> rows{{tr7("Processor:"), tr7("Calculations per second"), QStringLiteral("Processor")},
+                          {tr7("Memory (RAM):"), tr7("Memory operations per second"), QStringLiteral("Memory")},
+                          {tr7("Graphics:"), tr7("Desktop performance for Windows Aero"), QStringLiteral("Graphics")},
+                          {tr7("Gaming graphics:"), tr7("3D business and gaming graphics performance"), QStringLiteral("Gaming")},
+                          {tr7("Primary hard disk:"), tr7("Disk data transfer rate"), QStringLiteral("Disk")}};
     double base = 7.9;
     QString lowest;
     for (const Row &r : rows) {
@@ -621,7 +622,7 @@ inline QWidget *buildPerfPage(const Nav &nav)
     tileBox->setSpacing(4);
     tileBox->addStretch(1);
     tileBox->addWidget(new ScoreTile(base), 0, Qt::AlignHCenter);
-    auto *det = new QLabel(QStringLiteral("Визначається\nнайнижчою\nпідоцінкою"));
+    auto *det = new QLabel(tr7("Determined by\nlowest subscore"));
     det->setAlignment(Qt::AlignHCenter);
     tileBox->addWidget(det);
     tileBox->addStretch(1);
@@ -640,32 +641,19 @@ inline QWidget *buildPerfPage(const Nav &nav)
         return l;
     };
     links->addWidget(icon(QStringLiteral("seven-wei-help"), 32), 0, 0);
-    links->addWidget(new Link(QStringLiteral("Що означають ці цифри?"), [content] {
-        helpText(content->window(), QStringLiteral("Що означають ці цифри?"),
-                 QStringLiteral("<p>Індекс продуктивності Windows вимірює можливості апаратного й програмного забезпечення комп'ютера та подає результат у вигляді "
-                                "числа, яке називається <b>базовим індексом</b>. Що вищий базовий індекс, то краще й швидше працюватиме комп'ютер, особливо під час "
-                                "виконання складніших і ресурсоємніших завдань.</p>"
-                                "<p>Кожен компонент отримує окрему <b>підоцінку</b>. Базовий індекс визначається найнижчою підоцінкою, тому що загальна "
-                                "продуктивність обмежується найповільнішим компонентом.</p>"
-                                "<p>Зараз оцінки становлять від 1,0 до 7,9.</p>"
-                                "<ul><li><b>1,0–2,9</b> — достатньо для звичайних офісних завдань і перегляду Інтернету;</li>"
-                                "<li><b>3,0–4,9</b> — можна використовувати Aero і багато програм одночасно;</li>"
-                                "<li><b>5,0–7,9</b> — підходить для ігор, обробки відео й інших ресурсоємних завдань.</li></ul>"));
+    links->addWidget(new Link(tr7("What do these numbers mean?"), [content] {
+        helpText(content->window(), tr7("What do these numbers mean?"),
+                 tr7("<p>The Windows Experience Index measures the capability of your computer's hardware and software configuration and expresses this measurement as a number called a <b>base score</b>. A higher base score generally means that your computer will perform better and faster than a computer with a lower base score, especially when performing more advanced and resource-intensive tasks.</p><p>Each hardware component receives an individual <b>subscore</b>. Your computer's base score is determined by the lowest subscore, because overall performance is limited by the slowest component.</p><p>Currently, scores range from 1.0 to 7.9.</p><ul><li><b>1.0–2.9</b> - enough for general office work and browsing the Internet;</li><li><b>3.0–4.9</b> - can run Aero and many programs at the same time;</li><li><b>5.0–7.9</b> - suited for games, video editing and other demanding tasks.</li></ul>"));
     }), 0, 1);
     links->addWidget(icon(QStringLiteral("seven-wei-help"), 32), 1, 0);
-    links->addWidget(new Link(QStringLiteral("Поради щодо підвищення продуктивності\nкомп'ютера."), [content] {
-        helpText(content->window(), QStringLiteral("Поради щодо підвищення продуктивності комп'ютера"),
-                 QStringLiteral("<ul><li>Закрийте програми, якими не користуєтеся, і приберіть зайві програми з автозавантаження.</li>"
-                                "<li>Звільніть місце на диску за допомогою засобу «Очищення диска».</li>"
-                                "<li>Вимкніть зайві візуальні ефекти в розділі «Налаштування візуальних ефектів».</li>"
-                                "<li>Виберіть план живлення «Висока продуктивність», коли комп'ютер працює від мережі.</li>"
-                                "<li>Перевірте наявність оновлень драйверів у диспетчері пристроїв.</li>"
-                                "<li>Щоб підвищити базовий індекс, замініть компонент із найнижчою підоцінкою.</li></ul>"));
+    links->addWidget(new Link(tr7("Tips for improving your computer's\nperformance."), [content] {
+        helpText(content->window(), tr7("Tips for improving your computer's performance"),
+                 tr7("<ul><li>Close programs you are not using and remove unneeded programs from startup.</li><li>Free up disk space with Disk Cleanup.</li><li>Turn off unneeded visual effects in Adjust visual effects.</li><li>Choose the High performance power plan when the computer is plugged in.</li><li>Check Device Manager for driver updates.</li><li>To raise the base score, replace the component with the lowest subscore.</li></ul>"));
     }), 1, 1);
     auto *printRow = new QHBoxLayout;
     printRow->setSpacing(10);
     printRow->addWidget(icon(QStringLiteral("seven-wei-print"), 48), 0, Qt::AlignTop);
-    printRow->addWidget(new Link(QStringLiteral("Переглянути й надрукувати докладні\nвідомості про продуктивність\nкомп'ютера та систему"), [nav] {
+    printRow->addWidget(new Link(tr7("View and print detailed performance\nand system information"), [nav] {
         nav.open(DetailsView);
     }), 0, Qt::AlignTop);
     links->addLayout(printRow, 0, 2, 2, 1, Qt::AlignTop | Qt::AlignRight);
@@ -682,7 +670,7 @@ inline QWidget *buildPerfPage(const Nav &nav)
     bh->setContentsMargins(10, 14, 10, 14);
     bh->setSpacing(18);
     bh->addWidget(icon(QStringLiteral("seven-wei-online"), 48));
-    bh->addWidget(new Link(QStringLiteral("Докладніше про оцінки та програмне\nзабезпечення (в Інтернеті)"), [] {
+    bh->addWidget(new Link(tr7("Learn more about the scores and\nsoftware online"), [] {
         QDesktopServices::openUrl(QUrl(QStringLiteral("https://en.wikipedia.org/wiki/Windows_System_Assessment_Tool")));
     }));
     bh->addStretch(1);
@@ -691,14 +679,14 @@ inline QWidget *buildPerfPage(const Nav &nav)
     v->addSpacing(4);
     auto *bottom = new QHBoxLayout;
     auto *when = new QVBoxLayout;
-    when->addWidget(new QLabel(QStringLiteral("Оцінки відповідають поточному стану компонентів системи")));
-    when->addWidget(new QLabel(QStringLiteral("Останнє оновлення: %1").arg(s.value(QStringLiteral("LastUpdate")).toDateTime().toString(QStringLiteral("dd.MM.yyyy H:mm:ss")))));
+    when->addWidget(new QLabel(tr7("Your scores are current")));
+    when->addWidget(new QLabel(tr7("Last refreshed: %1").arg(s.value(QStringLiteral("LastUpdate")).toDateTime().toString(QStringLiteral("dd.MM.yyyy H:mm:ss")))));
     bottom->addLayout(when);
     bottom->addStretch(1);
     auto *shield = new QLabel;
     shield->setPixmap(QIcon::fromTheme(QStringLiteral("seven-cp-shield")).pixmap(16, 16));
     bottom->addWidget(shield);
-    bottom->addWidget(new Link(QStringLiteral("Повторити оцінку"), [nav, content] {
+    bottom->addWidget(new Link(tr7("Re-run the assessment"), [nav, content] {
         if (rate(content->window())) {
             nav.open(PerfView);
         }
@@ -718,8 +706,8 @@ inline QWidget *buildToolsPage(const Nav &nav)
     auto *v = new QVBoxLayout(content);
     v->setContentsMargins(32, 18, 30, 18);
     v->setSpacing(10);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Додаткові засоби")));
-    v->addWidget(Win7Programs::wrapped(QStringLiteral("Ці засоби дають змогу отримати додаткові відомості про продуктивність.")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Advanced Tools")));
+    v->addWidget(Win7Programs::wrapped(tr7("These tools give you more information about performance.")));
     v->addSpacing(6);
     struct Tool {
         QString icon, title, desc;
@@ -727,23 +715,23 @@ inline QWidget *buildToolsPage(const Nav &nav)
         bool shield = false;
     };
     const QList<Tool> tools{
-        {QStringLiteral("seven-perf"), QStringLiteral("Очистити всі оцінки індексу продуктивності Windows і повторно оцінити систему"),
-         QStringLiteral("Примусово повторити всі тести індексу продуктивності Windows."),
+        {QStringLiteral("seven-perf"), tr7("Clear all Windows Experience Index scores and re-rate the system"),
+         tr7("Force all Windows Experience Index tests to run again."),
          [nav] {
              store().clear();
              nav.open(PerfView);
          },
          true},
-        {QStringLiteral("seven-ev-app"), QStringLiteral("Переглянути відомості про продуктивність у журналі подій"), QStringLiteral("Переглянути відомості про проблеми, що впливають на продуктивність."),
+        {QStringLiteral("seven-ev-app"), tr7("View performance details in Event log"), tr7("View information about issues that affect performance."),
          [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--eventvwr")}); }},
-        {QStringLiteral("seven-resmon"), QStringLiteral("Відкрити монітор ресурсів"), QStringLiteral("Переглянути використання системних ресурсів у реальному часі та керувати службами й програмами."),
+        {QStringLiteral("seven-resmon"), tr7("Open Resource Monitor"), tr7("View real-time usage of system resources and manage services and programs."),
          [] { launch(QDir::homePath() + QStringLiteral("/.local/bin/seven-taskmgr"), {QStringLiteral("--resmon")}); }},
-        {QStringLiteral("utilities-system-monitor"), QStringLiteral("Відкрити диспетчер завдань"), QStringLiteral("Отримати відомості про програми й процеси, запущені на комп'ютері."),
+        {QStringLiteral("utilities-system-monitor"), tr7("Open Task Manager"), tr7("Get information about the programs and processes running on your computer."),
          [] { launchWin7Tool(QStringLiteral("seven-taskmgr"), QStringLiteral("plasma-systemmonitor")); }},
-        {QStringLiteral("seven-cps-system"), QStringLiteral("Переглянути додаткові відомості про систему"), QStringLiteral("Переглянути відомості про апаратні та програмні компоненти комп'ютера."),
+        {QStringLiteral("seven-cps-system"), tr7("View advanced system details in System Information"), tr7("View details about the hardware and software components of your computer."),
          [] { launchWin7Tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter")); }},
-        {QStringLiteral("preferences-desktop-effects"), QStringLiteral("Налаштувати оформлення й продуктивність Windows"),
-         QStringLiteral("Вибрати параметри візуальних ефектів."), [] { Win7VisualFx::open(); }, true},
+        {QStringLiteral("preferences-desktop-effects"), tr7("Adjust the appearance and performance of Windows"),
+         tr7("Choose visual effect settings."), [] { Win7VisualFx::open(); }, true},
     };
     for (const Tool &t : tools) {
         auto *row = new QHBoxLayout;
@@ -781,17 +769,17 @@ inline QString gpuMemory()
     if (p.waitForFinished(3000) && p.exitCode() == 0) {
         const int mb = QString::fromUtf8(p.readAllStandardOutput()).trimmed().section(QLatin1Char('\n'), 0, 0).toInt();
         if (mb > 0) {
-            return QStringLiteral("%1 МБ").arg(QLocale(QLocale::Ukrainian).toString(mb));
+            return tr7("%1 MB").arg(QLocale{}.toString(mb));
         }
     }
     Q_UNUSED(nv)
     for (const QString &c : QDir(QStringLiteral("/sys/class/drm")).entryList({QStringLiteral("card?")}, QDir::Dirs | QDir::System)) {
         const qint64 vram = readFile(QStringLiteral("/sys/class/drm/%1/device/mem_info_vram_total").arg(c)).trimmed().toLongLong();
         if (vram > 0) {
-            return QStringLiteral("%1 МБ").arg(QLocale(QLocale::Ukrainian).toString(vram / 1048576));
+            return tr7("%1 MB").arg(QLocale{}.toString(vram / 1048576));
         }
     }
-    return QStringLiteral("Не виявлено");
+    return tr7("Not detected");
 }
 
 inline QWidget *buildDetailsPage(const Nav &nav)
@@ -801,7 +789,7 @@ inline QWidget *buildDetailsPage(const Nav &nav)
     auto *v = new QVBoxLayout(content);
     v->setContentsMargins(32, 18, 30, 18);
     v->setSpacing(6);
-    v->addWidget(Win7Programs::pageTitle(QStringLiteral("Докладні відомості про продуктивність і систему")));
+    v->addWidget(Win7Programs::pageTitle(tr7("Performance Information and System Details")));
     QSettings &s = store();
     auto *g = new QGridLayout;
     g->setHorizontalSpacing(30);
@@ -814,40 +802,40 @@ inline QWidget *buildDetailsPage(const Nav &nav)
     };
     auto line = [&](const QString &k, const QString &val) {
         g->addWidget(new QLabel(k), row, 0, Qt::AlignTop);
-        auto *l = Win7Programs::wrapped(val.isEmpty() ? QStringLiteral("Не виявлено") : val);
+        auto *l = Win7Programs::wrapped(val.isEmpty() ? tr7("Not detected") : val);
         l->setTextInteractionFlags(Qt::TextSelectableByMouse);
         g->addWidget(l, row++, 1);
     };
-    const QLocale uk(QLocale::Ukrainian);
+    const QLocale uk;
     auto num = [&uk](double d, int prec) {
         return uk.toString(d, 'f', prec);
     };
-    section(QStringLiteral("Компонент — Подробиці"));
-    line(QStringLiteral("Процесор"), QStringLiteral("%1 (%2 МБ/с стиснення даних)").arg(fmt(s.value(QStringLiteral("Scores/Processor")).toDouble()),
+    section(tr7("Component - Details"));
+    line(tr7("Processor"), tr7("%1 (%2 MB/s data compression)").arg(fmt(s.value(QStringLiteral("Scores/Processor")).toDouble()),
                                                                                           num(s.value(QStringLiteral("Raw/CpuMBs")).toDouble(), 0)));
-    line(QStringLiteral("Пам'ять (ОЗП)"), QStringLiteral("%1 (%2 ГБ/с)").arg(fmt(s.value(QStringLiteral("Scores/Memory")).toDouble()), num(s.value(QStringLiteral("Raw/MemGBs")).toDouble(), 1)));
-    line(QStringLiteral("Графіка"), QStringLiteral("%1 (%2 Гпікс/с)").arg(fmt(s.value(QStringLiteral("Scores/Graphics")).toDouble()), num(s.value(QStringLiteral("Raw/FillGpix")).toDouble(), 1)));
-    line(QStringLiteral("Ігрова графіка"), QStringLiteral("%1 (%2 млн трикутників/с)").arg(fmt(s.value(QStringLiteral("Scores/Gaming")).toDouble()), num(s.value(QStringLiteral("Raw/MTris")).toDouble(), 0)));
-    line(QStringLiteral("Основний жорсткий диск"), QStringLiteral("%1 (%2 МБ/с, %3 операцій 4К/с)").arg(fmt(s.value(QStringLiteral("Scores/Disk")).toDouble()),
+    line(tr7("Memory (RAM)"), tr7("%1 (%2 GB/s)").arg(fmt(s.value(QStringLiteral("Scores/Memory")).toDouble()), num(s.value(QStringLiteral("Raw/MemGBs")).toDouble(), 1)));
+    line(tr7("Graphics"), tr7("%1 (%2 Gpixels/s)").arg(fmt(s.value(QStringLiteral("Scores/Graphics")).toDouble()), num(s.value(QStringLiteral("Raw/FillGpix")).toDouble(), 1)));
+    line(tr7("Gaming graphics"), tr7("%1 (%2 million triangles/s)").arg(fmt(s.value(QStringLiteral("Scores/Gaming")).toDouble()), num(s.value(QStringLiteral("Raw/MTris")).toDouble(), 0)));
+    line(tr7("Primary hard disk"), tr7("%1 (%2 MB/s, %3 4K operations/s)").arg(fmt(s.value(QStringLiteral("Scores/Disk")).toDouble()),
                                                                                                        num(s.value(QStringLiteral("Raw/DiskSeqMBs")).toDouble(), 0),
                                                                                                        num(s.value(QStringLiteral("Raw/DiskIops")).toDouble(), 0)));
-    section(QStringLiteral("Система"));
+    section(tr7("System"));
     const QString dmi = QStringLiteral("/sys/class/dmi/id/");
-    line(QStringLiteral("Виробник"), readFile(dmi + QStringLiteral("sys_vendor")).trimmed());
-    line(QStringLiteral("Модель"), readFile(dmi + QStringLiteral("product_version")).trimmed());
-    line(QStringLiteral("Загальний обсяг системної пам'яті"),
-         QStringLiteral("%1 ГБ ОЗП").arg(num(keyValue(readFile(QStringLiteral("/proc/meminfo")), QStringLiteral("MemTotal"), QLatin1Char(':')).section(QLatin1Char(' '), 0, 0).toDouble() / 1048576.0, 2)));
-    line(QStringLiteral("Тип системи"), QSysInfo::currentCpuArchitecture().contains(QLatin1String("64")) ? QStringLiteral("64-розрядна операційна система") : QStringLiteral("32-розрядна операційна система"));
-    line(QStringLiteral("Кількість ядер процесора"), QString::number(std::thread::hardware_concurrency()));
-    line(QStringLiteral("Підтримка 64-розрядних обчислень"), QStringLiteral("Так"));
-    section(QStringLiteral("Сховище"));
+    line(tr7("Manufacturer"), readFile(dmi + QStringLiteral("sys_vendor")).trimmed());
+    line(tr7("Model", "system"), readFile(dmi + QStringLiteral("product_version")).trimmed());
+    line(tr7("Total system memory"),
+         tr7("%1 GB RAM").arg(num(keyValue(readFile(QStringLiteral("/proc/meminfo")), QStringLiteral("MemTotal"), QLatin1Char(':')).section(QLatin1Char(' '), 0, 0).toDouble() / 1048576.0, 2)));
+    line(tr7("System type"), QSysInfo::currentCpuArchitecture().contains(QLatin1String("64")) ? tr7("64-bit Operating System") : tr7("32-bit Operating System"));
+    line(tr7("Number of processor cores"), QString::number(std::thread::hardware_concurrency()));
+    line(tr7("64-bit capable"), tr7("Yes"));
+    section(tr7("Storage", "system"));
     const QStorageInfo sys(QStringLiteral("/"));
-    line(QStringLiteral("Розділ диска (/)"), QStringLiteral("%1 ГБ вільно (%2 ГБ усього)").arg(num(sys.bytesAvailable() / 1e9, 0), num(sys.bytesTotal() / 1e9, 0)));
-    section(QStringLiteral("Графіка"));
-    line(QStringLiteral("Тип відеоадаптера"), s.value(QStringLiteral("Raw/Renderer")).toString());
-    line(QStringLiteral("Загальний обсяг відеопам'яті"), gpuMemory());
+    line(tr7("Disk partition (/)"), tr7("%1 GB free (%2 GB total)").arg(num(sys.bytesAvailable() / 1e9, 0), num(sys.bytesTotal() / 1e9, 0)));
+    section(tr7("Graphics"));
+    line(tr7("Display adapter type"), s.value(QStringLiteral("Raw/Renderer")).toString());
+    line(tr7("Total available graphics memory"), gpuMemory());
     const QScreen *scr = QGuiApplication::primaryScreen();
-    line(QStringLiteral("Роздільна здатність основного монітора"), scr ? QStringLiteral("%1x%2").arg(scr->size().width() * scr->devicePixelRatio()).arg(scr->size().height() * scr->devicePixelRatio()) : QString());
+    line(tr7("Primary monitor resolution"), scr ? QStringLiteral("%1x%2").arg(scr->size().width() * scr->devicePixelRatio()).arg(scr->size().height() * scr->devicePixelRatio()) : QString());
     g->setColumnMinimumWidth(0, 300);
     g->setColumnStretch(2, 1);
     v->addLayout(g);

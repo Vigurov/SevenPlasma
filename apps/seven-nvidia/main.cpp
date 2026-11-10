@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * seven-nvidia: the NVIDIA Control Panel of a Windows 7 laptop (Optimus), after the screenshots in
  * ~/Desktop/win7 (10-18): the "Select a Task..." tree, the blue banners, Manage 3D settings with Global and
@@ -124,20 +125,7 @@ inline void setRunMenu(bool on)
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         return;
     }
-    f.write(QStringLiteral(
-                "[Desktop Entry]\n"
-                "Type=Service\n"
-                "MimeType=application/x-executable;application/x-desktop;application/x-shellscript;application/vnd.microsoft.portable-executable;\n"
-                "Actions=nvidia;integrated;\n"
-                "X-KDE-Submenu=Запустити з графічним процесором\n"
-                "Icon=nvidia-settings\n\n"
-                "[Desktop Action nvidia]\n"
-                "Name=Високопродуктивний процесор NVIDIA\n"
-                "Icon=nvidia-settings\n"
-                "Exec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only kioclient exec %f\n\n"
-                "[Desktop Action integrated]\n"
-                "Name=Інтегрований графічний процесор\n"
-                "Exec=kioclient exec %f\n")
+    f.write(QStringLiteral("[Desktop Entry]\nType=Service\nMimeType=application/x-executable;application/x-desktop;application/x-shellscript;application/vnd.microsoft.portable-executable;\nActions=nvidia;integrated;\nX-KDE-Submenu=Run with graphics processor\nX-KDE-Submenu[uk]=Запустити з графічним процесором\nIcon=nvidia-settings\n\n[Desktop Action nvidia]\nName=High-performance NVIDIA processor\nName[uk]=Високопродуктивний процесор NVIDIA\nIcon=nvidia-settings\nExec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only kioclient exec %f\n\n[Desktop Action integrated]\nName=Integrated graphics\nName[uk]=Інтегрований графічний процесор\nExec=kioclient exec %f\n")
                 .toUtf8());
     f.setPermissions(f.permissions() | QFileDevice::ExeOwner | QFileDevice::ExeUser);
 }
@@ -186,7 +174,7 @@ inline QString applyState(const State &s, const State &before, QList<Program> &i
     st.endGroup();
     st.sync();
     if (!writeProfiles(s.global, profiles, s.osd)) {
-        return QStringLiteral("Не вдалося записати файл профілів %1.").arg(profilesPath());
+        return tr7("Could not write the profiles file %1.").arg(profilesPath());
     }
 
     // preferred graphics processor: per program, then the global choice for games without their own
@@ -211,7 +199,7 @@ inline QString applyState(const State &s, const State &before, QList<Program> &i
     // power management mode, again at every login
     const int mode = feature(QStringLiteral("power"))->choices.value(s.power).value.toInt();
     if (s.power != before.power && !setPowerMizerMode(mode)) {
-        return QStringLiteral("Не вдалося змінити режим керування живленням графічного процесора.");
+        return tr7("Could not change the power management mode of the graphics processor.");
     }
     st.setValue(QStringLiteral("PowerMizerMode"), mode);
     st.sync();
@@ -221,7 +209,7 @@ inline QString applyState(const State &s, const State &before, QList<Program> &i
         QDir().mkpath(QFileInfo(powerAutostartPath()).absolutePath());
         QFile f(powerAutostartPath());
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            f.write(QStringLiteral("[Desktop Entry]\nType=Application\nName=Панель керування NVIDIA: режим живлення\nExec=%1 --apply-power\nNoDisplay=true\n")
+            f.write(tr7("[Desktop Entry]\nType=Application\nName=NVIDIA Control Panel: power mode\nExec=%1 --apply-power\nNoDisplay=true\n")
                         .arg(QCoreApplication::applicationFilePath())
                         .toUtf8());
         }
@@ -266,12 +254,12 @@ public:
         auto *dv = new QVBoxLayout(d);
         dv->setContentsMargins(11, 0, 24, 0);
         dv->setSpacing(4);
-        dv->addWidget(new QLabel(QStringLiteral("Опис.")));
+        dv->addWidget(new QLabel(tr7("Description:")));
         desc = new QLabel;
         desc->setWordWrap(true);
         desc->setContentsMargins(15, 0, 0, 6);
         dv->addWidget(desc);
-        dv->addWidget(new QLabel(QStringLiteral("Типові сценарії використання.")));
+        dv->addWidget(new QLabel(tr7("Typical usage scenarios:")));
         usage = new QLabel;
         usage->setWordWrap(true);
         usage->setContentsMargins(15, 0, 0, 0);
@@ -313,7 +301,7 @@ inline QLabel *boldLabel(const QString &t)
 
 inline QPushButton *restoreButton()
 {
-    auto *b = new QPushButton(QStringLiteral("Відновити"));
+    auto *b = new QPushButton(tr7("Restore"));
     b->setIcon(QIcon(asset(QStringLiteral("restore.png"))));
     b->setIconSize(QSize(16, 16));
     b->setMinimumWidth(80);
@@ -380,7 +368,7 @@ class Window : public QMainWindow
 public:
     Window()
     {
-        setWindowTitle(QStringLiteral("Панель керування NVIDIA"));
+        setWindowTitle(tr7("NVIDIA Control Panel"));
         QIcon icon;
         for (int sz : {16, 32, 48, 64, 96, 128, 256}) {
             icon.addFile(asset(QStringLiteral("app%1.png").arg(sz)), QSize(sz, sz));
@@ -406,26 +394,26 @@ public:
         auto *lv = new QVBoxLayout(left);
         lv->setContentsMargins(2, 4, 0, 6);
         lv->setSpacing(3);
-        lv->addWidget(new QLabel(QStringLiteral("Виберіть завдання...")));
-        m_tree = new TaskTree({{QStringLiteral("Параметри 3D")},
-                               {QStringLiteral("Регулювання параметрів зображення з переглядом"), ImagePage},
-                               {QStringLiteral("Керування параметрами 3D"), Manage3DPage},
-                               {QStringLiteral("Налаштування конфігурації PhysX"), PhysXPage},
-                               {QStringLiteral("Дисплей")},
-                               {QStringLiteral("Зміна роздільної здатності"), ResolutionPage},
-                               {QStringLiteral("Регулювання параметрів кольору робочого столу"), DesktopColorPage},
-                               {QStringLiteral("Поворот дисплея"), RotatePage},
-                               {QStringLiteral("Перегляд стану HDCP"), HdcpPage},
-                               {QStringLiteral("Встановлення цифрового аудіо"), AudioPage},
-                               {QStringLiteral("Регулювання розміру й положення робочого столу"), SizePage},
-                               {QStringLiteral("Встановлення кількох дисплеїв"), MultiPage},
-                               {QStringLiteral("Продуктивність")},
-                               {QStringLiteral("Параметри пристрою"), DevicePage},
-                               {QStringLiteral("Перегляд відомостей про систему"), SystemPage},
-                               {QStringLiteral("Політики профілів"), PoliciesPage},
-                               {QStringLiteral("Відео")},
-                               {QStringLiteral("Регулювання параметрів кольору для відео"), VideoColorPage},
-                               {QStringLiteral("Регулювання параметрів зображення для відео"), VideoImagePage}});
+        lv->addWidget(new QLabel(tr7("Select a Task...")));
+        m_tree = new TaskTree({{tr7("3D Settings")},
+                               {tr7("Adjust image settings with preview"), ImagePage},
+                               {tr7("Manage 3D settings"), Manage3DPage},
+                               {tr7("Set PhysX Configuration"), PhysXPage},
+                               {tr7("Display")},
+                               {tr7("Change resolution"), ResolutionPage},
+                               {tr7("Adjust desktop color settings"), DesktopColorPage},
+                               {tr7("Rotate display"), RotatePage},
+                               {tr7("View HDCP status"), HdcpPage},
+                               {tr7("Set up digital audio"), AudioPage},
+                               {tr7("Adjust desktop size and position"), SizePage},
+                               {tr7("Set up multiple displays"), MultiPage},
+                               {tr7("Performance")},
+                               {tr7("Device Settings"), DevicePage},
+                               {tr7("View system information"), SystemPage},
+                               {tr7("Profile policies"), PoliciesPage},
+                               {tr7("Video")},
+                               {tr7("Adjust video color settings"), VideoColorPage},
+                               {tr7("Adjust video image settings"), VideoImagePage}});
         auto *treeFrame = new QFrame;
         treeFrame->setObjectName(QStringLiteral("nvTreeFrame"));
         treeFrame->setStyleSheet(QStringLiteral("#nvTreeFrame { background: white; border: 1px solid #828790; }"));
@@ -439,7 +427,7 @@ public:
         auto *siIcon = new QLabel;
         siIcon->setPixmap(QPixmap(asset(QStringLiteral("sysinfo.png"))));
         si->addWidget(siIcon);
-        si->addWidget(link(QStringLiteral("Відомості про систему"), [this] {
+        si->addWidget(link(tr7("System Information"), [this] {
             systemInformation();
         }));
         si->addStretch(1);
@@ -465,8 +453,8 @@ public:
         auto *ab = new QHBoxLayout(m_applyBar);
         ab->setContentsMargins(0, 8, 14, 2);
         ab->addStretch(1);
-        auto *apply = new QPushButton(QStringLiteral("Застосувати"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *apply = new QPushButton(tr7("Apply"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {apply, cancel}) {
             b->setMinimumSize(110, 28);
             ab->addWidget(b);
@@ -524,40 +512,39 @@ private:
     /* ---------- menus and toolbar ---------- */
     void buildMenus()
     {
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QStringLiteral("В&ихід"), this, &QWidget::close);
-        QMenu *edit = menuBar()->addMenu(QStringLiteral("&Правка"));
-        m_undo = edit->addAction(QStringLiteral("&Скасувати зміни"), this, [this] {
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(tr7("E&xit"), this, &QWidget::close);
+        QMenu *edit = menuBar()->addMenu(tr7("&Edit"));
+        m_undo = edit->addAction(tr7("&Undo Changes"), this, [this] {
             m_state = m_saved;
             m_disp.cancel();
             refresh();
         });
-        m_applyAct = edit->addAction(QStringLiteral("&Застосувати"), this, [this] {
+        m_applyAct = edit->addAction(tr7("&Apply"), this, [this] {
             applyChanges();
         });
-        QMenu *desk = menuBar()->addMenu(QStringLiteral("&Робочий стіл"));
-        m_runMenu = desk->addAction(QStringLiteral("Додати пункт «Запустити з графічним процесором» до контекстного меню"));
+        QMenu *desk = menuBar()->addMenu(tr7("&Desktop"));
+        m_runMenu = desk->addAction(tr7("Add \"Run with graphics processor\" to Context Menu"));
         m_runMenu->setCheckable(true);
         connect(m_runMenu, &QAction::toggled, this, [this](bool on) {
             m_state.runMenu = on;
             changed();
         });
-        QMenu *d3 = menuBar()->addMenu(QStringLiteral("П&араметри 3D"));
-        m_osd = d3->addAction(QStringLiteral("Показувати візуальний індикатор графіки"));
+        QMenu *d3 = menuBar()->addMenu(tr7("3D &Settings"));
+        m_osd = d3->addAction(tr7("Show Visual Indicator for graphics"));
         m_osd->setCheckable(true);
         connect(m_osd, &QAction::toggled, this, [this](bool on) {
             m_state.osd = on;
             changed();
         });
-        QMenu *help = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        help->addAction(QStringLiteral("&Відомості про систему"), this, [this] {
+        QMenu *help = menuBar()->addMenu(tr7("&Help"));
+        help->addAction(tr7("System &Information"), this, [this] {
             systemInformation();
         });
         help->addSeparator();
-        help->addAction(QStringLiteral("&Про програму"), this, [this] {
-            QMessageBox::about(this, QStringLiteral("Про панель керування NVIDIA"),
-                               QStringLiteral("<b>Панель керування NVIDIA</b><br>Версія драйвера: %1<br><br>"
-                                              "Параметри 3D записуються в профілі програм драйвера NVIDIA (%2).")
+        help->addAction(tr7("&About"), this, [this] {
+            QMessageBox::about(this, tr7("About NVIDIA Control Panel"),
+                               tr7("<b>NVIDIA Control Panel</b><br>Driver version: %1<br><br>3D settings are written to the application profiles of the NVIDIA driver (%2).")
                                    .arg(smi({QStringLiteral("driver_version")}).value(0), profilesPath().toHtmlEscaped()));
         });
     }
@@ -573,7 +560,7 @@ private:
                                           "QToolButton { border: 1px solid transparent; border-radius: 3px; padding: 1px; color: #36302d; }"
                                           "QToolButton:hover { border-color: #a8c4e6; background: #e6f0fa; }"));
         m_backBtn = new QToolButton;
-        m_backBtn->setText(QStringLiteral("Назад"));
+        m_backBtn->setText(tr7("Back"));
         m_backBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         // Windows: the history arrow is a separate little button after "Back"
         m_backMenu = new QMenu(m_backBtn);
@@ -608,7 +595,7 @@ private:
         });
         auto *home = new QToolButton;
         home->setIcon(QIcon(asset(QStringLiteral("home.png"))));
-        home->setToolTip(QStringLiteral("Домашня сторінка"));
+        home->setToolTip(tr7("Home"));
         connect(home, &QToolButton::clicked, this, [this] {
             go(Manage3DPage);
         });
@@ -635,9 +622,9 @@ private:
         m_fwdBtn->setEnabled(!m_forward.isEmpty());
         m_fwdBtn->setIcon(icon(m_forward.isEmpty() ? QStringLiteral("forward-disabled.png") : QStringLiteral("forward.png")));
         m_backMenu->clear();
-        static const QStringList names = {QStringLiteral("Регулювання параметрів зображення з переглядом"), QStringLiteral("Керування параметрами 3D"),
-                                          QStringLiteral("Налаштування конфігурації PhysX"), QStringLiteral("Параметри пристрою"),
-                                          QStringLiteral("Перегляд відомостей про систему"), QStringLiteral("Політики профілів")};
+        static const QStringList names = {tr7("Adjust image settings with preview"), tr7("Manage 3D settings"),
+                                          tr7("Set PhysX Configuration"), tr7("Device Settings"),
+                                          tr7("View system information"), tr7("Profile policies")};
         for (int i = m_back.size() - 1; i >= 0; --i) {
             const int page = m_back.at(i);
             const int steps = m_back.size() - i;
@@ -691,9 +678,8 @@ private:
     // --- Adjust image settings with preview ---
     QWidget *buildImagePage()
     {
-        auto *page = new PageFrame(QStringLiteral("Регулювання параметрів зображення з переглядом"),
-                                   QStringLiteral("На цій сторінці можна переглянути зміни параметрів зображення й відтворення. Вони стануть стандартними "
-                                                  "параметрами для програм з апаратним прискоренням 3D, що використовують OpenGL."));
+        auto *page = new PageFrame(tr7("Adjust image settings with preview"),
+                                   tr7("This page allows you to preview changes you make to image and rendering settings. These will be your default settings for 3D hardware-accelerated applications that use OpenGL."));
         page->banner->restore = [this] {
             m_state.imageMode = 0;
             m_state.imagePref = 2;
@@ -708,23 +694,21 @@ private:
         // left column: Performance / Quality thumbnails and "What do I look for?"
         auto *lc = new QVBoxLayout;
         lc->setSpacing(4);
-        lc->addWidget(new QLabel(QStringLiteral("Продуктивність:")));
+        lc->addWidget(new QLabel(tr7("Performance:")));
         m_thumbPerf = new QLabel;
         lc->addWidget(m_thumbPerf);
         lc->addSpacing(8);
-        lc->addWidget(new QLabel(QStringLiteral("Якість:")));
+        lc->addWidget(new QLabel(tr7("Quality:")));
         m_thumbQual = new QLabel;
         lc->addWidget(m_thumbQual);
         lc->addSpacing(8);
-        lc->addWidget(boldLabel(QStringLiteral("Що шукати?")));
-        auto *look = new QLabel(QStringLiteral("Що ближче до боку «Продуктивність», то вища частота кадрів, але криві лінії виглядатимуть "
-                                               "<a href=\"j\" style=\"color:#0066cc;\">нерівними</a>.<br><br>Що ближче до боку «Якість», то кращою "
-                                               "буде <a href=\"s\" style=\"color:#0066cc;\">плавність</a> кривих ліній."));
+        lc->addWidget(boldLabel(tr7("What do I look for?")));
+        auto *look = new QLabel(tr7("The closer you get to the Performance side, the higher the frame rate, but curved lines will appear <a href=\"j\" style=\"color:#0066cc;\">jagged</a>.<br><br>The closer you get to the Quality side, the <a href=\"s\" style=\"color:#0066cc;\">smoother</a> curved lines will appear."));
         look->setWordWrap(true);
         look->setFixedWidth(112);
         connect(look, &QLabel::linkActivated, this, [page](const QString &l) {
-            page->show(l == QLatin1String("j") ? QStringLiteral("Нерівність («драбинки») — це сходинки на краях похилих і кривих ліній, помітні без згладжування.")
-                                               : QStringLiteral("Плавність — краї ліній без сходинок завдяки згладжуванню й фільтрації текстур."),
+            page->show(l == QLatin1String("j") ? tr7("Jaggedness (\"jaggies\") is the stair-step look on the edges of sloped and curved lines without antialiasing.")
+                                               : tr7("Smoothness - line edges without steps thanks to antialiasing and texture filtering."),
                        {});
         });
         lc->addWidget(look);
@@ -734,33 +718,33 @@ private:
         auto *rc = new QVBoxLayout;
         rc->setSpacing(4);
         rc->setContentsMargins(0, 0, 0, 0);
-        rc->addWidget(new QLabel(QStringLiteral("Перегляд:")));
+        rc->addWidget(new QLabel(tr7("Preview:")));
         rc->addSpacing(1);
         m_preview = new Preview;
         m_preview->setFixedSize(422, 202);
         rc->addWidget(m_preview);
         auto *pauseRow = new QHBoxLayout;
         pauseRow->addStretch(1);
-        auto *pause = new QPushButton(QStringLiteral("Пауза"));
+        auto *pause = new QPushButton(tr7("Pause"));
         pause->setFixedSize(108, 23);
         pauseRow->addWidget(pause);
         rc->addLayout(pauseRow);
         connect(pause, &QPushButton::clicked, this, [this, pause] {
             m_preview->setPaused(!m_preview->paused());
-            pause->setText(m_preview->paused() ? QStringLiteral("Відтворити") : QStringLiteral("Пауза"));
+            pause->setText(m_preview->paused() ? tr7("Play") : tr7("Pause"));
         });
-        page->describe(pause, QStringLiteral("Зупиняє або відновлює обертання в області перегляду."));
+        page->describe(pause, tr7("Stops or resumes the rotation in the preview."));
         m_imgGroup = new QButtonGroup(this);
-        m_imgApp = new QRadioButton(QStringLiteral("Дозволити програмі 3D вирішувати"));
-        m_imgAdv = new QRadioButton(QStringLiteral("Використовувати розширені параметри зображення 3D"));
-        m_imgPref = new QRadioButton(QStringLiteral("Використовувати мої налаштування з акцентом на:"));
+        m_imgApp = new QRadioButton(tr7("Let the 3D application decide"));
+        m_imgAdv = new QRadioButton(tr7("Use the advanced 3D image settings"));
+        m_imgPref = new QRadioButton(tr7("Use my preference emphasizing:"));
         m_imgGroup->addButton(m_imgApp, 0);
         m_imgGroup->addButton(m_imgAdv, 1);
         m_imgGroup->addButton(m_imgPref, 2);
-        page->describe(m_imgApp, QStringLiteral("Програма 3D сама визначає параметри зображення."),
-                       QStringLiteral("Рекомендовано, якщо гра має власні параметри згладжування й фільтрації."));
-        page->describe(m_imgAdv, QStringLiteral("Використовує параметри зі сторінки «Керування параметрами 3D». Щоб відкрити її, натисніть «Перейти»."));
-        page->describe(m_imgPref, QStringLiteral("Повзунок задає баланс між продуктивністю та якістю зображення."));
+        page->describe(m_imgApp, tr7("The 3D application determines the image settings itself."),
+                       tr7("Recommended if the game has its own antialiasing and filtering settings."));
+        page->describe(m_imgAdv, tr7("Uses the settings on the Manage 3D settings page. To open it, click Take me there."));
+        page->describe(m_imgPref, tr7("The slider sets the balance between performance and image quality."));
         rc->addSpacing(2);
         rc->setSpacing(1);
         // the choices stand 9 px in from the preview's edge
@@ -774,7 +758,7 @@ private:
         advRow->setContentsMargins(9, 0, 0, 0);
         advRow->addWidget(m_imgAdv);
         advRow->addSpacing(18);
-        advRow->addWidget(link(QStringLiteral("Перейти"), [this] {
+        advRow->addWidget(link(tr7("Take me there"), [this] {
             go(Manage3DPage);
         }));
         advRow->addStretch(1);
@@ -793,8 +777,8 @@ private:
         pb->addLayout(prefRow);
         auto *sh = new QHBoxLayout;
         sh->setContentsMargins(9, 2, 12, 4);
-        m_perfLbl = new QLabel(QStringLiteral("Продуктивність"));
-        m_qualLbl = new QLabel(QStringLiteral("Якість"));
+        m_perfLbl = new QLabel(tr7("Performance"));
+        m_qualLbl = new QLabel(tr7("Quality"));
         m_slider = new Win7Slider;
         m_slider->setRange(0, 2);
         m_slider->setPageStep(1);
@@ -834,7 +818,7 @@ private:
             setImagePreset();
             changed();
         });
-        page->show(QStringLiteral("Використовує параметри зі сторінки «Керування параметрами 3D». Щоб відкрити її, натисніть «Перейти»."), {});
+        page->show(tr7("Uses the settings on the Manage 3D settings page. To open it, click Take me there."), {});
         return page;
     }
 
@@ -861,9 +845,8 @@ private:
     // --- Manage 3D settings ---
     QWidget *buildManagePage()
     {
-        auto *page = new PageFrame(QStringLiteral("Керування параметрами 3D"),
-                                   QStringLiteral("Ви можете змінити глобальні параметри 3D і створити заміни для окремих програм. Заміни "
-                                                  "використовуватимуться автоматично під час кожного запуску цих програм."));
+        auto *page = new PageFrame(tr7("Manage 3D settings"),
+                                   tr7("You can change the global 3D settings and create overrides for specific programs. The overrides will be used automatically each time the specified programs are launched."));
         m_managePage = page;
         page->banner->restore = [this] {
             if (m_tabs->currentIndex() == 0) {
@@ -882,7 +865,7 @@ private:
         auto *pv = new QVBoxLayout(panel);
         pv->setContentsMargins(20, 16, 20, 22);
         pv->setSpacing(10);
-        pv->addWidget(boldLabel(QStringLiteral("Я хочу використовувати такі параметри 3D:")));
+        pv->addWidget(boldLabel(tr7("I would like to use the following 3D settings:")));
         pv->addSpacing(14);
         m_tabs = new QTabWidget;
         m_tabs->setMaximumWidth(680);
@@ -891,33 +874,31 @@ private:
         auto *gv = new QVBoxLayout(gt);
         gv->setContentsMargins(14, 12, 14, 12);
         gv->setSpacing(6);
-        gv->addWidget(new QLabel(QStringLiteral("Бажаний графічний процесор:")));
+        gv->addWidget(new QLabel(tr7("Preferred graphics processor:")));
         auto *gr = new QHBoxLayout;
         m_globalGpu = new QComboBox;
-        m_globalGpu->addItem(QIcon(asset(QStringLiteral("restore.png"))), QStringLiteral("Автоматичний вибір"), GpuAuto);
-        m_globalGpu->addItem(QStringLiteral("Високопродуктивний процесор NVIDIA"), GpuNvidia);
-        m_globalGpu->addItem(QStringLiteral("Інтегрована графіка"), GpuIntegrated);
+        m_globalGpu->addItem(QIcon(asset(QStringLiteral("restore.png"))), tr7("Auto-select"), GpuAuto);
+        m_globalGpu->addItem(tr7("High-performance NVIDIA processor"), GpuNvidia);
+        m_globalGpu->addItem(tr7("Integrated graphics"), GpuIntegrated);
         m_globalGpu->setMinimumWidth(230);
         gr->addWidget(m_globalGpu);
         gr->addSpacing(4);
-        gr->addWidget(link(QStringLiteral("Керування оновленнями..."), [this] {
-            QMessageBox::information(this, QStringLiteral("Керування оновленнями"),
-                                     QStringLiteral("Профілі програм NVIDIA оновлюються разом із драйвером (зараз версія %1).")
+        gr->addWidget(link(tr7("Manage updates..."), [this] {
+            QMessageBox::information(this, tr7("Manage Updates"),
+                                     tr7("NVIDIA program profiles are updated with the driver (currently version %1).")
                                          .arg(smi({QStringLiteral("driver_version")}).value(0)));
         }));
         gr->addStretch(1);
         gv->addLayout(gr);
         page->describe(m_globalGpu,
-                       QStringLiteral("Визначає, який графічний процесор використовують програми. «Автоматичний вибір» — інтегрована графіка, "
-                                      "а NVIDIA для програм, яким її вибрано на вкладці «Програмні параметри»."),
-                       QStringLiteral("«Високопродуктивний процесор NVIDIA» застосовується до ігор і Steam (ігри Steam успадковують його). "
-                                      "Для інших програм виберіть процесор на вкладці «Програмні параметри»."));
+                       tr7("Specifies which graphics processor programs use. Auto-select uses integrated graphics, and NVIDIA for the programs it is selected for on the Program Settings tab."),
+                       tr7("\"High-performance NVIDIA processor\" applies to games and Steam (Steam games inherit it). For other programs, choose the processor on the Program Settings tab."));
         connect(m_globalGpu, &QComboBox::activated, this, [this] {
             m_state.globalGpu = m_globalGpu->currentData().toInt();
             changed();
         });
         gv->addSpacing(6);
-        gv->addWidget(new QLabel(QStringLiteral("Параметри:")));
+        gv->addWidget(new QLabel(tr7("Settings:")));
         m_globalTable = new SettingsTable;
         m_globalTable->setMinimumHeight(250);
         m_globalTable->value = [this](const QString &id) {
@@ -953,21 +934,21 @@ private:
             m_state.power = 0;
             changed();
         });
-        m_tabs->addTab(gt, QStringLiteral("Глобальні параметри"));
+        m_tabs->addTab(gt, tr7("Global Settings"));
 
         // Program Settings
         auto *pt = new QWidget;
         auto *ptv = new QVBoxLayout(pt);
         ptv->setContentsMargins(14, 12, 14, 12);
         ptv->setSpacing(6);
-        ptv->addWidget(new QLabel(QStringLiteral("1. Виберіть програму для налаштування:")));
+        ptv->addWidget(new QLabel(tr7("1. Select a program to customize:")));
         auto *pr = new QHBoxLayout;
         m_program = new QComboBox;
         m_program->setMinimumWidth(240);
         m_program->setMaxVisibleItems(16);
         pr->addWidget(m_program, 1);
-        auto *add = new QPushButton(QStringLiteral("Додати"));
-        m_remove = new QPushButton(QStringLiteral("Видалити"));
+        auto *add = new QPushButton(tr7("Add"));
+        m_remove = new QPushButton(tr7("Remove"));
         auto *prest = restoreButton();
         for (QPushButton *b : {add, m_remove}) {
             b->setMinimumWidth(90);
@@ -976,11 +957,11 @@ private:
         pr->addWidget(m_remove);
         pr->addWidget(prest);
         ptv->addLayout(pr);
-        m_onlyFound = new QCheckBox(QStringLiteral("Показувати лише програми, знайдені на цьому комп’ютері"));
+        m_onlyFound = new QCheckBox(tr7("Show only programs found on this computer"));
         m_onlyFound->setChecked(true);
         ptv->addWidget(m_onlyFound);
         ptv->addSpacing(8);
-        ptv->addWidget(new QLabel(QStringLiteral("2. Виберіть бажаний графічний процесор для цієї програми:")));
+        ptv->addWidget(new QLabel(tr7("2. Select the preferred graphics processor for this program:")));
         m_progGpu = new QComboBox;
         m_progGpu->setMinimumWidth(300);
         auto *pgr = new QHBoxLayout;
@@ -988,7 +969,7 @@ private:
         pgr->addStretch(1);
         ptv->addLayout(pgr);
         ptv->addSpacing(8);
-        ptv->addWidget(new QLabel(QStringLiteral("3. Укажіть параметри для цієї програми:")));
+        ptv->addWidget(new QLabel(tr7("3. Specify the settings for this program:")));
         m_progTable = new SettingsTable;
         m_progTable->perProgram = true;
         m_progTable->setMinimumHeight(200);
@@ -1001,7 +982,7 @@ private:
             if (id == QLatin1String("aaset") && m_state.global.value(QStringLiteral("aamode"), 0) != 1) {
                 g = 0;
             }
-            return QStringLiteral("Використовувати глобальний параметр (%1)").arg(f->choices.value(g).label);
+            return tr7("Use global setting (%1)").arg(f->choices.value(g).label);
         };
         m_progTable->changed = [this](const QString &id, int v) {
             const QString p = currentProgram();
@@ -1021,17 +1002,17 @@ private:
             page->show(f.description, f.usage);
         };
         ptv->addWidget(m_progTable, 1);
-        m_tabs->addTab(pt, QStringLiteral("Програмні параметри"));
+        m_tabs->addTab(pt, tr7("Program Settings"));
         pv->addWidget(m_tabs);
         page->body->addWidget(panel);
 
-        page->describe(m_program, QStringLiteral("Виберіть програму, параметри якої потрібно змінити. Її параметри замінюють глобальні під час кожного запуску."),
-                       QStringLiteral("Щоб додати програму, якої немає в списку, натисніть «Додати»."));
-        page->describe(add, QStringLiteral("Додає до списку програму, яка ще не має власних параметрів."));
-        page->describe(m_remove, QStringLiteral("Видаляє власні параметри вибраної програми; вона знову використовуватиме глобальні."));
-        page->describe(m_progGpu, QStringLiteral("Графічний процесор, з яким запускатиметься програма з меню «Пуск», панелі завдань чи робочого стола."),
-                       QStringLiteral("Діє для програм, запущених після застосування змін."));
-        page->describe(m_onlyFound, QStringLiteral("Якщо зняти прапорець, у списку з’являться й програми, для яких у драйвері NVIDIA є власні профілі."));
+        page->describe(m_program, tr7("Select the program whose settings you want to change. Its settings override the global ones each time it starts."),
+                       tr7("To add a program that is not in the list, click Add."));
+        page->describe(add, tr7("Adds a program to the list that does not have its own settings yet."));
+        page->describe(m_remove, tr7("Removes the own settings of the selected program; it will use the global ones again."));
+        page->describe(m_progGpu, tr7("The graphics processor the program runs with when started from the Start menu, the taskbar or the desktop."),
+                       tr7("Applies to programs started after the changes are applied."));
+        page->describe(m_onlyFound, tr7("If you clear this check box, the list also shows programs the NVIDIA driver has its own profiles for."));
 
         connect(m_program, &QComboBox::currentIndexChanged, this, [this] {
             if (!m_refreshing) {
@@ -1067,8 +1048,8 @@ private:
             m_state.programGpu.remove(p);
             changed();
         });
-        page->show(QStringLiteral("Глобальні параметри застосовуються до всіх програм, для яких не задано власних параметрів."),
-                   QStringLiteral("Параметри 3D діють на програми OpenGL. Ігри Vulkan і ігри через Proton (DXVK) використовують власні параметри."));
+        page->show(tr7("Global settings apply to all programs that have no settings of their own."),
+                   tr7("3D settings apply to OpenGL programs. Vulkan games and games through Proton (DXVK) use their own settings."));
         return page;
     }
 
@@ -1134,10 +1115,10 @@ private:
         const QString p = currentProgram();
         m_refreshing = true;
         m_progGpu->clear();
-        static const QStringList names = {QStringLiteral("Автоматичний вибір"), QStringLiteral("Високопродуктивний процесор NVIDIA"),
-                                          QStringLiteral("Інтегрована графіка")};
+        static const QStringList names = {tr7("Auto-select"), tr7("High-performance NVIDIA processor"),
+                                          tr7("Integrated graphics")};
         const bool desktopProgram = !p.startsWith(QLatin1String("exe:"));
-        m_progGpu->addItem(QStringLiteral("Використовувати глобальний параметр (%1)").arg(names.value(m_state.globalGpu)), GpuGlobal);
+        m_progGpu->addItem(tr7("Use global setting (%1)").arg(names.value(m_state.globalGpu)), GpuGlobal);
         m_progGpu->addItem(names.at(1), GpuNvidia);
         m_progGpu->addItem(names.at(2), GpuIntegrated);
         m_progGpu->setCurrentIndex(qMax(0, m_progGpu->findData(m_state.programGpu.value(p, GpuGlobal))));
@@ -1150,11 +1131,11 @@ private:
     void addProgram()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Вибір програми"));
+        dlg.setWindowTitle(tr7("Select a Program"));
         auto *v = new QVBoxLayout(&dlg);
-        v->addWidget(new QLabel(QStringLiteral("Виберіть програму, параметри якої потрібно змінити:")));
+        v->addWidget(new QLabel(tr7("Select a program to customize:")));
         auto *list = new QTreeWidget;
-        list->setHeaderLabels({QStringLiteral("Програма"), QStringLiteral("Процес")});
+        list->setHeaderLabels({tr7("Program"), tr7("Process")});
         list->setRootIsDecorated(false);
         for (const Program &p : m_programs) {
             auto *it = new QTreeWidgetItem(list, {p.name, p.exe});
@@ -1164,12 +1145,12 @@ private:
         list->resizeColumnToContents(0);
         v->addWidget(list);
         auto *row = new QHBoxLayout;
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         row->addWidget(browse);
         row->addStretch(1);
         auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-        bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("Додати вибрану програму"));
-        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+        bb->button(QDialogButtonBox::Ok)->setText(tr7("Add Selected Program"));
+        bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
         row->addWidget(bb);
         v->addLayout(row);
         QString chosen;
@@ -1185,7 +1166,7 @@ private:
             dlg.accept();
         });
         connect(browse, &QPushButton::clicked, &dlg, [&] {
-            const QString f = QFileDialog::getOpenFileName(&dlg, QStringLiteral("Виберіть програму"), QDir::homePath());
+            const QString f = QFileDialog::getOpenFileName(&dlg, tr7("Select a program"), QDir::homePath());
             if (!f.isEmpty()) {
                 chosen = QStringLiteral("exe:") + QFileInfo(f).fileName();
                 m_state.exes.insert(chosen, QFileInfo(f).fileName());
@@ -1204,9 +1185,8 @@ private:
     // --- Set PhysX configuration ---
     QWidget *buildPhysXPage()
     {
-        auto *page = new PageFrame(QStringLiteral("Налаштування конфігурації PhysX"),
-                                   QStringLiteral("NVIDIA® PhysX® — потужний фізичний рушій, який може використовувати прискорення графічного процесора "
-                                                  "для дивовижних фізичних ефектів у реальному часі."));
+        auto *page = new PageFrame(tr7("Set PhysX Configuration"),
+                                   tr7("NVIDIA® PhysX® is a powerful physics engine which can utilize GPU acceleration to provide amazing real-time physics effects."));
         page->banner->restore = [this] {
             m_state.physx = 0;
             changed();
@@ -1215,9 +1195,9 @@ private:
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(20, 16, 20, 22);
         v->setSpacing(10);
-        v->addWidget(boldLabel(QStringLiteral("Виберіть процесор PhysX:")));
+        v->addWidget(boldLabel(tr7("Select a PhysX processor:")));
         m_physx = new QComboBox;
-        m_physx->addItems({QStringLiteral("Автоматичний вибір (рекомендовано)"), gpuName(), QStringLiteral("ЦП")});
+        m_physx->addItems({tr7("Auto-select (recommended)"), gpuName(), tr7("CPU")});
         auto *r = new QHBoxLayout;
         r->setContentsMargins(16, 0, 0, 0);
         r->addWidget(m_physx);
@@ -1231,21 +1211,21 @@ private:
         dr->addStretch(1);
         v->addLayout(dr);
         page->body->addWidget(panel);
-        page->describe(m_physx, QStringLiteral("Визначає, який процесор обчислює фізику PhysX в іграх."),
-                       QStringLiteral("У Linux ігри через Proton вибирають процесор PhysX самостійно; цей вибір лише запам’ятовується."));
+        page->describe(m_physx, tr7("Specifies which processor calculates PhysX physics in games."),
+                       tr7("On Linux, games through Proton choose the PhysX processor themselves; this choice is only remembered."));
         connect(m_physx, &QComboBox::activated, this, [this](int i) {
             m_state.physx = i;
             changed();
         });
-        page->show(QStringLiteral("На схемі показано графічні процесори цього комп’ютера й дисплей, підключений до інтегрованої графіки."), {});
+        page->show(tr7("The diagram shows the graphics processors of this computer and the display connected to the integrated graphics."), {});
         return page;
     }
 
     // --- Device settings: what the GPU is doing now ---
     QWidget *buildDevicePage()
     {
-        auto *page = new PageFrame(QStringLiteral("Параметри пристрою"),
-                                   QStringLiteral("На цій сторінці показано поточний стан графічного процесора: частоти, температуру й навантаження."));
+        auto *page = new PageFrame(tr7("Device Settings"),
+                                   tr7("This page shows the current state of the graphics processor: clocks, temperature and load."));
         page->banner->setRestoreVisible(false);
         auto *panel = new RoundPanel;
         auto *g = new QGridLayout(panel);
@@ -1253,9 +1233,9 @@ private:
         g->setHorizontalSpacing(30);
         g->setVerticalSpacing(8);
         g->addWidget(boldLabel(gpuName()), 0, 0, 1, 2);
-        const QStringList rows = {QStringLiteral("Частота графічного ядра:"), QStringLiteral("Частота пам’яті:"), QStringLiteral("Температура ГП:"),
-                                  QStringLiteral("Завантаження ГП:"), QStringLiteral("Використання пам’яті:"), QStringLiteral("Споживана потужність:"),
-                                  QStringLiteral("Стан продуктивності:")};
+        const QStringList rows = {tr7("Graphics clock:"), tr7("Memory clock:"), tr7("GPU temperature:"),
+                                  tr7("GPU utilization:"), tr7("Memory usage:"), tr7("Power draw:"),
+                                  tr7("Performance state:")};
         for (int i = 0; i < rows.size(); ++i) {
             g->addWidget(new QLabel(rows.at(i)), i + 1, 0);
             auto *val = new QLabel(QStringLiteral("—"));
@@ -1264,8 +1244,8 @@ private:
         }
         g->setColumnStretch(2, 1);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Значення оновлюються щосекунди, поки відкрита ця сторінка."),
-                   QStringLiteral("Щоб графічний процесор міг заснути й заощадити заряд батареї, закрийте цю сторінку."));
+        page->show(tr7("The values are updated every second while this page is open."),
+                   tr7("Close this page to let the graphics processor sleep and save battery."));
         m_devTimer = new QTimer(this);
         m_devTimer->setInterval(1000);
         m_devTick = [this] {
@@ -1274,12 +1254,12 @@ private:
             auto or_ = [](const QString &s, const QString &unit) {
                 return s.isEmpty() ? QStringLiteral("—") : s + unit;
             };
-            m_devValues[0]->setText(or_(v[0], QStringLiteral(" МГц")));
-            m_devValues[1]->setText(or_(v[1], QStringLiteral(" МГц")));
+            m_devValues[0]->setText(or_(v[0], tr7(" MHz")));
+            m_devValues[1]->setText(or_(v[1], tr7(" MHz")));
             m_devValues[2]->setText(or_(v[2], QStringLiteral(" °C")));
             m_devValues[3]->setText(or_(v[3], QStringLiteral(" %")));
-            m_devValues[4]->setText(v[4].isEmpty() ? QStringLiteral("—") : QStringLiteral("%1 МБ із %2 МБ").arg(v[4], v[5]));
-            m_devValues[5]->setText(or_(v[6], QStringLiteral(" Вт")));
+            m_devValues[4]->setText(v[4].isEmpty() ? QStringLiteral("—") : tr7("%1 MB of %2 MB").arg(v[4], v[5]));
+            m_devValues[5]->setText(or_(v[6], tr7(" W")));
             m_devValues[6]->setText(or_(v[7], QString()));
         };
         connect(m_devTimer, &QTimer::timeout, this, [this] {
@@ -1299,20 +1279,20 @@ private:
     // --- Profile policies: which programs have their own settings ---
     QWidget *buildPoliciesPage()
     {
-        auto *page = new PageFrame(QStringLiteral("Політики профілів"),
-                                   QStringLiteral("Профілі програм автоматично застосовуються під час запуску програм. Тут показано всі програми з власними параметрами."));
+        auto *page = new PageFrame(tr7("Profile policies"),
+                                   tr7("Program profiles are applied automatically when programs start. All programs with their own settings are shown here."));
         page->banner->setRestoreVisible(false);
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(20, 16, 20, 22);
-        v->addWidget(boldLabel(QStringLiteral("Програми з власними параметрами:")));
+        v->addWidget(boldLabel(tr7("Programs with their own settings:")));
         m_policies = new QTreeWidget;
-        m_policies->setHeaderLabels({QStringLiteral("Програма"), QStringLiteral("Графічний процесор"), QStringLiteral("Змінені параметри")});
+        m_policies->setHeaderLabels({tr7("Program"), tr7("Graphics processor"), tr7("Changed settings")});
         m_policies->setRootIsDecorated(false);
         m_policies->setMinimumHeight(240);
         v->addWidget(m_policies);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Щоб змінити параметри програми, відкрийте «Керування параметрами 3D» → «Програмні параметри»."), {});
+        page->show(tr7("To change the settings of a program, open Manage 3D settings → Program Settings."), {});
         connect(m_policies, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *it) {
             go(Manage3DPage);
             m_tabs->setCurrentIndex(1);
@@ -1326,7 +1306,7 @@ private:
         m_policies->clear();
         QStringList ids = m_state.programs.keys() + m_state.programGpu.keys();
         ids.removeDuplicates();
-        static const QStringList gpus = {QStringLiteral("Автоматичний вибір"), QStringLiteral("Високопродуктивний процесор NVIDIA"), QStringLiteral("Інтегрована графіка")};
+        static const QStringList gpus = {tr7("Auto-select"), tr7("High-performance NVIDIA processor"), tr7("Integrated graphics")};
         for (const QString &id : ids) {
             QString name = id.startsWith(QLatin1String("exe:")) ? id.mid(4) : id;
             for (const Program &p : m_programs) {
@@ -1341,7 +1321,7 @@ private:
                 }
             }
             const int g = m_state.programGpu.value(id, GpuGlobal);
-            auto *it = new QTreeWidgetItem(m_policies, {name, g == GpuGlobal ? QStringLiteral("Глобальний параметр") : gpus.value(g),
+            auto *it = new QTreeWidgetItem(m_policies, {name, g == GpuGlobal ? tr7("Global setting") : gpus.value(g),
                                                         changedNames.isEmpty() ? QStringLiteral("—") : changedNames.join(QStringLiteral(", "))});
             it->setData(0, Qt::UserRole, id);
         }
@@ -1354,32 +1334,32 @@ private:
     void systemInformation()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Відомості про систему"));
+        dlg.setWindowTitle(tr7("System Information"));
         dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
         auto *v = new QVBoxLayout(&dlg);
         auto *tabs = new QTabWidget;
         // Display
         auto *disp = new QWidget;
         auto *dv = new QVBoxLayout(disp);
-        dv->addWidget(boldLabel(QStringLiteral("Відомості про систему")));
+        dv->addWidget(boldLabel(tr7("System Information")));
         auto *top = new QGridLayout;
         top->setContentsMargins(12, 2, 0, 6);
         QString os = QStringLiteral("Linux");
         {
             QSettings rel(QStringLiteral("/etc/os-release"), QSettings::IniFormat);
-            os = rel.value(QStringLiteral("PRETTY_NAME"), os).toString() + QStringLiteral(", ядро ") + run(QStringLiteral("uname"), {QStringLiteral("-r")});
+            os = rel.value(QStringLiteral("PRETTY_NAME"), os).toString() + tr7(", kernel ") + run(QStringLiteral("uname"), {QStringLiteral("-r")});
         }
         const QString vk = run(QStringLiteral("sh"), {QStringLiteral("-c"), QStringLiteral("vulkaninfo --summary 2>/dev/null | grep -m1 'Vulkan Instance Version' | sed 's/.*: //'")});
-        top->addWidget(new QLabel(QStringLiteral("Операційна система:")), 0, 0);
+        top->addWidget(new QLabel(tr7("Operating system:")), 0, 0);
         top->addWidget(new QLabel(os), 0, 1);
-        top->addWidget(new QLabel(QStringLiteral("Версія Vulkan:")), 1, 0);
+        top->addWidget(new QLabel(tr7("Vulkan version:")), 1, 0);
         top->addWidget(new QLabel(vk.isEmpty() ? QStringLiteral("—") : vk), 1, 1);
         top->setColumnStretch(1, 1);
         dv->addLayout(top);
-        dv->addWidget(new QLabel(QStringLiteral("Відомості про графічну плату")));
+        dv->addWidget(new QLabel(tr7("Graphics card information")));
         auto *split = new QHBoxLayout;
         auto *items = new QTreeWidget;
-        items->setHeaderLabels({QStringLiteral("Елементи")});
+        items->setHeaderLabels({tr7("Items")});
         items->setRootIsDecorated(false);
         auto *gpuItem = new QTreeWidgetItem(items, {gpuName()});
         gpuItem->setIcon(0, QIcon(asset(QStringLiteral("restore.png"))));
@@ -1387,10 +1367,10 @@ private:
         items->setFixedWidth(200);
         split->addWidget(items);
         auto *details = new QTreeWidget;
-        details->setHeaderLabels({QStringLiteral("Подробиці")});
+        details->setHeaderLabels({tr7("Details")});
         details->setRootIsDecorated(false);
         details->setColumnCount(2);
-        details->setHeaderLabels({QStringLiteral("Подробиці"), QString()});
+        details->setHeaderLabels({tr7("Details"), QString()});
         const QStringList s = smi({QStringLiteral("driver_version"), QStringLiteral("clocks.max.gr"), QStringLiteral("clocks.max.mem"),
                                    QStringLiteral("memory.total"), QStringLiteral("vbios_version"), QStringLiteral("pcie.link.gen.max"),
                                    QStringLiteral("pcie.link.width.max"), QStringLiteral("pci.bus_id")});
@@ -1400,21 +1380,21 @@ private:
         QString rate, bandwidth;
         if (!s[2].isEmpty() && !bus.isEmpty()) {
             const double mts = s[2].toDouble() * 2; // GDDR6: two transfers per memory clock reported by nvidia-smi
-            rate = QStringLiteral("%1 МГц").arg(qRound(mts));
-            bandwidth = QStringLiteral("%1 ГБ/с").arg(QString::number(mts * bus.toDouble() / 8 / 1000, 'f', 2));
+            rate = tr7("%1 MHz").arg(qRound(mts));
+            bandwidth = tr7("%1 GB/s").arg(QString::number(mts * bus.toDouble() / 8 / 1000, 'f', 2));
         }
         const QList<QPair<QString, QString>> rows = {
-            {QStringLiteral("Версія драйвера:"), s[0]},
-            {QStringLiteral("Ядра CUDA:"), cores},
-            {QStringLiteral("Тактова частота графіки:"), s[1].isEmpty() ? QString() : s[1] + QStringLiteral(" МГц")},
-            {QStringLiteral("Швидкість передачі даних пам’яті:"), rate},
-            {QStringLiteral("Інтерфейс пам’яті:"), bus.isEmpty() ? QString() : bus + QStringLiteral("-розрядний")},
-            {QStringLiteral("Пропускна здатність пам’яті:"), bandwidth},
-            {QStringLiteral("Виділена відеопам’ять:"), s[3].isEmpty() ? QString() : s[3] + QStringLiteral(" МБ GDDR6")},
-            {QStringLiteral("Версія Video BIOS:"), s[4]},
+            {tr7("Driver version:"), s[0]},
+            {tr7("CUDA Cores:"), cores},
+            {tr7("Graphics clock:", "details"), s[1].isEmpty() ? QString() : s[1] + tr7(" MHz")},
+            {tr7("Memory data rate:"), rate},
+            {tr7("Memory interface:"), bus.isEmpty() ? QString() : bus + tr7("-bit")},
+            {tr7("Memory bandwidth:"), bandwidth},
+            {tr7("Dedicated video memory:"), s[3].isEmpty() ? QString() : s[3] + tr7(" MB GDDR6")},
+            {tr7("Video BIOS version:"), s[4]},
             {QStringLiteral("IRQ:"), irq},
-            {QStringLiteral("Шина:"), s[5].isEmpty() ? QString() : QStringLiteral("PCI Express %1.0 x%2").arg(s[5], s[6])},
-            {QStringLiteral("Розташування PCI:"), s[7]},
+            {tr7("Bus:"), s[5].isEmpty() ? QString() : QStringLiteral("PCI Express %1.0 x%2").arg(s[5], s[6])},
+            {tr7("PCI location:"), s[7]},
         };
         for (const auto &r : rows) {
             new QTreeWidgetItem(details, {r.first, r.second.isEmpty() ? QStringLiteral("—") : r.second});
@@ -1422,25 +1402,25 @@ private:
         details->resizeColumnToContents(0);
         split->addWidget(details, 1);
         dv->addLayout(split, 1);
-        tabs->addTab(disp, QStringLiteral("Відображення"));
+        tabs->addTab(disp, tr7("Display", "system info"));
         // Components
         auto *comp = new QWidget;
         auto *cv = new QVBoxLayout(comp);
         auto *files = new QTreeWidget;
-        files->setHeaderLabels({QStringLiteral("Файл"), QStringLiteral("Версія"), QStringLiteral("Опис")});
+        files->setHeaderLabels({tr7("File"), tr7("Version"), tr7("Description")});
         files->setRootIsDecorated(false);
         const QString ver = s[0];
         const QList<QStringList> comps = {
             {QStringLiteral("nvidia.ko"), run(QStringLiteral("sh"), {QStringLiteral("-c"), QStringLiteral("modinfo -F version nvidia 2>/dev/null")}),
-             QStringLiteral("Модуль ядра NVIDIA")},
-            {QStringLiteral("libGLX_nvidia.so.0"), ver, QStringLiteral("Драйвер NVIDIA OpenGL")},
-            {QStringLiteral("libnvidia-glcore.so"), ver, QStringLiteral("Ядро OpenGL NVIDIA")},
-            {QStringLiteral("nvidia_icd.json"), ver, QStringLiteral("Драйвер NVIDIA Vulkan")},
-            {QStringLiteral("libcuda.so.1"), ver, QStringLiteral("Драйвер NVIDIA CUDA")},
-            {QStringLiteral("libnvcuvid.so.1"), ver, QStringLiteral("Декодування відео NVIDIA")},
-            {QStringLiteral("libnvidia-encode.so.1"), ver, QStringLiteral("Кодування відео NVIDIA (NVENC)")},
+             tr7("NVIDIA kernel module")},
+            {QStringLiteral("libGLX_nvidia.so.0"), ver, tr7("NVIDIA OpenGL driver")},
+            {QStringLiteral("libnvidia-glcore.so"), ver, tr7("NVIDIA OpenGL core")},
+            {QStringLiteral("nvidia_icd.json"), ver, tr7("NVIDIA Vulkan driver")},
+            {QStringLiteral("libcuda.so.1"), ver, tr7("NVIDIA CUDA driver")},
+            {QStringLiteral("libnvcuvid.so.1"), ver, tr7("NVIDIA video decode")},
+            {QStringLiteral("libnvidia-encode.so.1"), ver, tr7("NVIDIA video encode (NVENC)")},
             {QStringLiteral("nvidia-settings"), run(QStringLiteral("sh"), {QStringLiteral("-c"), QStringLiteral("nvidia-settings --version 2>/dev/null | grep -o '[0-9.]\\+' | head -1")}),
-             QStringLiteral("Параметри X-сервера NVIDIA")},
+             tr7("NVIDIA X server settings")},
         };
         for (const QStringList &c : comps) {
             new QTreeWidgetItem(files, c);
@@ -1449,12 +1429,12 @@ private:
             files->resizeColumnToContents(c);
         }
         cv->addWidget(files);
-        tabs->addTab(comp, QStringLiteral("Компоненти"));
+        tabs->addTab(comp, tr7("Components"));
         v->addWidget(tabs, 1);
         auto *row = new QHBoxLayout;
-        auto *about = new QPushButton(QStringLiteral("Про програму"));
-        auto *save = new QPushButton(QStringLiteral("Зберегти"));
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *about = new QPushButton(tr7("About"));
+        auto *save = new QPushButton(tr7("Save"));
+        auto *close = new QPushButton(tr7("Close"));
         close->setDefault(true);
         row->addWidget(about);
         row->addStretch(1);
@@ -1463,21 +1443,21 @@ private:
         v->addLayout(row);
         connect(close, &QPushButton::clicked, &dlg, &QDialog::accept);
         connect(about, &QPushButton::clicked, &dlg, [&dlg, s] {
-            QMessageBox::about(&dlg, QStringLiteral("Про панель керування NVIDIA"), QStringLiteral("<b>Панель керування NVIDIA</b><br>Версія драйвера: %1").arg(s[0]));
+            QMessageBox::about(&dlg, tr7("About NVIDIA Control Panel"), tr7("<b>NVIDIA Control Panel</b><br>Driver version: %1").arg(s[0]));
         });
         connect(save, &QPushButton::clicked, &dlg, [&dlg, os, rows, comps] {
-            const QString f = QFileDialog::getSaveFileName(&dlg, QStringLiteral("Зберегти відомості про систему"),
-                                                           QDir::homePath() + QStringLiteral("/Відомості про систему NVIDIA.txt"), QStringLiteral("Текстові файли (*.txt)"));
+            const QString f = QFileDialog::getSaveFileName(&dlg, tr7("Save System Information"),
+                                                           QDir::homePath() + tr7("/NVIDIA System Information.txt"), tr7("Text files (*.txt)"));
             if (f.isEmpty()) {
                 return;
             }
             QFile out(f);
             if (out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                QString t = QStringLiteral("Операційна система: %1\n\n%2\n").arg(os, gpuName());
+                QString t = tr7("Operating system: %1\n\n%2\n").arg(os, gpuName());
                 for (const auto &r : rows) {
                     t += QStringLiteral("  %1 %2\n").arg(r.first, r.second);
                 }
-                t += QStringLiteral("\nКомпоненти\n");
+                t += tr7("\nComponents\n");
                 for (const QStringList &c : comps) {
                     t += QStringLiteral("  %1  %2  %3\n").arg(c.value(0), c.value(1), c.value(2));
                 }
@@ -1511,7 +1491,7 @@ private:
         // image page
         m_imgGroup->button(m_state.imageMode)->setChecked(true);
         m_slider->setValue(m_state.imagePref);
-        static const QStringList prefNames = {QStringLiteral("Продуктивність"), QStringLiteral("Збалансовано"), QStringLiteral("Якість")};
+        static const QStringList prefNames = {tr7("Performance"), tr7("Balanced"), tr7("Quality")};
         m_prefName->setText(prefNames.value(m_state.imagePref));
         const bool pref = m_state.imageMode == 2;
         m_slider->setEnabled(pref);
@@ -1544,7 +1524,7 @@ private:
         }
         const QString err = applyState(m_state, m_saved, m_programs);
         if (!err.isEmpty()) {
-            QMessageBox::warning(this, QStringLiteral("Панель керування NVIDIA"), err);
+            QMessageBox::warning(this, tr7("NVIDIA Control Panel"), err);
         }
         m_programs = installedPrograms();
         m_saved = loadState(m_programs);
@@ -1590,6 +1570,7 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-nvidia"));
     app.setApplicationDisplayName(QString());
     app.setDesktopFileName(QStringLiteral("seven-nvidia"));

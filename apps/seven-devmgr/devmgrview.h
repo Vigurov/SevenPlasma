@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "win7i18n.h"
 
 #include "../seven-common/win7header.h"
 #include "../seven-common/win7states.h"
@@ -92,24 +93,24 @@ struct Category {
 const QList<Category> &categories()
 {
     static const QList<Category> list{
-        {QStringLiteral("dvd"), QStringLiteral("DVD- і CD-ROM дисководи"), QStringLiteral("seven-devmgr-dvd")},
-        {QStringLiteral("ide"), QStringLiteral("IDE ATA/ATAPI контролери"), QStringLiteral("seven-devmgr-ide")},
-        {QStringLiteral("bluetooth"), QStringLiteral("Радіомодулі Bluetooth"), QStringLiteral("seven-devmgr-bluetooth")},
-        {QStringLiteral("video"), QStringLiteral("Відеоадаптери"), QStringLiteral("seven-devmgr-video")},
-        {QStringLiteral("disk"), QStringLiteral("Дискові пристрої"), QStringLiteral("seven-devmgr-disk")},
-        {QStringLiteral("sound"), QStringLiteral("Звукові, відео та ігрові пристрої"), QStringLiteral("seven-devmgr-sound")},
-        {QStringLiteral("keyboard"), QStringLiteral("Клавіатури"), QStringLiteral("seven-devmgr-keyboard")},
-        {QStringLiteral("computer"), QStringLiteral("Комп'ютер"), QStringLiteral("seven-devmgr-computer")},
-        {QStringLiteral("usb"), QStringLiteral("Контролери USB"), QStringLiteral("seven-devmgr-usb")},
-        {QStringLiteral("storage"), QStringLiteral("Контролери запам'ятовуючих пристроїв"), QStringLiteral("seven-devmgr-storage")},
-        {QStringLiteral("battery"), QStringLiteral("Батареї"), QStringLiteral("seven-devmgr-battery")},
-        {QStringLiteral("monitor"), QStringLiteral("Монітори"), QStringLiteral("seven-devmgr-monitor")},
-        {QStringLiteral("mouse"), QStringLiteral("Миші та інші вказівні пристрої"), QStringLiteral("seven-devmgr-mouse")},
-        {QStringLiteral("portable"), QStringLiteral("Переносні пристрої"), QStringLiteral("seven-devmgr-portable")},
-        {QStringLiteral("imaging"), QStringLiteral("Пристрої обробки зображень"), QStringLiteral("seven-devmgr-imaging")},
-        {QStringLiteral("cpu"), QStringLiteral("Процесори"), QStringLiteral("seven-devmgr-cpu")},
-        {QStringLiteral("network"), QStringLiteral("Мережні адаптери"), QStringLiteral("seven-devmgr-network")},
-        {QStringLiteral("system"), QStringLiteral("Системні пристрої"), QStringLiteral("seven-devmgr-system")},
+        {QStringLiteral("dvd"), tr7("DVD/CD-ROM drives"), QStringLiteral("seven-devmgr-dvd")},
+        {QStringLiteral("ide"), tr7("IDE ATA/ATAPI controllers"), QStringLiteral("seven-devmgr-ide")},
+        {QStringLiteral("bluetooth"), tr7("Bluetooth Radios"), QStringLiteral("seven-devmgr-bluetooth")},
+        {QStringLiteral("video"), tr7("Display adapters"), QStringLiteral("seven-devmgr-video")},
+        {QStringLiteral("disk"), tr7("Disk drives"), QStringLiteral("seven-devmgr-disk")},
+        {QStringLiteral("sound"), tr7("Sound, video and game controllers"), QStringLiteral("seven-devmgr-sound")},
+        {QStringLiteral("keyboard"), tr7("Keyboards"), QStringLiteral("seven-devmgr-keyboard")},
+        {QStringLiteral("computer"), tr7("Computer"), QStringLiteral("seven-devmgr-computer")},
+        {QStringLiteral("usb"), tr7("Universal Serial Bus controllers"), QStringLiteral("seven-devmgr-usb")},
+        {QStringLiteral("storage"), tr7("Storage controllers"), QStringLiteral("seven-devmgr-storage")},
+        {QStringLiteral("battery"), tr7("Batteries"), QStringLiteral("seven-devmgr-battery")},
+        {QStringLiteral("monitor"), tr7("Monitors"), QStringLiteral("seven-devmgr-monitor")},
+        {QStringLiteral("mouse"), tr7("Mice and other pointing devices"), QStringLiteral("seven-devmgr-mouse")},
+        {QStringLiteral("portable"), tr7("Portable Devices"), QStringLiteral("seven-devmgr-portable")},
+        {QStringLiteral("imaging"), tr7("Imaging devices"), QStringLiteral("seven-devmgr-imaging")},
+        {QStringLiteral("cpu"), tr7("Processors"), QStringLiteral("seven-devmgr-cpu")},
+        {QStringLiteral("network"), tr7("Network adapters"), QStringLiteral("seven-devmgr-network")},
+        {QStringLiteral("system"), tr7("System devices"), QStringLiteral("seven-devmgr-system")},
     };
     return list;
 }
@@ -171,10 +172,10 @@ QList<Device> scan()
         const QString device = strip(kv.value(QStringLiteral("Device")));
         const QString slot = kv.value(QStringLiteral("Slot"));
         const QString sysPath = QStringLiteral("/sys/bus/pci/devices/0000:") + slot;
-        QVariantMap d{{QStringLiteral("Тип пристрою"), strip(kv.value(QStringLiteral("Class")))},
-                      {QStringLiteral("Виробник"), vendor},
-                      {QStringLiteral("Розташування"), QStringLiteral("Шина PCI %1").arg(slot)},
-                      {QStringLiteral("Драйвер"), driverOf(sysPath)},
+        QVariantMap d{{tr7("Device type"), strip(kv.value(QStringLiteral("Class")))},
+                      {tr7("Manufacturer"), vendor},
+                      {tr7("Location"), tr7("PCI bus %1").arg(slot)},
+                      {tr7("Driver"), driverOf(sysPath)},
                       {QStringLiteral("_sys"), sysPath}};
         QString name = device;
         if (!vendor.isEmpty() && !name.contains(vendor.section(QLatin1Char(' '), 0, 0), Qt::CaseInsensitive)) {
@@ -201,10 +202,10 @@ QList<Device> scan()
             + (usb ? QStringLiteral(" USB Device") : QString());
         add(optical ? QStringLiteral("dvd") : QStringLiteral("disk"),
             name,
-            {{QStringLiteral("Тип пристрою"), optical ? QStringLiteral("DVD- і CD-ROM дисководи") : QStringLiteral("Дискові пристрої")},
-             {QStringLiteral("Розташування"), usb ? QStringLiteral("USB") : QStringLiteral("Внутрішній (%1)").arg(blk)},
-             {QStringLiteral("Ємність"), optical ? QString() : QStringLiteral("%1 ГБ").arg(QString::number(gb, 'f', 1))},
-             {QStringLiteral("Драйвер"), driverOf(base + QStringLiteral("/device"))},
+            {{tr7("Device type"), optical ? tr7("DVD/CD-ROM drives") : tr7("Disk drives")},
+             {tr7("Location"), usb ? QStringLiteral("USB") : tr7("Internal (%1)").arg(blk)},
+             {tr7("Capacity"), optical ? QString() : tr7("%1 GB").arg(QString::number(gb, 'f', 1))},
+             {tr7("Driver"), driverOf(base + QStringLiteral("/device"))},
              {QStringLiteral("_sys"), base + QStringLiteral("/device")}});
     }
 
@@ -230,13 +231,13 @@ QList<Device> scan()
         }
         QString shown = name;
         if (isKbd && name.contains(QLatin1String("AT Translated"))) {
-            shown = QStringLiteral("Стандартна клавіатура PS/2");
+            shown = tr7("Standard PS/2 Keyboard");
         }
         add(isMouse ? QStringLiteral("mouse") : QStringLiteral("keyboard"),
             shown,
-            {{QStringLiteral("Тип пристрою"), isMouse ? QStringLiteral("Миші та інші вказівні пристрої") : QStringLiteral("Клавіатури")},
-             {QStringLiteral("Розташування"), phys.isEmpty() ? QStringLiteral("Невідомо") : phys},
-             {QStringLiteral("Опис ядра"), name},
+            {{tr7("Device type"), isMouse ? tr7("Mice and other pointing devices") : tr7("Keyboards")},
+             {tr7("Location"), phys.isEmpty() ? tr7("Unknown") : phys},
+             {tr7("Kernel description"), name},
              {QStringLiteral("_sys"), sysfs}});
     }
 
@@ -253,9 +254,9 @@ QList<Device> scan()
             }
         }
         add(QStringLiteral("cpu"), model,
-            {{QStringLiteral("Тип пристрою"), QStringLiteral("Процесори")},
-             {QStringLiteral("Виробник"), vendor},
-             {QStringLiteral("Розташування"), QStringLiteral("Логічний процесор %1").arg(index)},
+            {{tr7("Device type"), tr7("Processors")},
+             {tr7("Manufacturer"), vendor},
+             {tr7("Location"), tr7("Logical processor %1").arg(index)},
              {QStringLiteral("_sys"), QStringLiteral("/sys/devices/system/cpu/cpu%1").arg(index)}});
         ++index;
     }
@@ -266,7 +267,7 @@ QList<Device> scan()
         if (readFile(base + QStringLiteral("/status")) != QLatin1String("connected")) {
             continue;
         }
-        QString name = QStringLiteral("Універсальний монітор PnP");
+        QString name = tr7("Generic PnP Monitor");
         QFile edid(base + QStringLiteral("/edid"));
         if (edid.open(QIODevice::ReadOnly)) {
             const QByteArray e = edid.readAll();
@@ -274,13 +275,13 @@ QList<Device> scan()
                 if (e[off] == 0 && e[off + 1] == 0 && uchar(e[off + 3]) == 0xFC) {
                     const QString n = QString::fromLatin1(e.mid(off + 5, 13)).section(QLatin1Char('\n'), 0, 0).trimmed();
                     if (!n.isEmpty()) {
-                        name = QStringLiteral("Монітор %1").arg(n);
+                        name = tr7("%1 Monitor").arg(n);
                     }
                 }
             }
         }
         add(QStringLiteral("monitor"), name,
-            {{QStringLiteral("Тип пристрою"), QStringLiteral("Монітори")}, {QStringLiteral("Розташування"), conn.section(QLatin1Char('-'), 1)}, {QStringLiteral("_sys"), base}});
+            {{tr7("Device type"), tr7("Monitors")}, {tr7("Location"), conn.section(QLatin1Char('-'), 1)}, {QStringLiteral("_sys"), base}});
     }
 
     // --- Bluetooth radios ---
@@ -291,10 +292,10 @@ QList<Device> scan()
         const QString dev = QStringLiteral("/sys/class/bluetooth/") + hci + QStringLiteral("/device");
         QString name = readFile(dev + QStringLiteral("/../product"));
         if (name.isEmpty()) {
-            name = QStringLiteral("Радіомодуль Bluetooth (%1)").arg(hci);
+            name = tr7("Bluetooth Radio (%1)").arg(hci);
         }
         add(QStringLiteral("bluetooth"), name,
-            {{QStringLiteral("Тип пристрою"), QStringLiteral("Радіомодулі Bluetooth")}, {QStringLiteral("Драйвер"), driverOf(dev)}, {QStringLiteral("_sys"), dev}});
+            {{tr7("Device type"), tr7("Bluetooth Radios")}, {tr7("Driver"), driverOf(dev)}, {QStringLiteral("_sys"), dev}});
     }
 
     // --- Batteries and AC adapters ---
@@ -303,13 +304,13 @@ QList<Device> scan()
         const QString type = readFile(base + QStringLiteral("/type"));
         if (type == QLatin1String("Battery")) {
             const QString model = readFile(base + QStringLiteral("/model_name"));
-            add(QStringLiteral("battery"), QStringLiteral("Батарея, сумісна з ACPI") + (model.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(model)),
-                {{QStringLiteral("Тип пристрою"), QStringLiteral("Батареї")},
-                 {QStringLiteral("Виробник"), readFile(base + QStringLiteral("/manufacturer"))},
-                 {QStringLiteral("Заряд"), readFile(base + QStringLiteral("/capacity")) + QStringLiteral(" %")},
+            add(QStringLiteral("battery"), tr7("Microsoft ACPI-Compliant Control Method Battery") + (model.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(model)),
+                {{tr7("Device type"), tr7("Batteries")},
+                 {tr7("Manufacturer"), readFile(base + QStringLiteral("/manufacturer"))},
+                 {tr7("Charge"), readFile(base + QStringLiteral("/capacity")) + QStringLiteral(" %")},
                  {QStringLiteral("_sys"), base}});
         } else if (type == QLatin1String("Mains")) {
-            add(QStringLiteral("battery"), QStringLiteral("Адаптер змінного струму (Microsoft)"), {{QStringLiteral("Тип пристрою"), QStringLiteral("Батареї")}});
+            add(QStringLiteral("battery"), tr7("Microsoft AC Adapter"), {{tr7("Device type"), tr7("Batteries")}});
         }
     }
 
@@ -317,17 +318,17 @@ QList<Device> scan()
     for (const QString &v : QDir(QStringLiteral("/sys/class/video4linux")).entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
         const QString name = readFile(QStringLiteral("/sys/class/video4linux/") + v + QStringLiteral("/name"));
         if (readFile(QStringLiteral("/sys/class/video4linux/") + v + QStringLiteral("/index")) == QLatin1String("0")) {
-            add(QStringLiteral("imaging"), name, {{QStringLiteral("Тип пристрою"), QStringLiteral("Пристрої обробки зображень")},
+            add(QStringLiteral("imaging"), name, {{tr7("Device type"), tr7("Imaging devices")},
                                                   {QStringLiteral("_sys"), QStringLiteral("/sys/class/video4linux/") + v + QStringLiteral("/device")}});
         }
     }
 
     // --- Computer ---
     const bool x64 = QSysInfo::currentCpuArchitecture().contains(QLatin1String("64"));
-    add(QStringLiteral("computer"), x64 ? QStringLiteral("Комп'ютер x64 з ACPI") : QStringLiteral("Комп'ютер з ACPI"),
-        {{QStringLiteral("Тип пристрою"), QStringLiteral("Комп'ютер")},
-         {QStringLiteral("Виробник"), readFile(QStringLiteral("/sys/class/dmi/id/sys_vendor"))},
-         {QStringLiteral("Модель"), readFile(QStringLiteral("/sys/class/dmi/id/product_version"))}});
+    add(QStringLiteral("computer"), x64 ? tr7("ACPI x64-based PC") : tr7("ACPI-based PC"),
+        {{tr7("Device type"), tr7("Computer")},
+         {tr7("Manufacturer"), readFile(QStringLiteral("/sys/class/dmi/id/sys_vendor"))},
+         {tr7("Model"), readFile(QStringLiteral("/sys/class/dmi/id/product_version"))}});
     return out;
 }
 
@@ -549,25 +550,25 @@ DriverInfo driverInfo(const QString &sys, const QString &fallbackDriver, const Q
         d.description = field("description");
         QString author = field("author");
         author.remove(QRegularExpression(QStringLiteral("\\s*<[^>]*>")));
-        d.provider = d.file.contains(QLatin1String("nvidia")) ? QStringLiteral("NVIDIA Corporation") : author.isEmpty() ? QStringLiteral("Ядро Linux") : author.trimmed();
+        d.provider = d.file.contains(QLatin1String("nvidia")) ? QStringLiteral("NVIDIA Corporation") : author.isEmpty() ? tr7("Linux kernel") : author.trimmed();
         if (d.version.isEmpty()) {
             d.version = kernel;
         }
         QFileInfo fi(d.file);
-        d.date = fi.exists() ? QLocale(QLocale::Ukrainian).toString(fi.lastModified().date(), QStringLiteral("dd.MM.yyyy")) : QString();
+        d.date = fi.exists() ? QLocale{}.toString(fi.lastModified().date(), QStringLiteral("dd.MM.yyyy")) : QString();
     } else if (!d.driver.isEmpty()) {
-        d.provider = QStringLiteral("Ядро Linux");
+        d.provider = tr7("Linux kernel");
         d.version = kernel;
         d.file = QStringLiteral("/boot/vmlinuz-") + kernel;
-        d.signer = QStringLiteral("Вбудовано в ядро Linux");
+        d.signer = tr7("Built into the Linux kernel");
         d.license = QStringLiteral("GPL");
     }
     if (d.date.isEmpty() && !d.driver.isEmpty()) {
         const QFileInfo vmlinuz(QStringLiteral("/boot/vmlinuz-") + kernel);
-        d.date = vmlinuz.exists() ? QLocale(QLocale::Ukrainian).toString(vmlinuz.lastModified().date(), QStringLiteral("dd.MM.yyyy")) : QString();
+        d.date = vmlinuz.exists() ? QLocale{}.toString(vmlinuz.lastModified().date(), QStringLiteral("dd.MM.yyyy")) : QString();
     }
     if (d.signer.isEmpty() && !d.module.isEmpty()) {
-        d.signer = QStringLiteral("Немає цифрового підпису");
+        d.signer = tr7("Not digitally signed");
     }
     Q_UNUSED(vendor)
     return d;
@@ -604,26 +605,26 @@ QStringList hardwareIds(const QString &sys)
 void driverFileDetails(QWidget *parent, const QString &name, const QIcon &icon, const DriverInfo &d)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Відомості про файл драйвера"));
+    dlg.setWindowTitle(tr7("Driver File Details"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dlg.setFixedSize(dlu(0, 0, 224, 250).size());
     auto *ic = place(&dlg, new QLabel, dlu(7, 7, 20, 20));
     ic->setPixmap(icon.pixmap(32, 32));
     plain(&dlg, name, dlu(37, 9, 180, 16));
-    plain(&dlg, QStringLiteral("Файли драйвера:"), dlu(7, 34, 210, 8));
+    plain(&dlg, tr7("Driver files:"), dlu(7, 34, 210, 8));
     auto *files = place(&dlg, new QListWidget, dlu(7, 45, 210, 90));
     if (!d.file.isEmpty()) {
         files->addItem(d.file);
     }
     files->setCurrentRow(0);
-    const QList<QPair<QString, QString>> rows{{QStringLiteral("Постачальник:"), d.provider},
-                                              {QStringLiteral("Версія файлу:"), d.version},
-                                              {QStringLiteral("Ліцензія:"), d.license},
-                                              {QStringLiteral("Цифровий підпис:"), d.signer}};
+    const QList<QPair<QString, QString>> rows{{tr7("Provider:"), d.provider},
+                                              {tr7("File version:"), d.version},
+                                              {tr7("Copyright:"), d.license},
+                                              {tr7("Digital Signer:"), d.signer}};
     int y = 145;
     for (const auto &r : rows) {
         plain(&dlg, r.first, dlu(7, y, 64, 8));
-        plain(&dlg, r.second.isEmpty() ? QStringLiteral("Недоступно") : r.second, dlu(74, y, 143, 16));
+        plain(&dlg, r.second.isEmpty() ? tr7("Not available") : r.second, dlu(74, y, 143, 16));
         y += 18;
     }
     auto *ok = place(&dlg, new QPushButton(QStringLiteral("OK")), dlu(167, 229, 50, 14));
@@ -635,10 +636,10 @@ void driverFileDetails(QWidget *parent, const QString &name, const QIcon &icon, 
 void showProperties(QWidget *parent, const QString &name, const QIcon &icon, const QVariantMap &details)
 {
     const QString sys = details.value(QStringLiteral("_sys")).toString();
-    const DriverInfo drv = driverInfo(sys, details.value(QStringLiteral("Драйвер")).toString(), details.value(QStringLiteral("Виробник")).toString());
+    const DriverInfo drv = driverInfo(sys, details.value(tr7("Driver")).toString(), details.value(tr7("Manufacturer")).toString());
 
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Властивості: %1").arg(name));
+    dlg.setWindowTitle(tr7("%1 Properties").arg(name));
     dlg.setWindowIcon(icon);
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     const QSize page = dlu(0, 0, 252, 218).size();
@@ -656,34 +657,34 @@ void showProperties(QWidget *parent, const QString &name, const QIcon &icon, con
     // General (103)
     auto *general = new QWidget;
     header(general);
-    const QList<QPair<QString, QString>> info{{QStringLiteral("Тип пристрою:"), details.value(QStringLiteral("Тип пристрою")).toString()},
-                                              {QStringLiteral("Виробник:"), details.value(QStringLiteral("Виробник")).toString()},
-                                              {QStringLiteral("Розташування:"), details.value(QStringLiteral("Розташування")).toString()}};
+    const QList<QPair<QString, QString>> info{{tr7("Device type:"), details.value(tr7("Device type")).toString()},
+                                              {tr7("Manufacturer:"), details.value(tr7("Manufacturer")).toString()},
+                                              {tr7("Location:"), details.value(tr7("Location")).toString()}};
     int y = 36;
     for (const auto &r : info) {
         plain(general, r.first, dlu(37, y, 70, 8));
-        plain(general, r.second.isEmpty() ? QStringLiteral("Невідомо") : r.second, dlu(108, y, 138, y == 64 ? 16 : 12));
+        plain(general, r.second.isEmpty() ? tr7("Unknown") : r.second, dlu(108, y, 138, y == 64 ? 16 : 12));
         y += 14;
     }
-    auto *statusBox = place(general, new QGroupBox(QStringLiteral("Стан пристрою")), dlu(7, 85, 238, 108));
+    auto *statusBox = place(general, new QGroupBox(tr7("Device status")), dlu(7, 85, 238, 108));
     auto *status = place(statusBox, new QPlainTextEdit, dlu(7, 11, 224, 90));
     status->setReadOnly(true);
     const bool needsDriver = !sys.isEmpty() && sys.contains(QLatin1String("/bus/pci/")) && drv.driver.isEmpty();
-    status->setPlainText(needsDriver ? QStringLiteral("Драйвери для цього пристрою не встановлено. (Код 28)\n\nДрайвер для цього пристрою не знайдено.")
-                                     : QStringLiteral("Пристрій працює нормально."));
-    tabs->addTab(general, QStringLiteral("Загальні"));
+    status->setPlainText(needsDriver ? tr7("The drivers for this device are not installed. (Code 28)\n\nThere is no driver selected for the device information set or element.")
+                                     : tr7("This device is working properly."));
+    tabs->addTab(general, tr7("General"));
 
     // Driver (106)
     auto *driver = new QWidget;
     header(driver);
-    const QList<QPair<QString, QString>> dinfo{{QStringLiteral("Постачальник:"), drv.provider},
-                                               {QStringLiteral("Дата драйвера:"), drv.date},
-                                               {QStringLiteral("Версія драйвера:"), drv.version},
-                                               {QStringLiteral("Цифровий підпис:"), drv.signer}};
+    const QList<QPair<QString, QString>> dinfo{{tr7("Provider:"), drv.provider},
+                                               {tr7("Driver Date:"), drv.date},
+                                               {tr7("Driver Version:"), drv.version},
+                                               {tr7("Digital Signer:"), drv.signer}};
     y = 36;
     for (const auto &r : dinfo) {
         plain(driver, r.first, dlu(37, y, 76, 8));
-        plain(driver, r.second.isEmpty() ? QStringLiteral("Недоступно") : r.second, dlu(114, y, 132, y == 78 ? 16 : 12));
+        plain(driver, r.second.isEmpty() ? tr7("Not available") : r.second, dlu(114, y, 132, y == 78 ? 16 : 12));
         y += 14;
     }
     struct Action {
@@ -691,11 +692,11 @@ void showProperties(QWidget *parent, const QString &name, const QIcon &icon, con
         int y;
         bool enabled;
     };
-    const QList<Action> actions{{QStringLiteral("Відомості"), QStringLiteral("Перегляд відомостей про файли драйверів."), 100, !drv.file.isEmpty()},
-                                {QStringLiteral("Оновити..."), QStringLiteral("Оновлення програмного забезпечення драйвера для цього пристрою."), 123, true},
-                                {QStringLiteral("Відкотити"), QStringLiteral("Повернення до попереднього драйвера, якщо пристрій не працює після оновлення."), 146, false},
-                                {QStringLiteral("Вимкнути"), QStringLiteral("Вимкнення вибраного пристрою."), 171, false},
-                                {QStringLiteral("Видалити"), QStringLiteral("Видалення драйвера (для досвідчених користувачів)."), 196, false}};
+    const QList<Action> actions{{tr7("Driver Details"), tr7("To view details about the driver files."), 100, !drv.file.isEmpty()},
+                                {tr7("Update Driver..."), tr7("To update the driver software for this device."), 123, true},
+                                {tr7("Roll Back Driver"), tr7("If the device fails after updating the driver, roll back to the previously installed driver."), 146, false},
+                                {tr7("Disable"), tr7("Disables the selected device."), 171, false},
+                                {tr7("Uninstall"), tr7("To uninstall the driver (Advanced)."), 196, false}};
     for (const Action &a : actions) {
         auto *b = place(driver, new QPushButton(a.button), dlu(7, a.y, 76, 15));
         b->setEnabled(a.enabled);
@@ -710,48 +711,48 @@ void showProperties(QWidget *parent, const QString &name, const QIcon &icon, con
             });
         }
     }
-    tabs->addTab(driver, QStringLiteral("Драйвер"));
+    tabs->addTab(driver, tr7("Driver"));
 
     // Details (372)
     auto *more = new QWidget;
     header(more);
-    plain(more, QStringLiteral("Властивість"), dlu(7, 35, 239, 8));
+    plain(more, tr7("Property"), dlu(7, 35, 239, 8));
     auto *prop = place(more, new QComboBox, dlu(7, 46, 239, 14));
-    plain(more, QStringLiteral("Значення"), dlu(7, 67, 239, 8));
+    plain(more, tr7("Value"), dlu(7, 67, 239, 8));
     auto *value = place(more, new QListWidget, dlu(7, 78, 239, 135));
     QList<QPair<QString, QStringList>> props;
-    props.append({QStringLiteral("Опис пристрою"), {name}});
+    props.append({tr7("Device description"), {name}});
     if (!sys.isEmpty()) {
-        props.append({QStringLiteral("Шлях до екземпляра пристрою"), {QFileInfo(sys).canonicalFilePath().remove(QStringLiteral("/sys"))}});
+        props.append({tr7("Device Instance Path"), {QFileInfo(sys).canonicalFilePath().remove(QStringLiteral("/sys"))}});
     }
     const QStringList hw = sys.isEmpty() ? QStringList() : hardwareIds(sys);
     if (!hw.isEmpty()) {
-        props.append({QStringLiteral("Ідентифікатори обладнання"), hw});
+        props.append({tr7("Hardware Ids"), hw});
     }
-    props.append({QStringLiteral("Клас"), {details.value(QStringLiteral("Тип пристрою")).toString()}});
+    props.append({tr7("Class"), {details.value(tr7("Device type")).toString()}});
     if (!drv.driver.isEmpty()) {
-        props.append({QStringLiteral("Служба"), {drv.driver}});
+        props.append({tr7("Service"), {drv.driver}});
     }
     if (!drv.module.isEmpty()) {
-        props.append({QStringLiteral("Модуль ядра"), {drv.module}});
+        props.append({tr7("Kernel module"), {drv.module}});
     }
-    props.append({QStringLiteral("Постачальник драйвера"), {drv.provider}});
-    props.append({QStringLiteral("Дата драйвера"), {drv.date}});
-    props.append({QStringLiteral("Версія драйвера"), {drv.version}});
+    props.append({tr7("Driver provider"), {drv.provider}});
+    props.append({tr7("Driver date"), {drv.date}});
+    props.append({tr7("Driver version"), {drv.version}});
     if (!drv.description.isEmpty()) {
-        props.append({QStringLiteral("Опис драйвера"), {drv.description}});
+        props.append({tr7("Driver description"), {drv.description}});
     }
-    props.append({QStringLiteral("Відомості про розташування"), {details.value(QStringLiteral("Розташування")).toString()}});
+    props.append({tr7("Location information"), {details.value(tr7("Location")).toString()}});
     if (!sys.isEmpty()) {
         const QString canon = QFileInfo(sys).canonicalFilePath();
-        props.append({QStringLiteral("Батьківський елемент"), {canon.section(QLatin1Char('/'), -2, -2)}});
+        props.append({tr7("Parent"), {canon.section(QLatin1Char('/'), -2, -2)}});
         const QString subsystem = QFileInfo(QFileInfo(sys + QStringLiteral("/subsystem")).symLinkTarget()).fileName();
         if (!subsystem.isEmpty()) {
-            props.append({QStringLiteral("Шина"), {subsystem}});
+            props.append({tr7("Bus"), {subsystem}});
         }
     }
     for (auto it = details.cbegin(); it != details.cend(); ++it) {
-        static const QStringList shown{QStringLiteral("_sys"), QStringLiteral("Тип пристрою"), QStringLiteral("Виробник"), QStringLiteral("Розташування"), QStringLiteral("Драйвер")};
+        static const QStringList shown{QStringLiteral("_sys"), tr7("Device type"), tr7("Manufacturer"), tr7("Location"), tr7("Driver")};
         if (!shown.contains(it.key()) && !it.value().toString().isEmpty()) {
             props.append({it.key(), {it.value().toString()}});
         }
@@ -766,13 +767,13 @@ void showProperties(QWidget *parent, const QString &name, const QIcon &icon, con
         value->addItems(prop->currentData().toStringList());
     });
     value->addItems(prop->currentData().toStringList());
-    tabs->addTab(more, QStringLiteral("Відомості"));
+    tabs->addTab(more, tr7("Driver Details"));
 
     v->addWidget(tabs, 1);
     auto *row = new QHBoxLayout;
     row->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     for (QPushButton *b : {ok, cancel}) {
         b->setMinimumWidth(75);
         row->addWidget(b);
@@ -846,8 +847,8 @@ public:
         edgeLayout->addWidget(m_tree);
         lay->addWidget(edge);
 
-        m_scan = new QAction(win7Icon(QStringLiteral("seven-devmgr-scan")), QStringLiteral("Оновити конфігурацію обладнання"), this);
-        m_props = new QAction(win7Icon(QStringLiteral("seven-devmgr-props")), QStringLiteral("Властивості"), this);
+        m_scan = new QAction(win7Icon(QStringLiteral("seven-devmgr-scan")), tr7("Scan for hardware changes"), this);
+        m_props = new QAction(win7Icon(QStringLiteral("seven-devmgr-props")), tr7("Properties"), this);
         connect(m_scan, &QAction::triggered, this, &DeviceTree::reload);
         connect(m_props, &QAction::triggered, this, [this]() {
             openProperties(m_tree->currentIndex());
@@ -864,7 +865,7 @@ public:
                 m_tree->setCurrentIndex(idx);
                 menu.addAction(m_scan);
                 menu.addSeparator();
-                QAction *p = menu.addAction(QStringLiteral("Властивості"), this, [this, idx]() {
+                QAction *p = menu.addAction(tr7("Properties"), this, [this, idx]() {
                     openProperties(idx);
                 });
                 QFont f = p->font();

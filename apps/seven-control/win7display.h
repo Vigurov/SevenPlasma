@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7sound.h"
@@ -141,7 +142,7 @@ inline QWidget *sidePane(const std::function<void()> &home, const QList<SideItem
         row->addWidget(new Link(it.text, it.open, color), 1);
         sv->addLayout(row);
     };
-    addRow({QStringLiteral("Панель керування — домашня сторінка"), home});
+    addRow({tr7("Control Panel Home"), home});
     sv->addSpacing(9);
     for (const SideItem &it : items) {
         addRow(it);
@@ -150,7 +151,7 @@ inline QWidget *sidePane(const std::function<void()> &home, const QList<SideItem
     if (!seeAlso.isEmpty()) {
         auto *seeRow = new QHBoxLayout;
         seeRow->setContentsMargins(22, 0, 0, 0);
-        seeRow->addWidget(grey(QStringLiteral("Див. також")));
+        seeRow->addWidget(grey(tr7("See also")));
         sv->addLayout(seeRow);
     }
     for (const SideItem &it : seeAlso) {
@@ -197,11 +198,11 @@ inline QList<DeskIcon> deskIcons()
     const QString user = QString::fromLocal8Bit(qgetenv("USER"));
     return {
         // computer:/ only exists inside our Explorer, so the desktop icon starts it with that page
-        {QStringLiteral("computer"), QStringLiteral("Комп'ютер"), QStringLiteral("Комп'ютер"), QStringLiteral("computer:/"), QStringLiteral("dolphin computer:/"), QStringLiteral("seven-desk-computer"), {}},
-        {QStringLiteral("user"), QStringLiteral("Файли користувача"), user, QUrl::fromLocalFile(home).toString(), {}, QStringLiteral("seven-desk-user"), {}},
-        {QStringLiteral("network"), QStringLiteral("Мережа"), QStringLiteral("Мережа"), QStringLiteral("remote:/"), {}, QStringLiteral("seven-desk-network"), {}},
-        {QStringLiteral("trash"), QStringLiteral("Кошик"), QStringLiteral("Кошик"), QStringLiteral("trash:/"), {}, QStringLiteral("seven-desk-trash-full"), QStringLiteral("seven-desk-trash-empty")},
-        {QStringLiteral("control"), QStringLiteral("Панель керування"), QStringLiteral("Панель керування"), {}, home + QStringLiteral("/.local/bin/seven-control"), QStringLiteral("seven-desk-control"), {}},
+        {QStringLiteral("computer"), tr7("Computer"), tr7("Computer"), QStringLiteral("computer:/"), QStringLiteral("dolphin computer:/"), QStringLiteral("seven-desk-computer"), {}},
+        {QStringLiteral("user"), tr7("User's Files"), user, QUrl::fromLocalFile(home).toString(), {}, QStringLiteral("seven-desk-user"), {}},
+        {QStringLiteral("network"), tr7("Network"), tr7("Network"), QStringLiteral("remote:/"), {}, QStringLiteral("seven-desk-network"), {}},
+        {QStringLiteral("trash"), tr7("Recycle Bin"), tr7("Recycle Bin"), QStringLiteral("trash:/"), {}, QStringLiteral("seven-desk-trash-full"), QStringLiteral("seven-desk-trash-empty")},
+        {QStringLiteral("control"), tr7("Control Panel"), tr7("Control Panel"), {}, home + QStringLiteral("/.local/bin/seven-control"), QStringLiteral("seven-desk-control"), {}},
     };
 }
 
@@ -266,7 +267,7 @@ inline void writeDeskFile(const DeskIcon &d, const QString &icon, const QString 
 inline void desktopIconsDialog(QWidget *parent)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Параметри значків робочого столу"));
+    dlg.setWindowTitle(tr7("Desktop Icon Settings"));
     dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-personalize")));
     auto *v = new QVBoxLayout(&dlg);
     auto *tabs = new QTabWidget;
@@ -274,7 +275,7 @@ inline void desktopIconsDialog(QWidget *parent)
     auto *pv = new QVBoxLayout(page);
 
     const QList<DeskIcon> icons = deskIcons();
-    auto *box = new QGroupBox(QStringLiteral("Значки робочого столу"));
+    auto *box = new QGroupBox(tr7("Desktop icons"));
     auto *grid = new QGridLayout(box);
     grid->setHorizontalSpacing(40);
     QMap<QString, QCheckBox *> checks;
@@ -301,11 +302,11 @@ inline void desktopIconsDialog(QWidget *parent)
         QString caption;
     };
     const QString user = QString::fromLocal8Bit(qgetenv("USER"));
-    const QList<Entry> entries{{QStringLiteral("computer"), false, QStringLiteral("Комп'ютер")},
+    const QList<Entry> entries{{QStringLiteral("computer"), false, tr7("Computer")},
                                {QStringLiteral("user"), false, user},
-                               {QStringLiteral("network"), false, QStringLiteral("Мережа")},
-                               {QStringLiteral("trash"), false, QStringLiteral("Кошик\n(повний)")},
-                               {QStringLiteral("trash"), true, QStringLiteral("Кошик\n(порожній)")}};
+                               {QStringLiteral("network"), false, tr7("Network")},
+                               {QStringLiteral("trash"), false, tr7("Recycle Bin\n(full)")},
+                               {QStringLiteral("trash"), true, tr7("Recycle Bin\n(empty)")}};
     auto iconFor = [icons](const Entry &e) {
         for (const DeskIcon &d : icons) {
             if (d.key == e.key) {
@@ -344,20 +345,20 @@ inline void desktopIconsDialog(QWidget *parent)
     pv->addWidget(list, 1);
     auto *btnRow = new QHBoxLayout;
     btnRow->addStretch(1);
-    auto *change = new QPushButton(QStringLiteral("Змінити значок..."));
-    auto *restore = new QPushButton(QStringLiteral("Відновити стандартний"));
+    auto *change = new QPushButton(tr7("Change Icon..."));
+    auto *restore = new QPushButton(tr7("Restore Default"));
     change->setAutoDefault(false);
     restore->setAutoDefault(false);
     btnRow->addWidget(change);
     btnRow->addWidget(restore);
     pv->addLayout(btnRow);
-    tabs->addTab(page, QStringLiteral("Значки робочого столу"));
+    tabs->addTab(page, tr7("Desktop icons"));
     v->addWidget(tabs);
 
     auto *buttons = new QDialogButtonBox;
     auto *ok = buttons->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-    buttons->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
-    auto *apply = buttons->addButton(QStringLiteral("Застосувати"), QDialogButtonBox::ApplyRole);
+    buttons->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
+    auto *apply = buttons->addButton(tr7("Apply"), QDialogButtonBox::ApplyRole);
     for (QAbstractButton *b : buttons->buttons()) {
         b->setMinimumWidth(80);
     }
@@ -458,17 +459,17 @@ inline QList<Theme> win7Themes()
     };
     static const Def defs[] = {
         {"windows7", "Windows 7", "Windows", "img0.jpg", 0x6B74B8FC, 1, "Windows 7"},
-        {"architecture", "Архітектура", "Architecture", "img13.jpg", 0xA80046AD, 2, "Windows 7 Cityscape"},
-        {"characters", "Персонажі", "Characters", "img19.jpg", 0x6698844C, 13, "Windows 7 Characters"},
-        {"landscapes", "Пейзажі", "Landscapes", "img7.jpg", 0x80555555, 15, "Windows 7 Landscape"},
-        {"nature", "Природа", "Nature", "img1.jpg", 0x528D5A94, 12, "Windows 7 Garden"},
-        {"scenes", "Сцени", "Scenes", "img25.jpg", 0x856E3BA1, 11, "Windows 7 Quirky"},
+        {"architecture", "Architecture", "Architecture", "img13.jpg", 0xA80046AD, 2, "Windows 7 Cityscape"},
+        {"characters", "Characters", "Characters", "img19.jpg", 0x6698844C, 13, "Windows 7 Characters"},
+        {"landscapes", "Landscapes", "Landscapes", "img7.jpg", 0x80555555, 15, "Windows 7 Landscape"},
+        {"nature", "Nature", "Nature", "img1.jpg", 0x528D5A94, 12, "Windows 7 Garden"},
+        {"scenes", "Scenes", "Scenes", "img25.jpg", 0x856E3BA1, 11, "Windows 7 Quirky"},
     };
     QList<Theme> list;
     for (const Def &d : defs) {
         Theme t;
         t.id = QLatin1String(d.id);
-        t.name = QString::fromUtf8(d.name);
+        t.name = tr7(d.name);
         t.folder = root + QLatin1String(d.folder);
         t.preview = t.folder + QLatin1Char('/') + QLatin1String(d.first);
         t.color = QColor::fromRgba(d.argb);
@@ -482,11 +483,11 @@ inline QList<Theme> win7Themes()
 /** Windows 7's names of the window colours, in the order of the aeroglassblur effect's list */
 inline QString windowColorName(int index)
 {
-    static const QStringList names{QStringLiteral("Власний"), QStringLiteral("Небо"), QStringLiteral("Сутінки"), QStringLiteral("Море"), QStringLiteral("Листя"),
-                                   QStringLiteral("Лайм"), QStringLiteral("Сонце"), QStringLiteral("Гарбуз"), QStringLiteral("Рубін"), QStringLiteral("Фуксія"),
-                                   QStringLiteral("Рум'янець"), QStringLiteral("Фіалка"), QStringLiteral("Лаванда"), QStringLiteral("Сіро-коричневий"),
-                                   QStringLiteral("Шоколад"), QStringLiteral("Сланець"), QStringLiteral("Іній")};
-    return names.value(index, QStringLiteral("Власний"));
+    static const QStringList names{tr7("Custom"), tr7("Sky"), tr7("Twilight"), tr7("Sea"), tr7("Leaf"),
+                                   tr7("Lime"), tr7("Sun", "color"), tr7("Pumpkin"), tr7("Ruby"), tr7("Fuchsia"),
+                                   tr7("Blush"), tr7("Violet"), tr7("Lavender"), tr7("Taupe"),
+                                   tr7("Chocolate"), tr7("Slate"), tr7("Frost")};
+    return names.value(index, tr7("Custom"));
 }
 
 inline KConfigGroup win7ThemeConfig()
@@ -748,7 +749,7 @@ inline std::pair<QPixmap, QString> currentWallpaper()
             if (!img.isNull()) {
                 pm = QPixmap::fromImage(img.scaled(76, 48, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation).copy(0, 0, 76, 48));
             }
-            return {pm, QStringLiteral("Слайд-шоу")};
+            return {pm, tr7("Slide Show")};
         }
         if (c.readEntry("wallpaperplugin", QString()) != QLatin1String("org.kde.image")) {
             continue;
@@ -761,7 +762,7 @@ inline std::pair<QPixmap, QString> currentWallpaper()
         image.remove(QStringLiteral("file://"));
         QString name = QFileInfo(image).completeBaseName();
         if (image.endsWith(QLatin1String("/Windows7/Windows/img0.jpg"))) {
-            name = QStringLiteral("Гармонія"); // what Windows 7 calls its default background
+            name = tr7("Harmony"); // what Windows 7 calls its default background
         }
         QString picture = image;
         if (QFileInfo(image).isDir()) { // wallpaper package
@@ -787,7 +788,7 @@ inline std::pair<QPixmap, QString> currentWallpaper()
         }
         return {pm, name};
     }
-    return {QPixmap(), QStringLiteral("Невідомо")};
+    return {QPixmap(), tr7("Unknown")};
 }
 
 /** One of the four items under the gallery */
@@ -968,20 +969,20 @@ private:
 inline QWidget *buildPersonalizePage(const Nav &nav)
 {
     auto *side = sidePane(nav.home,
-                          {{QStringLiteral("Змінення значків робочого столу"), [] { desktopIconsDialog(QApplication::activeWindow()); }},
-                           {QStringLiteral("Змінення вказівників миші"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--mouse"), QStringLiteral("1")}); }},
-                           {QStringLiteral("Змінення рисунка облікового запису"), [nav] { nav.open(28); /* Win7Users::PictureView, own account */ }}},
-                          {{QStringLiteral("Екран"), [nav] { nav.open(DisplayView); }},
-                           {QStringLiteral("Панель завдань і меню «Пуск»"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props")}); }},
-                           {QStringLiteral("Центр спеціальних можливостей"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--ease")}); }}});
+                          {{tr7("Change desktop icons"), [] { desktopIconsDialog(QApplication::activeWindow()); }},
+                           {tr7("Change mouse pointers"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--mouse"), QStringLiteral("1")}); }},
+                           {tr7("Change your account picture", "personalization"), [nav] { nav.open(28); /* Win7Users::PictureView, own account */ }}},
+                          {{tr7("Display"), [nav] { nav.open(DisplayView); }},
+                           {tr7("Taskbar and Start Menu"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props")}); }},
+                           {tr7("Ease of Access Center"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--ease")}); }}});
 
     auto *main = new QWidget;
     auto *mv = new QVBoxLayout(main);
     mv->setContentsMargins(22, 18, 22, 14);
     mv->setSpacing(0);
-    mv->addWidget(pageTitle(QStringLiteral("Змінення зображення та звуку на комп'ютері")));
+    mv->addWidget(pageTitle(tr7("Change the visuals and sounds on your computer")));
     mv->addSpacing(6);
-    mv->addWidget(plain(QStringLiteral("Виберіть тему, щоб одночасно змінити фоновий рисунок робочого столу, колір вікна, звуки та заставку.")));
+    mv->addWidget(plain(tr7("Click a theme to change the desktop background, window color, sounds, and screen saver all at once.")));
     mv->addSpacing(10);
 
     // gallery
@@ -1054,14 +1055,14 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
             // Windows 7: the unsaved theme shows the background and the window colour now set
             Theme unsaved;
             unsaved.id = QStringLiteral("unsaved");
-            unsaved.name = QStringLiteral("Незбережена тема");
+            unsaved.name = tr7("Unsaved Theme");
             unsaved.preview = image;
             unsaved.color = currentGlassColor();
             mine.prepend(unsaved);
             current = unsaved.id; // no Aero theme is the selected one then
         }
         if (!mine.isEmpty()) {
-            auto *header = new SectionHeader(QStringLiteral("Мої теми (%1)").arg(mine.size()));
+            auto *header = new SectionHeader(tr7("My Themes (%1)").arg(mine.size()));
             header->setStyleSheet(QStringLiteral("color: #1e3287;"));
             gv->addWidget(header);
             auto *grid = new TileFlow;
@@ -1084,10 +1085,10 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
                 auto *links = new QHBoxLayout;
                 links->addStretch(1);
                 const Theme unsaved = mine.first();
-                links->addWidget(new Link(QStringLiteral("Зберегти тему"), [unsaved, nav] {
+                links->addWidget(new Link(tr7("Save theme"), [unsaved, nav] {
                     bool ok = false;
-                    const QString name = QInputDialog::getText(QApplication::activeWindow(), QStringLiteral("Зберегти тему як"), QStringLiteral("Ім'я теми:"),
-                                                               QLineEdit::Normal, QStringLiteral("Незбережена тема"), &ok)
+                    const QString name = QInputDialog::getText(QApplication::activeWindow(), tr7("Save Theme As"), tr7("Theme name:"),
+                                                               QLineEdit::Normal, tr7("Unsaved Theme"), &ok)
                                              .trimmed();
                     if (!ok || name.isEmpty()) {
                         return;
@@ -1107,7 +1108,7 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
             gv->addSpacing(6);
         }
     }
-    addGroup(QStringLiteral("Теми Aero"), aero);
+    addGroup(tr7("Aero Themes"), aero);
     gv->addStretch(1);
     galleryArea->setWidget(gallery);
     mv->addWidget(galleryArea, 1);
@@ -1118,18 +1119,18 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
     row->setSpacing(8);
     row->addStretch(1);
     const auto [wallPicture, wallName] = currentWallpaper();
-    row->addWidget(bottomItem(wallPicture, QStringLiteral("Фон робочого столу"), wallName, [nav] { nav.open(83); /* Win7Background::BackgroundView */ }));
+    row->addWidget(bottomItem(wallPicture, tr7("Desktop Background"), wallName, [nav] { nav.open(83); /* Win7Background::BackgroundView */ }));
     const int accent = KConfig(QStringLiteral("kwinrc")).group(QStringLiteral("Effect-aeroglassblur")).readEntry("AccentColorName", 1);
-    row->addWidget(bottomItem(colorSwatch(), QStringLiteral("Колір вікна"), windowColorName(accent), [nav] { nav.open(84); /* Win7WindowColor::ColorView */ }));
+    row->addWidget(bottomItem(colorSwatch(), tr7("Window Color"), windowColorName(accent), [nav] { nav.open(84); /* Win7WindowColor::ColorView */ }));
     // the scheme name as the "Sounds" tab of the Sound dialog shows it
     const QString soundTheme = Win7Sound::currentTheme();
-    QString sounds = QStringLiteral("За замовчуванням");
+    QString sounds = tr7("Default");
     for (const Win7Sound::Theme &t : Win7Sound::themes()) {
         if (t.dir == soundTheme) {
             sounds = t.name;
         }
     }
-    row->addWidget(bottomItem(QPixmap(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-aero/themecpl/PNG_86.png"))), QStringLiteral("Звуки"), sounds, [nav] {
+    row->addWidget(bottomItem(QPixmap(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-aero/themecpl/PNG_86.png"))), tr7("Sounds"), sounds, [nav] {
         auto *dlg = new Win7Sound::SoundDialog(2, QApplication::activeWindow());
         dlg->openSpeech = [] {
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--speech")});
@@ -1141,10 +1142,10 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
     }));
     // the screen saver of Win7ScreenSaver (~/.config/seven-screensaverrc), "Відсутня" without one
     const QString saverId = KConfig(QStringLiteral("seven-screensaverrc")).group(QStringLiteral("General")).readEntry("Saver", QStringLiteral("none"));
-    QString saverName = QStringLiteral("Відсутня");
-    static const QList<QPair<QString, QString>> saverNames{{QStringLiteral("text3d"), QStringLiteral("Тривимірний текст")}, {QStringLiteral("blank"), QStringLiteral("Пустий екран")},
-                                                           {QStringLiteral("bubbles"), QStringLiteral("Бульбашки")}, {QStringLiteral("mystify"), QStringLiteral("Містифікація")},
-                                                           {QStringLiteral("photos"), QStringLiteral("Фотографії")}, {QStringLiteral("ribbons"), QStringLiteral("Стрічки")}};
+    QString saverName = tr7("None", "screen saver");
+    static const QList<QPair<QString, QString>> saverNames{{QStringLiteral("text3d"), tr7("3D Text")}, {QStringLiteral("blank"), tr7("Blank")},
+                                                           {QStringLiteral("bubbles"), tr7("Bubbles")}, {QStringLiteral("mystify"), tr7("Mystify")},
+                                                           {QStringLiteral("photos"), tr7("Photos")}, {QStringLiteral("ribbons"), tr7("Ribbons")}};
     for (const auto &n : saverNames) {
         if (n.first == saverId) {
             saverName = n.second;
@@ -1152,7 +1153,7 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
     }
     const QString saverPic = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                                     saverId == QLatin1String("none") ? QStringLiteral("seven-aero/themecpl/PNG_89.png") : QStringLiteral("seven-aero/themecpl/PNG_88.png"));
-    row->addWidget(bottomItem(QPixmap(saverPic), QStringLiteral("Заставка"), saverName, [nav] {
+    row->addWidget(bottomItem(QPixmap(saverPic), tr7("Screen Saver"), saverName, [nav] {
         // its own window and taskbar button with the desk.cpl icon, like Windows 7
         auto *proc = new QProcess;
         QObject::connect(proc, &QProcess::finished, [proc, nav] {
@@ -1307,9 +1308,9 @@ inline QString monitorName(int index)
                 name = QString::fromLatin1(e.mid(off + 5, 13)).trimmed();
             }
         }
-        names << (name.isEmpty() ? QStringLiteral("Універсальний монітор PnP") : name);
+        names << (name.isEmpty() ? tr7("Generic PnP Monitor") : name);
     }
-    return names.value(index, QStringLiteral("Універсальний монітор PnP"));
+    return names.value(index, tr7("Generic PnP Monitor"));
 }
 
 /** The built-in screen of a laptop (Windows 7 calls it "Mobile PC Display") */
@@ -1358,8 +1359,8 @@ inline bool applyOutputs(QWidget *parent, const QList<Output> &list)
     proc.start(QStringLiteral("kscreen-doctor"), args);
     proc.waitForFinished(15000);
     if (proc.exitCode() != 0) {
-        QMessageBox::warning(parent, QStringLiteral("Роздільна здатність екрана"),
-                             QStringLiteral("Не вдалося змінити параметри екрана.\n\n%1").arg(QString::fromUtf8(proc.readAllStandardError()).trimmed()));
+        QMessageBox::warning(parent, tr7("Screen Resolution"),
+                             tr7("The display settings could not be changed.\n\n%1").arg(QString::fromUtf8(proc.readAllStandardError()).trimmed()));
         return false;
     }
     // a single panel: the desktop size is the scaled one (or the native one, which turns scaling off)
@@ -1384,9 +1385,9 @@ inline bool applyOutputs(QWidget *parent, const QList<Output> &list)
 inline bool confirmKeep(QWidget *parent)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Параметри екрана"));
+    dlg.setWindowTitle(tr7("Display settings"));
     auto *v = new QVBoxLayout(&dlg);
-    auto *title = new QLabel(QStringLiteral("Зберегти ці параметри екрана?"));
+    auto *title = new QLabel(tr7("Do you want to keep these display settings?"));
     QFont f = title->font();
     f.setPixelSize(15);
     title->setFont(f);
@@ -1396,14 +1397,14 @@ inline bool confirmKeep(QWidget *parent)
     auto *countdown = plain(QString());
     v->addWidget(countdown);
     auto *buttons = new QDialogButtonBox;
-    auto *keep = buttons->addButton(QStringLiteral("Зберегти зміни"), QDialogButtonBox::AcceptRole);
-    buttons->addButton(QStringLiteral("Повернути"), QDialogButtonBox::RejectRole);
+    auto *keep = buttons->addButton(tr7("Save changes"), QDialogButtonBox::AcceptRole);
+    buttons->addButton(tr7("Revert"), QDialogButtonBox::RejectRole);
     keep->setMinimumWidth(110);
     v->addWidget(buttons);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
     auto update = [&] {
-        countdown->setText(QStringLiteral("Повернення до попередніх параметрів екрана через %1 с.").arg(left));
+        countdown->setText(tr7("Reverting to previous display settings in %1 seconds.").arg(left));
     };
     update();
     QTimer timer;
@@ -1597,7 +1598,7 @@ inline QString gpuValue(const QString &field)
 
 inline QString modeText(const Mode &m)
 {
-    return QStringLiteral("%1 на %2, True Color (32 біти), %3 Гц").arg(m.size.width()).arg(m.size.height()).arg(qRound(m.refresh));
+    return tr7("%1 by %2, True Color (32 bit), %3 Hertz").arg(m.size.width()).arg(m.size.height()).arg(qRound(m.refresh));
 }
 
 /** Returns the chosen mode id (refresh rate) or empty */
@@ -1608,7 +1609,7 @@ inline QString advancedDialog(QWidget *parent, const Output &o, int index)
     const QString adapter = gpu.isEmpty() ? vga : gpu;
     const QString monitor = monitorName(index);
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Властивості: %1 і %2").arg(monitor, adapter));
+    dlg.setWindowTitle(tr7("%1 and %2 Properties").arg(monitor, adapter));
     dlg.setMinimumWidth(420);
     auto *v = new QVBoxLayout(&dlg);
     auto *tabs = new QTabWidget;
@@ -1616,14 +1617,14 @@ inline QString advancedDialog(QWidget *parent, const Output &o, int index)
     // Adapter
     auto *ad = new QWidget;
     auto *av = new QVBoxLayout(ad);
-    auto *typeBox = new QGroupBox(QStringLiteral("Тип адаптера"));
+    auto *typeBox = new QGroupBox(tr7("Adapter Type"));
     auto *tl = new QHBoxLayout(typeBox);
     auto *adIcon = new QLabel;
     adIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-deskadp")).pixmap(32, 32));
     tl->addWidget(adIcon);
     tl->addWidget(plain(adapter), 1);
     av->addWidget(typeBox);
-    auto *infoBox = new QGroupBox(QStringLiteral("Відомості про адаптер"));
+    auto *infoBox = new QGroupBox(tr7("Adapter Information"));
     auto *grid = new QGridLayout(infoBox);
     int r = 0;
     auto row = [&](const QString &k, const QString &val) {
@@ -1636,58 +1637,58 @@ inline QString advancedDialog(QWidget *parent, const Output &o, int index)
         grid->addWidget(l, r, 1);
         ++r;
     };
-    row(QStringLiteral("Тип мікросхем:"), adapter);
-    row(QStringLiteral("Рядок адаптера:"), vga);
-    row(QStringLiteral("Версія драйвера:"), gpuValue(QStringLiteral("driver_version")));
+    row(tr7("Chip Type:"), adapter);
+    row(tr7("Adapter String:"), vga);
+    row(tr7("Driver Version:"), gpuValue(QStringLiteral("driver_version")));
     const QString vram = gpuValue(QStringLiteral("memory.total"));
-    row(QStringLiteral("Доступно графічної пам'яті:"), vram.isEmpty() ? QString() : vram + QStringLiteral(" МБ"));
+    row(tr7("Total Available Graphics Memory:"), vram.isEmpty() ? QString() : vram + tr7(" MB"));
     grid->setColumnStretch(1, 1);
     av->addWidget(infoBox);
     auto *modesRow = new QHBoxLayout;
-    auto *allModes = new QPushButton(QStringLiteral("Список усіх режимів"));
+    auto *allModes = new QPushButton(tr7("List All Modes"));
     modesRow->addWidget(allModes);
     modesRow->addStretch(1);
     av->addLayout(modesRow);
     av->addStretch(1);
-    tabs->addTab(ad, QStringLiteral("Адаптер"));
+    tabs->addTab(ad, tr7("Adapter"));
 
     // Monitor
     auto *mon = new QWidget;
     auto *mv = new QVBoxLayout(mon);
-    auto *monBox = new QGroupBox(QStringLiteral("Тип монітора"));
+    auto *monBox = new QGroupBox(tr7("Monitor Type"));
     auto *ml = new QHBoxLayout(monBox);
     auto *monIcon = new QLabel;
     monIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-deskmon")).pixmap(32, 32));
     ml->addWidget(monIcon);
     ml->addWidget(plain(monitor), 1);
     mv->addWidget(monBox);
-    auto *setBox = new QGroupBox(QStringLiteral("Параметри монітора"));
+    auto *setBox = new QGroupBox(tr7("Monitor Settings"));
     auto *sl = new QVBoxLayout(setBox);
-    sl->addWidget(new QLabel(QStringLiteral("Частота оновлення екрана:")));
+    sl->addWidget(new QLabel(tr7("Screen refresh rate:")));
     auto *refresh = new QComboBox;
     const Mode cur = currentMode(o);
     for (const Mode &m : o.modes) {
         if (m.size == cur.size) {
-            refresh->addItem(QStringLiteral("%1 Гц").arg(qRound(m.refresh)), m.id);
+            refresh->addItem(tr7("%1 Hertz").arg(qRound(m.refresh)), m.id);
         }
     }
     refresh->setCurrentIndex(qMax(0, refresh->findData(o.modeId)));
     sl->addWidget(refresh);
     mv->addWidget(setBox);
-    mv->addWidget(new QLabel(QStringLiteral("Якість кольору:")));
+    mv->addWidget(new QLabel(tr7("Colors:")));
     auto *depth = new QComboBox;
-    depth->addItem(QStringLiteral("True Color (32 біти)"));
+    depth->addItem(tr7("True Color (32 bit)"));
     depth->setFixedWidth(180);
     mv->addWidget(depth);
     mv->addStretch(1);
-    tabs->addTab(mon, QStringLiteral("Монітор"));
+    tabs->addTab(mon, tr7("Monitor"));
     v->addWidget(tabs);
 
     QObject::connect(allModes, &QPushButton::clicked, &dlg, [&dlg, o, refresh] {
         QDialog list(&dlg);
-        list.setWindowTitle(QStringLiteral("Список усіх режимів"));
+        list.setWindowTitle(tr7("List All Modes"));
         auto *lv = new QVBoxLayout(&list);
-        auto *box = new QGroupBox(QStringLiteral("Список доступних режимів"));
+        auto *box = new QGroupBox(tr7("List of valid modes"));
         auto *bl = new QVBoxLayout(box);
         auto *w = new QListWidget;
         for (const Mode &m : o.modes) {
@@ -1701,7 +1702,7 @@ inline QString advancedDialog(QWidget *parent, const Output &o, int index)
         lv->addWidget(box);
         auto *bb = new QDialogButtonBox;
         bb->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+        bb->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
         QObject::connect(bb, &QDialogButtonBox::accepted, &list, &QDialog::accept);
         QObject::connect(bb, &QDialogButtonBox::rejected, &list, &QDialog::reject);
         lv->addWidget(bb);
@@ -1715,7 +1716,7 @@ inline QString advancedDialog(QWidget *parent, const Output &o, int index)
     });
     auto *bb = new QDialogButtonBox;
     bb->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-    bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+    bb->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
     QObject::connect(bb, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     QObject::connect(bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
     v->addWidget(bb);
@@ -1747,7 +1748,7 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     auto *cv = new QVBoxLayout(col);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(pageTitle(QStringLiteral("Змінення вигляду дисплеїв")));
+    cv->addWidget(pageTitle(tr7("Change the appearance of your displays")));
     cv->addSpacing(12);
 
     auto *box = new QFrame;
@@ -1757,8 +1758,8 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     auto *preview = new MonitorsPreview(*state, selected.get());
     bh->addWidget(preview, 1);
     auto *bv = new QVBoxLayout;
-    auto *detect = new QPushButton(QStringLiteral("Знайти"));
-    auto *identify = new QPushButton(QStringLiteral("Визначити"));
+    auto *detect = new QPushButton(tr7("Detect"));
+    auto *identify = new QPushButton(tr7("Identify"));
     detect->setMinimumWidth(100);
     identify->setMinimumWidth(100);
     bv->addWidget(detect);
@@ -1780,25 +1781,25 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     rotCombo->setMinimumWidth(190);
     multiCombo->setMinimumWidth(240);
     for (int i = 0; i < state->size(); ++i) {
-        screenCombo->addItem(QStringLiteral("%1. %2").arg(i + 1).arg(isLaptopPanel(*state, i) ? QStringLiteral("Дисплей мобільного ПК") : monitorName(i)));
+        screenCombo->addItem(QStringLiteral("%1. %2").arg(i + 1).arg(isLaptopPanel(*state, i) ? tr7("Mobile PC Display") : monitorName(i)));
     }
-    rotCombo->addItem(QStringLiteral("Альбомна"), 1);
-    rotCombo->addItem(QStringLiteral("Книжкова"), 2);
-    rotCombo->addItem(QStringLiteral("Альбомна (перевернута)"), 4);
-    rotCombo->addItem(QStringLiteral("Книжкова (перевернута)"), 8);
-    form->addWidget(new QLabel(QStringLiteral("Екран:")), 0, 0);
+    rotCombo->addItem(tr7("Landscape"), 1);
+    rotCombo->addItem(tr7("Portrait"), 2);
+    rotCombo->addItem(tr7("Landscape (flipped)"), 4);
+    rotCombo->addItem(tr7("Portrait (flipped)"), 8);
+    form->addWidget(new QLabel(tr7("Display:")), 0, 0);
     form->addWidget(screenCombo, 0, 1, Qt::AlignLeft);
-    form->addWidget(new QLabel(QStringLiteral("Роздільна здатність:")), 1, 0);
+    form->addWidget(new QLabel(tr7("Resolution:")), 1, 0);
     form->addWidget(resCombo, 1, 1, Qt::AlignLeft);
-    form->addWidget(new QLabel(QStringLiteral("Орієнтація:")), 2, 0);
+    form->addWidget(new QLabel(tr7("Orientation:")), 2, 0);
     form->addWidget(rotCombo, 2, 1, Qt::AlignLeft);
     const bool multi = state->size() > 1;
     if (multi) {
-        multiCombo->addItem(QStringLiteral("Дублювати ці екрани"));
-        multiCombo->addItem(QStringLiteral("Розширити ці екрани"));
-        multiCombo->addItem(QStringLiteral("Відображати робочий стіл лише на 1"));
-        multiCombo->addItem(QStringLiteral("Відображати робочий стіл лише на 2"));
-        form->addWidget(new QLabel(QStringLiteral("Кілька екранів:")), 3, 0);
+        multiCombo->addItem(tr7("Duplicate these displays"));
+        multiCombo->addItem(tr7("Extend these displays"));
+        multiCombo->addItem(tr7("Show desktop only on 1"));
+        multiCombo->addItem(tr7("Show desktop only on 2"));
+        form->addWidget(new QLabel(tr7("Multiple displays:")), 3, 0);
         form->addWidget(multiCombo, 3, 1, Qt::AlignLeft);
         const bool both = state->at(0).enabled && state->at(1).enabled;
         multiCombo->setCurrentIndex(both ? (state->at(0).pos == state->at(1).pos ? 0 : 1) : (state->at(0).enabled ? 2 : 3));
@@ -1810,7 +1811,7 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     auto *primaryLabel = new QLabel;
     primaryRow->addWidget(primaryLabel);
     primaryRow->addStretch(1);
-    auto *advanced = new Link(QStringLiteral("Додаткові параметри"), nullptr);
+    auto *advanced = new Link(tr7("More Options"), nullptr);
     advanced->setWordWrap(false);
     primaryRow->addWidget(advanced);
     cv->addLayout(primaryRow);
@@ -1822,18 +1823,18 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     cv->addSpacing(8);
     auto *projRow = new QHBoxLayout;
     projRow->setSpacing(0);
-    auto *proj = new Link(QStringLiteral("Підключення до проектора"), [] { showDisplaySwitcher(); });
+    auto *proj = new Link(tr7("Connect to a projector"), [] { showDisplaySwitcher(); });
     proj->setWordWrap(false);
     projRow->addWidget(proj);
-    projRow->addWidget(new QLabel(QStringLiteral(" (або натисніть клавішу ")));
+    projRow->addWidget(new QLabel(tr7(" (or press the ")));
     auto *winKey = new QLabel;
     winKey->setPixmap(QIcon::fromTheme(QStringLiteral("start-here")).pixmap(14, 14));
     projRow->addWidget(winKey);
-    projRow->addWidget(new QLabel(QStringLiteral(" і P)")));
+    projRow->addWidget(new QLabel(tr7(" key and tap P)")));
     projRow->addStretch(1);
     cv->addLayout(projRow);
     cv->addSpacing(8);
-    cv->addWidget(new Link(QStringLiteral("Зробити текст та інші елементи більшими або меншими"), [nav] { nav.open(DisplayView); }));
+    cv->addWidget(new Link(tr7("Make text and other items larger or smaller", "link"), [nav] { nav.open(DisplayView); }));
     outer->addWidget(col, 0, Qt::AlignHCenter);
     outer->addSpacing(18);
 
@@ -1848,8 +1849,8 @@ inline QWidget *buildResolutionPage(const Nav &nav)
     bl->setContentsMargins(0, 0, 0, 0);
     bl->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-    auto *apply = new QPushButton(QStringLiteral("Застосувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
+    auto *apply = new QPushButton(tr7("Apply"));
     for (QPushButton *b : {ok, cancel, apply}) {
         b->setMinimumWidth(78);
         bl->addWidget(b);
@@ -1875,11 +1876,11 @@ inline QWidget *buildResolutionPage(const Nav &nav)
         });
         for (const QSize &s : sizes) {
             const bool recommended = &s == &sizes.first();
-            resCombo->addItem(QStringLiteral("%1 × %2%3").arg(s.width()).arg(s.height()).arg(recommended ? QStringLiteral(" (рекомендовано)") : QString()), s);
+            resCombo->addItem(QStringLiteral("%1 × %2%3").arg(s.width()).arg(s.height()).arg(recommended ? tr7(" (Recommended)") : QString()), s);
         }
         resCombo->setCurrentIndex(qMax(0, resCombo->findData(currentMode(o).size)));
         rotCombo->setCurrentIndex(qMax(0, rotCombo->findData(o.rotation)));
-        primaryLabel->setText(multi && o.primary ? QStringLiteral("Зараз це основний монітор.") : QString());
+        primaryLabel->setText(multi && o.primary ? tr7("This is currently your main display.") : QString());
         preview->update();
         *updating = false;
     };
@@ -2040,14 +2041,14 @@ inline QPixmap scalePreview(double scale)
 inline QWidget *buildDisplayPage(const Nav &nav)
 {
     auto *side = sidePane(nav.home,
-                          {{QStringLiteral("Налаштування роздільної здатності екрана"), [nav] { nav.open(ResolutionView); }},
-                           {QStringLiteral("Налаштування яскравості"), [nav] { nav.powerPlans(); }},
-                           {QStringLiteral("Налаштування параметрів екрана"), [nav] { nav.open(ResolutionView); }},
-                           {QStringLiteral("Підключитися до проектора"), [] { showDisplaySwitcher(); }},
-                           {QStringLiteral("Налаштування тексту ClearType"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cttune")}); }},
-                           {QStringLiteral("Інший розмір шрифту (точок на дюйм)"), [] { systemSettings(QStringLiteral("kcm_fonts")); }}},
-                          {{QStringLiteral("Персоналізація"), [nav] { nav.open(PersonalizeView); }},
-                           {QStringLiteral("Пристрої та принтери"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--devices")}); }}});
+                          {{tr7("Adjust screen resolution"), [nav] { nav.open(ResolutionView); }},
+                           {tr7("Adjust brightness"), [nav] { nav.powerPlans(); }},
+                           {tr7("Adjust display settings"), [nav] { nav.open(ResolutionView); }},
+                           {tr7("Connect to a projector", "task"), [] { showDisplaySwitcher(); }},
+                           {tr7("Adjust ClearType text", "task"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cttune")}); }},
+                           {tr7("Set custom text size (DPI)"), [] { systemSettings(QStringLiteral("kcm_fonts")); }}},
+                          {{tr7("Personalization"), [nav] { nav.open(PersonalizeView); }},
+                           {tr7("Devices and Printers"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--devices")}); }}});
 
     auto *main = new QWidget;
     auto *mv = new QVBoxLayout(main);
@@ -2058,10 +2059,9 @@ inline QWidget *buildDisplayPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(pageTitle(QStringLiteral("Зручність читання з екрана")));
+    cv->addWidget(pageTitle(tr7("Make it easier to read what's on your screen")));
     cv->addSpacing(6);
-    auto *intro = new QLabel(QStringLiteral("Можна змінити розмір тексту та інших елементів на екрані, вибравши один із цих параметрів. "
-                                            "Для тимчасового збільшення частини екрана використовуйте <a href=\"zoom\" style=\"color:#0066cc;\">екранну лупу</a>."));
+    auto *intro = new QLabel(tr7("You can change the size of text and other items on your screen by choosing one of these options. To temporarily enlarge just part of the screen, use the <a href=\"zoom\" style=\"color:#0066cc;\">Magnifier</a> tool."));
     intro->setWordWrap(true);
     QObject::connect(intro, &QLabel::linkActivated, intro, [] {
         QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
@@ -2077,9 +2077,9 @@ inline QWidget *buildDisplayPage(const Nav &nav)
     const double cur = currentScale();
     auto *group = new QButtonGroup(main);
     const QList<std::tuple<double, QString, int>> options{
-        {1.0, QStringLiteral("Дрібний — 100% (за замовчуванням)"), 12},
-        {1.25, QStringLiteral("Середній — 125%"), 15},
-        {1.5, QStringLiteral("Великий — 150%"), 18},
+        {1.0, tr7("Smaller - 100% (default)"), 12},
+        {1.25, tr7("Medium - 125%"), 15},
+        {1.5, tr7("Larger - 150%"), 18},
     };
     int id = 0;
     for (const auto &[scale, text, px] : options) {
@@ -2094,7 +2094,7 @@ inline QWidget *buildDisplayPage(const Nav &nav)
     radios->addStretch(1);
     row->addLayout(radios, 1);
     auto *pv = new QVBoxLayout;
-    pv->addWidget(new SectionHeader(QStringLiteral("Перегляд")));
+    pv->addWidget(new SectionHeader(tr7("Preview")));
     auto *previewPic = new QLabel;
     previewPic->setPixmap(scalePreview(cur));
     previewPic->setAlignment(Qt::AlignCenter);
@@ -2114,11 +2114,11 @@ inline QWidget *buildDisplayPage(const Nav &nav)
     auto *bottom = new QHBoxLayout;
     auto *warnIcon = new QLabel;
     warnIcon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-net-warn")).pixmap(16, 16));
-    auto *warn = plain(QStringLiteral("Деякі елементи можуть не поміститися на екрані, якщо вибрати цей параметр за такої роздільної здатності екрана."));
+    auto *warn = plain(tr7("Some items may not fit on your screen if you choose this setting while your display is set to this resolution."));
     bottom->addWidget(warnIcon, 0, Qt::AlignTop);
     bottom->addWidget(warn, 1);
     bottom->addStretch(0);
-    auto *apply = new QPushButton(QStringLiteral("Застосувати"));
+    auto *apply = new QPushButton(tr7("Apply"));
     apply->setMinimumWidth(96);
     apply->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     apply->setEnabled(false);
@@ -2150,10 +2150,10 @@ inline QWidget *buildDisplayPage(const Nav &nav)
         }
         writeScale(std::get<0>(options.at(chosen)));
         apply->setEnabled(false);
-        QMessageBox box(QMessageBox::Warning, QStringLiteral("Екран"), QStringLiteral("Щоб зміни набули чинності, необхідно вийти з системи"), QMessageBox::NoButton, main);
-        box.setInformativeText(QStringLiteral("Перед виходом із системи збережіть усі відкриті файли та закрийте всі програми."));
-        QPushButton *now = box.addButton(QStringLiteral("Вийти зараз"), QMessageBox::AcceptRole);
-        box.addButton(QStringLiteral("Вийти пізніше"), QMessageBox::RejectRole);
+        QMessageBox box(QMessageBox::Warning, tr7("Display"), tr7("You must log off your computer to apply these changes"), QMessageBox::NoButton, main);
+        box.setInformativeText(tr7("Save any open files and close all programs before you log off."));
+        QPushButton *now = box.addButton(tr7("Log off now"), QMessageBox::AcceptRole);
+        box.addButton(tr7("Log off later"), QMessageBox::RejectRole);
         box.exec();
         if (box.clickedButton() == now) {
             QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.Shutdown"), QStringLiteral("/Shutdown"), QStringLiteral("org.kde.Shutdown.logout")});

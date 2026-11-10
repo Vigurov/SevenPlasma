@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * Media library: scans the Music / Videos / Pictures folders, reads tags with KFileMetaData and caches the
  * result in ~/.cache/seven-wmp/library.json (keyed by path + modification time).
@@ -38,7 +39,7 @@ struct MediaItem {
     }
     QString displayArtist() const
     {
-        return artist.isEmpty() ? QStringLiteral("Невідомий виконавець") : artist;
+        return artist.isEmpty() ? tr7("Unknown Artist") : artist;
     }
     QString displayAlbumArtist() const
     {
@@ -46,11 +47,11 @@ struct MediaItem {
     }
     QString displayAlbum() const
     {
-        return album.isEmpty() ? QStringLiteral("Невідомий альбом") : album;
+        return album.isEmpty() ? tr7("Unknown Album") : album;
     }
     QString displayGenre() const
     {
-        return genre.isEmpty() ? QStringLiteral("Невідомий жанр") : genre;
+        return genre.isEmpty() ? tr7("Unknown Genre") : genre;
     }
     QUrl url() const
     {
@@ -70,7 +71,7 @@ inline QString formatLength(qint64 ms)
 inline QString formatSize(qint64 bytes)
 {
     double v = bytes;
-    QStringList units{QStringLiteral("байт"), QStringLiteral("КБ"), QStringLiteral("МБ"), QStringLiteral("ГБ")};
+    QStringList units{tr7("bytes"), tr7("KB"), tr7("MB"), tr7("GB")};
     int u = 0;
     while (v >= 1024 && u < 3) {
         v /= 1024;

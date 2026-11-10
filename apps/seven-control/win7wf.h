@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7wrapmenubar.h"
 #include "win7states.h"
@@ -46,15 +47,15 @@ using Win7Firewall::Ufw;
 inline QString actionName(const QString &a)
 {
     if (a == QLatin1String("allow")) {
-        return QStringLiteral("Дозволити");
+        return tr7("Allow");
     }
     if (a == QLatin1String("limit")) {
-        return QStringLiteral("Дозволити (з обмеженням частоти)");
+        return tr7("Allow (rate limited)");
     }
-    return QStringLiteral("Блокувати");
+    return tr7("Block");
 }
 
-inline QString any(const QString &v, const QString &word = QStringLiteral("Будь-яка"))
+inline QString any(const QString &v, const QString &word = tr7("Any", "address"))
 {
     return v.isEmpty() || v == QLatin1String("any") || v == QLatin1String("0.0.0.0/0") || v == QLatin1String("::/0") ? word : v;
 }
@@ -111,9 +112,9 @@ inline QString ruleName(const Rule &r)
         return r.dapp;
     }
     if (!r.dport.isEmpty() && r.dport != QLatin1String("any")) {
-        return QStringLiteral("Порт %1%2").arg(r.dport, r.protocol.isEmpty() || r.protocol == QLatin1String("any") ? QString() : QLatin1Char('/') + r.protocol.toUpper());
+        return tr7("Port %1%2").arg(r.dport, r.protocol.isEmpty() || r.protocol == QLatin1String("any") ? QString() : QLatin1Char('/') + r.protocol.toUpper());
     }
-    return QStringLiteral("Правило %1").arg(r.position);
+    return tr7("Rule %1").arg(r.position);
 }
 
 inline QString arrows()
@@ -153,7 +154,7 @@ public:
         : QDialog(parent)
         , m_inbound(inbound)
     {
-        setWindowTitle(inbound ? QStringLiteral("Майстер створення правила для вхідного підключення") : QStringLiteral("Майстер створення правила для вихідного підключення"));
+        setWindowTitle(inbound ? tr7("New Inbound Rule Wizard") : tr7("New Outbound Rule Wizard"));
         setWindowIcon(QIcon::fromTheme(inbound ? QStringLiteral("seven-wf-newinbound") : QStringLiteral("seven-wf-newoutbound")));
         setFixedSize(700, 540);
         auto *outer = new QVBoxLayout(this);
@@ -185,7 +186,7 @@ public:
         body->setContentsMargins(14, 12, 14, 8);
         body->setSpacing(14);
         auto *stepsBox = new QVBoxLayout;
-        auto *stepsTitle = new QLabel(QStringLiteral("Кроки:"));
+        auto *stepsTitle = new QLabel(tr7("Steps:"));
         stepsTitle->setFont(bf);
         stepsBox->addWidget(stepsTitle);
         m_steps = new QListWidget;
@@ -202,9 +203,9 @@ public:
         auto *row = new QHBoxLayout;
         row->setContentsMargins(14, 8, 14, 12);
         row->addStretch(1);
-        m_back = new QPushButton(QStringLiteral("< Назад"));
-        m_next = new QPushButton(QStringLiteral("Далі >"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_back = new QPushButton(tr7("< Back"));
+        m_next = new QPushButton(tr7("Next >"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_back, m_next, cancel}) {
             b->setMinimumWidth(80);
             row->addWidget(b);
@@ -254,11 +255,11 @@ private:
     void buildType()
     {
         auto *v = page(TypePage);
-        v->addWidget(new QLabel(QStringLiteral("Правило якого типу потрібно створити?")));
+        v->addWidget(new QLabel(tr7("What type of rule would you like to create?")));
         v->addSpacing(8);
-        m_port = new QRadioButton(QStringLiteral("Для порту"));
-        m_predefined = new QRadioButton(QStringLiteral("Стандартне:"));
-        m_custom = new QRadioButton(QStringLiteral("Настроюване"));
+        m_port = new QRadioButton(tr7("Port", "rule type"));
+        m_predefined = new QRadioButton(tr7("Predefined:"));
+        m_custom = new QRadioButton(tr7("Custom", "rule type"));
         m_port->setChecked(true);
         auto desc = [](const QString &t) {
             auto *l = new QLabel(t);
@@ -267,7 +268,7 @@ private:
             return l;
         };
         v->addWidget(m_port);
-        v->addWidget(desc(QStringLiteral("Правило, що керує підключеннями для порту TCP або UDP.")));
+        v->addWidget(desc(tr7("Rule that controls connections for a TCP or UDP port.")));
         v->addSpacing(6);
         v->addWidget(m_predefined);
         m_feature = new QComboBox;
@@ -279,10 +280,10 @@ private:
         fl->setContentsMargins(22, 0, 0, 0);
         fl->addWidget(m_feature, 1);
         v->addLayout(fl);
-        v->addWidget(desc(QStringLiteral("Правило, що керує підключеннями відомої служби.")));
+        v->addWidget(desc(tr7("Rule that controls connections for a well-known service.")));
         v->addSpacing(6);
         v->addWidget(m_custom);
-        v->addWidget(desc(QStringLiteral("Настроюване правило: протокол, порти й адреси.")));
+        v->addWidget(desc(tr7("Custom rule: protocol, ports and addresses.")));
         v->addStretch(1);
         connect(m_predefined, &QRadioButton::toggled, m_feature, &QWidget::setEnabled);
         if (!m_inbound) {
@@ -293,9 +294,9 @@ private:
     void buildPorts()
     {
         auto *v = page(PortsPage);
-        v->addWidget(new QLabel(QStringLiteral("Чи застосовується це правило до TCP або UDP?")));
-        m_tcp = new QRadioButton(QStringLiteral("Протокол TCP"));
-        m_udp = new QRadioButton(QStringLiteral("Протокол UDP"));
+        v->addWidget(new QLabel(tr7("Does this rule apply to TCP or UDP?")));
+        m_tcp = new QRadioButton(tr7("TCP"));
+        m_udp = new QRadioButton(tr7("UDP"));
         m_tcp->setChecked(true);
         auto *g1 = new QButtonGroup(this);
         g1->addButton(m_tcp);
@@ -305,12 +306,12 @@ private:
             v->addWidget(b);
         }
         v->addSpacing(14);
-        auto *which = new QLabel(m_inbound ? QStringLiteral("Застосовується це правило до всіх локальних портів чи до певних локальних портів?")
-                                           : QStringLiteral("Застосовується це правило до всіх віддалених портів чи до певних віддалених портів?"));
+        auto *which = new QLabel(m_inbound ? tr7("Does this rule apply to all local ports or specific local ports?")
+                                           : tr7("Does this rule apply to all remote ports or specific remote ports?"));
         which->setWordWrap(true);
         v->addWidget(which);
-        m_allPorts = new QRadioButton(m_inbound ? QStringLiteral("Усі локальні порти") : QStringLiteral("Усі віддалені порти"));
-        m_somePorts = new QRadioButton(m_inbound ? QStringLiteral("Певні локальні порти:") : QStringLiteral("Певні віддалені порти:"));
+        m_allPorts = new QRadioButton(m_inbound ? tr7("All local ports") : tr7("All remote ports"));
+        m_somePorts = new QRadioButton(m_inbound ? tr7("Specific local ports:") : tr7("Specific remote ports:"));
         m_somePorts->setChecked(true);
         auto *g2 = new QButtonGroup(this);
         g2->addButton(m_allPorts);
@@ -321,7 +322,7 @@ private:
         m_ports = new QLineEdit;
         row->addWidget(m_ports, 1);
         v->addLayout(row);
-        auto *ex = new QLabel(QStringLiteral("Приклад: 80, 443, 5000:5010"));
+        auto *ex = new QLabel(tr7("Example: 80, 443, 5000:5010"));
         ex->setContentsMargins(150, 0, 0, 0);
         v->addWidget(ex);
         v->addStretch(1);
@@ -331,10 +332,10 @@ private:
     void buildPredefined()
     {
         auto *v = page(PredefinedPage);
-        v->addWidget(new QLabel(QStringLiteral("Будуть створені такі правила:")));
+        v->addWidget(new QLabel(tr7("The following rules will be created:")));
         m_preview = new QTreeWidget;
         m_preview->setRootIsDecorated(false);
-        m_preview->setHeaderLabels({QStringLiteral("Правило"), QStringLiteral("Порти")});
+        m_preview->setHeaderLabels({tr7("Rule"), tr7("Ports", "rules")});
         m_preview->setColumnWidth(0, 230);
         v->addWidget(m_preview, 1);
     }
@@ -345,25 +346,25 @@ private:
         auto *g = new QGridLayout;
         g->setVerticalSpacing(10);
         m_proto = new QComboBox;
-        m_proto->addItem(QStringLiteral("Будь-який"), QString());
+        m_proto->addItem(tr7("Any"), QString());
         m_proto->addItem(QStringLiteral("TCP"), QStringLiteral("tcp"));
         m_proto->addItem(QStringLiteral("UDP"), QStringLiteral("udp"));
         m_customPorts = new QLineEdit;
-        m_customPorts->setPlaceholderText(QStringLiteral("Усі порти"));
+        m_customPorts->setPlaceholderText(tr7("All Ports"));
         m_customPorts->setEnabled(false);
         m_remote = new QLineEdit;
-        m_remote->setPlaceholderText(QStringLiteral("Будь-яка IP-адреса"));
-        g->addWidget(new QLabel(QStringLiteral("Тип протоколу:")), 0, 0);
+        m_remote->setPlaceholderText(tr7("Any IP address"));
+        g->addWidget(new QLabel(tr7("Protocol type:")), 0, 0);
         g->addWidget(m_proto, 0, 1);
-        g->addWidget(new QLabel(m_inbound ? QStringLiteral("Локальний порт:") : QStringLiteral("Віддалений порт:")), 1, 0);
+        g->addWidget(new QLabel(m_inbound ? tr7("Local port:") : tr7("Remote port:")), 1, 0);
         g->addWidget(m_customPorts, 1, 1);
-        g->addWidget(new QLabel(QStringLiteral("Віддалена IP-адреса:")), 2, 0);
+        g->addWidget(new QLabel(tr7("Remote IP address:")), 2, 0);
         g->addWidget(m_remote, 2, 1);
         g->setColumnStretch(1, 1);
-        v->addWidget(new QLabel(QStringLiteral("До яких протоколів, портів і IP-адрес застосовується це правило?")));
+        v->addWidget(new QLabel(tr7("To which ports and IP addresses does this rule apply?")));
         v->addSpacing(6);
         v->addLayout(g);
-        auto *ex = new QLabel(QStringLiteral("IP-адресу можна вказати з маскою, наприклад 192.168.1.0/24."));
+        auto *ex = new QLabel(tr7("An IP address can be given with a mask, for example 192.168.1.0/24."));
         ex->setWordWrap(true);
         v->addWidget(ex);
         v->addStretch(1);
@@ -375,11 +376,11 @@ private:
     void buildAction()
     {
         auto *v = page(ActionPage);
-        v->addWidget(new QLabel(QStringLiteral("Яку дію слід виконати, якщо підключення відповідає вказаним умовам?")));
+        v->addWidget(new QLabel(tr7("What action should be taken when a connection matches the specified conditions?")));
         v->addSpacing(8);
-        m_allow = new QRadioButton(QStringLiteral("Дозволити підключення"));
-        m_limit = new QRadioButton(QStringLiteral("Дозволити, але обмежити частоту підключень"));
-        m_block = new QRadioButton(QStringLiteral("Блокувати підключення"));
+        m_allow = new QRadioButton(tr7("Allow the connection"));
+        m_limit = new QRadioButton(tr7("Allow, but limit the connection rate"));
+        m_block = new QRadioButton(tr7("Block the connection"));
         m_allow->setChecked(true);
         auto desc = [](const QString &t) {
             auto *l = new QLabel(t);
@@ -388,9 +389,9 @@ private:
             return l;
         };
         v->addWidget(m_allow);
-        v->addWidget(desc(QStringLiteral("Включає як захищені, так і незахищені підключення.")));
+        v->addWidget(desc(tr7("This includes connections that are protected with IPsec as well as those that are not.")));
         v->addWidget(m_limit);
-        v->addWidget(desc(QStringLiteral("Підключення блокується, якщо з однієї адреси за 30 секунд надходить більше 6 спроб (захист від підбору пароля).")));
+        v->addWidget(desc(tr7("The connection is blocked if more than 6 attempts come from one address within 30 seconds (protection against password guessing).")));
         v->addWidget(m_block);
         v->addStretch(1);
         if (!m_inbound) {
@@ -401,10 +402,10 @@ private:
     void buildName()
     {
         auto *v = page(NamePage);
-        v->addWidget(new QLabel(QStringLiteral("Ім'я:")));
+        v->addWidget(new QLabel(tr7("Name:")));
         m_name = new QLineEdit;
         v->addWidget(m_name);
-        v->addWidget(new QLabel(QStringLiteral("Опис (необов'язково):")));
+        v->addWidget(new QLabel(tr7("Description (optional):")));
         m_desc = new QPlainTextEdit;
         m_desc->setFixedHeight(100);
         v->addWidget(m_desc);
@@ -432,12 +433,12 @@ private:
         }
         m_stack->setCurrentIndex(id);
         static const QHash<int, QPair<QString, QString>> heads{
-            {TypePage, {QStringLiteral("Тип правила"), QStringLiteral("Виберіть тип правила брандмауера.")}},
-            {PortsPage, {QStringLiteral("Протокол і порти"), QStringLiteral("Укажіть протоколи й порти, до яких застосовується це правило.")}},
-            {PredefinedPage, {QStringLiteral("Стандартні правила"), QStringLiteral("Виберіть правила, які потрібно створити.")}},
-            {CustomPage, {QStringLiteral("Протокол і порти"), QStringLiteral("Укажіть протоколи, порти й IP-адреси, до яких застосовується це правило.")}},
-            {ActionPage, {QStringLiteral("Дія"), QStringLiteral("Укажіть дію, яку слід виконати, якщо підключення відповідає умовам правила.")}},
-            {NamePage, {QStringLiteral("Ім'я"), QStringLiteral("Укажіть ім'я та опис цього правила.")}}};
+            {TypePage, {tr7("Rule Type"), tr7("Specify the type of firewall rule to create.")}},
+            {PortsPage, {tr7("Protocol and Ports"), tr7("Specify the protocols and ports to which this rule applies.")}},
+            {PredefinedPage, {tr7("Predefined Rules"), tr7("Select the rules to be created.")}},
+            {CustomPage, {tr7("Protocol and Ports"), tr7("Specify the protocols, ports and IP addresses to which this rule applies.")}},
+            {ActionPage, {tr7("Action"), tr7("Specify the action to be taken when a connection matches the conditions specified in the rule.")}},
+            {NamePage, {tr7("Name"), tr7("Specify the name and description of this rule.")}}};
         m_title->setText(heads.value(id).first);
         m_subtitle->setText(heads.value(id).second);
         m_steps->clear();
@@ -449,12 +450,12 @@ private:
             it->setForeground(p == id ? QColor(0x00, 0x33, 0x99) : QColor(0x50, 0x50, 0x50));
         }
         m_back->setEnabled(id != TypePage);
-        m_next->setText(id == NamePage ? QStringLiteral("Готово") : QStringLiteral("Далі >"));
+        m_next->setText(id == NamePage ? tr7("Done") : tr7("Next >"));
         m_next->setEnabled(id != NamePage || !m_name->text().trimmed().isEmpty());
         if (id == PredefinedPage) {
             m_preview->clear();
             const Win7Firewall::Feature f = Win7Firewall::features().value(m_feature->currentIndex());
-            new QTreeWidgetItem(m_preview, {f.name, f.app.isEmpty() ? f.portSpecs.join(QStringLiteral(", ")).toUpper() : QStringLiteral("профіль ") + f.app});
+            new QTreeWidgetItem(m_preview, {f.name, f.app.isEmpty() ? f.portSpecs.join(QStringLiteral(", ")).toUpper() : tr7("profile ") + f.app});
             if (m_name->text().isEmpty()) {
                 m_name->setText(f.name);
             }
@@ -468,7 +469,7 @@ private:
         if (cur == PortsPage && m_somePorts->isChecked()) {
             static const QRegularExpression valid(QStringLiteral("^\\d{1,5}(:\\d{1,5})?(,\\d{1,5}(:\\d{1,5})?)*$"));
             if (!valid.match(m_ports->text().remove(QLatin1Char(' '))).hasMatch()) {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Укажіть порт або діапазон портів, наприклад 80, 443 або 5000:5010."));
+                QMessageBox::warning(this, windowTitle(), tr7("Enter a port or a port range, for example 80, 443 or 5000:5010."));
                 return;
             }
         }
@@ -549,7 +550,7 @@ class FirewallConsole : public QMainWindow
 public:
     FirewallConsole()
     {
-        setWindowTitle(QStringLiteral("Брандмауер Windows у режимі підвищеної безпеки"));
+        setWindowTitle(tr7("Windows Firewall with Advanced Security"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-wf-firewall")));
         resize(1060, 660);
         buildUi();
@@ -562,13 +563,13 @@ private:
 
     void buildUi()
     {
-        m_back = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-back")), QStringLiteral("Назад"), this);
-        m_forward = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-forward")), QStringLiteral("Вперед"), this);
+        m_back = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-back")), tr7("Back"), this);
+        m_forward = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-forward")), tr7("Forward"), this);
         m_back->setEnabled(false);
         m_forward->setEnabled(false);
-        auto *console = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-console")), QStringLiteral("Показати або приховати дерево консолі"), this);
-        auto *help = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this);
-        auto *actionPane = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-actionpane")), QStringLiteral("Показати або приховати область дій"), this);
+        auto *console = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-console")), tr7("Show/Hide Console Tree"), this);
+        auto *help = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-help")), tr7("Help"), this);
+        auto *actionPane = new QAction(Win7Disk::flatIcon(QStringLiteral("seven-mmc-actionpane")), tr7("Show/Hide Action Pane"), this);
         console->setCheckable(true);
         console->setChecked(true);
         actionPane->setCheckable(true);
@@ -582,22 +583,22 @@ private:
         connect(help, &QAction::triggered, this, [this] {
             showHelp();
         });
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
-        file->addAction(QStringLiteral("Вихід"), this, &QWidget::close);
-        m_actionMenu = menuBar()->addMenu(QStringLiteral("&Дія"));
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
+        file->addAction(tr7("Exit"), this, &QWidget::close);
+        m_actionMenu = menuBar()->addMenu(tr7("&Action"));
         connect(m_actionMenu, &QMenu::aboutToShow, this, [this] {
             m_actionMenu->clear();
             fillMenu(m_actionMenu, false);
         });
-        QMenu *viewMenu = menuBar()->addMenu(QStringLiteral("&Вигляд"));
-        viewMenu->addAction(QStringLiteral("Оновити"), this, [this] {
+        QMenu *viewMenu = menuBar()->addMenu(tr7("&View"));
+        viewMenu->addAction(tr7("Refresh"), this, [this] {
             reload();
         });
-        QMenu *helpMenu = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        helpMenu->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this, [this] {
+        QMenu *helpMenu = menuBar()->addMenu(tr7("&Help"));
+        helpMenu->addAction(QIcon::fromTheme(QStringLiteral("seven-mmc-help")), tr7("Help"), this, [this] {
             showHelp();
         });
-        QToolBar *bar = addToolBar(QStringLiteral("Стандартна"));
+        QToolBar *bar = addToolBar(tr7("Standard"));
         bar->setMovable(false);
         bar->setIconSize(QSize(16, 16));
         bar->addAction(m_back);
@@ -620,7 +621,7 @@ private:
         m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
         m_tree->setStyleSheet(QStringLiteral("QTreeView { background: white; outline: 0; show-decoration-selected: 0; }") + arrows()
                               + Win7States::itemViewSheet());
-        auto *root = new QTreeWidgetItem(m_tree, {QStringLiteral("Брандмауер Windows у режимі підвищеної безпеки на Локальний комп'ютер")});
+        auto *root = new QTreeWidgetItem(m_tree, {tr7("Windows Firewall with Advanced Security on Local Computer")});
         root->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-wf-firewall")));
         root->setData(0, Qt::UserRole, RootNode);
         auto add = [](QTreeWidgetItem *parent, const QString &t, const QString &icon, int node) {
@@ -629,10 +630,10 @@ private:
             it->setData(0, Qt::UserRole, node);
             return it;
         };
-        add(root, QStringLiteral("Правила для вхідних підключень"), QStringLiteral("seven-wf-inbound_ico"), InboundNode);
-        add(root, QStringLiteral("Правила для вихідних підключень"), QStringLiteral("seven-wf-outbound_ico"), OutboundNode);
-        auto *mon = add(root, QStringLiteral("Спостереження"), QStringLiteral("seven-wf-monitoring"), MonitoringNode);
-        add(mon, QStringLiteral("Брандмауер"), QStringLiteral("seven-wf-firewallrulesfolder"), ActiveNode);
+        add(root, tr7("Inbound Rules"), QStringLiteral("seven-wf-inbound_ico"), InboundNode);
+        add(root, tr7("Outbound Rules"), QStringLiteral("seven-wf-outbound_ico"), OutboundNode);
+        auto *mon = add(root, tr7("Monitoring"), QStringLiteral("seven-wf-monitoring"), MonitoringNode);
+        add(mon, tr7("Windows Firewall"), QStringLiteral("seven-wf-firewallrulesfolder"), ActiveNode);
         root->setExpanded(true);
 
         m_middle = new QStackedWidget;
@@ -749,69 +750,69 @@ private:
         auto *shield = new QLabel;
         shield->setPixmap(QIcon::fromTheme(m_ufw.enabled ? QStringLiteral("seven-wf-shieldcheck") : QStringLiteral("seven-wf-shieldcritical")).pixmap(32, 32));
         ph->addWidget(shield, 0, Qt::AlignTop);
-        auto *pt = new QLabel(QStringLiteral("<b>Загальний профіль активний</b>"));
+        auto *pt = new QLabel(tr7("<b>Public profile is Active</b>"));
         ph->addWidget(pt, 1);
         pv->addLayout(ph);
         auto *lines = new QVBoxLayout;
         lines->setContentsMargins(38, 0, 0, 0);
         lines->addLayout(line(m_ufw.enabled ? QStringLiteral("seven-wf-shieldcheck") : QStringLiteral("seven-wf-shieldcritical"),
-                              m_ufw.enabled ? QStringLiteral("Брандмауер увімкнено.") : QStringLiteral("Брандмауер вимкнено.")));
+                              m_ufw.enabled ? tr7("Windows Firewall is on.") : tr7("Windows Firewall is off.")));
         const bool inBlock = m_ufw.incoming != QLatin1String("allow");
         const bool outBlock = m_ufw.outgoing != QLatin1String("allow") && !m_ufw.outgoing.isEmpty();
         lines->addLayout(line(inBlock ? QStringLiteral("seven-wf-block") : QStringLiteral("seven-wf-allow"),
-                              inBlock ? QStringLiteral("Вхідні підключення, які не відповідають правилу, блокуються.")
-                                      : QStringLiteral("Вхідні підключення, які не відповідають правилу, дозволяються.")));
+                              inBlock ? tr7("Inbound connections that do not match a rule are blocked.")
+                                      : tr7("Inbound connections that do not match a rule are allowed.")));
         lines->addLayout(line(outBlock ? QStringLiteral("seven-wf-block") : QStringLiteral("seven-wf-allow"),
-                              outBlock ? QStringLiteral("Вихідні підключення, які не відповідають правилу, блокуються.")
-                                       : QStringLiteral("Вихідні підключення, які не відповідають правилу, дозволяються.")));
+                              outBlock ? tr7("Outbound connections that do not match a rule are blocked.")
+                                       : tr7("Outbound connections that do not match a rule are allowed.")));
         pv->addLayout(lines);
-        auto *props = new Link(QStringLiteral("Властивості брандмауера Windows"), [this] {
+        auto *props = new Link(tr7("Windows Firewall Properties"), [this] {
             firewallProperties();
         });
         props->setContentsMargins(38, 4, 0, 0);
         pv->addWidget(props);
         if (!m_ufw.ok) {
-            pv->addWidget(new QLabel(QStringLiteral("Не вдалося прочитати стан брандмауера.")));
+            pv->addWidget(new QLabel(tr7("The firewall state could not be read.")));
         }
-        auto *intro = new QLabel(monitoring ? QStringLiteral("Тут показано поточний стан брандмауера та правила, що діють зараз.")
-                                            : QStringLiteral("Брандмауер Windows у режимі підвищеної безпеки забезпечує мережевий захист комп'ютера."));
+        auto *intro = new QLabel(monitoring ? tr7("This shows the current firewall state and the rules in effect now.")
+                                            : tr7("Windows Firewall with Advanced Security provides network security for Windows computers."));
         intro->setWordWrap(true);
         v->addWidget(intro);
-        v->addWidget(new Section(monitoring ? QStringLiteral("Стан брандмауера") : QStringLiteral("Огляд"), profile));
+        v->addWidget(new Section(monitoring ? tr7("Firewall State") : tr7("Overview"), profile));
         if (!monitoring) {
             auto *start = new QWidget;
             auto *sv = new QVBoxLayout(start);
             sv->setContentsMargins(0, 0, 0, 0);
             sv->setSpacing(4);
-            auto *h1 = new QLabel(QStringLiteral("<b>Перегляд і створення правил брандмауера</b>"));
+            auto *h1 = new QLabel(tr7("<b>View and create firewall rules</b>"));
             sv->addWidget(h1);
-            auto *t1 = new QLabel(QStringLiteral("Створюйте правила брандмауера, щоб дозволити або заблокувати підключення до певних портів чи служб."));
+            auto *t1 = new QLabel(tr7("Create firewall rules to allow or block connections to specified ports or services."));
             t1->setWordWrap(true);
             sv->addWidget(t1);
-            sv->addWidget(new Link(QStringLiteral("Правила для вхідних підключень"), [this] {
+            sv->addWidget(new Link(tr7("Inbound Rules"), [this] {
                 select(InboundNode);
             }));
-            sv->addWidget(new Link(QStringLiteral("Правила для вихідних підключень"), [this] {
+            sv->addWidget(new Link(tr7("Outbound Rules"), [this] {
                 select(OutboundNode);
             }));
             sv->addSpacing(8);
-            sv->addWidget(new QLabel(QStringLiteral("<b>Перегляд поточних політик брандмауера та дій</b>")));
-            auto *t2 = new QLabel(QStringLiteral("Перегляньте відомості про правила брандмауера, що застосовуються зараз."));
+            sv->addWidget(new QLabel(tr7("<b>View current firewall and IPsec policy and activity</b>")));
+            auto *t2 = new QLabel(tr7("View information about currently applied firewall rules."));
             t2->setWordWrap(true);
             sv->addWidget(t2);
-            sv->addWidget(new Link(QStringLiteral("Спостереження"), [this] {
+            sv->addWidget(new Link(tr7("Monitoring"), [this] {
                 select(MonitoringNode);
             }));
-            v->addWidget(new Section(QStringLiteral("Початок роботи"), start));
+            v->addWidget(new Section(tr7("Getting Started"), start));
         } else {
             auto *act = new QWidget;
             auto *av = new QVBoxLayout(act);
             av->setContentsMargins(0, 0, 0, 0);
-            av->addLayout(line(QStringLiteral("seven-wf-firewallrulesfolder"), QStringLiteral("Активних правил брандмауера: %1").arg(m_ufw.rules.size())));
-            av->addWidget(new Link(QStringLiteral("Переглянути активні правила брандмауера"), [this] {
+            av->addLayout(line(QStringLiteral("seven-wf-firewallrulesfolder"), tr7("Active firewall rules: %1").arg(m_ufw.rules.size())));
+            av->addWidget(new Link(tr7("View active firewall rules"), [this] {
                 select(ActiveNode);
             }));
-            v->addWidget(new Section(QStringLiteral("Активні правила"), act));
+            v->addWidget(new Section(tr7("Active Rules"), act));
         }
         v->addStretch(1);
     }
@@ -821,9 +822,9 @@ private:
         QWidget *page = pageWithHeader(m_rulesHeader);
         m_list = new QTreeWidget;
         m_list->setHeader(new VistaHeader(m_list));
-        m_list->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Група"), QStringLiteral("Профіль"), QStringLiteral("Увімкнуто"), QStringLiteral("Дія"),
-                                 QStringLiteral("Програма"), QStringLiteral("Локальна адреса"), QStringLiteral("Віддалена адреса"), QStringLiteral("Протокол"),
-                                 QStringLiteral("Локальний порт"), QStringLiteral("Віддалений порт")});
+        m_list->setHeaderLabels({tr7("Name"), tr7("Group"), tr7("Profile"), tr7("Enabled"), tr7("Action"),
+                                 tr7("Application"), tr7("Local Address"), tr7("Remote Address"), tr7("Protocol"),
+                                 tr7("Local Port"), tr7("Remote Port")});
         const QList<int> widths{230, 90, 70, 75, 150, 80, 110, 110, 70, 100, 100};
         for (int i = 0; i < widths.size(); ++i) {
             m_list->setColumnWidth(i, widths.at(i));
@@ -911,8 +912,8 @@ private:
     {
         const int n = node();
         if (n == RootNode || n == MonitoringNode) {
-            m_overviewHeader->setText(n == RootNode ? QStringLiteral("Брандмауер Windows у режимі підвищеної безпеки на Локальний комп'ютер")
-                                                    : QStringLiteral("Спостереження"));
+            m_overviewHeader->setText(n == RootNode ? tr7("Windows Firewall with Advanced Security on Local Computer")
+                                                    : tr7("Monitoring"));
             fillOverview(n == MonitoringNode);
             m_middle->setCurrentIndex(0);
         } else {
@@ -925,8 +926,8 @@ private:
     void fillRules(int n)
     {
         const QString dir = n == InboundNode ? QStringLiteral("in") : n == OutboundNode ? QStringLiteral("out") : QString();
-        m_rulesHeader->setText(n == InboundNode ? QStringLiteral("Правила для вхідних підключень")
-                                                : n == OutboundNode ? QStringLiteral("Правила для вихідних підключень") : QStringLiteral("Брандмауер"));
+        m_rulesHeader->setText(n == InboundNode ? tr7("Inbound Rules")
+                                                : n == OutboundNode ? tr7("Outbound Rules") : tr7("Windows Firewall"));
         m_list->setSortingEnabled(false);
         m_list->clear();
         QSet<QString> seen; // ufw keeps an IPv4 and an IPv6 copy of most rules: Windows shows one rule
@@ -944,27 +945,27 @@ private:
             it->setText(0, ruleName(r));
             it->setIcon(0, QIcon::fromTheme(r.action == QLatin1String("allow") || r.action == QLatin1String("limit") ? QStringLiteral("seven-wf-allow") : QStringLiteral("seven-wf-block")));
             it->setText(1, QString());
-            it->setText(2, QStringLiteral("Усі"));
-            it->setText(3, QStringLiteral("Так"));
+            it->setText(2, tr7("All"));
+            it->setText(3, tr7("Yes"));
             it->setText(4, actionName(r.action));
-            it->setText(5, QStringLiteral("Будь-яка"));
+            it->setText(5, tr7("Any", "address"));
             it->setText(6, any(in ? r.dst : r.src));
             it->setText(7, any(in ? r.src : r.dst));
-            it->setText(8, r.dapp.isEmpty() ? any(r.protocol, QStringLiteral("Будь-який")).toUpper().replace(QStringLiteral("БУДЬ-ЯКИЙ"), QStringLiteral("Будь-який"))
-                                            : QStringLiteral("Профіль"));
-            it->setText(9, any(in ? r.dport : r.sport, QStringLiteral("Будь-який")));
-            it->setText(10, any(in ? r.sport : r.dport, QStringLiteral("Будь-який")));
+            it->setText(8, r.dapp.isEmpty() ? any(r.protocol, tr7("Any")).toUpper().replace(tr7("ANY"), tr7("Any"))
+                                            : tr7("Profile"));
+            it->setText(9, any(in ? r.dport : r.sport, tr7("Any")));
+            it->setText(10, any(in ? r.sport : r.dport, tr7("Any")));
             if (!r.dapp.isEmpty()) {
                 it->setText(9, r.dapp);
             }
             if (n == ActiveNode) {
-                it->setText(1, in ? QStringLiteral("Вхідне") : QStringLiteral("Вихідне"));
+                it->setText(1, in ? tr7("Inbound") : tr7("Outbound"));
             }
             it->setData(0, Qt::UserRole, m_ufw.rules.indexOf(r));
         }
         m_list->setSortingEnabled(true);
         m_list->sortByColumn(0, Qt::AscendingOrder);
-        statusBar()->showMessage(m_ufw.ok ? QString() : QStringLiteral("Не вдалося прочитати правила брандмауера."));
+        statusBar()->showMessage(m_ufw.ok ? QString() : tr7("The firewall rules could not be read."));
     }
 
     Rule currentRule() const
@@ -977,15 +978,15 @@ private:
     {
         const bool has = m_list->currentItem();
         return {
-            {QStringLiteral("Видалити"), QStringLiteral("seven-wf-delete"), [this] {
+            {tr7("Delete"), QStringLiteral("seven-wf-delete"), [this] {
                  deleteRule();
              },
              has},
-            {QStringLiteral("Властивості"), QStringLiteral("seven-mmc-props"), [this] {
+            {tr7("Properties"), QStringLiteral("seven-mmc-props"), [this] {
                  ruleProperties();
              },
              has, true},
-            {QStringLiteral("Довідка"), QStringLiteral("seven-mmc-help"), [this] {
+            {tr7("Help"), QStringLiteral("seven-mmc-help"), [this] {
                  showHelp();
              },
              true, true},
@@ -997,32 +998,32 @@ private:
         const int n = node();
         QList<ActionItem> items;
         if (n == InboundNode || n == OutboundNode) {
-            items << ActionItem{QStringLiteral("Створити правило..."), n == InboundNode ? QStringLiteral("seven-wf-newinbound") : QStringLiteral("seven-wf-newoutbound"),
+            items << ActionItem{tr7("New Rule..."), n == InboundNode ? QStringLiteral("seven-wf-newinbound") : QStringLiteral("seven-wf-newoutbound"),
                                 [this, n] {
                                     newRule(n == InboundNode);
                                 }}
-                  << ActionItem{QStringLiteral("Експортувати список..."), QStringLiteral("seven-wf-export"), [this] {
+                  << ActionItem{tr7("Export List..."), QStringLiteral("seven-wf-export"), [this] {
                                     exportList();
                                 },
                                 true, true};
         } else if (n == RootNode) {
-            items << ActionItem{QStringLiteral("Відновити стандартну політику"), QString(), [this] {
+            items << ActionItem{tr7("Restore Default Policy"), QString(), [this] {
                                     restoreDefaults();
                                 }}
-                  << ActionItem{QStringLiteral("Властивості"), QStringLiteral("seven-mmc-props"), [this] {
+                  << ActionItem{tr7("Properties"), QStringLiteral("seven-mmc-props"), [this] {
                                     firewallProperties();
                                 },
                                 true, true};
         } else if (n == ActiveNode) {
-            items << ActionItem{QStringLiteral("Експортувати список..."), QStringLiteral("seven-wf-export"), [this] {
+            items << ActionItem{tr7("Export List..."), QStringLiteral("seven-wf-export"), [this] {
                 exportList();
             }};
         }
-        items << ActionItem{QStringLiteral("Оновити"), QStringLiteral("seven-mmc-refresh"), [this] {
+        items << ActionItem{tr7("Refresh"), QStringLiteral("seven-mmc-refresh"), [this] {
                                 reload();
                             },
                             true, true}
-              << ActionItem{QStringLiteral("Довідка"), QStringLiteral("seven-mmc-help"), [this] {
+              << ActionItem{tr7("Help"), QStringLiteral("seven-mmc-help"), [this] {
                                 showHelp();
                             },
                             true, true};
@@ -1097,7 +1098,7 @@ private:
     void deleteRule()
     {
         const Rule r = currentRule();
-        if (QMessageBox::question(this, QStringLiteral("Видалення правила"), QStringLiteral("Видалити це правило?")) != QMessageBox::Yes) {
+        if (QMessageBox::question(this, tr7("Delete Rule"), tr7("Are you sure you want to delete this rule?")) != QMessageBox::Yes) {
             return;
         }
         if (root(QStringLiteral("ufw delete ") + ruleSpec(r))) {
@@ -1114,27 +1115,27 @@ private:
             return;
         }
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Властивості: %1").arg(ruleName(r)));
+        dlg.setWindowTitle(tr7("%1 Properties").arg(ruleName(r)));
         dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-wf-rule")));
         dlg.setFixedSize(440, 480);
         auto *v = new QVBoxLayout(&dlg);
         auto *tabs = new QTabWidget;
         auto *general = new QWidget;
         auto *gv = new QVBoxLayout(general);
-        auto *gGroup = new QGroupBox(QStringLiteral("Загальні"));
+        auto *gGroup = new QGroupBox(tr7("General"));
         auto *gg = new QGridLayout(gGroup);
         auto *icon = new QLabel;
         icon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-wf-rule")).pixmap(32, 32));
         gg->addWidget(icon, 0, 0, 2, 1, Qt::AlignTop);
-        gg->addWidget(new QLabel(QStringLiteral("Ім'я:")), 0, 1);
+        gg->addWidget(new QLabel(tr7("Name:")), 0, 1);
         auto *name = new QLineEdit(ruleName(r));
         gg->addWidget(name, 1, 1);
         gv->addWidget(gGroup);
-        auto *aGroup = new QGroupBox(QStringLiteral("Дія"));
+        auto *aGroup = new QGroupBox(tr7("Action"));
         auto *av = new QVBoxLayout(aGroup);
-        auto *allow = new QRadioButton(QStringLiteral("Дозволити підключення"));
-        auto *limit = new QRadioButton(QStringLiteral("Дозволити, але обмежити частоту підключень"));
-        auto *block = new QRadioButton(QStringLiteral("Блокувати підключення"));
+        auto *allow = new QRadioButton(tr7("Allow the connection"));
+        auto *limit = new QRadioButton(tr7("Allow, but limit the connection rate"));
+        auto *block = new QRadioButton(tr7("Block the connection"));
         (r.action == QLatin1String("allow") ? allow : r.action == QLatin1String("limit") ? limit : block)->setChecked(true);
         limit->setEnabled(r.direction == QLatin1String("in"));
         av->addWidget(allow);
@@ -1142,13 +1143,13 @@ private:
         av->addWidget(block);
         gv->addWidget(aGroup);
         gv->addStretch(1);
-        tabs->addTab(general, QStringLiteral("Загальні"));
+        tabs->addTab(general, tr7("General"));
         auto *ports = new QWidget;
         auto *pg = new QGridLayout(ports);
         const bool in = r.direction == QLatin1String("in");
-        const QList<QPair<QString, QString>> rows{{QStringLiteral("Тип протоколу:"), r.dapp.isEmpty() ? any(r.protocol, QStringLiteral("Будь-який")).toUpper() : QStringLiteral("Профіль ") + r.dapp},
-                                                  {QStringLiteral("Локальний порт:"), any(in ? r.dport : r.sport, QStringLiteral("Усі порти"))},
-                                                  {QStringLiteral("Віддалений порт:"), any(in ? r.sport : r.dport, QStringLiteral("Усі порти"))}};
+        const QList<QPair<QString, QString>> rows{{tr7("Protocol type:"), r.dapp.isEmpty() ? any(r.protocol, tr7("Any")).toUpper() : tr7("Profile ") + r.dapp},
+                                                  {tr7("Local port:"), any(in ? r.dport : r.sport, tr7("All Ports"))},
+                                                  {tr7("Remote port:"), any(in ? r.sport : r.dport, tr7("All Ports"))}};
         int row = 0;
         for (const auto &[k, val] : rows) {
             pg->addWidget(new QLabel(k), row, 0);
@@ -1156,21 +1157,21 @@ private:
         }
         pg->setRowStretch(row, 1);
         pg->setColumnStretch(1, 1);
-        tabs->addTab(ports, QStringLiteral("Протоколи й порти"));
+        tabs->addTab(ports, tr7("Protocols and Ports"));
         auto *scope = new QWidget;
         auto *sg = new QGridLayout(scope);
-        sg->addWidget(new QLabel(QStringLiteral("Локальна IP-адреса:")), 0, 0);
-        sg->addWidget(new QLabel(any(in ? r.dst : r.src, QStringLiteral("Будь-яка IP-адреса"))), 0, 1);
-        sg->addWidget(new QLabel(QStringLiteral("Віддалена IP-адреса:")), 1, 0);
-        sg->addWidget(new QLabel(any(in ? r.src : r.dst, QStringLiteral("Будь-яка IP-адреса"))), 1, 1);
+        sg->addWidget(new QLabel(tr7("Local IP address:")), 0, 0);
+        sg->addWidget(new QLabel(any(in ? r.dst : r.src, tr7("Any IP address"))), 0, 1);
+        sg->addWidget(new QLabel(tr7("Remote IP address:")), 1, 0);
+        sg->addWidget(new QLabel(any(in ? r.src : r.dst, tr7("Any IP address"))), 1, 1);
         sg->setRowStretch(2, 1);
         sg->setColumnStretch(1, 1);
-        tabs->addTab(scope, QStringLiteral("Область"));
+        tabs->addTab(scope, tr7("Scope"));
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(80);
             btns->addWidget(b);
@@ -1196,47 +1197,47 @@ private:
     void firewallProperties()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Властивості брандмауера Windows у режимі підвищеної безпеки на Локальний комп'ютер"));
+        dlg.setWindowTitle(tr7("Windows Firewall with Advanced Security on Local Computer Properties"));
         dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-wf-firewall")));
         dlg.setFixedSize(460, 420);
         auto *v = new QVBoxLayout(&dlg);
         auto *tabs = new QTabWidget;
         auto *page = new QWidget;
         auto *pv = new QVBoxLayout(page);
-        auto *intro = new QLabel(QStringLiteral("Укажіть поведінку для всіх мереж, до яких підключено комп'ютер."));
+        auto *intro = new QLabel(tr7("Specify behavior for all networks the computer is connected to."));
         intro->setWordWrap(true);
         pv->addWidget(intro);
-        auto *state = new QGroupBox(QStringLiteral("Стан"));
+        auto *state = new QGroupBox(tr7("Status"));
         auto *sg = new QGridLayout(state);
         auto *icon = new QLabel;
         icon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-wf-shield")).pixmap(32, 32));
         sg->addWidget(icon, 0, 0, 3, 1, Qt::AlignTop);
         auto *on = new QComboBox;
-        on->addItems({QStringLiteral("Увімкнуто (рекомендовано)"), QStringLiteral("Вимкнуто")});
+        on->addItems({tr7("On (recommended)"), tr7("Off", "state")});
         on->setCurrentIndex(m_ufw.enabled ? 0 : 1);
         auto *inbound = new QComboBox;
-        inbound->addItem(QStringLiteral("Блокувати (за замовчуванням)"), QStringLiteral("deny"));
-        inbound->addItem(QStringLiteral("Відхиляти з повідомленням"), QStringLiteral("reject"));
-        inbound->addItem(QStringLiteral("Дозволити"), QStringLiteral("allow"));
+        inbound->addItem(tr7("Block (default)"), QStringLiteral("deny"));
+        inbound->addItem(tr7("Reject with a message"), QStringLiteral("reject"));
+        inbound->addItem(tr7("Allow"), QStringLiteral("allow"));
         inbound->setCurrentIndex(qMax(0, inbound->findData(m_ufw.incoming)));
         auto *outbound = new QComboBox;
-        outbound->addItem(QStringLiteral("Дозволити (за замовчуванням)"), QStringLiteral("allow"));
-        outbound->addItem(QStringLiteral("Блокувати"), QStringLiteral("deny"));
+        outbound->addItem(tr7("Allow (default)"), QStringLiteral("allow"));
+        outbound->addItem(tr7("Block"), QStringLiteral("deny"));
         outbound->setCurrentIndex(qMax(0, outbound->findData(m_ufw.outgoing)));
-        sg->addWidget(new QLabel(QStringLiteral("Стан брандмауера:")), 0, 1);
+        sg->addWidget(new QLabel(tr7("Windows Firewall state:")), 0, 1);
         sg->addWidget(on, 0, 2);
-        sg->addWidget(new QLabel(QStringLiteral("Вхідні підключення:")), 1, 1);
+        sg->addWidget(new QLabel(tr7("Incoming connections:")), 1, 1);
         sg->addWidget(inbound, 1, 2);
-        sg->addWidget(new QLabel(QStringLiteral("Вихідні підключення:")), 2, 1);
+        sg->addWidget(new QLabel(tr7("Outbound connections:")), 2, 1);
         sg->addWidget(outbound, 2, 2);
         pv->addWidget(state);
         pv->addStretch(1);
-        tabs->addTab(page, QStringLiteral("Загальний профіль"));
+        tabs->addTab(page, tr7("Public Profile"));
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(80);
             btns->addWidget(b);
@@ -1264,8 +1265,8 @@ private:
 
     void restoreDefaults()
     {
-        if (QMessageBox::warning(this, QStringLiteral("Відновлення стандартної політики"),
-                                 QStringLiteral("Усі правила брандмауера буде видалено, вхідні підключення блокуватимуться, вихідні — дозволятимуться.\n\nПродовжити?"),
+        if (QMessageBox::warning(this, tr7("Restore Default Policy", "title"),
+                                 tr7("All firewall rules will be removed; inbound connections will be blocked and outbound ones allowed.\n\nDo you want to continue?"),
                                  QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes) {
             return;
@@ -1279,8 +1280,8 @@ private:
 
     void exportList()
     {
-        const QString f = QFileDialog::getSaveFileName(this, QStringLiteral("Експортувати список"), QDir::homePath() + QStringLiteral("/Правила брандмауера.txt"),
-                                                       QStringLiteral("Текст (розділювач — табуляція) (*.txt);;CSV (розділювач — кома) (*.csv)"));
+        const QString f = QFileDialog::getSaveFileName(this, tr7("Export List", "title"), QDir::homePath() + tr7("/Firewall rules.txt"),
+                                                       tr7("Text (Tab delimited) (*.txt);;CSV (Comma Separated) (*.csv)"));
         if (f.isEmpty()) {
             return;
         }
@@ -1307,10 +1308,7 @@ private:
     void showHelp()
     {
         QMessageBox::information(this, windowTitle(),
-                                 QStringLiteral("Тут можна переглядати й змінювати правила брандмауера (ufw).\n\n"
-                                                "• «Правила для вхідних підключень» — що можна відкривати на цьому комп'ютері з мережі.\n"
-                                                "• «Правила для вихідних підключень» — куди програми можуть підключатися.\n"
-                                                "• Брандмауер Linux фільтрує порти, а не окремі програми, тому правила створюються для портів і служб."));
+                                 tr7("Here you can view and change the firewall rules (ufw).\n\n• Inbound Rules - what can be opened on this computer from the network.\n• Outbound Rules - where programs can connect.\n• The Linux firewall filters ports, not individual programs, so rules are created for ports and services."));
     }
 
     QTreeWidget *m_tree;

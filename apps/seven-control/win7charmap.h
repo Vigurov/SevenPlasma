@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7fontdata.h"
 
@@ -72,50 +73,50 @@ inline QString unicodeName(char32_t c)
 inline const QList<std::tuple<QString, char32_t, char32_t>> &subranges()
 {
     static const QList<std::tuple<QString, char32_t, char32_t>> r{
-        {QStringLiteral("Латиниця"), 0x0020, 0x024f},
-        {QStringLiteral("Модифікатори пробілів"), 0x02b0, 0x02ff},
-        {QStringLiteral("Діакритичні знаки"), 0x0300, 0x036f},
-        {QStringLiteral("Грецька"), 0x0370, 0x03ff},
-        {QStringLiteral("Кирилиця"), 0x0400, 0x052f},
-        {QStringLiteral("Вірменська"), 0x0530, 0x058f},
-        {QStringLiteral("Іврит"), 0x0590, 0x05ff},
-        {QStringLiteral("Арабська"), 0x0600, 0x06ff},
-        {QStringLiteral("Деванагарі"), 0x0900, 0x097f},
-        {QStringLiteral("Бенгальська"), 0x0980, 0x09ff},
-        {QStringLiteral("Гурмукхі"), 0x0a00, 0x0a7f},
-        {QStringLiteral("Гуджараті"), 0x0a80, 0x0aff},
-        {QStringLiteral("Орія"), 0x0b00, 0x0b7f},
-        {QStringLiteral("Тамільська"), 0x0b80, 0x0bff},
-        {QStringLiteral("Телугу"), 0x0c00, 0x0c7f},
-        {QStringLiteral("Каннада"), 0x0c80, 0x0cff},
-        {QStringLiteral("Малаялам"), 0x0d00, 0x0d7f},
-        {QStringLiteral("Тайська"), 0x0e00, 0x0e7f},
-        {QStringLiteral("Лаоська"), 0x0e80, 0x0eff},
-        {QStringLiteral("Тибетська"), 0x0f00, 0x0fff},
-        {QStringLiteral("Грузинська"), 0x10a0, 0x10ff},
-        {QStringLiteral("Корейський хангиль"), 0x1100, 0x11ff},
-        {QStringLiteral("Загальна пунктуація"), 0x2000, 0x206f},
-        {QStringLiteral("Верхні й нижні індекси"), 0x2070, 0x209f},
-        {QStringLiteral("Символи валют"), 0x20a0, 0x20cf},
-        {QStringLiteral("Буквоподібні символи"), 0x2100, 0x214f},
-        {QStringLiteral("Числові форми"), 0x2150, 0x218f},
-        {QStringLiteral("Стрілки"), 0x2190, 0x21ff},
-        {QStringLiteral("Математичні оператори"), 0x2200, 0x22ff},
-        {QStringLiteral("Різні технічні"), 0x2300, 0x23ff},
-        {QStringLiteral("Керувальні зображення та OCR"), 0x2400, 0x245f},
-        {QStringLiteral("Вкладені букви й цифри"), 0x2460, 0x24ff},
-        {QStringLiteral("Рамки"), 0x2500, 0x257f},
-        {QStringLiteral("Блоки й геометричні фігури"), 0x2580, 0x25ff},
-        {QStringLiteral("Символи й декоративні елементи"), 0x2600, 0x27bf},
-        {QStringLiteral("Символи й пунктуація CJK"), 0x3000, 0x303f},
-        {QStringLiteral("Японська хірагана й катакана"), 0x3040, 0x30ff},
-        {QStringLiteral("Китайське бопомофо"), 0x3100, 0x312f},
-        {QStringLiteral("Ієрогліфи CJK"), 0x4e00, 0x9fff},
-        {QStringLiteral("Корейський хангиль (склади)"), 0xac00, 0xd7af},
-        {QStringLiteral("Символи приватного використання"), 0xe000, 0xf8ff},
-        {QStringLiteral("Форми сумісності CJK"), 0xfe30, 0xfe4f},
-        {QStringLiteral("Варіанти малих форм"), 0xfe50, 0xfe6f},
-        {QStringLiteral("Повноширинні та напівширинні форми"), 0xff00, 0xffef},
+        {tr7("Latin"), 0x0020, 0x024f},
+        {tr7("Spacing Modifier Letters"), 0x02b0, 0x02ff},
+        {tr7("Combining Diacritical Marks"), 0x0300, 0x036f},
+        {tr7("Greek"), 0x0370, 0x03ff},
+        {tr7("Cyrillic"), 0x0400, 0x052f},
+        {tr7("Armenian"), 0x0530, 0x058f},
+        {tr7("Hebrew"), 0x0590, 0x05ff},
+        {tr7("Arabic"), 0x0600, 0x06ff},
+        {tr7("Devanagari"), 0x0900, 0x097f},
+        {tr7("Bengali"), 0x0980, 0x09ff},
+        {tr7("Gurmukhi"), 0x0a00, 0x0a7f},
+        {tr7("Gujarati"), 0x0a80, 0x0aff},
+        {tr7("Oriya"), 0x0b00, 0x0b7f},
+        {tr7("Tamil"), 0x0b80, 0x0bff},
+        {tr7("Telugu"), 0x0c00, 0x0c7f},
+        {tr7("Kannada"), 0x0c80, 0x0cff},
+        {tr7("Malayalam"), 0x0d00, 0x0d7f},
+        {tr7("Thai"), 0x0e00, 0x0e7f},
+        {tr7("Lao"), 0x0e80, 0x0eff},
+        {tr7("Tibetan"), 0x0f00, 0x0fff},
+        {tr7("Georgian"), 0x10a0, 0x10ff},
+        {tr7("Hangul"), 0x1100, 0x11ff},
+        {tr7("General Punctuation"), 0x2000, 0x206f},
+        {tr7("Superscripts and Subscripts"), 0x2070, 0x209f},
+        {tr7("Currency Symbols"), 0x20a0, 0x20cf},
+        {tr7("Letterlike Symbols"), 0x2100, 0x214f},
+        {tr7("Number Forms"), 0x2150, 0x218f},
+        {tr7("Arrows"), 0x2190, 0x21ff},
+        {tr7("Mathematical Operators"), 0x2200, 0x22ff},
+        {tr7("Miscellaneous Technical"), 0x2300, 0x23ff},
+        {tr7("Control Pictures and OCR"), 0x2400, 0x245f},
+        {tr7("Enclosed Alphanumerics"), 0x2460, 0x24ff},
+        {tr7("Box Drawing"), 0x2500, 0x257f},
+        {tr7("Block Elements and Geometric Shapes"), 0x2580, 0x25ff},
+        {tr7("Symbols and Dingbats"), 0x2600, 0x27bf},
+        {tr7("CJK Symbols and Punctuation"), 0x3000, 0x303f},
+        {tr7("Hiragana and Katakana"), 0x3040, 0x30ff},
+        {tr7("Bopomofo"), 0x3100, 0x312f},
+        {tr7("CJK Unified Ideographs"), 0x4e00, 0x9fff},
+        {tr7("Hangul Syllables"), 0xac00, 0xd7af},
+        {tr7("Private Use Characters"), 0xe000, 0xf8ff},
+        {tr7("CJK Compatibility Forms"), 0xfe30, 0xfe4f},
+        {tr7("Small Form Variants"), 0xfe50, 0xfe6f},
+        {tr7("Halfwidth and Fullwidth Forms"), 0xff00, 0xffef},
     };
     return r;
 }
@@ -376,13 +377,13 @@ public:
     CharMap()
     {
         setAttribute(Qt::WA_DeleteOnClose);
-        setWindowTitle(QStringLiteral("Таблиця символів"));
+        setWindowTitle(tr7("Character Map"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-charmap")));
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(8, 8, 8, 0);
         v->setSpacing(6);
         auto *top = new QHBoxLayout;
-        top->addWidget(new QLabel(QStringLiteral("Шрифт:")));
+        top->addWidget(new QLabel(tr7("Font:")));
         m_font = new QFontComboBox;
         m_font->setCurrentFont(QFont(QStringLiteral("Arial")));
         top->addWidget(m_font, 1);
@@ -399,40 +400,40 @@ public:
         v->addLayout(gridRow);
 
         auto *copyRow = new QHBoxLayout;
-        copyRow->addWidget(new QLabel(QStringLiteral("Символи для копіювання:")));
+        copyRow->addWidget(new QLabel(tr7("Characters to copy:")));
         m_copy = new QLineEdit;
         QFont cf = m_copy->font();
         cf.setPixelSize(15);
         m_copy->setFont(cf);
         copyRow->addWidget(m_copy, 1);
-        auto *select = new QPushButton(QStringLiteral("Вибрати"));
-        auto *copy = new QPushButton(QStringLiteral("Копіювати"));
+        auto *select = new QPushButton(tr7("Select"));
+        auto *copy = new QPushButton(tr7("Copy"));
         copyRow->addWidget(select);
         copyRow->addWidget(copy);
         v->addLayout(copyRow);
 
-        m_advanced = new QCheckBox(QStringLiteral("Додатковий перегляд"));
+        m_advanced = new QCheckBox(tr7("Advanced view"));
         v->addWidget(m_advanced);
         m_adv = new QWidget;
         auto *ag = new QGridLayout(m_adv);
         ag->setContentsMargins(0, 0, 0, 0);
-        ag->addWidget(new QLabel(QStringLiteral("Набір символів:")), 0, 0);
+        ag->addWidget(new QLabel(tr7("Character set:")), 0, 0);
         auto *charset = new QComboBox;
-        charset->addItem(QStringLiteral("Юнікод"));
+        charset->addItem(tr7("Unicode"));
         ag->addWidget(charset, 0, 1);
-        ag->addWidget(new QLabel(QStringLiteral("Перейти до Юнікоду:")), 0, 2);
+        ag->addWidget(new QLabel(tr7("Go to Unicode:")), 0, 2);
         m_goto = new QLineEdit;
         m_goto->setPlaceholderText(QStringLiteral("U+"));
         m_goto->setMaximumWidth(80);
         ag->addWidget(m_goto, 0, 3);
-        ag->addWidget(new QLabel(QStringLiteral("Групування:")), 1, 0);
+        ag->addWidget(new QLabel(tr7("Group by:")), 1, 0);
         m_group = new QComboBox;
-        m_group->addItems({QStringLiteral("Усі"), QStringLiteral("Діапазон Юнікоду")});
+        m_group->addItems({tr7("All"), tr7("Unicode Subrange")});
         ag->addWidget(m_group, 1, 1);
-        ag->addWidget(new QLabel(QStringLiteral("Пошук:")), 2, 0);
+        ag->addWidget(new QLabel(tr7("Search for:", "character map")), 2, 0);
         m_search = new QLineEdit;
         ag->addWidget(m_search, 2, 1);
-        m_searchBtn = new QPushButton(QStringLiteral("Пошук"));
+        m_searchBtn = new QPushButton(tr7("Search"));
         ag->addWidget(m_searchBtn, 2, 2);
         ag->setColumnStretch(1, 1);
         m_adv->hide();
@@ -445,8 +446,8 @@ public:
 
         m_ranges = new QListWidget;
         m_ranges->setWindowFlags(Qt::Tool);
-        m_ranges->setWindowTitle(QStringLiteral("Діапазон Юнікоду"));
-        m_ranges->addItem(QStringLiteral("Усі"));
+        m_ranges->setWindowTitle(tr7("Unicode Subrange"));
+        m_ranges->addItem(tr7("All"));
         for (const auto &r : subranges()) {
             m_ranges->addItem(std::get<0>(r));
         }
@@ -480,7 +481,7 @@ public:
                 m_ranges->hide();
                 m_group->setCurrentIndex(0);
                 m_searched.clear();
-                m_searchBtn->setText(QStringLiteral("Пошук"));
+                m_searchBtn->setText(tr7("Search"));
                 refill();
             }
             QTimer::singleShot(0, this, [this] { adjustSize(); });
@@ -503,10 +504,10 @@ public:
             if (!m_searched.isEmpty()) {
                 m_searched.clear();
                 m_search->clear();
-                m_searchBtn->setText(QStringLiteral("Пошук"));
+                m_searchBtn->setText(tr7("Search"));
             } else if (!m_search->text().trimmed().isEmpty()) {
                 m_searched = m_search->text().trimmed();
-                m_searchBtn->setText(QStringLiteral("Скинути"));
+                m_searchBtn->setText(tr7("Reset"));
             }
             refill();
         });

@@ -200,6 +200,12 @@ cp -r "$REPO"/apps/plasmoids/* "$L/share/plasma/plasmoids/"
 cp -r "$REPO/apps/kwin/sevenkeys" "$L/share/kwin/scripts/"
 run systemctl --user daemon-reload
 run systemctl --user enable seven-folder-refresh.service || true
+# "Open with" of programs that ask through xdg-desktop-portal (Chrome, Telegram, Flatpak...): our Windows 7 dialog
+mkdir -p "$L/share/dbus-1/services" "$HOME/.config/xdg-desktop-portal"
+printf '[D-BUS Service]\nName=org.freedesktop.impl.portal.desktop.win7\nExec=%s/bin/seven-control --portal\n' "$L" \
+    > "$L/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service"
+printf '[preferred]\ndefault=kde\norg.freedesktop.impl.portal.Settings=kde;gtk;\norg.freedesktop.impl.portal.Secret=kwallet\norg.freedesktop.impl.portal.AppChooser=seven;kde;\n' \
+    > "$HOME/.config/xdg-desktop-portal/kde-portals.conf"
 run kbuildsycoca6 || true
 note "$(L "готово" "done")"
 
@@ -287,6 +293,8 @@ if [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
     note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
     run sudo update-initramfs -u
 fi
+printf '[portal]\nDBusName=org.freedesktop.impl.portal.desktop.win7\nInterfaces=org.freedesktop.impl.portal.AppChooser\nUseIn=KDE\n' \
+    | run sudo install -D -m 644 /dev/stdin /usr/share/xdg-desktop-portal/portals/seven.portal
 # the account picture: like a new Windows 7 account, a random one of the standard pictures (when there is none)
 PICS=("$L"/share/seven-control/account-pictures/usertile*.png)
 AS=/var/lib/AccountsService/users/$USER

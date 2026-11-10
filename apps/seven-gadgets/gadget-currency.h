@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Currency: Currency.Gadget (currency.js / currency.css) — the gold card converting between two to four currencies.
  * Rates: ExchangeRate-API's open endpoint (open.er-api.com, daily, no key). Included inside main.cpp's namespace.
@@ -8,34 +9,34 @@
 QString currencyName(const QString &code)
 {
     static const QHash<QString, QString> names{
-        {QStringLiteral("UAH"), QStringLiteral("Українська гривня")}, {QStringLiteral("USD"), QStringLiteral("Долар США")},
-        {QStringLiteral("EUR"), QStringLiteral("Євро")}, {QStringLiteral("GBP"), QStringLiteral("Британський фунт")},
-        {QStringLiteral("PLN"), QStringLiteral("Польський злотий")}, {QStringLiteral("CHF"), QStringLiteral("Швейцарський франк")},
-        {QStringLiteral("JPY"), QStringLiteral("Японська єна")}, {QStringLiteral("CNY"), QStringLiteral("Китайський юань")},
-        {QStringLiteral("CZK"), QStringLiteral("Чеська крона")}, {QStringLiteral("CAD"), QStringLiteral("Канадський долар")},
-        {QStringLiteral("AUD"), QStringLiteral("Австралійський долар")}, {QStringLiteral("SEK"), QStringLiteral("Шведська крона")},
-        {QStringLiteral("NOK"), QStringLiteral("Норвезька крона")}, {QStringLiteral("DKK"), QStringLiteral("Данська крона")},
-        {QStringLiteral("HUF"), QStringLiteral("Угорський форинт")}, {QStringLiteral("RON"), QStringLiteral("Румунський лей")},
-        {QStringLiteral("MDL"), QStringLiteral("Молдовський лей")}, {QStringLiteral("TRY"), QStringLiteral("Турецька ліра")},
-        {QStringLiteral("GEL"), QStringLiteral("Грузинський ларі")}, {QStringLiteral("KZT"), QStringLiteral("Казахстанський теньге")},
-        {QStringLiteral("ILS"), QStringLiteral("Ізраїльський шекель")}, {QStringLiteral("INR"), QStringLiteral("Індійська рупія")},
-        {QStringLiteral("BGN"), QStringLiteral("Болгарський лев")}, {QStringLiteral("AZN"), QStringLiteral("Азербайджанський манат")},
-        {QStringLiteral("AMD"), QStringLiteral("Вірменський драм")}, {QStringLiteral("KRW"), QStringLiteral("Південнокорейська вона")},
-        {QStringLiteral("SGD"), QStringLiteral("Сінгапурський долар")}, {QStringLiteral("HKD"), QStringLiteral("Гонконзький долар")},
-        {QStringLiteral("NZD"), QStringLiteral("Новозеландський долар")}, {QStringLiteral("MXN"), QStringLiteral("Мексиканське песо")},
-        {QStringLiteral("BRL"), QStringLiteral("Бразильський реал")}, {QStringLiteral("ZAR"), QStringLiteral("Південноафриканський ранд")},
-        {QStringLiteral("AED"), QStringLiteral("Дирхам ОАЕ")}, {QStringLiteral("SAR"), QStringLiteral("Саудівський ріал")},
-        {QStringLiteral("EGP"), QStringLiteral("Єгипетський фунт")}, {QStringLiteral("THB"), QStringLiteral("Таїландський бат")},
-        {QStringLiteral("ISK"), QStringLiteral("Ісландська крона")}, {QStringLiteral("RSD"), QStringLiteral("Сербський динар")},
-        {QStringLiteral("BYN"), QStringLiteral("Білоруський рубль")}, {QStringLiteral("RUB"), QStringLiteral("Російський рубль")},
-        {QStringLiteral("IDR"), QStringLiteral("Індонезійська рупія")},
-        {QStringLiteral("MYR"), QStringLiteral("Малайзійський ринггіт")}, {QStringLiteral("PHP"), QStringLiteral("Філіппінське песо")},
-        {QStringLiteral("VND"), QStringLiteral("В'єтнамський донг")}, {QStringLiteral("ARS"), QStringLiteral("Аргентинське песо")},
-        {QStringLiteral("CLP"), QStringLiteral("Чилійське песо")}, {QStringLiteral("COP"), QStringLiteral("Колумбійське песо")},
-        {QStringLiteral("PEN"), QStringLiteral("Перуанський соль")}, {QStringLiteral("UZS"), QStringLiteral("Узбецький сум")},
-        {QStringLiteral("TWD"), QStringLiteral("Новий тайванський долар")}, {QStringLiteral("QAR"), QStringLiteral("Катарський ріал")},
-        {QStringLiteral("KWD"), QStringLiteral("Кувейтський динар")}, {QStringLiteral("MAD"), QStringLiteral("Марокканський дирхам")},
-        {QStringLiteral("XAU"), QStringLiteral("Золото (унція)")},
+        {QStringLiteral("UAH"), tr7("Ukrainian Hryvnia")}, {QStringLiteral("USD"), tr7("US Dollar")},
+        {QStringLiteral("EUR"), tr7("Euro")}, {QStringLiteral("GBP"), tr7("British Pound")},
+        {QStringLiteral("PLN"), tr7("Polish Zloty")}, {QStringLiteral("CHF"), tr7("Swiss Franc")},
+        {QStringLiteral("JPY"), tr7("Japanese Yen")}, {QStringLiteral("CNY"), tr7("Chinese Yuan")},
+        {QStringLiteral("CZK"), tr7("Czech Koruna")}, {QStringLiteral("CAD"), tr7("Canadian Dollar")},
+        {QStringLiteral("AUD"), tr7("Australian Dollar")}, {QStringLiteral("SEK"), tr7("Swedish Krona")},
+        {QStringLiteral("NOK"), tr7("Norwegian Krone")}, {QStringLiteral("DKK"), tr7("Danish Krone")},
+        {QStringLiteral("HUF"), tr7("Hungarian Forint")}, {QStringLiteral("RON"), tr7("Romanian Leu")},
+        {QStringLiteral("MDL"), tr7("Moldovan Leu")}, {QStringLiteral("TRY"), tr7("Turkish Lira")},
+        {QStringLiteral("GEL"), tr7("Georgian Lari")}, {QStringLiteral("KZT"), tr7("Kazakhstani Tenge")},
+        {QStringLiteral("ILS"), tr7("Israeli Shekel")}, {QStringLiteral("INR"), tr7("Indian Rupee")},
+        {QStringLiteral("BGN"), tr7("Bulgarian Lev")}, {QStringLiteral("AZN"), tr7("Azerbaijani Manat")},
+        {QStringLiteral("AMD"), tr7("Armenian Dram")}, {QStringLiteral("KRW"), tr7("South Korean Won")},
+        {QStringLiteral("SGD"), tr7("Singapore Dollar")}, {QStringLiteral("HKD"), tr7("Hong Kong Dollar")},
+        {QStringLiteral("NZD"), tr7("New Zealand Dollar")}, {QStringLiteral("MXN"), tr7("Mexican Peso")},
+        {QStringLiteral("BRL"), tr7("Brazilian Real")}, {QStringLiteral("ZAR"), tr7("South African Rand")},
+        {QStringLiteral("AED"), tr7("UAE Dirham")}, {QStringLiteral("SAR"), tr7("Saudi Riyal")},
+        {QStringLiteral("EGP"), tr7("Egyptian Pound")}, {QStringLiteral("THB"), tr7("Thai Baht")},
+        {QStringLiteral("ISK"), tr7("Icelandic Krona")}, {QStringLiteral("RSD"), tr7("Serbian Dinar")},
+        {QStringLiteral("BYN"), tr7("Belarusian Ruble")}, {QStringLiteral("RUB"), tr7("Russian Ruble")},
+        {QStringLiteral("IDR"), tr7("Indonesian Rupiah")},
+        {QStringLiteral("MYR"), tr7("Malaysian Ringgit")}, {QStringLiteral("PHP"), tr7("Philippine Peso")},
+        {QStringLiteral("VND"), tr7("Vietnamese Dong")}, {QStringLiteral("ARS"), tr7("Argentine Peso")},
+        {QStringLiteral("CLP"), tr7("Chilean Peso")}, {QStringLiteral("COP"), tr7("Colombian Peso")},
+        {QStringLiteral("PEN"), tr7("Peruvian Sol")}, {QStringLiteral("UZS"), tr7("Uzbekistani Som")},
+        {QStringLiteral("TWD"), tr7("New Taiwan Dollar")}, {QStringLiteral("QAR"), tr7("Qatari Riyal")},
+        {QStringLiteral("KWD"), tr7("Kuwaiti Dinar")}, {QStringLiteral("MAD"), tr7("Moroccan Dirham")},
+        {QStringLiteral("XAU"), tr7("Gold (ounce)")},
     };
     return names.value(code, code);
 }
@@ -148,7 +149,7 @@ public:
             edit->setStyleSheet(QStringLiteral("QLineEdit { background: transparent; border: none; color: black; padding: 0 3px 0 1px; }"));
             connect(edit, &QLineEdit::textEdited, this, [this, i](const QString &text) {
                 bool ok = false;
-                const double v = QLocale(QLocale::Ukrainian).toDouble(QString(text).replace(QLatin1Char('.'), QLatin1Char(',')).remove(QChar(0xa0)).remove(QLatin1Char(' ')), &ok);
+                const double v = QLocale{}.toDouble(QString(text).replace(QLatin1Char('.'), QLatin1Char(',')).remove(QChar(0xa0)).remove(QLatin1Char(' ')), &ok);
                 if (!ok) {
                     return;
                 }
@@ -233,7 +234,7 @@ protected:
         const CurrencyRates &r = CurrencyRates::instance();
         if (r.rates.isEmpty()) {
             p.setFont(gadgetFont(12));
-            const QString msg = r.failed ? QStringLiteral("Не вдалося зв'язатися з постачальником даних.") : QStringLiteral("Завантаження...");
+            const QString msg = r.failed ? tr7("Could not contact the data provider.") : tr7("Loading...");
             drawShadowText(p, QRectF(rect()).adjusted(10, 6, -10, -6), Qt::AlignCenter | Qt::TextWordWrap, msg, Qt::white);
             return;
         }
@@ -345,7 +346,7 @@ private:
     void chooseCurrency(int row)
     {
         QStringList codes = CurrencyRates::instance().rates.keys();
-        QCollator c(QLocale(QLocale::Ukrainian));
+        QCollator c(QLocale{});
         std::sort(codes.begin(), codes.end(), [&c](const QString &a, const QString &b) {
             return c.compare(currencyName(a), currencyName(b)) < 0;
         });
@@ -359,7 +360,7 @@ private:
             a->setChecked(code == m_codes.at(row));
         }
         menu.addSeparator();
-        QMenu *all = menu.addMenu(QStringLiteral("Усі валюти"));
+        QMenu *all = menu.addMenu(tr7("All currencies"));
         for (const QString &code : std::as_const(codes)) {
             if (currencyName(code) == code) {
                 continue; // no Ukrainian name: rarely wanted
@@ -411,13 +412,13 @@ private:
         }
         const qint64 mins = t.secsTo(QDateTime::currentDateTime()) / 60;
         if (mins < 1) {
-            return QStringLiteral("Щойно");
+            return tr7("Just now");
         }
         if (mins < 60) {
-            return QStringLiteral("%1 хв тому").arg(mins);
+            return tr7("%1 min ago").arg(mins);
         }
         if (mins < 24 * 60) {
-            return QStringLiteral("%1 год тому").arg(mins / 60);
+            return tr7("%1 hours ago").arg(mins / 60);
         }
         return t.toString(QStringLiteral("dd.MM.yyyy"));
     }

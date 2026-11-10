@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7soundfx.h"
@@ -133,15 +134,15 @@ struct Endpoint {
     QString status() const
     {
         if (disabled) {
-            return QStringLiteral("Вимкнено");
+            return tr7("Off", "firewall state");
         }
         if (unplugged) {
-            return QStringLiteral("Не підключено");
+            return tr7("Not connected");
         }
         if (isDefault) {
-            return QStringLiteral("Пристрій за замовчуванням");
+            return tr7("Default Device");
         }
-        return QStringLiteral("Готовий");
+        return tr7("Ready");
     }
 };
 
@@ -219,33 +220,33 @@ inline QString typeFor(bool output, const QString &port, const QString &formFact
 {
     const QString p = port.toLower();
     if (node.endsWith(QLatin1String(".monitor"))) {
-        return QStringLiteral("Стерео мікшер");
+        return tr7("Stereo Mix");
     }
     if (output) {
         if (p.contains(QLatin1String("headphone")) || formFactor == QLatin1String("headphone")) {
-            return QStringLiteral("Навушники");
+            return tr7("Headphones");
         }
         if (p.contains(QLatin1String("headset")) || formFactor == QLatin1String("headset")) {
-            return QStringLiteral("Навушники");
+            return tr7("Headphones");
         }
         if (p.contains(QLatin1String("hdmi")) || p.contains(QLatin1String("displayport"))) {
-            return QStringLiteral("Цифровий вихід HDMI");
+            return tr7("Digital Output (HDMI)");
         }
         if (p.contains(QLatin1String("iec958")) || p.contains(QLatin1String("spdif"))) {
-            return QStringLiteral("Цифровий вихід");
+            return tr7("Digital Output");
         }
         if (p.contains(QLatin1String("lineout")) || p.contains(QLatin1String("line-out"))) {
-            return QStringLiteral("Лінійний вихід");
+            return tr7("Line Out");
         }
-        return QStringLiteral("Динаміки");
+        return tr7("Speakers");
     }
     if (p.contains(QLatin1String("linein")) || p.contains(QLatin1String("line-in"))) {
-        return QStringLiteral("Лінійний вхід");
+        return tr7("Line In");
     }
     if (p.contains(QLatin1String("headset")) || formFactor == QLatin1String("headset")) {
-        return QStringLiteral("Мікрофон гарнітури");
+        return tr7("Headset Microphone");
     }
-    return QStringLiteral("Мікрофон");
+    return tr7("Microphone");
 }
 
 inline QString iconFor(bool output, const QString &port, const QString &formFactor, const QString &node)
@@ -468,17 +469,17 @@ inline void setDeviceEnabled(const Endpoint &e, bool on)
 
 inline const QStringList &channelLabels()
 {
-    static const QStringList l{QStringLiteral("Л"), QStringLiteral("П"), QStringLiteral("Ц"), QStringLiteral("НЧ"), QStringLiteral("ЗЛ"), QStringLiteral("ЗП"), QStringLiteral("БЛ"), QStringLiteral("БП")};
+    static const QStringList l{tr7("L"), tr7("R"), tr7("C"), tr7("LFE"), tr7("RL"), tr7("RR"), tr7("SL"), tr7("SR")};
     return l;
 }
 
 inline QString channelShort(const QString &ch)
 {
-    static const QHash<QString, QString> m{{QStringLiteral("front-left"), QStringLiteral("Л")},  {QStringLiteral("front-right"), QStringLiteral("П")},
-                                           {QStringLiteral("front-center"), QStringLiteral("Ц")}, {QStringLiteral("lfe"), QStringLiteral("НЧ")},
-                                           {QStringLiteral("rear-left"), QStringLiteral("ЗЛ")},  {QStringLiteral("rear-right"), QStringLiteral("ЗП")},
-                                           {QStringLiteral("side-left"), QStringLiteral("БЛ")},  {QStringLiteral("side-right"), QStringLiteral("БП")},
-                                           {QStringLiteral("mono"), QStringLiteral("М")}};
+    static const QHash<QString, QString> m{{QStringLiteral("front-left"), tr7("L")},  {QStringLiteral("front-right"), tr7("R")},
+                                           {QStringLiteral("front-center"), tr7("C")}, {QStringLiteral("lfe"), tr7("LFE")},
+                                           {QStringLiteral("rear-left"), tr7("RL")},  {QStringLiteral("rear-right"), tr7("RR")},
+                                           {QStringLiteral("side-left"), tr7("SL")},  {QStringLiteral("side-right"), tr7("SR")},
+                                           {QStringLiteral("mono"), tr7("M")}};
     return m.value(ch, ch);
 }
 
@@ -686,7 +687,7 @@ public:
         : QDialog(parent)
         , m_e(e)
     {
-        setWindowTitle(QStringLiteral("Баланс"));
+        setWindowTitle(tr7("Balance"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-sound")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         auto *v = new QVBoxLayout(this);
@@ -746,11 +747,11 @@ private:
 inline const QList<QPair<QString, QString>> &iconChoices()
 {
     static const QList<QPair<QString, QString>> l{
-        {QStringLiteral("seven-snd-speakers"), QStringLiteral("Динаміки")},     {QStringLiteral("seven-snd-headphones"), QStringLiteral("Навушники")},
-        {QStringLiteral("seven-snd-headset"), QStringLiteral("Гарнітура")},     {QStringLiteral("seven-snd-hdmi"), QStringLiteral("Монітор")},
-        {QStringLiteral("seven-snd-digital"), QStringLiteral("Цифровий")},      {QStringLiteral("seven-snd-linein"), QStringLiteral("Лінійний")},
-        {QStringLiteral("seven-snd-mic"), QStringLiteral("Мікрофон")},          {QStringLiteral("seven-snd-webcam"), QStringLiteral("Веб-камера")},
-        {QStringLiteral("seven-snd-phone"), QStringLiteral("Телефон")},         {QStringLiteral("seven-snd-card"), QStringLiteral("Звукова плата")},
+        {QStringLiteral("seven-snd-speakers"), tr7("Speakers")},     {QStringLiteral("seven-snd-headphones"), tr7("Headphones")},
+        {QStringLiteral("seven-snd-headset"), tr7("Headset")},     {QStringLiteral("seven-snd-hdmi"), tr7("Monitor")},
+        {QStringLiteral("seven-snd-digital"), tr7("Digital")},      {QStringLiteral("seven-snd-linein"), tr7("Line")},
+        {QStringLiteral("seven-snd-mic"), tr7("Microphone")},          {QStringLiteral("seven-snd-webcam"), tr7("Webcam")},
+        {QStringLiteral("seven-snd-phone"), tr7("Phone")},         {QStringLiteral("seven-snd-card"), tr7("Sound card")},
     };
     return l;
 }
@@ -758,10 +759,10 @@ inline const QList<QPair<QString, QString>> &iconChoices()
 inline QString pickIcon(QWidget *parent, const QString &current)
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Змінення значка"));
+    dlg.setWindowTitle(tr7("Change Icon"));
     dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     auto *v = new QVBoxLayout(&dlg);
-    v->addWidget(new QLabel(QStringLiteral("Виберіть значок зі списку:")));
+    v->addWidget(new QLabel(tr7("Select an icon from the list below:")));
     auto *list = new QListWidget;
     list->setViewMode(QListView::IconMode);
     list->setIconSize(QSize(48, 48));
@@ -779,7 +780,7 @@ inline QString pickIcon(QWidget *parent, const QString &current)
     auto *btns = new QHBoxLayout;
     btns->addStretch(1);
     auto *ok = new QPushButton(QStringLiteral("OK"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     ok->setDefault(true);
     btns->addWidget(ok);
     btns->addWidget(cancel);
@@ -839,13 +840,13 @@ inline QString formatLabel(const QString &format, int rate)
     const int bits = format.contains(QLatin1String("32")) ? 32 : format.contains(QLatin1String("24")) ? 24 : 16;
     QString quality;
     if (bits == 16 && rate == 44100) {
-        quality = QStringLiteral(" (Якість компакт-диска)");
+        quality = tr7(" (CD Quality)");
     } else if (bits == 16 && rate == 48000) {
-        quality = QStringLiteral(" (Якість DVD)");
+        quality = tr7(" (DVD Quality)");
     } else if (bits >= 24) {
-        quality = QStringLiteral(" (Студійна якість)");
+        quality = tr7(" (Studio Quality)");
     }
-    return QStringLiteral("%1 біт, %2 Гц%3").arg(bits).arg(rate).arg(quality);
+    return tr7("%1 bit, %2 Hz%3").arg(bits).arg(rate).arg(quality);
 }
 
 class PropertiesDialog : public QDialog
@@ -857,37 +858,37 @@ public:
         : QDialog(parent)
         , m_e(e)
     {
-        setWindowTitle(QStringLiteral("Властивості: %1").arg(e.shownName()));
+        setWindowTitle(tr7("%1 Properties").arg(e.shownName()));
         setWindowIcon(QIcon::fromTheme(e.shownIcon()));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setFixedWidth(420);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(generalTab(), QStringLiteral("Загальні"));
+        tabs->addTab(generalTab(), tr7("General"));
         if (!e.output && !e.node.endsWith(QLatin1String(".monitor")) && !e.disabled) {
-            tabs->addTab(listenTab(), QStringLiteral("Прослухати"));
+            tabs->addTab(listenTab(), tr7("Listen"));
         }
         if (!e.disabled && !e.unplugged) {
-            tabs->addTab(levelsTab(), QStringLiteral("Рівні"));
+            tabs->addTab(levelsTab(), tr7("Levels"));
             if (e.output && !e.node.isEmpty()) {
-                const bool phones = e.node.startsWith(QLatin1String("bluez_output")) || e.typeName.contains(QStringLiteral("Навушник"))
-                    || e.port.contains(QLatin1String("Headphone"), Qt::CaseInsensitive) || e.port.contains(QStringLiteral("Навушник"));
+                const bool phones = e.node.startsWith(QLatin1String("bluez_output")) || e.typeName.contains(tr7("Headphone"))
+                    || e.port.contains(QLatin1String("Headphone"), Qt::CaseInsensitive) || e.port.contains(tr7("Headphone"));
                 m_fx = new Win7SoundFx::EnhancementsTab(e.node, e.shownName(), phones);
                 m_fx->changed = [this] {
                     changed();
                 };
-                tabs->addTab(m_fx, QStringLiteral("Покращення"));
+                tabs->addTab(m_fx, tr7("Enhancements"));
             }
-            tabs->addTab(advancedTab(), QStringLiteral("Додатково"));
+            tabs->addTab(advancedTab(), tr7("Advanced"));
         }
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -937,27 +938,27 @@ private:
         auto *nameCol = new QVBoxLayout;
         m_name = new QLineEdit(m_e.shownName());
         nameCol->addWidget(m_name);
-        auto *changeIcon = new QPushButton(QStringLiteral("Змінити значок"));
+        auto *changeIcon = new QPushButton(tr7("Change Icon", "sound"));
         nameCol->addWidget(changeIcon, 0, Qt::AlignLeft);
         top->addLayout(nameCol, 1);
         v->addLayout(top);
         v->addSpacing(8);
-        auto *ctl = group(QStringLiteral("Контролер"));
+        auto *ctl = group(tr7("Controller Information"));
         auto *cg = new QGridLayout(ctl);
         cg->addWidget(new QLabel(m_e.deviceName), 0, 0);
-        auto *props = new QPushButton(QStringLiteral("Властивості"));
+        auto *props = new QPushButton(tr7("Properties"));
         cg->addWidget(props, 0, 1, Qt::AlignRight);
-        cg->addWidget(new QLabel(m_e.vendor.isEmpty() ? QStringLiteral("Невідомий виробник") : m_e.vendor.section(QLatin1Char('['), 0, 0).trimmed()), 1, 0);
+        cg->addWidget(new QLabel(m_e.vendor.isEmpty() ? tr7("Unknown manufacturer") : m_e.vendor.section(QLatin1Char('['), 0, 0).trimmed()), 1, 0);
         cg->setColumnStretch(0, 1);
         v->addWidget(ctl);
-        auto *jack = group(QStringLiteral("Роз'єм"));
+        auto *jack = group(tr7("Jack Information"));
         auto *jv = new QVBoxLayout(jack);
-        jv->addWidget(new QLabel(m_e.port.isEmpty() || m_e.port == QLatin1String("(null)") ? QStringLiteral("Немає даних про гніздо підключення") : m_e.port));
+        jv->addWidget(new QLabel(m_e.port.isEmpty() || m_e.port == QLatin1String("(null)") ? tr7("No jack information available") : m_e.port));
         v->addWidget(jack);
         v->addStretch(1);
-        v->addWidget(new QLabel(QStringLiteral("Застосування пристрою:")));
+        v->addWidget(new QLabel(tr7("Device usage:")));
         m_use = new QComboBox;
-        m_use->addItems({QStringLiteral("Використовувати цей пристрій (увімк.)"), QStringLiteral("Не використовувати цей пристрій (вимк.)")});
+        m_use->addItems({tr7("Use this device (enable)"), tr7("Don't use this device (disable)")});
         m_use->setCurrentIndex(m_e.disabled ? 1 : 0);
         m_use->setEnabled(!m_e.card.isEmpty() && !m_e.unplugged && !m_e.node.endsWith(QLatin1String(".monitor")));
         v->addWidget(m_use);
@@ -986,8 +987,7 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(12, 12, 12, 12);
-        auto *intro = new QLabel(QStringLiteral("Цей пристрій можна використовувати для прослуховування музики з плеєра або інших пристроїв, підключених до нього. "
-                                                "Під час підключення мікрофона можуть виникати перешкоди."));
+        auto *intro = new QLabel(tr7("You can listen to a portable music player or other device through this device. Connecting a microphone may cause feedback."));
         intro->setWordWrap(true);
         v->addWidget(intro);
         auto *pic = new QHBoxLayout;
@@ -1000,12 +1000,12 @@ private:
         }
         pic->addStretch(1);
         v->addLayout(pic);
-        m_listen = new QCheckBox(QStringLiteral("Прослуховувати з цього пристрою"));
+        m_listen = new QCheckBox(tr7("Listen to this device"));
         m_listen->setChecked(store().contains(QStringLiteral("Loopback/") + key(m_e.node)));
         v->addWidget(m_listen);
-        v->addWidget(new QLabel(QStringLiteral("Відтворювати через цей пристрій:")));
+        v->addWidget(new QLabel(tr7("Playback through this device:")));
         m_listenTo = new QComboBox;
-        m_listenTo->addItem(QStringLiteral("Пристрій відтворення за замовчуванням"), QString());
+        m_listenTo->addItem(tr7("Default Playback Device"), QString());
         for (const Endpoint &o : endpoints(true, false, false)) {
             m_listenTo->addItem(o.shownName() + QStringLiteral(" (") + o.deviceName + QLatin1Char(')'), o.node);
         }
@@ -1047,14 +1047,14 @@ private:
         m_muteBtn->setFixedSize(26, 24);
         auto updateMute = [this] {
             m_muteBtn->setIcon(trimmedIcon(m_muteBtn->isChecked() ? QStringLiteral("seven-snd-muted") : QStringLiteral("seven-snd-unmuted")));
-            m_muteBtn->setToolTip(m_muteBtn->isChecked() ? QStringLiteral("Увімкнути звук") : QStringLiteral("Вимкнути звук"));
+            m_muteBtn->setToolTip(m_muteBtn->isChecked() ? tr7("Unmute") : tr7("Mute"));
         };
         updateMute();
         h->addWidget(m_slider, 1);
         h->addWidget(spin);
         h->addWidget(m_muteBtn);
         if (m_e.channels.size() > 1) {
-            auto *balance = new QPushButton(QStringLiteral("Баланс"));
+            auto *balance = new QPushButton(tr7("Balance"));
             h->addWidget(balance);
             connect(balance, &QPushButton::clicked, this, [this, spin] {
                 Endpoint cur = m_e;
@@ -1110,10 +1110,10 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(12, 12, 12, 12);
-        auto *box = group(QStringLiteral("Формат за замовчуванням"));
+        auto *box = group(tr7("Default Format"));
         auto *bv = new QVBoxLayout(box);
-        auto *t = new QLabel(m_e.output ? QStringLiteral("Виберіть розрядність і частоту дискретизації для використання в загальному режимі.")
-                                        : QStringLiteral("Виберіть розрядність і частоту дискретизації для використання в загальному режимі."));
+        auto *t = new QLabel(m_e.output ? tr7("Select the sample rate and bit depth to be used when running in shared mode.")
+                                        : tr7("Select the sample rate and bit depth to be used when running in shared mode."));
         t->setWordWrap(true);
         bv->addWidget(t);
         auto *row = new QHBoxLayout;
@@ -1141,7 +1141,7 @@ private:
         m_formatStart = m_format->currentData().toString();
         row->addWidget(m_format, 1);
         if (m_e.output) {
-            auto *test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), QStringLiteral("Перевірка"));
+            auto *test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), tr7("Test"));
             row->addWidget(test);
             connect(test, &QPushButton::clicked, this, [this] {
                 playTest(m_e.node, m_e.channels, -1, this);
@@ -1150,7 +1150,7 @@ private:
         bv->addLayout(row);
         v->addWidget(box);
         v->addStretch(1);
-        auto *defaults = new QPushButton(QStringLiteral("За замовчуванням"));
+        auto *defaults = new QPushButton(tr7("Default"));
         v->addWidget(defaults, 0, Qt::AlignLeft);
         connect(m_format, &QComboBox::currentIndexChanged, this, [this] {
             changed();
@@ -1179,7 +1179,7 @@ private:
             store().setValue(QStringLiteral("Icons/") + key(m_e.id()), m_icon);
         }
         store().sync();
-        setWindowTitle(QStringLiteral("Властивості: %1").arg(name.isEmpty() ? m_e.typeName : name));
+        setWindowTitle(tr7("%1 Properties").arg(name.isEmpty() ? m_e.typeName : name));
         if (m_listen) {
             const QString k = QStringLiteral("Loopback/") + key(m_e.node);
             const QString old = store().value(k).toString();
@@ -1348,22 +1348,22 @@ public:
         : QDialog(parent)
         , m_e(e)
     {
-        setWindowTitle(QStringLiteral("Налаштування динаміків"));
+        setWindowTitle(tr7("Speaker Setup"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-sound")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setFixedSize(560, 430);
         for (const QString &prof : e.surroundProfiles) {
             SpeakerConfig c{prof, {}, {}};
             if (prof.contains(QLatin1String("surround71")) || prof.contains(QLatin1String("surround-71"))) {
-                c = {prof, QStringLiteral("Об'ємне звучання 7.1"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("front-center"), QStringLiteral("lfe"), QStringLiteral("rear-left"), QStringLiteral("rear-right"), QStringLiteral("side-left"), QStringLiteral("side-right")}};
+                c = {prof, tr7("7.1 Surround"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("front-center"), QStringLiteral("lfe"), QStringLiteral("rear-left"), QStringLiteral("rear-right"), QStringLiteral("side-left"), QStringLiteral("side-right")}};
             } else if (prof.contains(QLatin1String("surround-51")) || prof.contains(QLatin1String("surround")) && !prof.contains(QLatin1String("40"))) {
-                c = {prof, QStringLiteral("Об'ємне звучання 5.1"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("front-center"), QStringLiteral("lfe"), QStringLiteral("rear-left"), QStringLiteral("rear-right")}};
+                c = {prof, tr7("5.1 Surround"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("front-center"), QStringLiteral("lfe"), QStringLiteral("rear-left"), QStringLiteral("rear-right")}};
             } else if (prof.contains(QLatin1String("surround-40")) || prof.contains(QLatin1String("quad"))) {
-                c = {prof, QStringLiteral("Квадрофонічні"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("rear-left"), QStringLiteral("rear-right")}};
+                c = {prof, tr7("Quadraphonic"), {QStringLiteral("front-left"), QStringLiteral("front-right"), QStringLiteral("rear-left"), QStringLiteral("rear-right")}};
             } else if (prof.contains(QLatin1String("mono"))) {
-                c = {prof, QStringLiteral("Моно"), {QStringLiteral("mono")}};
+                c = {prof, tr7("Mono"), {QStringLiteral("mono")}};
             } else if (prof.contains(QLatin1String("stereo")) || prof.startsWith(QLatin1String("a2dp")) || prof.contains(QLatin1String("headset"))) {
-                c = {prof, QStringLiteral("Стерео"), {QStringLiteral("front-left"), QStringLiteral("front-right")}};
+                c = {prof, tr7("Stereo"), {QStringLiteral("front-left"), QStringLiteral("front-right")}};
             }
             if (c.title.isEmpty()) {
                 continue;
@@ -1377,7 +1377,7 @@ public:
             }
         }
         if (m_configs.isEmpty()) {
-            m_configs.append({QString(), QStringLiteral("Стерео"), e.channels.isEmpty() ? QStringList{QStringLiteral("front-left"), QStringLiteral("front-right")} : e.channels});
+            m_configs.append({QString(), tr7("Stereo"), e.channels.isEmpty() ? QStringList{QStringLiteral("front-left"), QStringLiteral("front-right")} : e.channels});
         }
 
         auto *v = new QVBoxLayout(this);
@@ -1422,7 +1422,7 @@ public:
         m_checksLayout->setContentsMargins(0, 0, 0, 0);
         left->addWidget(m_checks);
         left->addSpacing(16);
-        m_test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), QStringLiteral("Перевірка"));
+        m_test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), tr7("Test"));
         m_test->setFixedWidth(100);
         left->addWidget(m_test, 0, Qt::AlignLeft);
         left->addStretch(1);
@@ -1433,7 +1433,7 @@ public:
         m_room = new SpeakerRoom;
         right->addWidget(m_room, 0, Qt::AlignHCenter);
         right->addSpacing(14);
-        m_hint = new QLabel(QStringLiteral("Виберіть динамік для перевірки."));
+        m_hint = new QLabel(tr7("Click on a speaker above to test it."));
         right->addWidget(m_hint, 0, Qt::AlignHCenter);
         right->addStretch(1);
         bh->addLayout(right);
@@ -1444,11 +1444,11 @@ public:
         band->setStyleSheet(QStringLiteral("#win7band { background: #f0f0f0; border-top: 1px solid #dfdfdf; }"));
         auto *bl = new QHBoxLayout(band);
         bl->setContentsMargins(12, 10, 12, 10);
-        m_back = new QPushButton(QStringLiteral("< Назад"));
+        m_back = new QPushButton(tr7("< Back"));
         bl->addWidget(m_back);
         bl->addStretch(1);
-        m_next = new QPushButton(QStringLiteral("Далі"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_next = new QPushButton(tr7("Next"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         m_next->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         m_next->setDefault(true);
@@ -1466,7 +1466,7 @@ public:
             } else {
                 m_cycleIndex = -1;
                 m_cycle.start();
-                m_test->setText(QStringLiteral("Зупинка"));
+                m_test->setText(tr7("Stop", "test"));
                 m_test->setIcon(QIcon::fromTheme(QStringLiteral("seven-snd-stop")));
                 nextChannel();
             }
@@ -1543,7 +1543,7 @@ private:
     void stopTest()
     {
         m_cycle.stop();
-        m_test->setText(QStringLiteral("Перевірка"));
+        m_test->setText(tr7("Test"));
         m_test->setIcon(QIcon::fromTheme(QStringLiteral("seven-snd-play")));
     }
 
@@ -1566,22 +1566,22 @@ private:
         m_test->setVisible(page == 0);
         m_room->setVisible(page < 3);
         m_hint->setVisible(page < 3);
-        m_next->setText(page == 3 ? QStringLiteral("Готово") : QStringLiteral("Далі"));
+        m_next->setText(page == 3 ? tr7("Done") : tr7("Next"));
         m_room->channels = page == 0 ? config().channels : present();
         m_room->update();
         if (page == 0) {
-            m_title->setText(QStringLiteral("Виберіть конфігурацію"));
-            m_text->setText(QStringLiteral("Укажіть розташування динаміків, яке найбільше відповідає конфігурації комп'ютера."));
-            m_listLabel->setText(QStringLiteral("Звукові канали:"));
+            m_title->setText(tr7("Choose your configuration"));
+            m_text->setText(tr7("Select the speaker setup below that is most like the configuration on your computer."));
+            m_listLabel->setText(tr7("Audio channels:"));
         } else if (page == 1) {
-            m_title->setText(QStringLiteral("Налаштуйте конфігурацію"));
-            m_text->setText(QStringLiteral("Позначте прапорцями, які динаміки є у вашій конфігурації об'ємного звучання."));
-            m_listLabel->setText(QStringLiteral("Додаткові динаміки:"));
+            m_title->setText(tr7("Customize your configuration"));
+            m_text->setText(tr7("Select which speakers are present in your configuration."));
+            m_listLabel->setText(tr7("Optional speakers:"));
             const QStringList chs = config().channels;
-            const QList<QPair<QString, QString>> optional{{QStringLiteral("front-center"), QStringLiteral("По центру")},
-                                                          {QStringLiteral("lfe"), QStringLiteral("Низькочастотний динамік")},
-                                                          {QStringLiteral("side-left,side-right"), QStringLiteral("Бокова пара")},
-                                                          {QStringLiteral("rear-left,rear-right"), QStringLiteral("Задня пара")}};
+            const QList<QPair<QString, QString>> optional{{QStringLiteral("front-center"), tr7("Center")},
+                                                          {QStringLiteral("lfe"), tr7("Subwoofer")},
+                                                          {QStringLiteral("side-left,side-right"), tr7("Side pair")},
+                                                          {QStringLiteral("rear-left,rear-right"), tr7("Rear pair")}};
             for (const auto &o : optional) {
                 auto *cb = new QCheckBox(o.second);
                 const bool exists = chs.contains(o.first.section(QLatin1Char(','), 0, 0));
@@ -1595,22 +1595,20 @@ private:
                 m_checksLayout->addWidget(cb);
             }
         } else if (page == 2) {
-            m_title->setText(QStringLiteral("Виберіть широкосмугові динаміки"));
-            m_text->setText(QStringLiteral("Супутні динаміки зазвичай мають обмежений динамічний діапазон і повинні використовуватися з низькочастотним динаміком. "
-                                           "Якщо в конфігурації є широкосмугові динаміки, установіть відповідні прапорці."));
-            m_listLabel->setText(QStringLiteral("Широкосмугові динаміки:"));
-            auto *front = new QCheckBox(QStringLiteral("Лівий і правий передні"));
+            m_title->setText(tr7("Select full-range speakers"));
+            m_text->setText(tr7("Satellite speakers often have a limited range and need a subwoofer. If your configuration has full-range speakers, select them below."));
+            m_listLabel->setText(tr7("Full-range speakers:"));
+            auto *front = new QCheckBox(tr7("Front left and right"));
             front->setChecked(true);
             m_checksLayout->addWidget(front);
             if (present().size() > 2) {
-                auto *surround = new QCheckBox(QStringLiteral("Навколишні динаміки"));
+                auto *surround = new QCheckBox(tr7("Surround speakers"));
                 surround->setChecked(true);
                 m_checksLayout->addWidget(surround);
             }
         } else {
-            m_title->setText(QStringLiteral("Налаштування завершено"));
-            m_text->setText(QStringLiteral("Після натискання кнопки «Готово» нові параметри буде застосовано до звукового пристрою. "
-                                           "Для внесення інших змін можна використати діалогове вікно «Властивості» або знову запустити майстер."));
+            m_title->setText(tr7("Configuration complete"));
+            m_text->setText(tr7("After you click Finish, the new settings are applied to your audio device. To make other changes, you can use the Properties dialog or run this wizard again."));
         }
     }
 
@@ -1651,22 +1649,22 @@ struct SoundEvent {
 inline const QList<SoundEvent> &soundEvents()
 {
     static const QList<SoundEvent> l{
-        {QStringLiteral("Windows"), QStringLiteral("Вихід з Windows"), QStringLiteral("plasma_workspace"), QStringLiteral("exitkde")},
-        {QStringLiteral("Windows"), QStringLiteral("Вхід у Windows"), QStringLiteral("plasma_workspace"), QStringLiteral("startkde")},
-        {QStringLiteral("Windows"), QStringLiteral("Запит"), QStringLiteral("plasma_workspace"), QStringLiteral("messageQuestion")},
-        {QStringLiteral("Windows"), QStringLiteral("Звуковий сигнал за замовчуванням"), QStringLiteral("plasma_workspace"), QStringLiteral("beep")},
-        {QStringLiteral("Windows"), QStringLiteral("Знак оклику"), QStringLiteral("plasma_workspace"), QStringLiteral("messageWarning")},
-        {QStringLiteral("Windows"), QStringLiteral("Критична зупинка"), QStringLiteral("plasma_workspace"), QStringLiteral("messageCritical")},
-        {QStringLiteral("Windows"), QStringLiteral("Критична помилка"), QStringLiteral("plasma_workspace"), QStringLiteral("fatalerror")},
-        {QStringLiteral("Windows"), QStringLiteral("Критичний рівень заряду батареї"), QStringLiteral("powerdevil"), QStringLiteral("criticalbattery")},
-        {QStringLiteral("Windows"), QStringLiteral("Низький рівень заряду батареї"), QStringLiteral("powerdevil"), QStringLiteral("lowbattery")},
-        {QStringLiteral("Windows"), QStringLiteral("Відключення пристрою"), QStringLiteral("plasma_workspace"), QStringLiteral("deviceRemoved")},
-        {QStringLiteral("Windows"), QStringLiteral("Підключення пристрою"), QStringLiteral("plasma_workspace"), QStringLiteral("deviceAdded")},
-        {QStringLiteral("Windows"), QStringLiteral("Помилка друку"), QStringLiteral("plasma_workspace"), QStringLiteral("printerror")},
-        {QStringLiteral("Windows"), QStringLiteral("Системне сповіщення"), QStringLiteral("plasma_workspace"), QStringLiteral("messageInformation")},
-        {QStringLiteral("Windows"), QStringLiteral("Підключення живлення"), QStringLiteral("powerdevil"), QStringLiteral("pluggedin")},
-        {QStringLiteral("Windows"), QStringLiteral("Відключення живлення"), QStringLiteral("powerdevil"), QStringLiteral("unplugged")},
-        {QStringLiteral("Провідник"), QStringLiteral("Очищення кошика"), QStringLiteral("plasma_workspace"), QStringLiteral("Trash: emptied")},
+        {QStringLiteral("Windows"), tr7("Exit Windows"), QStringLiteral("plasma_workspace"), QStringLiteral("exitkde")},
+        {QStringLiteral("Windows"), tr7("Windows Logon"), QStringLiteral("plasma_workspace"), QStringLiteral("startkde")},
+        {QStringLiteral("Windows"), tr7("Question"), QStringLiteral("plasma_workspace"), QStringLiteral("messageQuestion")},
+        {QStringLiteral("Windows"), tr7("Default Beep"), QStringLiteral("plasma_workspace"), QStringLiteral("beep")},
+        {QStringLiteral("Windows"), tr7("Exclamation"), QStringLiteral("plasma_workspace"), QStringLiteral("messageWarning")},
+        {QStringLiteral("Windows"), tr7("Critical Stop"), QStringLiteral("plasma_workspace"), QStringLiteral("messageCritical")},
+        {QStringLiteral("Windows"), tr7("Critical Error"), QStringLiteral("plasma_workspace"), QStringLiteral("fatalerror")},
+        {QStringLiteral("Windows"), tr7("Critical Battery Alarm"), QStringLiteral("powerdevil"), QStringLiteral("criticalbattery")},
+        {QStringLiteral("Windows"), tr7("Low Battery Alarm"), QStringLiteral("powerdevil"), QStringLiteral("lowbattery")},
+        {QStringLiteral("Windows"), tr7("Device Disconnect"), QStringLiteral("plasma_workspace"), QStringLiteral("deviceRemoved")},
+        {QStringLiteral("Windows"), tr7("Device Connect"), QStringLiteral("plasma_workspace"), QStringLiteral("deviceAdded")},
+        {QStringLiteral("Windows"), tr7("Print Error"), QStringLiteral("plasma_workspace"), QStringLiteral("printerror")},
+        {QStringLiteral("Windows"), tr7("System Notification"), QStringLiteral("plasma_workspace"), QStringLiteral("messageInformation")},
+        {QStringLiteral("Windows"), tr7("Power Connected"), QStringLiteral("powerdevil"), QStringLiteral("pluggedin")},
+        {QStringLiteral("Windows"), tr7("Power Disconnected"), QStringLiteral("powerdevil"), QStringLiteral("unplugged")},
+        {tr7("Explore"), tr7("Empty Recycle Bin"), QStringLiteral("plasma_workspace"), QStringLiteral("Trash: emptied")},
     };
     return l;
 }
@@ -1675,20 +1673,20 @@ inline const QList<SoundEvent> &soundEvents()
 inline QString soundLabel(const QString &name)
 {
     static const QHash<QString, QString> m{
-        {QStringLiteral("desktop-login"), QStringLiteral("Вхід у Windows")},        {QStringLiteral("desktop-logout"), QStringLiteral("Вихід з Windows")},
-        {QStringLiteral("dialog-question"), QStringLiteral("Запит")},              {QStringLiteral("bell-window-system"), QStringLiteral("Дзвінок")},
-        {QStringLiteral("bell"), QStringLiteral("Дзвінок")},                      {QStringLiteral("dialog-warning"), QStringLiteral("Знак оклику")},
-        {QStringLiteral("dialog-error-critical"), QStringLiteral("Критична зупинка")}, {QStringLiteral("dialog-error-serious"), QStringLiteral("Критична помилка")},
-        {QStringLiteral("dialog-error"), QStringLiteral("Помилка")},              {QStringLiteral("battery-low"), QStringLiteral("Критичний рівень заряду батареї")},
-        {QStringLiteral("battery-caution"), QStringLiteral("Низький рівень заряду батареї")}, {QStringLiteral("battery-full"), QStringLiteral("Батарею заряджено")},
-        {QStringLiteral("device-added"), QStringLiteral("Підключення пристрою")},  {QStringLiteral("device-removed"), QStringLiteral("Відключення пристрою")},
-        {QStringLiteral("device-error"), QStringLiteral("Помилка підключення пристрою")}, {QStringLiteral("dialog-information"), QStringLiteral("Сповіщення")},
-        {QStringLiteral("trash-empty"), QStringLiteral("Очищення кошика")},        {QStringLiteral("system-startup"), QStringLiteral("Запуск Windows")},
-        {QStringLiteral("system-shutdown"), QStringLiteral("Завершення роботи Windows")}, {QStringLiteral("power-plug"), QStringLiteral("Підключення живлення")},
-        {QStringLiteral("power-unplug"), QStringLiteral("Відключення живлення")},  {QStringLiteral("message-new-email"), QStringLiteral("Нова пошта")},
-        {QStringLiteral("message-new-instant"), QStringLiteral("Нове повідомлення")}, {QStringLiteral("audio-volume-change"), QStringLiteral("Зміна гучності")},
-        {QStringLiteral("desktop-unlock"), QStringLiteral("Розблокування")},       {QStringLiteral("window-inactive-click"), QStringLiteral("Клацання")},
-        {QStringLiteral("dialog-calendar"), QStringLiteral("Нагадування")},       {QStringLiteral("phone-incoming-call"), QStringLiteral("Вхідний дзвінок")},
+        {QStringLiteral("desktop-login"), tr7("Windows Logon")},        {QStringLiteral("desktop-logout"), tr7("Exit Windows")},
+        {QStringLiteral("dialog-question"), tr7("Question")},              {QStringLiteral("bell-window-system"), tr7("Ring")},
+        {QStringLiteral("bell"), tr7("Ring")},                      {QStringLiteral("dialog-warning"), tr7("Exclamation")},
+        {QStringLiteral("dialog-error-critical"), tr7("Critical Stop")}, {QStringLiteral("dialog-error-serious"), tr7("Critical Error")},
+        {QStringLiteral("dialog-error"), tr7("Error")},              {QStringLiteral("battery-low"), tr7("Critical Battery Alarm")},
+        {QStringLiteral("battery-caution"), tr7("Low Battery Alarm")}, {QStringLiteral("battery-full"), tr7("Battery Charged")},
+        {QStringLiteral("device-added"), tr7("Device Connect")},  {QStringLiteral("device-removed"), tr7("Device Disconnect")},
+        {QStringLiteral("device-error"), tr7("Device Failed to Connect")}, {QStringLiteral("dialog-information"), tr7("Notification")},
+        {QStringLiteral("trash-empty"), tr7("Empty Recycle Bin")},        {QStringLiteral("system-startup"), tr7("Windows Startup")},
+        {QStringLiteral("system-shutdown"), tr7("Windows Shutdown")}, {QStringLiteral("power-plug"), tr7("Power Connected")},
+        {QStringLiteral("power-unplug"), tr7("Power Disconnected")},  {QStringLiteral("message-new-email"), tr7("New Mail Notification")},
+        {QStringLiteral("message-new-instant"), tr7("New Text Message Notification")}, {QStringLiteral("audio-volume-change"), tr7("Volume Change")},
+        {QStringLiteral("desktop-unlock"), tr7("Windows Unlock")},       {QStringLiteral("window-inactive-click"), tr7("Click")},
+        {QStringLiteral("dialog-calendar"), tr7("Reminder")},       {QStringLiteral("phone-incoming-call"), tr7("Incoming Call")},
     };
     return m.value(name, name);
 }
@@ -1701,20 +1699,20 @@ struct Theme {
 
 inline QString themeTitle(const QString &dir, const QString &name)
 {
-    static const QHash<QString, QString> m{{QStringLiteral("Windows 7"), QStringLiteral("За замовчуванням")},
-                                           {QStringLiteral("Windows 7 Afternoon"), QStringLiteral("Середина дня")},
-                                           {QStringLiteral("Windows 7 Calligraphy"), QStringLiteral("Каліграфія")},
-                                           {QStringLiteral("Windows 7 Characters"), QStringLiteral("Символи")},
-                                           {QStringLiteral("Windows 7 Cityscape"), QStringLiteral("Міський вид")},
-                                           {QStringLiteral("Windows 7 Delta"), QStringLiteral("Дельта")},
-                                           {QStringLiteral("Windows 7 Festival"), QStringLiteral("Фестиваль")},
-                                           {QStringLiteral("Windows 7 Garden"), QStringLiteral("Сад")},
-                                           {QStringLiteral("Windows 7 Heritage"), QStringLiteral("Спадщина")},
-                                           {QStringLiteral("Windows 7 Landscape"), QStringLiteral("Ландшафт")},
-                                           {QStringLiteral("Windows 7 Quirky"), QStringLiteral("Дивна")},
-                                           {QStringLiteral("Windows 7 Raga"), QStringLiteral("Рага")},
-                                           {QStringLiteral("Windows 7 Savanna"), QStringLiteral("Савана")},
-                                           {QStringLiteral("Windows 7 Sonata"), QStringLiteral("Соната")}};
+    static const QHash<QString, QString> m{{QStringLiteral("Windows 7"), tr7("Default")},
+                                           {QStringLiteral("Windows 7 Afternoon"), tr7("Afternoon")},
+                                           {QStringLiteral("Windows 7 Calligraphy"), tr7("Calligraphy")},
+                                           {QStringLiteral("Windows 7 Characters"), tr7("Characters", "sound scheme")},
+                                           {QStringLiteral("Windows 7 Cityscape"), tr7("Cityscape")},
+                                           {QStringLiteral("Windows 7 Delta"), tr7("Delta")},
+                                           {QStringLiteral("Windows 7 Festival"), tr7("Festival")},
+                                           {QStringLiteral("Windows 7 Garden"), tr7("Garden")},
+                                           {QStringLiteral("Windows 7 Heritage"), tr7("Heritage")},
+                                           {QStringLiteral("Windows 7 Landscape"), tr7("Landscape", "sound scheme")},
+                                           {QStringLiteral("Windows 7 Quirky"), tr7("Quirky")},
+                                           {QStringLiteral("Windows 7 Raga"), tr7("Raga")},
+                                           {QStringLiteral("Windows 7 Savanna"), tr7("Savanna")},
+                                           {QStringLiteral("Windows 7 Sonata"), tr7("Sonata")}};
     return m.value(dir, name);
 }
 
@@ -1738,7 +1736,7 @@ inline QList<Theme> themes()
             list.append({d, themeTitle(d, name), QDir(base).canonicalPath() == QDir(userDir).canonicalPath()});
         }
     }
-    QCollator c(QLocale(QLocale::Ukrainian));
+    QCollator c(QLocale{});
     std::sort(list.begin(), list.end(), [&c](const Theme &a, const Theme &b) {
         return c.compare(a.name, b.name) < 0;
     });
@@ -1872,39 +1870,39 @@ public:
     {
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *intro = new QLabel(QStringLiteral("Звукова схема задає звуки, що супроводжують події в Windows і програмах. Можна вибрати одну з наявних схем або створити нову."));
+        auto *intro = new QLabel(tr7("A sound theme is a set of sounds applied to events in Windows and programs. You can select an existing scheme or save one you have modified."));
         intro->setWordWrap(true);
         v->addWidget(intro);
-        v->addWidget(new QLabel(QStringLiteral("Звукова схема:")));
+        v->addWidget(new QLabel(tr7("Sound Scheme:")));
         auto *row = new QHBoxLayout;
         m_scheme = new QComboBox;
         row->addWidget(m_scheme, 1);
-        auto *saveAs = new QPushButton(QStringLiteral("Зберегти як..."));
-        m_delete = new QPushButton(QStringLiteral("Видалити"));
+        auto *saveAs = new QPushButton(tr7("Save As..."));
+        m_delete = new QPushButton(tr7("Delete"));
         row->addWidget(saveAs);
         row->addWidget(m_delete);
         v->addLayout(row);
-        auto *hint = new QLabel(QStringLiteral("Щоб змінити звукове супроводження, клацніть подію в списку й виберіть потрібний звук. Зміни можна зберегти як нову звукову схему."));
+        auto *hint = new QLabel(tr7("To change sounds, click a program event in the following list and then select a sound to apply. You can save the changes as a new sound scheme."));
         hint->setWordWrap(true);
         v->addWidget(hint);
-        v->addWidget(new QLabel(QStringLiteral("Програмні події:")));
+        v->addWidget(new QLabel(tr7("Program Events:")));
         m_tree = new QTreeWidget;
         m_tree->setHeaderHidden(true);
         m_tree->setIndentation(14);
         m_tree->setMinimumHeight(120);
         v->addWidget(m_tree, 1);
-        m_startup = new QCheckBox(QStringLiteral("Програвати мелодію запуску Windows"));
+        m_startup = new QCheckBox(tr7("Play Windows Startup sound"));
         m_startup->setChecked(QFile::exists(startupAutostart()));
         v->addWidget(m_startup);
         auto *srow = new QHBoxLayout;
-        srow->addWidget(new QLabel(QStringLiteral("Звуки:")));
+        srow->addWidget(new QLabel(tr7("Sounds:")));
         m_sound = new QComboBox;
         srow->addWidget(m_sound, 1);
         v->addLayout(srow);
         auto *brow = new QHBoxLayout;
         brow->addStretch(1);
-        m_test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), QStringLiteral("Перевірити"));
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        m_test = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-snd-play")), tr7("Test", "sound"));
+        auto *browse = new QPushButton(tr7("Browse..."));
         brow->addWidget(m_test);
         brow->addWidget(browse);
         v->addLayout(brow);
@@ -1958,9 +1956,9 @@ public:
             if (!it || it->data(0, Qt::UserRole).isNull()) {
                 return;
             }
-            const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Огляд нового звуку для «%1»").arg(it->text(0)),
+            const QString f = QFileDialog::getOpenFileName(this, tr7("Browse for new %1 sound").arg(it->text(0)),
                                                            QFileInfo(soundFile(m_sounds.value(it->text(0)), m_theme)).absolutePath(),
-                                                           QStringLiteral("Звукові файли (*.wav *.ogg *.oga *.flac *.mp3)"));
+                                                           tr7("Sound files (*.wav *.ogg *.oga *.flac *.mp3)"));
             if (!f.isEmpty()) {
                 m_sounds[it->text(0)] = f;
                 selectEvent();
@@ -1998,8 +1996,7 @@ public:
                 QDir().mkpath(QFileInfo(startupAutostart()).absolutePath());
                 QFile f(startupAutostart());
                 if (f.open(QIODevice::WriteOnly)) {
-                    f.write(QStringLiteral("[Desktop Entry]\nType=Application\nName=Windows startup sound\nName[uk]=Мелодія запуску Windows\n"
-                                           "Exec=%1 --play-sound system-startup\nNoDisplay=true\nX-KDE-autostart-phase=2\n")
+                    f.write(QStringLiteral("[Desktop Entry]\nType=Application\nName=Windows startup sound\nName[uk]=Мелодія запуску Windows\nExec=%1 --play-sound system-startup\nNoDisplay=true\nX-KDE-autostart-phase=2\n")
                                 .arg(QCoreApplication::applicationFilePath())
                                 .toUtf8());
                 }
@@ -2034,7 +2031,7 @@ private:
     {
         m_scheme->blockSignals(true);
         m_scheme->clear();
-        m_scheme->addItem(QStringLiteral("Без звуку"), QString());
+        m_scheme->addItem(tr7("(None)", "sound"), QString());
         for (const Theme &t : themes()) {
             m_scheme->addItem(t.name, t.dir);
         }
@@ -2092,7 +2089,7 @@ private:
         m_sound->setEnabled(isEvent);
         m_test->setEnabled(isEvent);
         m_sound->clear();
-        m_sound->addItem(QStringLiteral("(Немає)"), QString());
+        m_sound->addItem(tr7("(None)"), QString());
         QList<QPair<QString, QString>> items;
         for (const QString &n : themeSounds(m_theme.isEmpty() ? QStringLiteral("freedesktop") : m_theme)) {
             items.append({soundLabel(n), n});
@@ -2117,8 +2114,8 @@ private:
     void saveScheme()
     {
         bool ok = false;
-        const QString name = QInputDialog::getText(this, QStringLiteral("Збереження схеми"), QStringLiteral("Зберегти цю звукову схему як:"), QLineEdit::Normal,
-                                                   QStringLiteral("%1 (змінена)").arg(m_scheme->currentText()), &ok)
+        const QString name = QInputDialog::getText(this, tr7("Save Scheme"), tr7("Save this sound scheme as:"), QLineEdit::Normal,
+                                                   tr7("%1 (modified)").arg(m_scheme->currentText()), &ok)
                                  .trimmed();
         if (!ok || name.isEmpty()) {
             return;
@@ -2157,7 +2154,7 @@ private:
         if (!isUserTheme(t)) {
             return;
         }
-        if (QMessageBox::question(this, QStringLiteral("Видалення схеми"), QStringLiteral("Видалити звукову схему «%1»?").arg(m_scheme->currentText())) != QMessageBox::Yes) {
+        if (QMessageBox::question(this, tr7("Delete Scheme"), tr7("Delete the sound scheme \"%1\"?").arg(m_scheme->currentText())) != QMessageBox::Yes) {
             return;
         }
         QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/sounds/") + t).removeRecursively();
@@ -2232,7 +2229,7 @@ public:
     explicit SpeechProperties(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Властивості мовлення"));
+        setWindowTitle(tr7("Speech Properties"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("text-speak"), QIcon::fromTheme(QStringLiteral("seven-sound"))));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setFixedWidth(470);
@@ -2242,10 +2239,10 @@ public:
         auto *page = new QWidget;
         auto *pv = new QVBoxLayout(page);
         pv->setContentsMargins(10, 10, 10, 10);
-        auto *intro = new QLabel(QStringLiteral("Можна змінити властивості голосу, швидкість та інші параметри перетворення тексту на мовлення."));
+        auto *intro = new QLabel(tr7("You can control the voice properties, speed, and other options for text-to-speech translation."));
         intro->setWordWrap(true);
         pv->addWidget(intro);
-        auto *voiceBox = new QGroupBox(QStringLiteral("Вибір голосу"));
+        auto *voiceBox = new QGroupBox(tr7("Voice selection"));
         auto *vb = new QVBoxLayout(voiceBox);
         m_voice = new QComboBox;
         const QString module = speechdValue(QStringLiteral("DefaultModule"));
@@ -2264,13 +2261,13 @@ public:
         vb->addWidget(m_voice);
         Q_UNUSED(module)
         Q_UNUSED(variant)
-        vb->addWidget(new QLabel(QStringLiteral("Використовувати такий текст для проби голосу:")));
+        vb->addWidget(new QLabel(tr7("Use the following text to preview the voice:")));
         m_sample = new QLineEdit;
         vb->addWidget(m_sample);
-        auto *preview = new QPushButton(QStringLiteral("Проба голосу"));
+        auto *preview = new QPushButton(tr7("Preview Voice"));
         vb->addWidget(preview, 0, Qt::AlignRight);
         pv->addWidget(voiceBox);
-        auto *rateBox = new QGroupBox(QStringLiteral("Швидкість голосу"));
+        auto *rateBox = new QGroupBox(tr7("Voice speed"));
         auto *rb = new QGridLayout(rateBox);
         m_rate = new QSlider(Qt::Horizontal);
         m_rate->setRange(-100, 100);
@@ -2278,18 +2275,18 @@ public:
         m_rate->setTickInterval(10);
         m_rate->setValue(speechdValue(QStringLiteral("DefaultRate")).toInt());
         rb->addWidget(m_rate, 0, 0, 1, 3);
-        rb->addWidget(new QLabel(QStringLiteral("Нижча")), 1, 0, Qt::AlignLeft);
-        rb->addWidget(new QLabel(QStringLiteral("Середня")), 1, 1, Qt::AlignHCenter);
-        rb->addWidget(new QLabel(QStringLiteral("Вища")), 1, 2, Qt::AlignRight);
+        rb->addWidget(new QLabel(tr7("Slow", "voice")), 1, 0, Qt::AlignLeft);
+        rb->addWidget(new QLabel(tr7("Medium", "slide show")), 1, 1, Qt::AlignHCenter);
+        rb->addWidget(new QLabel(tr7("Fast", "voice")), 1, 2, Qt::AlignRight);
         pv->addWidget(rateBox);
         pv->addStretch(1);
-        tabs->addTab(page, QStringLiteral("Перетворення тексту на мовлення"));
+        tabs->addTab(page, tr7("Text to Speech"));
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -2323,7 +2320,7 @@ private:
     void updateSample()
     {
         const QString lang = m_voice->currentData().toString();
-        m_sample->setText(lang == QLatin1String("uk") ? QStringLiteral("Вибрано голос %1 як голос за замовчуванням.").arg(m_voice->currentText())
+        m_sample->setText(lang == QLatin1String("uk") ? tr7("You have selected %1 as the computer's default voice.").arg(m_voice->currentText())
                                                        : QStringLiteral("You have selected %1 as the computer's default voice.").arg(m_voice->currentText()));
     }
 
@@ -2352,7 +2349,7 @@ public:
     explicit SoundDialog(int tab, QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Звук"));
+        setWindowTitle(tr7("Sound"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-sound")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
@@ -2362,18 +2359,18 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         m_tabs = new QTabWidget;
-        m_tabs->addTab(deviceTab(true), QStringLiteral("Відтворення"));
-        m_tabs->addTab(deviceTab(false), QStringLiteral("Запис"));
+        m_tabs->addTab(deviceTab(true), tr7("Playback"));
+        m_tabs->addTab(deviceTab(false), tr7("Write"));
         m_sounds = new SoundsTab;
-        m_tabs->addTab(m_sounds, QStringLiteral("Звуки"));
+        m_tabs->addTab(m_sounds, tr7("Sounds"));
         m_tabs->setCurrentIndex(tab);
         v->addWidget(m_tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -2494,7 +2491,7 @@ private:
             }
         }
         if (list.isEmpty()) {
-            auto *it = new QListWidgetItem(output ? QStringLiteral("Звукові пристрої не встановлено") : QStringLiteral("Звукові пристрої не встановлено"), t.list);
+            auto *it = new QListWidgetItem(output ? tr7("No audio devices are installed") : tr7("No audio devices are installed"), t.list);
             it->setFlags(Qt::NoItemFlags);
         }
         updateButtons(output);
@@ -2523,8 +2520,8 @@ private:
         auto *page = new QWidget;
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(10, 10, 10, 10);
-        auto *intro = new QLabel(output ? QStringLiteral("Виберіть пристрій відтворення, параметри якого потрібно змінити:")
-                                        : QStringLiteral("Виберіть пристрій запису, параметри якого потрібно змінити:"));
+        auto *intro = new QLabel(output ? tr7("Select a playback device below to modify its settings:")
+                                        : tr7("Select a recording device below to modify its settings:"));
         intro->setWordWrap(true);
         v->addWidget(intro);
         t.list = new QListWidget;
@@ -2535,25 +2532,25 @@ private:
         t.list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         v->addWidget(t.list, 1);
         auto *row = new QHBoxLayout;
-        t.configure = new QPushButton(QStringLiteral("Настроїти"));
+        t.configure = new QPushButton(tr7("Configure", "sound"));
         row->addWidget(t.configure);
         row->addStretch(1);
         t.setDefault = new QToolButton;
-        t.setDefault->setText(QStringLiteral("За замовчуванням"));
+        t.setDefault->setText(tr7("Default"));
         t.setDefault->setPopupMode(QToolButton::MenuButtonPopup);
         t.setDefault->setMinimumWidth(130);
         auto *defMenu = new QMenu(t.setDefault);
-        defMenu->addAction(QStringLiteral("Пристрій за замовчуванням"), this, [this, output] {
+        defMenu->addAction(tr7("Default Device"), this, [this, output] {
             setDefault(selected(output));
             reload(output, true);
         });
-        defMenu->addAction(QStringLiteral("Пристрій зв'язку за замовчуванням"), this, [this, output] {
+        defMenu->addAction(tr7("Default Communication Device"), this, [this, output] {
             setDefault(selected(output));
             reload(output, true);
         });
         t.setDefault->setMenu(defMenu);
         row->addWidget(t.setDefault);
-        t.properties = new QPushButton(QStringLiteral("Властивості"));
+        t.properties = new QPushButton(tr7("Properties"));
         row->addWidget(t.properties);
         v->addLayout(row);
         reload(output, true);
@@ -2591,7 +2588,7 @@ private:
             const bool usable = it && !e.disabled && !e.unplugged && !e.node.isEmpty();
             QMenu menu(this);
             if (output) {
-                QAction *test = menu.addAction(QStringLiteral("Перевірка"), this, [this, e] {
+                QAction *test = menu.addAction(tr7("Test"), this, [this, e] {
                     playTest(e.node, e.channels, -1, this);
                 });
                 test->setEnabled(usable);
@@ -2600,29 +2597,29 @@ private:
             }
             if (it && !e.node.endsWith(QLatin1String(".monitor"))) {
                 if (e.disabled) {
-                    menu.addAction(QStringLiteral("Увімкнути"), this, [this, e, output] {
+                    menu.addAction(tr7("Turn on"), this, [this, e, output] {
                         setDeviceEnabled(e, true);
                         reload(output, true);
                     });
                 } else if (!e.unplugged) {
-                    menu.addAction(QStringLiteral("Вимкнути"), this, [this, e, output] {
+                    menu.addAction(tr7("Disable"), this, [this, e, output] {
                         setDeviceEnabled(e, false);
                         reload(output, true);
                     });
                 }
             }
-            QAction *def = menu.addAction(QStringLiteral("Використовувати за замовчуванням"), this, [this, e, output] {
+            QAction *def = menu.addAction(tr7("Set as the default printer"), this, [this, e, output] {
                 setDefault(e);
                 reload(output, true);
             });
             def->setEnabled(usable && !e.isDefault);
-            QAction *comm = menu.addAction(QStringLiteral("Використовувати пристрій зв'язку за замовчуванням"), this, [this, e, output] {
+            QAction *comm = menu.addAction(tr7("Use Default Communication Device"), this, [this, e, output] {
                 setDefault(e);
                 reload(output, true);
             });
             comm->setEnabled(usable && !e.isDefault);
             menu.addSeparator();
-            QAction *sd = menu.addAction(QStringLiteral("Показати вимкнені пристрої"));
+            QAction *sd = menu.addAction(tr7("Show Disabled Devices"));
             sd->setCheckable(true);
             sd->setChecked(m_showDisabled);
             connect(sd, &QAction::toggled, this, [this](bool on) {
@@ -2631,7 +2628,7 @@ private:
                 reload(true, true);
                 reload(false, true);
             });
-            QAction *su = menu.addAction(QStringLiteral("Показати від'єднані пристрої"));
+            QAction *su = menu.addAction(tr7("Show Disconnected Devices"));
             su->setCheckable(true);
             su->setChecked(m_showUnplugged);
             connect(su, &QAction::toggled, this, [this](bool on) {
@@ -2642,7 +2639,7 @@ private:
             });
             if (it) {
                 menu.addSeparator();
-                QAction *props = menu.addAction(QStringLiteral("Властивості"), this, [this, output] {
+                QAction *props = menu.addAction(tr7("Properties"), this, [this, output] {
                     openProperties(output);
                 });
                 QFont f = props->font();
@@ -2684,33 +2681,33 @@ inline QWidget *buildSpeechPage(std::function<void()> openTts)
     auto *sv = new QVBoxLayout(side);
     sv->setContentsMargins(18, 16, 12, 16);
     sv->setSpacing(10);
-    auto *home = new Link(QStringLiteral("Панель керування — домашня сторінка"), [] {
+    auto *home = new Link(tr7("Control Panel Home"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {});
     });
     sv->addWidget(home);
-    sv->addWidget(new Link(QStringLiteral("Перетворення тексту на мовлення"), std::move(openTts)));
+    sv->addWidget(new Link(tr7("Text to Speech"), std::move(openTts)));
     sv->addStretch(1);
-    auto *see = new QLabel(QStringLiteral("Див. також"));
+    auto *see = new QLabel(tr7("See also"));
     see->setStyleSheet(QStringLiteral("color: #6d6d6d;"));
     sv->addWidget(see);
-    sv->addWidget(new Link(QStringLiteral("Спеціальні можливості"), [] {
+    sv->addWidget(new Link(tr7("Ease of Access"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--ease")});
     }));
-    sv->addWidget(new Link(QStringLiteral("Аудіопристрої"), [] {
+    sv->addWidget(new Link(tr7("Audio Devices"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--sound")});
     }));
     h->addWidget(side);
     auto *body = new QWidget;
     auto *bv = new QVBoxLayout(body);
     bv->setContentsMargins(24, 16, 24, 16);
-    auto *title = new QLabel(QStringLiteral("Налаштування розпізнавання мовлення"));
+    auto *title = new QLabel(tr7("Speech Recognition Options"));
     QFont tf = title->font();
     tf.setPixelSize(16);
     title->setFont(tf);
     title->setStyleSheet(QStringLiteral("color: #1e3287;"));
     bv->addWidget(title);
     bv->addSpacing(18);
-    bv->addWidget(new QLabel(QStringLiteral("Розпізнавання мовлення Windows не підтримується для цієї мови")));
+    bv->addWidget(new QLabel(tr7("Windows Speech Recognition is not supported for this language")));
     bv->addStretch(1);
     h->addWidget(body, 1);
     return page;

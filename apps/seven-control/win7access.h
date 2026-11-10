@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7display.h"
@@ -293,7 +294,7 @@ inline QLabel *under(const QString &t, int indent = 24)
 
 inline QString unavailable()
 {
-    return QStringLiteral("У цій системі такого параметра немає.");
+    return tr7("This setting is not available on this system.");
 }
 
 inline QCheckBox *dead(const QString &t)
@@ -325,7 +326,7 @@ inline void learnOnline()
 class SettingsPage : public QWidget
 {
 public:
-    SettingsPage(const Nav &nav, const QString &title, const QString &intro = QStringLiteral("Якщо вибрати ці параметри, вони автоматично вмикатимуться під час кожного входу в систему."))
+    SettingsPage(const Nav &nav, const QString &title, const QString &intro = tr7("When you select these settings, they will automatically start each time you log on."))
         : m_nav(nav)
         , m_old(load())
         , s(m_old)
@@ -368,8 +369,8 @@ public:
         bh->setContentsMargins(10, 9, 14, 9);
         bh->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(85);
             bh->addWidget(b);
@@ -448,20 +449,20 @@ public:
     /** the three "keyboard shortcut" checkboxes; all of them are the one AccessX gestures switch */
     void shortcutBlock(const QString &shortcutText)
     {
-        section(QStringLiteral("Сполучення клавіш"));
+        section(tr7("Keyboard shortcuts"));
         check(shortcutText, &s.gestures, 24);
-        text(QStringLiteral("Якщо для ввімкнення параметрів спеціальних можливостей використовуються сполучення клавіш:"), 48);
-        check(QStringLiteral("Відображати попередження під час увімкнення параметра"), &s.gestureConfirm, 48);
-        check(QStringLiteral("Подавати звуковий сигнал під час увімкнення або вимкнення параметра"), &s.accessXBeep, 48);
+        text(tr7("When using keyboard shortcuts to turn Ease of Access settings on:"), 48);
+        check(tr7("Display a warning message when turning a setting on"), &s.gestureConfirm, 48);
+        check(tr7("Make a sound when turning a setting on or off"), &s.accessXBeep, 48);
     }
 
     void seeAlso(const QList<QPair<QString, std::function<void()>>> &links)
     {
-        section(QStringLiteral("Див. також"));
+        section(tr7("See also"));
         for (const auto &l : links) {
             link(l.first, l.second);
         }
-        link(QStringLiteral("Додаткові відомості про допоміжні технології в Інтернеті"), learnOnline);
+        link(tr7("Learn about additional assistive technologies online"), learnOnline);
     }
 
     void finish()
@@ -558,7 +559,7 @@ public:
         auto *v = new QVBoxLayout(content);
         v->setContentsMargins(26, 18, 30, 20);
         v->setSpacing(6);
-        v->addWidget(heading(QStringLiteral("Полегшення роботи з комп'ютером")));
+        v->addWidget(heading(tr7("Make your computer easier to use")));
         v->addSpacing(4);
         auto *box = new QFrame;
         box->setObjectName(QStringLiteral("win7eoaquick"));
@@ -575,15 +576,15 @@ public:
         auto *tv = new QVBoxLayout(top);
         tv->setContentsMargins(26, 10, 18, 12);
         tv->setSpacing(4);
-        tv->addWidget(heading(QStringLiteral("Швидкий доступ до звичайних засобів"), 17));
-        tv->addWidget(plainText(QStringLiteral("Засоби в цьому розділі допоможуть розпочати роботу.")));
-        auto *scanText = plainText(QStringLiteral("Windows може автоматично читати й переглядати цей список. Щоб вибрати виділений засіб, натисніть клавішу ПРОБІЛ."));
+        tv->addWidget(heading(tr7("Quick access to common tools"), 17));
+        tv->addWidget(plainText(tr7("The tools in this section can help you get started.")));
+        auto *scanText = plainText(tr7("Windows can read and scan this list automatically.  Press the SPACEBAR to select the highlighted tool."));
         scanText->setMinimumWidth(200);
         tv->addWidget(scanText);
         auto *row = new QHBoxLayout;
         KConfigGroup cfg(KSharedConfig::openConfig(QStringLiteral("seven-controlrc")), QStringLiteral("EaseOfAccess"));
-        m_read = new QCheckBox(QStringLiteral("Завжди читати цей розділ уголос"));
-        m_scan = new QCheckBox(QStringLiteral("Завжди переглядати цей розділ"));
+        m_read = new QCheckBox(tr7("Always read this section aloud"));
+        m_scan = new QCheckBox(tr7("Always scan this section"));
         m_read->setChecked(cfg.readEntry("ReadAloud", false));
         m_scan->setChecked(cfg.readEntry("Scan", false));
         row->addWidget(m_read);
@@ -596,15 +597,15 @@ public:
         grid->setContentsMargins(26, 14, 18, 14);
         grid->setHorizontalSpacing(30);
         grid->setVerticalSpacing(4);
-        m_tools = {new ToolLink(QStringLiteral("seven-eoa-magnifier"), QStringLiteral("Запустити екранну лупу"), QStringLiteral("Екранна лупа збільшує частину екрана, на якій розташовано покажчик миші."),
+        m_tools = {new ToolLink(QStringLiteral("seven-eoa-magnifier"), tr7("Start Magnifier"), tr7("Magnifier enlarges the part of the screen where the mouse is pointing."),
                                 [nav] { nav.self({QStringLiteral("--magnifier")}); }),
-                   new ToolLink(QStringLiteral("seven-eoa-narrator"), QStringLiteral("Запустити екранного диктора"), QStringLiteral("Екранний диктор читає вголос текст на екрані."),
+                   new ToolLink(QStringLiteral("seven-eoa-narrator"), tr7("Start Narrator"), tr7("Narrator reads aloud any text on the screen."),
                                 [nav] { nav.self({QStringLiteral("--narrator")}); }),
-                   new ToolLink(QStringLiteral("seven-eoa-osk"), QStringLiteral("Запустити екранну клавіатуру"),
-                                QStringLiteral("Екранна клавіатура дає змогу вводити текст мишею або іншим вказівним пристроєм, клацаючи клавіші на зображенні клавіатури."),
+                   new ToolLink(QStringLiteral("seven-eoa-osk"), tr7("Start On-Screen Keyboard"),
+                                tr7("On-Screen Keyboard lets you type using a mouse or other pointing device by clicking keys on a picture of a keyboard."),
                                 [nav] { nav.self({QStringLiteral("--osk")}); }),
-                   new ToolLink(QStringLiteral("seven-eoa-contrast"), QStringLiteral("Налаштувати високу контрастність"),
-                                QStringLiteral("Висока контрастність робить текст і зображення чіткішими та зручнішими для читання."), [nav] { nav.open(Win7Display::PersonalizeView); })};
+                   new ToolLink(QStringLiteral("seven-eoa-contrast"), tr7("Set up High Contrast"),
+                                tr7("High Contrast makes text and images easier to see."), [nav] { nav.open(Win7Display::PersonalizeView); })};
         grid->addWidget(m_tools[0], 0, 0);
         grid->addWidget(m_tools[1], 0, 1);
         grid->addWidget(m_tools[2], 1, 0);
@@ -623,25 +624,25 @@ public:
         auto *bulb = new QLabel;
         bulb->setPixmap(QIcon::fromTheme(QStringLiteral("seven-eoa-tip")).pixmap(16, 16));
         th->addWidget(bulb);
-        th->addWidget(new QLabel(QStringLiteral("Не знаєте, з чого почати?")));
-        auto *rec = new Link(QStringLiteral("Отримати рекомендації щодо полегшення роботи з комп'ютером"), [nav] { nav.open(QuestionsView); });
+        th->addWidget(new QLabel(tr7("Not sure where to start?")));
+        auto *rec = new Link(tr7("Get recommendations to make your computer easier to use"), [nav] { nav.open(QuestionsView); });
         rec->setWordWrap(false);
         th->addWidget(rec);
         th->addStretch(1);
         v->addSpacing(8);
         v->addWidget(tip);
         v->addSpacing(14);
-        v->addWidget(heading(QStringLiteral("Перегляд усіх параметрів"), 17));
-        v->addWidget(plainText(QStringLiteral("Якщо вибрати ці параметри, вони автоматично вмикатимуться під час кожного входу в систему.")));
+        v->addWidget(heading(tr7("Explore all settings"), 17));
+        v->addWidget(plainText(tr7("When you select these settings, they will automatically start each time you log on.")));
         v->addSpacing(6);
         const QList<std::tuple<QString, QString, QString, int>> all{
-            {QStringLiteral("seven-eoa-nodisplay"), QStringLiteral("Використання комп'ютера без дисплея"), QStringLiteral("Оптимізація для незрячих"), NoDisplayView},
-            {QStringLiteral("seven-eoa-see"), QStringLiteral("Полегшення роботи з екраном"), QStringLiteral("Оптимізація зображення на екрані"), SeeView},
-            {QStringLiteral("seven-eoa-noinput"), QStringLiteral("Використання комп'ютера без миші або клавіатури"), QStringLiteral("Налаштування альтернативних пристроїв введення"), NoInputView},
-            {QStringLiteral("seven-eoa-mouse"), QStringLiteral("Полегшення роботи з мишею"), QStringLiteral("Налаштування параметрів миші та інших вказівних пристроїв"), MouseView},
-            {QStringLiteral("seven-eoa-keyboard"), QStringLiteral("Полегшення роботи з клавіатурою"), QStringLiteral("Налаштування параметрів клавіатури"), KeyboardView},
-            {QStringLiteral("seven-eoa-sounds"), QStringLiteral("Використання текстових або візуальних альтернатив для звуків"), QStringLiteral("Налаштування альтернатив для звуків"), SoundsView},
-            {QStringLiteral("seven-eoa-focus"), QStringLiteral("Полегшення зосередження на завданнях"), QStringLiteral("Налаштування параметрів читання та введення"), FocusView},
+            {QStringLiteral("seven-eoa-nodisplay"), tr7("Use the computer without a display"), tr7("Optimize for blindness", "ease of access category"), NoDisplayView},
+            {QStringLiteral("seven-eoa-see"), tr7("Make the computer easier to see"), tr7("Optimize visual display"), SeeView},
+            {QStringLiteral("seven-eoa-noinput"), tr7("Use the computer without a mouse or keyboard"), tr7("Set up alternative input devices"), NoInputView},
+            {QStringLiteral("seven-eoa-mouse"), tr7("Make the mouse easier to use"), tr7("Adjust settings for the mouse or other pointing devices"), MouseView},
+            {QStringLiteral("seven-eoa-keyboard"), tr7("Make the keyboard easier to use"), tr7("Adjust keyboard settings"), KeyboardView},
+            {QStringLiteral("seven-eoa-sounds"), tr7("Use text or visual alternatives for sounds"), tr7("Set up alternatives for sounds"), SoundsView},
+            {QStringLiteral("seven-eoa-focus"), tr7("Make it easier to focus on tasks"), tr7("Adjust settings for reading and typing"), FocusView},
         };
         for (const auto &[icon, title, desc, view] : all) {
             auto *r = new QHBoxLayout;
@@ -705,8 +706,8 @@ protected:
 private:
     void readAloud()
     {
-        QStringList texts{QStringLiteral("Швидкий доступ до звичайних засобів."), QStringLiteral("Запустити екранну лупу."), QStringLiteral("Запустити екранного диктора."),
-                          QStringLiteral("Запустити екранну клавіатуру."), QStringLiteral("Налаштувати високу контрастність.")};
+        QStringList texts{tr7("Quick access to common tools."), tr7("Start Magnifier."), tr7("Start Narrator."),
+                          tr7("Start On-Screen Keyboard."), tr7("Set up High Contrast.")};
         QProcess::startDetached(QStringLiteral("spd-say"), {QStringLiteral("-l"), QStringLiteral("uk"), texts.join(QLatin1Char(' '))});
     }
 
@@ -747,7 +748,7 @@ private:
 
 inline QStringList popupTimes()
 {
-    return {QStringLiteral("5 секунд"), QStringLiteral("7 секунд"), QStringLiteral("15 секунд"), QStringLiteral("30 секунд"), QStringLiteral("1 хвилина"), QStringLiteral("5 хвилин")};
+    return {tr7("5 seconds"), tr7("7 seconds"), tr7("15 seconds"), tr7("30 seconds"), tr7("1 minute"), tr7("5 minutes")};
 }
 
 inline QList<int> popupSeconds()
@@ -757,7 +758,7 @@ inline QList<int> popupSeconds()
 
 inline void notificationTime(SettingsPage *p)
 {
-    p->text(QStringLiteral("Скільки часу мають відображатися діалогові вікна сповіщень Windows?"), 24);
+    p->text(tr7("How long should Windows notification dialog boxes stay open?"), 24);
     auto *combo = new QComboBox;
     combo->addItems(popupTimes());
     const int i = popupSeconds().indexOf(p->s.popupSeconds);
@@ -777,32 +778,32 @@ inline void notificationTime(SettingsPage *p)
 
 inline void narratorChecks(SettingsPage *p)
 {
-    p->check(QStringLiteral("Увімкнути екранного диктора"), &p->s.narrator, 24);
-    p->text(QStringLiteral("Екранний диктор читає вголос будь-який текст на екрані. Потрібні динаміки."));
-    p->deadCheck(QStringLiteral("Увімкнути звуковий опис"));
-    p->text(QStringLiteral("Прослуховування опису подій у відео (якщо доступно)."));
+    p->check(tr7("Turn on Narrator"), &p->s.narrator, 24);
+    p->text(tr7("Narrator reads aloud any text on the screen. You will need speakers."));
+    p->deadCheck(tr7("Turn on Audio Description"));
+    p->text(tr7("Hear descriptions of what's happening in videos (when available)."));
 }
 
 inline QWidget *buildSeePage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Полегшення роботи з екраном"));
-    p->section(QStringLiteral("Висока контрастність"));
-    p->link(QStringLiteral("Вибір теми з високою контрастністю"), [nav] { nav.open(Win7Display::PersonalizeView); });
-    p->deadCheck(QStringLiteral("Вмикати або вимикати високу контрастність натисканням лівих клавіш ALT + SHIFT + PRINT SCREEN"));
-    p->section(QStringLiteral("Читання вголос тексту та описів"));
+    auto *p = new SettingsPage(nav, tr7("Make the computer easier to see"));
+    p->section(tr7("High Contrast"));
+    p->link(tr7("Choose a High Contrast theme"), [nav] { nav.open(Win7Display::PersonalizeView); });
+    p->deadCheck(tr7("Turn on or off High Contrast when left ALT + left SHIFT + PRINT SCREEN is pressed"));
+    p->section(tr7("Hear text and descriptions read aloud"));
     narratorChecks(p);
-    p->section(QStringLiteral("Збільшення елементів на екрані"));
-    p->link(QStringLiteral("Змінення розміру тексту та значків"), [nav] { nav.open(Win7Display::DisplayView); });
-    p->check(QStringLiteral("Увімкнути екранну лупу"), &p->s.magnifier, 24);
-    p->text(QStringLiteral("Екранна лупа збільшує будь-яку частину екрана. Її можна переміщувати, закріплювати в одному місці або змінювати її розмір."));
-    p->section(QStringLiteral("Полегшення сприйняття елементів на екрані"));
-    p->link(QStringLiteral("Настроювання кольору й прозорості меж вікон"), [] { Win7Display::openWindowColor(); });
-    p->link(QStringLiteral("Точне настроювання ефектів відображення"), [] { launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_colors")}); });
-    p->deadCheck(QStringLiteral("Зробити прямокутник фокусу товщим"));
+    p->section(tr7("Make things on the screen larger"));
+    p->link(tr7("Change the size of text and icons"), [nav] { nav.open(Win7Display::DisplayView); });
+    p->check(tr7("Turn on Magnifier"), &p->s.magnifier, 24);
+    p->text(tr7("Magnifier zooms in anywhere on the screen. You can move Magnifier around, lock it in one place, or resize it."));
+    p->section(tr7("Make things on the screen easier to see"));
+    p->link(tr7("Adjust the color and transparency of the window borders"), [] { Win7Display::openWindowColor(); });
+    p->link(tr7("Fine tune display effects"), [] { launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_colors")}); });
+    p->deadCheck(tr7("Make the focus rectangle thicker"));
     auto *caret = new QWidget;
     auto *ch = new QHBoxLayout(caret);
     ch->setContentsMargins(24, 2, 0, 2);
-    auto *cl = new QLabel(QStringLiteral("Товщина миготливого курсора:"));
+    auto *cl = new QLabel(tr7("Set the thickness of the blinking cursor:"));
     auto *cc = new QComboBox;
     cc->addItem(QStringLiteral("1"));
     auto *preview = new QLabel(QStringLiteral(" | "));
@@ -814,40 +815,40 @@ inline QWidget *buildSeePage(const Nav &nav)
     ch->addWidget(cl);
     ch->addWidget(cc);
     ch->addSpacing(30);
-    ch->addWidget(new QLabel(QStringLiteral("Зразок:")));
+    ch->addWidget(new QLabel(tr7("Preview:")));
     ch->addWidget(preview);
     ch->addStretch(1);
     p->body->addWidget(caret);
-    p->check(QStringLiteral("Вимкнути всі непотрібні анімації (якщо можливо)"), &p->s.noAnimations, 24);
-    p->deadCheck(QStringLiteral("Видалити фонові зображення (якщо доступно)"));
-    p->seeAlso({{QStringLiteral("Персоналізація вигляду та звукових ефектів"), [nav] { nav.open(Win7Display::PersonalizeView); }}});
+    p->check(tr7("Turn off all unnecessary animations (when possible)"), &p->s.noAnimations, 24);
+    p->deadCheck(tr7("Remove background images (where available)"));
+    p->seeAlso({{tr7("Personalize appearance and sound effects"), [nav] { nav.open(Win7Display::PersonalizeView); }}});
     p->finish();
     return p;
 }
 
 inline QWidget *buildNoDisplayPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Використання комп'ютера без дисплея"));
-    p->section(QStringLiteral("Читання тексту вголос"));
+    auto *p = new SettingsPage(nav, tr7("Use the computer without a display"));
+    p->section(tr7("Hear text read aloud"));
     narratorChecks(p);
-    p->link(QStringLiteral("Налаштування перетворення тексту на мовлення"), [nav] { nav.self({QStringLiteral("--tts")}); });
-    p->section(QStringLiteral("Настроювання часових обмежень і миготливих елементів"));
-    p->check(QStringLiteral("Вимкнути всі непотрібні анімації (якщо можливо)"), &p->s.noAnimations, 24);
+    p->link(tr7("Set up Text to Speech"), [nav] { nav.self({QStringLiteral("--tts")}); });
+    p->section(tr7("Adjust time limits and flashing visuals"));
+    p->check(tr7("Turn off all unnecessary animations (when possible)"), &p->s.noAnimations, 24);
     notificationTime(p);
-    p->seeAlso({{QStringLiteral("Звукові пристрої та звукові теми"), [nav] { nav.self({QStringLiteral("--sound")}); }}});
+    p->seeAlso({{tr7("Audio devices and sound themes"), [nav] { nav.self({QStringLiteral("--sound")}); }}});
     p->finish();
     return p;
 }
 
 inline QWidget *buildNoInputPage(const Nav &nav, int speechView)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Використання комп'ютера без миші або клавіатури"));
-    p->section(QStringLiteral("Введення за допомогою вказівного пристрою"));
-    p->check(QStringLiteral("Використовувати екранну клавіатуру"), &p->s.osk, 24);
-    p->text(QStringLiteral("Введення за допомогою миші або іншого вказівного пристрою (наприклад, джойстика) шляхом вибору клавіш на зображенні клавіатури."));
-    p->section(QStringLiteral("Робота без миші та клавіатури"));
-    p->text(QStringLiteral("Керування комп'ютером, відкриття програм і диктування тексту за допомогою голосу та мікрофона."), 24);
-    p->link(QStringLiteral("Використання розпізнавання мовлення"), [nav, speechView] { nav.open(speechView); });
+    auto *p = new SettingsPage(nav, tr7("Use the computer without a mouse or keyboard"));
+    p->section(tr7("Type using a pointing device"));
+    p->check(tr7("Use On-Screen Keyboard"), &p->s.osk, 24);
+    p->text(tr7("Use the mouse or another pointing device (such as a joystick) to select keys on a picture of a keyboard."));
+    p->section(tr7("Use the computer without a mouse or keyboard", "category title"));
+    p->text(tr7("Use your voice and a microphone to control the computer, open programs, and dictate text."), 24);
+    p->link(tr7("Use Speech Recognition"), [nav, speechView] { nav.open(speechView); });
     p->seeAlso({});
     p->finish();
     return p;
@@ -882,17 +883,17 @@ inline QWidget *pointerChoice(QButtonGroup *group, const QString &label, const Q
 
 inline void mouseKeysBlock(SettingsPage *p, const Nav &nav)
 {
-    p->section(QStringLiteral("Керування мишею за допомогою клавіатури"));
-    p->check(QStringLiteral("Увімкнути керування вказівником із клавіатури"), &p->s.mouseKeys, 24);
-    p->text(QStringLiteral("Використання цифрової клавіатури для переміщення покажчика миші по екрану."));
-    p->link(QStringLiteral("Налаштування керування вказівником із клавіатури"), [nav] { nav.open(MouseKeysView); }, 48);
+    p->section(tr7("Control the mouse with the keyboard"));
+    p->check(tr7("Turn on Mouse Keys"), &p->s.mouseKeys, 24);
+    p->text(tr7("Use the numeric keypad to move the mouse around the screen."));
+    p->link(tr7("Set up Mouse Keys"), [nav] { nav.open(MouseKeysView); }, 48);
 }
 
 inline QWidget *buildMousePage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Полегшення роботи з мишею"));
-    p->section(QStringLiteral("Покажчики миші"));
-    p->text(QStringLiteral("Змінення кольору й розміру покажчиків миші."), 24);
+    auto *p = new SettingsPage(nav, tr7("Make the mouse easier to use"));
+    p->section(tr7("Mouse pointers"));
+    p->text(tr7("Change the color and size of mouse pointers."), 24);
     auto *box = new QFrame;
     box->setObjectName(QStringLiteral("win7ptrbox"));
     box->setStyleSheet(QStringLiteral("#win7ptrbox { border: 1px solid #000000; background: #ffffff; }"));
@@ -900,9 +901,9 @@ inline QWidget *buildMousePage(const Nav &nav)
     auto *grid = new QGridLayout(box);
     grid->setContentsMargins(8, 8, 8, 8);
     auto *group = new QButtonGroup(box);
-    const QStringList sizes{QStringLiteral("Звичайний"), QStringLiteral("Великий"), QStringLiteral("Дуже великий")};
+    const QStringList sizes{tr7("Regular"), tr7("Large"), tr7("Extra Large")};
     const QStringList colors{QStringLiteral("white"), QStringLiteral("black"), QStringLiteral("invert")};
-    const QStringList names{QStringLiteral("білий"), QStringLiteral("чорний"), QStringLiteral("інвертований")};
+    const QStringList names{tr7("white"), tr7("black"), tr7("inverting")};
     for (int r = 0; r < 3; ++r) {
         for (int c = 0; c < 3; ++c) {
             const QString theme = c < 2 ? QStringLiteral("seven-cursors-%1-%2").arg(colors[c]).arg(r + 1) : QString();
@@ -917,8 +918,8 @@ inline QWidget *buildMousePage(const Nav &nav)
     QObject::connect(group, &QButtonGroup::buttonClicked, p, [p, group](QAbstractButton *b) {
         if (b->property("unavailable").toBool()) {
             // X11 cursors can't invert the screen under them
-            QMessageBox::information(p->window(), QStringLiteral("Покажчики миші"),
-                                     QStringLiteral("Інвертовані покажчики в цій системі недоступні. Виберіть білу або чорну схему."));
+            QMessageBox::information(p->window(), tr7("Mouse pointers"),
+                                     tr7("Inverting pointers are not available on this system. Choose the white or black scheme."));
             group->setExclusive(false);
             b->setChecked(false);
             group->setExclusive(true);
@@ -939,11 +940,11 @@ inline QWidget *buildMousePage(const Nav &nav)
     wh->addStretch(1);
     p->body->addWidget(wrap);
     mouseKeysBlock(p, nav);
-    p->section(QStringLiteral("Полегшення керування вікнами"));
-    p->check(QStringLiteral("Активувати вікно наведенням на нього покажчика миші"), &p->s.hoverFocus, 24);
+    p->section(tr7("Make it easier to manage windows"));
+    p->check(tr7("Activate a window by hovering over it with the mouse"), &p->s.hoverFocus, 24);
     p->body->addSpacing(4);
-    p->check(QStringLiteral("Не впорядковувати вікна автоматично під час переміщення до краю екрана"), &p->s.noSnap, 24);
-    p->seeAlso({{QStringLiteral("Параметри миші"), [nav] { nav.self({QStringLiteral("--mouse")}); }}});
+    p->check(tr7("Prevent windows from being automatically arranged when moved to the edge of the screen"), &p->s.noSnap, 24);
+    p->seeAlso({{tr7("Mouse settings"), [nav] { nav.self({QStringLiteral("--mouse")}); }}});
     p->finish();
     return p;
 }
@@ -973,18 +974,18 @@ inline QWidget *sliderRow(const QString &left, QSlider *slider, const QString &r
 
 inline QWidget *buildMouseKeysPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Налаштування керування вказівником із клавіатури"), QString());
-    p->check(QStringLiteral("Увімкнути керування вказівником із клавіатури"), &p->s.mouseKeys);
-    p->text(QStringLiteral("Використання цифрової клавіатури для переміщення покажчика миші по екрану."), 24);
-    p->shortcutBlock(QStringLiteral("Вмикати керування вказівником із клавіатури лівими клавішами ALT + SHIFT + NUM LOCK"));
-    p->section(QStringLiteral("Швидкість покажчика"));
-    p->text(QStringLiteral("Максимальна швидкість:"), 24);
+    auto *p = new SettingsPage(nav, tr7("Set up Mouse Keys"), QString());
+    p->check(tr7("Turn on Mouse Keys"), &p->s.mouseKeys);
+    p->text(tr7("Use the numeric keypad to move the mouse around the screen."), 24);
+    p->shortcutBlock(tr7("Turn on Mouse Keys with left ALT + left SHIFT + NUM LOCK"));
+    p->section(tr7("Pointer speed"));
+    p->text(tr7("Top speed:"), 24);
     // MKMaxSpeed: pixels per step at full speed; MKTimeToMax: steps until full speed
     auto *top = wideSlider(5, 100, qBound(5, p->s.mkMaxSpeed, 100));
-    p->body->addWidget(sliderRow(QStringLiteral("Низька"), top, QStringLiteral("Висока")));
-    p->text(QStringLiteral("Прискорення:"), 24);
+    p->body->addWidget(sliderRow(tr7("Low"), top, tr7("High")));
+    p->text(tr7("Acceleration:"), 24);
     auto *acc = wideSlider(0, 95, 100 - qBound(5, p->s.mkTimeToMax, 100));
-    p->body->addWidget(sliderRow(QStringLiteral("Повільно"), acc, QStringLiteral("Швидко")));
+    p->body->addWidget(sliderRow(tr7("Slow"), acc, tr7("Fast")));
     QObject::connect(top, &QSlider::valueChanged, p, [p](int v) {
         p->s.mkMaxSpeed = v;
         p->changed();
@@ -993,11 +994,11 @@ inline QWidget *buildMouseKeysPage(const Nav &nav)
         p->s.mkTimeToMax = 100 - v;
         p->changed();
     });
-    p->deadCheck(QStringLiteral("Утримуйте клавішу CTRL для прискорення та клавішу SHIFT для сповільнення"));
-    p->section(QStringLiteral("Інші параметри"));
-    p->text(QStringLiteral("Використовувати керування вказівником із клавіатури, коли клавіша NUM LOCK:"), 24);
-    auto *on = new QRadioButton(QStringLiteral("Увімк."));
-    auto *off = new QRadioButton(QStringLiteral("Вимк."));
+    p->deadCheck(tr7("Hold down CTRL to speed up and SHIFT to slow down"));
+    p->section(tr7("Other settings"));
+    p->text(tr7("Use Mouse Keys when NUM LOCK is:"), 24);
+    auto *on = new QRadioButton(tr7("On"));
+    auto *off = new QRadioButton(tr7("Off"));
     on->setChecked(true);
     for (QRadioButton *r : {on, off}) {
         r->setEnabled(false);
@@ -1009,21 +1010,21 @@ inline QWidget *buildMouseKeysPage(const Nav &nav)
         h->addStretch(1);
         p->body->addWidget(w);
     }
-    p->deadCheck(QStringLiteral("Відображати значок керування вказівником із клавіатури на панелі завдань"));
+    p->deadCheck(tr7("Display the Mouse Keys icon on the taskbar"));
     p->finish();
     return p;
 }
 
 inline void stickyBlock(SettingsPage *p, const Nav &nav)
 {
-    p->check(QStringLiteral("Увімкнути залипання клавіш"), &p->s.sticky, 24);
-    p->text(QStringLiteral("Натискання сполучень клавіш (наприклад, CTRL+ALT+DEL) по одній клавіші."));
-    p->link(QStringLiteral("Налаштування залипання клавіш"), [nav] { nav.open(StickyView); }, 48);
+    p->check(tr7("Turn on Sticky Keys"), &p->s.sticky, 24);
+    p->text(tr7("Press keyboard shortcuts (such as CTRL+ALT+DEL) one key at a time."));
+    p->link(tr7("Set up Sticky Keys"), [nav] { nav.open(StickyView); }, 48);
 }
 
 inline void filterBlock(SettingsPage *p, const Nav &nav)
 {
-    auto *box = p->check(QStringLiteral("Увімкнути фільтрацію введення"), &p->s.slow, 24);
+    auto *box = p->check(tr7("Turn on Filter Keys"), &p->s.slow, 24);
     // "Filter Keys" is Slow Keys or Bounce Keys, whichever was chosen on its page
     p->s.slow = p->s.slow || p->s.bounce;
     box->setChecked(p->s.slow);
@@ -1038,59 +1039,59 @@ inline void filterBlock(SettingsPage *p, const Nav &nav)
         }
         p->changed();
     });
-    p->text(QStringLiteral("Пропуск або сповільнення коротких чи повторних натискань клавіш і настроювання частоти повторення."));
-    p->link(QStringLiteral("Налаштування фільтрації введення"), [nav] { nav.open(FilterView); }, 48);
+    p->text(tr7("Ignore or slow down brief or repeated keystrokes and adjust keyboard repeat rates."));
+    p->link(tr7("Set up Filter Keys"), [nav] { nav.open(FilterView); }, 48);
 }
 
 inline QWidget *buildKeyboardPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Полегшення роботи з клавіатурою"));
+    auto *p = new SettingsPage(nav, tr7("Make the keyboard easier to use"));
     mouseKeysBlock(p, nav);
-    p->section(QStringLiteral("Полегшення введення тексту"));
+    p->section(tr7("Make it easier to type"));
     stickyBlock(p, nav);
     p->body->addSpacing(6);
-    p->check(QStringLiteral("Увімкнути озвучування перемикання"), &p->s.toggleBeep, 24);
-    p->text(QStringLiteral("Відтворення звукового сигналу під час натискання клавіш CAPS LOCK, NUM LOCK або SCROLL LOCK."));
-    p->deadCheck(QStringLiteral("Вмикати озвучування перемикання, утримуючи клавішу NUM LOCK протягом 5 секунд"), 48);
+    p->check(tr7("Turn on Toggle Keys"), &p->s.toggleBeep, 24);
+    p->text(tr7("Hear a tone when you press CAPS LOCK, NUM LOCK, or SCROLL LOCK."));
+    p->deadCheck(tr7("Turn on Toggle Keys by holding down the NUM LOCK key for 5 seconds"), 48);
     p->body->addSpacing(6);
     filterBlock(p, nav);
-    p->section(QStringLiteral("Полегшення використання сполучень клавіш"));
-    p->deadCheck(QStringLiteral("Підкреслювати сполучення клавіш і клавіші доступу"));
-    p->section(QStringLiteral("Полегшення керування вікнами"));
-    p->check(QStringLiteral("Не впорядковувати вікна автоматично під час переміщення до краю екрана"), &p->s.noSnap, 24);
-    p->seeAlso({{QStringLiteral("Додавання розкладки Дворака та змінення інших параметрів введення з клавіатури"), [nav] { nav.self({QStringLiteral("--text-services")}); }},
-                {QStringLiteral("Параметри клавіатури"), [nav] { nav.self({QStringLiteral("--keyboard")}); }}});
+    p->section(tr7("Make it easier to use keyboard shortcuts"));
+    p->deadCheck(tr7("Underline keyboard shortcuts and access keys"));
+    p->section(tr7("Make it easier to manage windows"));
+    p->check(tr7("Prevent windows from being automatically arranged when moved to the edge of the screen"), &p->s.noSnap, 24);
+    p->seeAlso({{tr7("Add a Dvorak keyboard and change other keyboard input settings"), [nav] { nav.self({QStringLiteral("--text-services")}); }},
+                {tr7("Keyboard settings"), [nav] { nav.self({QStringLiteral("--keyboard")}); }}});
     p->finish();
     return p;
 }
 
 inline QWidget *buildStickyPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Налаштування залипання клавіш"), QString());
-    p->check(QStringLiteral("Увімкнути залипання клавіш"), &p->s.sticky);
-    p->text(QStringLiteral("Натискання сполучень клавіш (наприклад, CTRL+ALT+DEL) по одній клавіші."), 24);
-    p->shortcutBlock(QStringLiteral("Вмикати залипання клавіш п'ятикратним натисканням клавіші SHIFT"));
-    p->section(QStringLiteral("Параметри"));
-    p->check(QStringLiteral("Фіксувати клавіші-модифікатори подвійним натисканням"), &p->s.stickyLatch, 24);
-    p->check(QStringLiteral("Вимикати залипання клавіш одночасним натисканням двох клавіш"), &p->s.stickyAutoOff, 24);
-    p->section(QStringLiteral("Зворотний зв'язок"));
-    p->check(QStringLiteral("Подавати звуковий сигнал під час натискання клавіш-модифікаторів"), &p->s.stickyBeep, 24);
-    p->deadCheck(QStringLiteral("Відображати значок залипання клавіш на панелі завдань"));
+    auto *p = new SettingsPage(nav, tr7("Set up Sticky Keys"), QString());
+    p->check(tr7("Turn on Sticky Keys"), &p->s.sticky);
+    p->text(tr7("Press keyboard shortcuts (such as CTRL+ALT+DEL) one key at a time."), 24);
+    p->shortcutBlock(tr7("Turn on Sticky Keys when SHIFT is pressed five times"));
+    p->section(tr7("Options"));
+    p->check(tr7("Lock modifier keys when pressed twice in a row"), &p->s.stickyLatch, 24);
+    p->check(tr7("Turn off Sticky Keys when two keys are pressed at once"), &p->s.stickyAutoOff, 24);
+    p->section(tr7("Feedback"));
+    p->check(tr7("Play a sound when modifier keys are pressed"), &p->s.stickyBeep, 24);
+    p->deadCheck(tr7("Display the Sticky Keys icon on the taskbar"));
     p->finish();
     return p;
 }
 
 inline QWidget *buildFilterPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Налаштування фільтрації введення"), QString());
-    auto *on = new QCheckBox(QStringLiteral("Увімкнути фільтрацію введення"));
+    auto *p = new SettingsPage(nav, tr7("Set up Filter Keys"), QString());
+    auto *on = new QCheckBox(tr7("Turn on Filter Keys"));
     on->setChecked(p->s.slow || p->s.bounce);
     p->body->addWidget(on);
-    p->text(QStringLiteral("Пропуск або сповільнення коротких чи повторних натискань клавіш і настроювання частоти повторення."), 24);
-    p->shortcutBlock(QStringLiteral("Вмикати фільтрацію введення, утримуючи праву клавішу SHIFT протягом 8 секунд"));
-    p->section(QStringLiteral("Параметри фільтрації"));
-    auto *bounce = new QRadioButton(QStringLiteral("Увімкнути пропуск повторних натискань"));
-    auto *repeat = new QRadioButton(QStringLiteral("Увімкнути повторне і повільне введення"));
+    p->text(tr7("Ignore or slow down brief or repeated keystrokes and adjust keyboard repeat rates."), 24);
+    p->shortcutBlock(tr7("Turn on Filter Keys when right SHIFT is pressed for 8 seconds"));
+    p->section(tr7("Filter options"));
+    auto *bounce = new QRadioButton(tr7("Turn on Bounce Keys"));
+    auto *repeat = new QRadioButton(tr7("Turn on Repeat Keys and Slow Keys"));
     (p->s.filterRepeat ? repeat : bounce)->setChecked(true);
     auto addRadio = [p](QRadioButton *r) {
         auto *w = new QWidget;
@@ -1101,12 +1102,12 @@ inline QWidget *buildFilterPage(const Nav &nav)
         p->body->addWidget(w);
     };
     addRadio(bounce);
-    p->text(QStringLiteral("Якщо пальці випадково кілька разів поспіль торкаються клавіші, повторні натискання протягом указаного часу пропускатимуться."));
+    p->text(tr7("If your fingers accidentally hit a key more than once, repeated keystrokes within the set time are ignored."));
     const QList<int> delays{500, 700, 1000, 1500, 2000};
     auto delayCombo = [&delays](int current) {
         auto *c = new QComboBox;
         for (int d : delays) {
-            c->addItem(QStringLiteral("%1 с").arg(QLocale(QLocale::Ukrainian).toString(d / 1000.0, 'f', 1)), d);
+            c->addItem(tr7("%1 s").arg(QLocale{}.toString(d / 1000.0, 'f', 1)), d);
         }
         int best = 0;
         for (int i = 0; i < delays.size(); ++i) {
@@ -1122,23 +1123,23 @@ inline QWidget *buildFilterPage(const Nav &nav)
     auto *br = new QWidget;
     auto *brh = new QHBoxLayout(br);
     brh->setContentsMargins(48, 0, 0, 0);
-    brh->addWidget(new QLabel(QStringLiteral("Скільки часу комп'ютер має чекати, перш ніж прийняти натискання?")));
+    brh->addWidget(new QLabel(tr7("How long should the computer wait before accepting keystrokes?")));
     brh->addWidget(bounceDelay);
     brh->addStretch(1);
     p->body->addWidget(br);
     addRadio(repeat);
-    p->text(QStringLiteral("Комп'ютер пропускатиме короткі натискання клавіш: щоб натискання було прийнято, клавішу слід утримувати вказаний час."));
+    p->text(tr7("The computer ignores brief keystrokes: hold a key down for the set time for the keystroke to be accepted."));
     auto *slowDelay = delayCombo(p->s.slowDelay);
     auto *sr = new QWidget;
     auto *srh = new QHBoxLayout(sr);
     srh->setContentsMargins(48, 0, 0, 0);
-    srh->addWidget(new QLabel(QStringLiteral("Скільки часу слід утримувати клавішу, щоб натискання було прийнято?")));
+    srh->addWidget(new QLabel(tr7("How long should a key be held down before the keystroke is accepted?")));
     srh->addWidget(slowDelay);
     srh->addStretch(1);
     p->body->addWidget(sr);
-    p->link(QStringLiteral("Налаштування частоти повторення клавіш"), [nav] { nav.self({QStringLiteral("--keyboard")}); }, 48);
+    p->link(tr7("Set up repeat rates"), [nav] { nav.self({QStringLiteral("--keyboard")}); }, 48);
     auto *test = new QLineEdit;
-    test->setPlaceholderText(QStringLiteral("Введіть тут текст, щоб перевірити параметри"));
+    test->setPlaceholderText(tr7("Type text here to test settings"));
     test->setFixedWidth(420);
     auto *tw = new QWidget;
     auto *th = new QHBoxLayout(tw);
@@ -1146,9 +1147,9 @@ inline QWidget *buildFilterPage(const Nav &nav)
     th->addWidget(test);
     th->addStretch(1);
     p->body->addWidget(tw);
-    p->section(QStringLiteral("Інші параметри"));
-    p->check(QStringLiteral("Подавати звуковий сигнал під час натискання або прийняття клавіш"), &p->s.slowBeep, 24);
-    p->deadCheck(QStringLiteral("Відображати значок фільтрації введення на панелі завдань"));
+    p->section(tr7("Other settings"));
+    p->check(tr7("Beep when keys are pressed or accepted"), &p->s.slowBeep, 24);
+    p->deadCheck(tr7("Display the Filter Keys icon on the taskbar"));
     auto sync = [p, on, repeat] {
         p->s.filterRepeat = repeat->isChecked();
         p->s.slow = on->isChecked() && p->s.filterRepeat;
@@ -1171,12 +1172,12 @@ inline QWidget *buildFilterPage(const Nav &nav)
 
 inline QWidget *buildSoundsPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Використання текстових або візуальних альтернатив для звуків"));
-    p->section(QStringLiteral("Використання візуальних підказок замість звуків"));
-    p->check(QStringLiteral("Увімкнути візуальне сповіщення про звуки (Sound Sentry)"), &p->s.visibleBell, 24);
-    p->text(QStringLiteral("Виберіть візуальне попередження"), 48);
+    auto *p = new SettingsPage(nav, tr7("Use text or visual alternatives for sounds"));
+    p->section(tr7("Use visual cues instead of sounds"));
+    p->check(tr7("Turn on visual notifications for sounds (Sound Sentry)"), &p->s.visibleBell, 24);
+    p->text(tr7("Choose visual warning"), 48);
     auto *group = new QButtonGroup(p);
-    const QStringList options{QStringLiteral("Немає"), QStringLiteral("Блимання активного заголовка"), QStringLiteral("Блимання активного вікна"), QStringLiteral("Блимання робочого стола")};
+    const QStringList options{tr7("None"), tr7("Flash active caption bar"), tr7("Flash active window"), tr7("Flash desktop")};
     for (int i = 0; i < options.size(); ++i) {
         auto *r = new QRadioButton(options[i]);
         group->addButton(r, i);
@@ -1194,30 +1195,30 @@ inline QWidget *buildSoundsPage(const Nav &nav)
         p->s.visibleBellInvert = id == 3;
         p->changed();
     });
-    p->section(QStringLiteral("Увімкнення текстових субтитрів для мовлення"));
-    p->deadCheck(QStringLiteral("Увімкнути текстові субтитри для мовлення (якщо доступно)"));
-    p->text(QStringLiteral("Відображення текстових субтитрів замість звуків для зазначення дії, яка відбувається на комп'ютері (наприклад, початок або завершення друку документа)."));
-    p->seeAlso({{QStringLiteral("Звукові пристрої та звукові теми"), [nav] { nav.self({QStringLiteral("--sound")}); }}});
+    p->section(tr7("Turn on text captions for spoken dialog"));
+    p->deadCheck(tr7("Turn on text captions for spoken dialog (when available)"));
+    p->text(tr7("Display text captions instead of sounds to indicate that activity is happening on your computer (for example, when a document starts or finishes printing)."));
+    p->seeAlso({{tr7("Audio devices and sound themes"), [nav] { nav.self({QStringLiteral("--sound")}); }}});
     p->finish();
     return p;
 }
 
 inline QWidget *buildFocusPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Полегшення зосередження на завданнях"));
-    p->section(QStringLiteral("Читання вголос тексту та описів"));
+    auto *p = new SettingsPage(nav, tr7("Make it easier to focus on tasks"));
+    p->section(tr7("Hear text and descriptions read aloud"));
     narratorChecks(p);
-    p->section(QStringLiteral("Видалення відволікаючих анімацій"));
-    p->check(QStringLiteral("Вимкнути всі непотрібні анімації (якщо можливо)"), &p->s.noAnimations, 24);
-    p->deadCheck(QStringLiteral("Видалити фонові зображення (якщо доступно)"));
-    p->section(QStringLiteral("Полегшення введення тексту"));
+    p->section(tr7("Remove distracting animations"));
+    p->check(tr7("Turn off all unnecessary animations (when possible)"), &p->s.noAnimations, 24);
+    p->deadCheck(tr7("Remove background images (where available)"));
+    p->section(tr7("Make it easier to type"));
     stickyBlock(p, nav);
     p->body->addSpacing(6);
-    p->check(QStringLiteral("Увімкнути озвучування перемикання"), &p->s.toggleBeep, 24);
-    p->text(QStringLiteral("Відтворення звукового сигналу під час натискання клавіш CAPS LOCK, NUM LOCK або SCROLL LOCK."));
+    p->check(tr7("Turn on Toggle Keys"), &p->s.toggleBeep, 24);
+    p->text(tr7("Hear a tone when you press CAPS LOCK, NUM LOCK, or SCROLL LOCK."));
     p->body->addSpacing(6);
     filterBlock(p, nav);
-    p->section(QStringLiteral("Настроювання часових обмежень і миготливих елементів"));
+    p->section(tr7("Adjust time limits and flashing visuals"));
     notificationTime(p);
     p->seeAlso({});
     p->finish();
@@ -1234,23 +1235,23 @@ inline QStringList &answers()
 
 inline QWidget *buildQuestionsPage(const Nav &nav)
 {
-    auto *p = new SettingsPage(nav, QStringLiteral("Отримання рекомендацій щодо полегшення роботи з комп'ютером"),
-                               QStringLiteral("Позначте всі твердження, які стосуються вас. Windows порекомендує параметри, що можуть полегшити роботу з комп'ютером."));
+    auto *p = new SettingsPage(nav, tr7("Get recommendations to make your computer easier to use", "page title"),
+                               tr7("Select all statements that apply to you. Windows will recommend settings that can make your computer easier to use."));
     struct Q {
         QString group;
         QStringList items;
     };
     const QList<Q> qs{
-        {QStringLiteral("Зір"),
-         {QStringLiteral("eyes|Мені важко розпізнавати обличчя або текст на телевізорі"), QStringLiteral("light|Мені важко розрізняти зображення через освітлення"),
-          QStringLiteral("blind|Я незрячий"), QStringLiteral("other-eyes|Я маю інші проблеми із зором")}},
-        {QStringLiteral("Рухливість"),
-         {QStringLiteral("pen|Мені важко користуватися ручкою або олівцем"), QStringLiteral("nokeyboard|Я не використовую клавіатуру"),
-          QStringLiteral("nomouse|Я не використовую мишу"), QStringLiteral("tremor|Я маю інші проблеми з рухливістю")}},
-        {QStringLiteral("Слух"), {QStringLiteral("hear|Мені важко чути розмову, навіть коли поруч тихо"), QStringLiteral("deaf|Я глухий")}},
-        {QStringLiteral("Мовлення"), {QStringLiteral("speech|Я маю порушення мовлення")}},
-        {QStringLiteral("Мислення та сприйняття"),
-         {QStringLiteral("focus|Мені важко зосередитися та запам'ятовувати"), QStringLiteral("read|Мені важко читати текст")}},
+        {tr7("Eyesight"),
+         {tr7("eyes|Images and text on TV are difficult to see (even when I'm wearing glasses)"), tr7("light|Lighting conditions make it difficult to see images on my monitor"),
+          tr7("blind|I am blind"), tr7("other-eyes|I have another type of vision impairment")}},
+        {tr7("Dexterity"),
+         {tr7("pen|Pens and pencils are difficult to use"), tr7("nokeyboard|I don't use a keyboard"),
+          tr7("nomouse|I don't use a mouse"), tr7("tremor|I have another type of dexterity impairment")}},
+        {tr7("Hearing"), {tr7("hear|Conversations are difficult to hear (even when it's quiet)"), tr7("deaf|I am deaf")}},
+        {tr7("Speech"), {tr7("speech|I have a speech impairment")}},
+        {tr7("Reasoning"),
+         {tr7("focus|I often have trouble concentrating and remembering things"), tr7("read|I have difficulty reading text")}},
     };
     QList<QCheckBox *> boxes;
     for (const Q &q : qs) {
@@ -1269,7 +1270,7 @@ inline QWidget *buildQuestionsPage(const Nav &nav)
         }
     }
     p->body->addSpacing(14);
-    auto *done = new QPushButton(QStringLiteral("Готово"));
+    auto *done = new QPushButton(tr7("Done"));
     done->setFixedWidth(100);
     p->body->addWidget(done);
     QObject::connect(done, &QPushButton::clicked, p, [nav, boxes] {
@@ -1294,8 +1295,8 @@ inline QWidget *buildResultsPage(const Nav &nav)
     auto *v = new QVBoxLayout(page);
     v->setContentsMargins(150, 20, 60, 20);
     v->setSpacing(8);
-    v->addWidget(heading(QStringLiteral("Рекомендовані параметри")));
-    v->addWidget(plainText(QStringLiteral("Виходячи з ваших відповідей, рекомендуємо переглянути ці параметри.")));
+    v->addWidget(heading(tr7("Let Windows suggest settings")));
+    v->addWidget(plainText(tr7("Based on your answers, the following settings are recommended.")));
     v->addSpacing(8);
     const QStringList a = answers();
     auto has = [&a](std::initializer_list<const char *> keys) {
@@ -1308,28 +1309,28 @@ inline QWidget *buildResultsPage(const Nav &nav)
     };
     QList<std::tuple<QString, QString, int>> rec;
     if (has({"blind"})) {
-        rec.append({QStringLiteral("seven-eoa-nodisplay"), QStringLiteral("Використання комп'ютера без дисплея"), NoDisplayView});
+        rec.append({QStringLiteral("seven-eoa-nodisplay"), tr7("Use the computer without a display"), NoDisplayView});
     }
     if (has({"eyes", "light", "other-eyes", "read"})) {
-        rec.append({QStringLiteral("seven-eoa-see"), QStringLiteral("Полегшення роботи з екраном"), SeeView});
+        rec.append({QStringLiteral("seven-eoa-see"), tr7("Make the computer easier to see"), SeeView});
     }
     if (has({"nokeyboard", "nomouse", "pen"})) {
-        rec.append({QStringLiteral("seven-eoa-noinput"), QStringLiteral("Використання комп'ютера без миші або клавіатури"), NoInputView});
+        rec.append({QStringLiteral("seven-eoa-noinput"), tr7("Use the computer without a mouse or keyboard"), NoInputView});
     }
     if (has({"pen", "tremor", "nomouse"})) {
-        rec.append({QStringLiteral("seven-eoa-mouse"), QStringLiteral("Полегшення роботи з мишею"), MouseView});
+        rec.append({QStringLiteral("seven-eoa-mouse"), tr7("Make the mouse easier to use"), MouseView});
     }
     if (has({"tremor", "pen", "nokeyboard"})) {
-        rec.append({QStringLiteral("seven-eoa-keyboard"), QStringLiteral("Полегшення роботи з клавіатурою"), KeyboardView});
+        rec.append({QStringLiteral("seven-eoa-keyboard"), tr7("Make the keyboard easier to use"), KeyboardView});
     }
     if (has({"hear", "deaf"})) {
-        rec.append({QStringLiteral("seven-eoa-sounds"), QStringLiteral("Використання текстових або візуальних альтернатив для звуків"), SoundsView});
+        rec.append({QStringLiteral("seven-eoa-sounds"), tr7("Use text or visual alternatives for sounds"), SoundsView});
     }
     if (has({"focus", "read"})) {
-        rec.append({QStringLiteral("seven-eoa-focus"), QStringLiteral("Полегшення зосередження на завданнях"), FocusView});
+        rec.append({QStringLiteral("seven-eoa-focus"), tr7("Make it easier to focus on tasks"), FocusView});
     }
     if (rec.isEmpty()) {
-        v->addWidget(plainText(QStringLiteral("Рекомендацій немає. Усі параметри можна переглянути в Центрі спеціальних можливостей.")));
+        v->addWidget(plainText(tr7("There are no recommendations. You can explore all settings in the Ease of Access Center.")));
     }
     for (const auto &[icon, title, view] : rec) {
         auto *r = new QHBoxLayout;
@@ -1344,7 +1345,7 @@ inline QWidget *buildResultsPage(const Nav &nav)
         v->addLayout(r);
     }
     v->addSpacing(14);
-    v->addWidget(new Link(QStringLiteral("Повернутися до Центру спеціальних можливостей"), [nav] { nav.open(CenterView); }));
+    v->addWidget(new Link(tr7("Return to the Ease of Access Center"), [nav] { nav.open(CenterView); }));
     v->addStretch(1);
     return page;
 }
@@ -1386,31 +1387,31 @@ inline QString viewTitle(int view)
 {
     switch (view) {
     case CenterView:
-        return QStringLiteral("Центр спеціальних можливостей");
+        return tr7("Ease of Access Center");
     case SeeView:
-        return QStringLiteral("Полегшення роботи з екраном");
+        return tr7("Make the computer easier to see");
     case NoDisplayView:
-        return QStringLiteral("Використання комп'ютера без дисплея");
+        return tr7("Use the computer without a display");
     case NoInputView:
-        return QStringLiteral("Використання комп'ютера без миші або клавіатури");
+        return tr7("Use the computer without a mouse or keyboard");
     case MouseView:
-        return QStringLiteral("Полегшення роботи з мишею");
+        return tr7("Make the mouse easier to use");
     case MouseKeysView:
-        return QStringLiteral("Налаштування керування вказівником із клавіатури");
+        return tr7("Set up Mouse Keys");
     case KeyboardView:
-        return QStringLiteral("Полегшення роботи з клавіатурою");
+        return tr7("Make the keyboard easier to use");
     case StickyView:
-        return QStringLiteral("Налаштування залипання клавіш");
+        return tr7("Set up Sticky Keys");
     case FilterView:
-        return QStringLiteral("Налаштування фільтрації введення");
+        return tr7("Set up Filter Keys");
     case SoundsView:
-        return QStringLiteral("Використання текстових або візуальних альтернатив для звуків");
+        return tr7("Use text or visual alternatives for sounds");
     case FocusView:
-        return QStringLiteral("Полегшення зосередження на завданнях");
+        return tr7("Make it easier to focus on tasks");
     case QuestionsView:
-        return QStringLiteral("Отримання рекомендацій");
+        return tr7("Get recommendations");
     case ResultsView:
-        return QStringLiteral("Рекомендовані параметри");
+        return tr7("Let Windows suggest settings");
     }
     return QString();
 }
@@ -1429,7 +1430,7 @@ class MagnifierWindow : public QWidget
 public:
     MagnifierWindow()
     {
-        setWindowTitle(QStringLiteral("Екранна лупа"));
+        setWindowTitle(tr7("Magnifier"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-magnify")));
         setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
@@ -1457,28 +1458,28 @@ public:
             h->addWidget(b);
             return b;
         };
-        auto *out = button(QStringLiteral("seven-magnify-out"), QStringLiteral("Зменшити (Windows+мінус)"));
-        auto *in = button(QStringLiteral("seven-magnify-in"), QStringLiteral("Збільшити (Windows+плюс)"));
+        auto *out = button(QStringLiteral("seven-magnify-out"), tr7("Zoom out (Windows+minus)"));
+        auto *in = button(QStringLiteral("seven-magnify-in"), tr7("Zoom in (Windows+plus)"));
         m_percent = new QLabel;
         m_percent->setFixedWidth(44);
         m_percent->setAlignment(Qt::AlignCenter);
         h->addWidget(m_percent);
         auto *views = new QToolButton;
-        views->setText(QStringLiteral("Подання  ▾"));
+        views->setText(tr7("Views  ▾"));
         views->setAutoRaise(true);
         views->setPopupMode(QToolButton::InstantPopup);
         views->setStyleSheet(QStringLiteral("QToolButton::menu-indicator { image: none; width: 0px; }"));
         auto *menu = new QMenu(views);
-        auto *full = menu->addAction(QStringLiteral("Повноекранний режим"));
+        auto *full = menu->addAction(tr7("Full screen"));
         full->setCheckable(true);
         full->setChecked(true);
-        for (const QString &t : {QStringLiteral("Збільшувальне скло"), QStringLiteral("Закріплений")}) {
+        for (const QString &t : {tr7("Lens"), tr7("Docked")}) {
             menu->addAction(t)->setEnabled(false);
         }
         views->setMenu(menu);
         h->addWidget(views);
-        auto *opts = button(QStringLiteral("seven-magnify-options"), QStringLiteral("Параметри екранної лупи"));
-        auto *help = button(QStringLiteral("seven-magnify-help"), QStringLiteral("Довідка"));
+        auto *opts = button(QStringLiteral("seven-magnify-options"), tr7("Magnifier Options"));
+        auto *help = button(QStringLiteral("seven-magnify-help"), tr7("Help"));
         opts->setIconSize(QSize(16, 16));
         help->setIconSize(QSize(16, 16));
         connect(in, &QToolButton::clicked, this, [this] { zoom(+1); });
@@ -1486,8 +1487,7 @@ public:
         connect(opts, &QToolButton::clicked, this, [] { launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_access")}); });
         connect(help, &QToolButton::clicked, this, [this] {
             QMessageBox::information(this, windowTitle(),
-                                     QStringLiteral("Екранна лупа збільшує частину екрана навколо покажчика миші.\n\nЗбільшити: Windows + «+» або кнопка «+».\n"
-                                                    "Зменшити: Windows + «−» або кнопка «−».\nПід час закриття лупи масштаб повертається до 100 %."));
+                                     tr7("Magnifier enlarges the part of the screen around the mouse pointer.\n\nZoom in: Windows + \"+\" or the \"+\" button.\nZoom out: Windows + \"−\" or the \"−\" button.\nWhen Magnifier closes, the zoom goes back to 100%."));
         });
         showPercent();
         QTimer::singleShot(0, this, [this] { zoom(+1); }); // Windows 7 starts at 200 %
@@ -1528,33 +1528,33 @@ class NarratorWindow : public QDialog
 public:
     NarratorWindow()
     {
-        setWindowTitle(QStringLiteral("Екранний диктор"));
+        setWindowTitle(tr7("Narrator"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-narrator")));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedSize(470, 410);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 10, 12, 12);
         auto *bar = new QMenuBar;
-        auto *file = bar->addMenu(QStringLiteral("Файл"));
-        file->addAction(QStringLiteral("Вихід"), this, [this] { exitNarrator(); });
-        auto *prefs = bar->addMenu(QStringLiteral("Параметри"));
-        prefs->addAction(QStringLiteral("Параметри голосу..."), this, [] { QProcess::startDetached(QStringLiteral("orca"), {QStringLiteral("-s")}); });
-        auto *help = bar->addMenu(QStringLiteral("Довідка"));
-        help->addAction(QStringLiteral("Коротка довідка"), this, [this] { quickHelp(); });
+        auto *file = bar->addMenu(tr7("File"));
+        file->addAction(tr7("Exit"), this, [this] { exitNarrator(); });
+        auto *prefs = bar->addMenu(tr7("Options"));
+        prefs->addAction(tr7("Voice Settings..."), this, [] { QProcess::startDetached(QStringLiteral("orca"), {QStringLiteral("-s")}); });
+        auto *help = bar->addMenu(tr7("Help"));
+        help->addAction(tr7("Quick Help"), this, [this] { quickHelp(); });
         v->setMenuBar(bar);
-        v->addWidget(plainText(QStringLiteral("Екранний диктор читатиме вголос текст на екрані, коли ви переходите між елементами за допомогою клавіатури.")));
-        auto *box = new QGroupBox(QStringLiteral("Основні параметри екранного диктора"));
+        v->addWidget(plainText(tr7("Narrator will read aloud what is on-screen as you navigate using the keyboard.")));
+        auto *box = new QGroupBox(tr7("Main Narrator Settings"));
         auto *bv = new QVBoxLayout(box);
         bv->setSpacing(10);
         KConfigGroup cfg(KSharedConfig::openConfig(QStringLiteral("seven-controlrc")), QStringLiteral("Narrator"));
-        auto *echo = new QCheckBox(QStringLiteral("Озвучувати натискання клавіш користувачем"));
-        auto *sys = new QCheckBox(QStringLiteral("Повідомляти про системні події"));
-        auto *scroll = new QCheckBox(QStringLiteral("Повідомляти про прокручування"));
-        auto *minimized = new QCheckBox(QStringLiteral("Запускати диктора згорнутим"));
+        auto *echo = new QCheckBox(tr7("Echo User's Keystrokes"));
+        auto *sys = new QCheckBox(tr7("Announce System Messages"));
+        auto *scroll = new QCheckBox(tr7("Announce Scroll Notifications"));
+        auto *minimized = new QCheckBox(tr7("Start Narrator Minimized"));
         for (QCheckBox *c : {echo, sys}) {
             c->setChecked(true);
             c->setEnabled(false);
-            c->setToolTip(QStringLiteral("Налаштовується в параметрах голосу (Orca)."));
+            c->setToolTip(tr7("Set in the voice settings (Orca)."));
         }
         scroll->setEnabled(false);
         scroll->setToolTip(unavailable());
@@ -1563,15 +1563,15 @@ public:
             bv->addWidget(c);
         }
         v->addWidget(box);
-        auto *logon = new Link(QStringLiteral("Керування запуском диктора під час входу в систему"), [] {
+        auto *logon = new Link(tr7("Control whether Narrator starts when I log on"), [] {
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--ease"), QStringLiteral("nodisplay")});
         });
         v->addWidget(logon);
         v->addStretch(1);
         auto *row = new QHBoxLayout;
-        auto *qh = new QPushButton(QStringLiteral("Коротка довідка"));
-        auto *voice = new QPushButton(QStringLiteral("Параметри голосу"));
-        auto *exit = new QPushButton(QStringLiteral("Вихід"));
+        auto *qh = new QPushButton(tr7("Quick Help"));
+        auto *voice = new QPushButton(tr7("Voice Settings"));
+        auto *exit = new QPushButton(tr7("Exit"));
         for (QPushButton *b : {qh, voice, exit}) {
             b->setMinimumHeight(30);
             row->addWidget(b);
@@ -1597,8 +1597,7 @@ private:
     void quickHelp()
     {
         QMessageBox::information(this, windowTitle(),
-                                 QStringLiteral("Екранний диктор (Orca) читає вголос елементи, на які переходить фокус.\n\n"
-                                                "Insert + пробіл — параметри диктора.\nInsert + Q — вихід із диктора.\nInsert + H — режим навчання клавіш."));
+                                 tr7("Narrator (Orca) reads aloud the items the focus moves to.\n\nInsert + Space - Narrator settings.\nInsert + Q - exit Narrator.\nInsert + H - key learning mode."));
     }
     void exitNarrator()
     {
@@ -1723,7 +1722,7 @@ public:
     static constexpr double DW = 813, DH = 199; // design size of the client area
     KeyboardWindow()
     {
-        setWindowTitle(QStringLiteral("Екранна клавіатура"));
+        setWindowTitle(tr7("On-Screen Keyboard"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-osk")));
         setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus);
         setAttribute(Qt::WA_ShowWithoutActivating);
@@ -1770,7 +1769,7 @@ public:
         m_labelTimer.start();
         if (!m_x.ok()) {
             QTimer::singleShot(0, this, [this] {
-                QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося підключитися до X11 (XTest). Екранна клавіатура не зможе вводити текст."));
+                QMessageBox::warning(this, windowTitle(), tr7("Could not connect to X11 (XTest). On-Screen Keyboard will not be able to type."));
             });
         }
     }
@@ -1930,8 +1929,7 @@ protected:
         if (key.sym == 0) {
             if (key.label == QLatin1String("Options") || key.label == QLatin1String("Help")) {
                 QMessageBox::information(this, windowTitle(),
-                                         QStringLiteral("Клацайте клавіші мишею, щоб вводити текст у вікно, яке зараз активне.\n\n"
-                                                        "Shift, Ctrl, Alt і клавіша Windows залишаються натиснутими до наступної клавіші."));
+                                         tr7("Click the keys with the mouse to type into the window that is active now.\n\nShift, Ctrl, Alt and the Windows key stay pressed until the next key."));
             }
             update();
             return;
@@ -1992,7 +1990,7 @@ class KeyboardDialog : public QDialog
 public:
     explicit KeyboardDialog(int tab = 0)
     {
-        setWindowTitle(QStringLiteral("Властивості: Клавіатура"));
+        setWindowTitle(tr7("Keyboard Properties"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-keyboard")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
@@ -2006,15 +2004,15 @@ public:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(speedTab(), QStringLiteral("Швидкість"));
-        tabs->addTab(hardwareTab(), QStringLiteral("Устаткування"));
+        tabs->addTab(speedTab(), tr7("Speed"));
+        tabs->addTab(hardwareTab(), tr7("Hardware"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             row->addWidget(b);
@@ -2057,42 +2055,42 @@ private:
         auto *v = new QVBoxLayout(w);
         v->setContentsMargins(10, 12, 10, 10);
         v->setSpacing(10);
-        auto *rep = new QGroupBox(QStringLiteral("Повторення символів"));
+        auto *rep = new QGroupBox(tr7("Character repeat"));
         auto *g = new QGridLayout(rep);
         g->setVerticalSpacing(4);
         g->addWidget(icon(QStringLiteral("seven-kbd-delay")), 0, 0, 2, 1);
-        g->addWidget(new QLabel(QStringLiteral("Затримка перед початком повторення:")), 0, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Довше")), 1, 1);
+        g->addWidget(new QLabel(tr7("Repeat delay:")), 0, 1, 1, 3);
+        g->addWidget(new QLabel(tr7("Long")), 1, 1);
         // Windows: 4 steps, 1 s ... 250 ms
         auto *delay = ticks(3);
         delay->setValue(qBound(0, 3 - qRound((m_delay - 250) / 250.0), 3));
         g->addWidget(delay, 1, 2);
-        g->addWidget(new QLabel(QStringLiteral("Коротше")), 1, 3);
+        g->addWidget(new QLabel(tr7("Short")), 1, 3);
         g->addWidget(icon(QStringLiteral("seven-kbd-rate")), 2, 0, 2, 1);
-        g->addWidget(new QLabel(QStringLiteral("Швидкість повторення:")), 2, 1, 1, 3);
-        g->addWidget(new QLabel(QStringLiteral("Нижче")), 3, 1);
+        g->addWidget(new QLabel(tr7("Repeat rate:")), 2, 1, 1, 3);
+        g->addWidget(new QLabel(tr7("Slow", "repeat rate")), 3, 1);
         // Windows: 32 steps, about 2.5 ... 30 characters per second
         auto *rate = ticks(31);
         rate->setTickInterval(4);
         rate->setValue(qBound(0, qRound((m_rate - 2.5) / 27.5 * 31), 31));
         g->addWidget(rate, 3, 2);
-        g->addWidget(new QLabel(QStringLiteral("Вище")), 3, 3);
-        g->addWidget(new QLabel(QStringLiteral("Клацніть тут і утримуйте клавішу для перевірки:")), 4, 1, 1, 3);
+        g->addWidget(new QLabel(tr7("Fast", "repeat rate")), 3, 3);
+        g->addWidget(new QLabel(tr7("Click here and hold down a key to test repeat rate:")), 4, 1, 1, 3);
         auto *test = new QLineEdit;
         g->addWidget(test, 5, 1, 1, 3);
         g->setColumnStretch(3, 1);
         v->addWidget(rep);
-        auto *blink = new QGroupBox(QStringLiteral("Частота мерехтіння курсора"));
+        auto *blink = new QGroupBox(tr7("Cursor blink rate"));
         auto *bg = new QGridLayout(blink);
         m_caret = new QLabel(QStringLiteral("|"));
         m_caret->setFixedWidth(40);
         bg->addWidget(m_caret, 0, 0);
-        bg->addWidget(new QLabel(QStringLiteral("Немає")), 0, 1);
+        bg->addWidget(new QLabel(tr7("None")), 0, 1);
         auto *speed = ticks(10);
         // 0 = no blinking, 10 = 200 ms
         speed->setValue(m_blink <= 0 ? 0 : qBound(1, 10 - qRound((m_blink - 200) / 120.0), 10));
         bg->addWidget(speed, 0, 2);
-        bg->addWidget(new QLabel(QStringLiteral("Висока")), 0, 3);
+        bg->addWidget(new QLabel(tr7("High")), 0, 3);
         bg->setColumnStretch(3, 1);
         v->addWidget(blink);
         v->addStretch(1);
@@ -2128,10 +2126,10 @@ private:
         auto *w = new QWidget;
         auto *v = new QVBoxLayout(w);
         v->setContentsMargins(10, 12, 10, 10);
-        v->addWidget(new QLabel(QStringLiteral("Пристрої:")));
+        v->addWidget(new QLabel(tr7("Devices:")));
         auto *tree = new QTreeWidget;
         tree->setRootIsDecorated(false);
-        tree->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Тип")});
+        tree->setHeaderLabels({tr7("Name"), tr7("Type")});
         tree->setColumnWidth(0, 220);
         const QString devices = readFile(QStringLiteral("/proc/bus/input/devices"));
         static const QRegularExpression nameRe(QStringLiteral("N: Name=\"([^\"]+)\""));
@@ -2145,23 +2143,23 @@ private:
                 continue;
             }
             seen.append(n);
-            auto *it = new QTreeWidgetItem(tree, {n, QStringLiteral("Клавіатури")});
+            auto *it = new QTreeWidgetItem(tree, {n, tr7("Keyboards")});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-devmgr-keyboard")));
             it->setData(0, Qt::UserRole, block);
         }
         v->addWidget(tree, 1);
-        auto *props = new QGroupBox(QStringLiteral("Властивості пристрою"));
+        auto *props = new QGroupBox(tr7("Device Properties"));
         auto *pg = new QGridLayout(props);
         auto *maker = new QLabel;
         auto *where = new QLabel;
-        pg->addWidget(new QLabel(QStringLiteral("Виробник:")), 0, 0);
+        pg->addWidget(new QLabel(tr7("Manufacturer:")), 0, 0);
         pg->addWidget(maker, 0, 1);
-        pg->addWidget(new QLabel(QStringLiteral("Розташування:")), 1, 0);
+        pg->addWidget(new QLabel(tr7("Location:")), 1, 0);
         pg->addWidget(where, 1, 1);
-        pg->addWidget(new QLabel(QStringLiteral("Стан пристрою:")), 2, 0);
-        pg->addWidget(new QLabel(QStringLiteral("Пристрій працює нормально.")), 2, 1);
+        pg->addWidget(new QLabel(tr7("Device status:")), 2, 0);
+        pg->addWidget(new QLabel(tr7("This device is working properly.")), 2, 1);
         pg->setColumnStretch(1, 1);
-        auto *btn = new QPushButton(QStringLiteral("Властивості"));
+        auto *btn = new QPushButton(tr7("Properties"));
         pg->addWidget(btn, 3, 1, Qt::AlignRight);
         v->addWidget(props);
         connect(tree, &QTreeWidget::currentItemChanged, this, [maker, where](QTreeWidgetItem *it) {
@@ -2172,8 +2170,8 @@ private:
             static const QRegularExpression bus(QStringLiteral("Bus=(\\w+)"));
             const QString b = bus.match(block).captured(1);
             where->setText(b == QLatin1String("0005") ? QStringLiteral("Bluetooth") : b == QLatin1String("0003") ? QStringLiteral("USB")
-                               : b == QLatin1String("0011")                                    ? QStringLiteral("Порт PS/2")
-                                                                                               : QStringLiteral("Невідомо"));
+                               : b == QLatin1String("0011")                                    ? tr7("PS/2 port")
+                                                                                               : tr7("Unknown"));
             maker->setText(it->text(0).section(QLatin1Char(' '), 0, 0));
         });
         if (tree->topLevelItemCount()) {

@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * "Now Playing" mode: black window, the title in the top band, the video (or album art for music) and the
  * dark controls at the bottom. The bands keep their height; their contents disappear when the mouse leaves the
@@ -56,7 +57,7 @@ protected:
     }
     void mouseMoveEvent(QMouseEvent *e) override
     {
-        setToolTip(switchRect().contains(e->pos()) ? QStringLiteral("Перейти до бібліотеки") : QString());
+        setToolTip(switchRect().contains(e->pos()) ? tr7("Go to Library") : QString());
         QWidget::mouseMoveEvent(e);
     }
     void mouseReleaseEvent(QMouseEvent *e) override

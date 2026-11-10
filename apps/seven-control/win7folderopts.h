@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include <KConfig>
 #include <KConfigGroup>
@@ -113,21 +114,21 @@ public:
     explicit FolderOptionsDialog(const QString &folder = QString())
         : m_folder(folder)
     {
-        setWindowTitle(QStringLiteral("Параметри папок"));
+        setWindowTitle(tr7("Folder Options"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-folderopts")));
         setAttribute(Qt::WA_DeleteOnClose);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         m_tabs = new QTabWidget;
-        m_tabs->addTab(generalPage(), QStringLiteral("Загальні"));
-        m_tabs->addTab(viewPage(), QStringLiteral("Вигляд"));
-        m_tabs->addTab(searchPage(), QStringLiteral("Пошук"));
+        m_tabs->addTab(generalPage(), tr7("General"));
+        m_tabs->addTab(viewPage(), tr7("View"));
+        m_tabs->addTab(searchPage(), tr7("Search"));
         v->addWidget(m_tabs);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -206,21 +207,21 @@ private:
     QWidget *generalPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Огляд папок")), dlu(7, 7, 226, 38));
+        place(p, new QGroupBox(tr7("Browse For Folder")), dlu(7, 7, 226, 38));
         m_browseIcon = icon(p, QStringLiteral("seven-fo-samewindow"), 14, 19);
-        m_sameWindow = place(p, new QRadioButton(QStringLiteral("Відкривати кожну папку в тому самому вікні")), dlu(41, 17, 185, 9));
-        m_ownWindow = place(p, new QRadioButton(QStringLiteral("Відкривати кожну папку в окремому вікні")), dlu(41, 30, 185, 9));
+        m_sameWindow = place(p, new QRadioButton(tr7("Open each folder in the same window")), dlu(41, 17, 185, 9));
+        m_ownWindow = place(p, new QRadioButton(tr7("Open each folder in its own window")), dlu(41, 30, 185, 9));
         auto *browse = new QButtonGroup(p);
         browse->addButton(m_sameWindow);
         browse->addButton(m_ownWindow);
 
-        place(p, new QGroupBox(QStringLiteral("Клацання мишею")), dlu(7, 52, 226, 60));
+        place(p, new QGroupBox(tr7("Click items as follows")), dlu(7, 52, 226, 60));
         m_clickIcon = icon(p, QStringLiteral("seven-fo-doubleclick"), 14, 64);
-        m_single = place(p, new QRadioButton(QStringLiteral("Відкривати одним клацанням, виділяти наведенням")), dlu(41, 64, 188, 9));
+        m_single = place(p, new QRadioButton(tr7("Single-click to open an item (point to select)")), dlu(41, 64, 188, 9));
         // Dolphin underlines nothing; Windows greys these out too while double-click is chosen
-        m_under1 = place(p, new QRadioButton(QStringLiteral("Підкреслювати підписи значків як у браузері")), dlu(54, 75, 172, 9));
-        m_under2 = place(p, new QRadioButton(QStringLiteral("Підкреслювати підписи лише під час наведення")), dlu(54, 86, 172, 9));
-        m_double = place(p, new QRadioButton(QStringLiteral("Відкривати подвійним, а виділяти одним клацанням")), dlu(41, 97, 185, 9));
+        m_under1 = place(p, new QRadioButton(tr7("Underline icon titles consistent with my browser")), dlu(54, 75, 172, 9));
+        m_under2 = place(p, new QRadioButton(tr7("Underline icon titles only when I point at them")), dlu(54, 86, 172, 9));
+        m_double = place(p, new QRadioButton(tr7("Double-click to open an item (single-click to select)")), dlu(41, 97, 185, 9));
         auto *click = new QButtonGroup(p);
         click->addButton(m_single);
         click->addButton(m_double);
@@ -231,13 +232,13 @@ private:
         m_under1->setEnabled(false);
         m_under2->setEnabled(false);
 
-        place(p, new QGroupBox(QStringLiteral("Область переходів")), dlu(7, 119, 226, 38));
+        place(p, new QGroupBox(tr7("Navigation pane")), dlu(7, 119, 226, 38));
         icon(p, QStringLiteral("seven-fo-navpane"), 14, 131);
-        m_showAll = place(p, new QCheckBox(QStringLiteral("Показати всі папки")), dlu(41, 129, 185, 9));
+        m_showAll = place(p, new QCheckBox(tr7("Show all folders")), dlu(41, 129, 185, 9));
         m_showAll->setEnabled(false); // the tree has no Desktop root like Explorer's
-        m_autoExpand = place(p, new QCheckBox(QStringLiteral("Автоматично розгортати до поточної папки")), dlu(41, 142, 185, 9));
+        m_autoExpand = place(p, new QCheckBox(tr7("Automatically expand to current folder")), dlu(41, 142, 185, 9));
 
-        auto *restore = place(p, new QPushButton(QStringLiteral("Відновити типові")), dlu(161, 161, 72, 14));
+        auto *restore = place(p, new QPushButton(tr7("Restore Defaults")), dlu(161, 161, 72, 14));
         connect(restore, &QPushButton::clicked, this, [this] {
             m_sameWindow->setChecked(true);
             m_double->setChecked(true);
@@ -271,13 +272,13 @@ private:
     QWidget *viewPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Подання папок")), dlu(10, 5, 220, 55));
+        place(p, new QGroupBox(tr7("Folder views")), dlu(10, 5, 220, 55));
         icon(p, QStringLiteral("seven-fo-folderviews"), 20, 20);
-        auto *text = place(p, new QLabel(QStringLiteral("Подання цієї папки (наприклад, «Таблиця» або «Значки») можна застосувати до всіх папок.")),
+        auto *text = place(p, new QLabel(tr7("You can apply the view (such as Details or Icons) that you are using for this folder to all folders of this type.")),
                            dlu(56, 14, 169, 20));
         text->setWordWrap(true);
-        auto *applyAll = place(p, new QPushButton(QStringLiteral("Застосувати до папок")), dlu(56, 35, 77, 15));
-        auto *reset = place(p, new QPushButton(QStringLiteral("Скинути папки")), dlu(143, 35, 77, 15));
+        auto *applyAll = place(p, new QPushButton(tr7("Apply to Folders")), dlu(56, 35, 77, 15));
+        auto *reset = place(p, new QPushButton(tr7("Reset Folders")), dlu(143, 35, 77, 15));
         // like Windows 7 opened from Control Panel: there is no "this folder" to copy from
         applyAll->setEnabled(!m_folder.isEmpty() && !readProps(m_folder).isEmpty());
         connect(applyAll, &QPushButton::clicked, this, [this] {
@@ -296,39 +297,39 @@ private:
             writeProps(globalPropsDir(), props);
         });
 
-        place(p, new QLabel(QStringLiteral("Додаткові параметри:")), dlu(10, 70, 108, 8));
+        place(p, new QLabel(tr7("Advanced settings:")), dlu(10, 70, 108, 8));
         m_tree = place(p, new QTreeWidget, dlu(10, 80, 220, 120));
         m_tree->setHeaderHidden(true);
         m_tree->setRootIsDecorated(false);
         m_tree->setIndentation(18);
         m_tree->setSelectionMode(QAbstractItemView::NoSelection);
         m_tree->setFocusPolicy(Qt::NoFocus);
-        auto *files = new QTreeWidgetItem(m_tree, {QStringLiteral("Файли й папки")});
+        auto *files = new QTreeWidgetItem(m_tree, {tr7("Files and Folders")});
         files->setIcon(0, QIcon::fromTheme(QStringLiteral("folder")));
-        m_icons = option(files, QStringLiteral("Завжди відображати значки, а не ескізи"));
-        m_menu = option(files, QStringLiteral("Завжди відображати меню"));
-        m_fullPath = option(files, QStringLiteral("Відображати повний шлях у рядку заголовка"));
-        auto *hidden = new QTreeWidgetItem(files, {QStringLiteral("Приховані файли й папки")});
+        m_icons = option(files, tr7("Always show icons, never thumbnails"));
+        m_menu = option(files, tr7("Always show menus"));
+        m_fullPath = option(files, tr7("Display the full path in the title bar"));
+        auto *hidden = new QTreeWidgetItem(files, {tr7("Hidden files and folders")});
         hidden->setIcon(0, QIcon::fromTheme(QStringLiteral("folder")));
-        m_hide = option(hidden, QStringLiteral("Не відображати приховані файли, папки й диски"), true);
-        m_show = option(hidden, QStringLiteral("Відображати приховані файли, папки й диски"), true);
+        m_hide = option(hidden, tr7("Don't show hidden files, folders, or drives"), true);
+        m_show = option(hidden, tr7("Show hidden files, folders, and drives"), true);
         auto *hiddenGroup = new QButtonGroup(p);
         hiddenGroup->addButton(button(m_hide));
         hiddenGroup->addButton(button(m_show));
-        option(files, QStringLiteral("Приховувати розширення для зареєстрованих типів файлів"), false, false);
-        m_tips = option(files, QStringLiteral("Відображати спливаючі описи для папок і елементів робочого столу"));
-        m_checks = option(files, QStringLiteral("Використовувати прапорці для вибору елементів"));
-        m_restoreWindows = option(files, QStringLiteral("Відновлювати попередні вікна папок під час входу в систему"));
-        auto *nav = new QTreeWidgetItem(m_tree, {QStringLiteral("Область переходів")});
+        option(files, tr7("Hide extensions for known file types"), false, false);
+        m_tips = option(files, tr7("Show pop-up description for folder and desktop items"));
+        m_checks = option(files, tr7("Use check boxes to select items"));
+        m_restoreWindows = option(files, tr7("Restore previous folder windows at logon"));
+        auto *nav = new QTreeWidgetItem(m_tree, {tr7("Navigation pane")});
         nav->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-fo-navpane")));
-        m_navExpand = option(nav, QStringLiteral("Автоматично розгортати до поточної папки"));
-        option(nav, QStringLiteral("Показати всі папки"), false, false);
+        m_navExpand = option(nav, tr7("Automatically expand to current folder"));
+        option(nav, tr7("Show all folders"), false, false);
         m_tree->expandAll();
         // the two copies of "expand to current folder" are one setting
         connect(button(m_navExpand), &QAbstractButton::toggled, m_autoExpand, &QCheckBox::setChecked);
         connect(m_autoExpand, &QCheckBox::toggled, button(m_navExpand), &QAbstractButton::setChecked);
 
-        auto *restore = place(p, new QPushButton(QStringLiteral("Відновити типові")), dlu(160, 210, 70, 14));
+        auto *restore = place(p, new QPushButton(tr7("Restore Defaults")), dlu(160, 210, 70, 14));
         connect(restore, &QPushButton::clicked, this, [this] {
             button(m_icons)->setChecked(false);
             button(m_menu)->setChecked(false);
@@ -345,31 +346,31 @@ private:
     QWidget *searchPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Що шукати")), dlu(7, 7, 224, 58));
-        m_indexed = wrapped(p, new QRadioButton, QStringLiteral("У проіндексованих розташуваннях шукати імена та вміст файлів. У непроіндексованих — лише імена файлів."),
+        place(p, new QGroupBox(tr7("What to search")), dlu(7, 7, 224, 58));
+        m_indexed = wrapped(p, new QRadioButton, tr7("In indexed locations, search filenames and contents. In non-indexed locations, search file names only."),
                             dlu(20, 18, 200, 20));
-        m_always = wrapped(p, new QRadioButton, QStringLiteral("Завжди шукати імена та вміст файлів (це може тривати кілька хвилин)"), dlu(20, 39, 200, 20));
+        m_always = wrapped(p, new QRadioButton, tr7("Always search file names and contents (this might take several minutes)"), dlu(20, 39, 200, 20));
         auto *what = new QButtonGroup(p);
         what->addButton(m_indexed);
         what->addButton(m_always);
 
-        place(p, new QGroupBox(QStringLiteral("Як шукати")), dlu(7, 72, 224, 78));
+        place(p, new QGroupBox(tr7("How to search")), dlu(7, 72, 224, 78));
         // Dolphin always searches subfolders and matches parts of names
         auto *sub = new QCheckBox;
         sub->setChecked(true);
         sub->setEnabled(false);
-        wrapped(p, sub, QStringLiteral("Включати вкладені папки в результати пошуку під час пошуку в папках"), dlu(20, 83, 200, 20));
-        auto *partial = place(p, new QCheckBox(QStringLiteral("Шукати часткові збіги")), dlu(20, 104, 200, 10));
+        wrapped(p, sub, tr7("Include subfolders in search results when searching in file folders"), dlu(20, 83, 200, 20));
+        auto *partial = place(p, new QCheckBox(tr7("Find partial matches")), dlu(20, 104, 200, 10));
         partial->setChecked(true);
         partial->setEnabled(false);
-        place(p, new QCheckBox(QStringLiteral("Використовувати пошук природною мовою")), dlu(20, 115, 200, 10))->setEnabled(false);
-        m_noIndex = wrapped(p, new QCheckBox, QStringLiteral("Не використовувати індекс під час пошуку в папках (пошук може тривати довше)"), dlu(20, 126, 200, 20));
+        place(p, new QCheckBox(tr7("Use natural language search")), dlu(20, 115, 200, 10))->setEnabled(false);
+        m_noIndex = wrapped(p, new QCheckBox, tr7("Don't use the index when searching in file folders for system files (searches might take longer)"), dlu(20, 126, 200, 20));
 
-        place(p, new QGroupBox(QStringLiteral("Під час пошуку в непроіндексованих розташуваннях")), dlu(7, 158, 224, 38));
-        place(p, new QCheckBox(QStringLiteral("Включати системні каталоги")), dlu(20, 169, 200, 10))->setEnabled(false);
-        place(p, new QCheckBox(QStringLiteral("Включати стиснуті файли (ZIP, CAB...)")), dlu(20, 180, 200, 10))->setEnabled(false);
+        place(p, new QGroupBox(tr7("When searching non-indexed locations")), dlu(7, 158, 224, 38));
+        place(p, new QCheckBox(tr7("Include system directories")), dlu(20, 169, 200, 10))->setEnabled(false);
+        place(p, new QCheckBox(tr7("Include compressed files (ZIP, CAB...)")), dlu(20, 180, 200, 10))->setEnabled(false);
 
-        auto *restore = place(p, new QPushButton(QStringLiteral("Відновити типові")), dlu(161, 202, 70, 14));
+        auto *restore = place(p, new QPushButton(tr7("Restore Defaults")), dlu(161, 202, 70, 14));
         connect(restore, &QPushButton::clicked, this, [this] {
             m_indexed->setChecked(true);
             m_noIndex->setChecked(false);

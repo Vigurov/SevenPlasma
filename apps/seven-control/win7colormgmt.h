@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 #include "win7header.h"
@@ -145,7 +146,7 @@ inline QList<Device> displays()
                 d.profiles << byPath(kv.second);
             }
         }
-        d.name = QStringLiteral("Дисплей: %1. %2 %3%4").arg(list.size() + 1).arg(vendor, model, embedded == QLatin1String("Yes") ? QStringLiteral(" — вбудований") : QString());
+        d.name = tr7("Display: %1. %2 %3%4").arg(list.size() + 1).arg(vendor, model, embedded == QLatin1String("Yes") ? tr7(" - built-in") : QString());
         if (!output.isEmpty()) {
             d.name += QStringLiteral(" (%1)").arg(output);
         }
@@ -161,19 +162,19 @@ class ColorManagement : public QDialog
 public:
     ColorManagement()
     {
-        setWindowTitle(QStringLiteral("Керування кольорами"));
+        setWindowTitle(tr7("Color Management"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-color")));
         setAttribute(Qt::WA_DeleteOnClose);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         auto *tabs = new QTabWidget;
-        tabs->addTab(devicesPage(), QStringLiteral("Пристрої"));
-        tabs->addTab(allPage(), QStringLiteral("Усі профілі"));
-        tabs->addTab(advancedPage(), QStringLiteral("Додатково"));
+        tabs->addTab(devicesPage(), tr7("Devices"));
+        tabs->addTab(allPage(), tr7("All Profiles"));
+        tabs->addTab(advancedPage(), tr7("Advanced"));
         v->addWidget(tabs);
         auto *bar = new QHBoxLayout;
         bar->addStretch(1);
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *close = new QPushButton(tr7("Close"));
         close->setMinimumWidth(75);
         bar->addWidget(close);
         v->addLayout(bar);
@@ -194,7 +195,7 @@ private:
     {
         auto *t = place(p, new QTreeWidget, r);
         t->setRootIsDecorated(false);
-        t->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Ім'я файлу")});
+        t->setHeaderLabels({tr7("Name"), tr7("File name")});
         Win7HeaderView::install(t);
         t->setColumnWidth(0, r.width() / 2);
         return t;
@@ -203,15 +204,15 @@ private:
     QWidget *devicesPage()
     {
         QWidget *p = page();
-        place(p, new QLabel(QStringLiteral("Пристрій:")), dlu(7, 9, 36, 10));
+        place(p, new QLabel(tr7("Device:")), dlu(7, 9, 36, 10));
         m_device = place(p, new QComboBox, dlu(46, 7, 247, 14));
-        m_mine = place(p, new QCheckBox(QStringLiteral("Використовувати мої параметри для цього пристрою")), dlu(46, 24, 247, 10));
+        m_mine = place(p, new QCheckBox(tr7("Use my settings for this device")), dlu(46, 24, 247, 10));
         m_mine->setChecked(true);
-        place(p, new QLabel(QStringLiteral("Профілі, пов'язані з цим пристроєм:")), dlu(7, 42, 286, 10));
+        place(p, new QLabel(tr7("Profiles associated with this device:")), dlu(7, 42, 286, 10));
         m_assoc = list(p, dlu(7, 54, 286, 130));
-        auto *add = place(p, new QPushButton(QStringLiteral("Додати...")), dlu(7, 190, 60, 14));
-        m_remove = place(p, new QPushButton(QStringLiteral("Видалити")), dlu(71, 190, 60, 14));
-        m_default = place(p, new QPushButton(QStringLiteral("Установити як профіль за замовчуванням")), dlu(135, 190, 158, 14));
+        auto *add = place(p, new QPushButton(tr7("Add...")), dlu(7, 190, 60, 14));
+        m_remove = place(p, new QPushButton(tr7("Delete")), dlu(71, 190, 60, 14));
+        m_default = place(p, new QPushButton(tr7("Set as Default Profile")), dlu(135, 190, 158, 14));
         connect(m_device, &QComboBox::currentIndexChanged, this, [this] { showDevice(); });
         connect(m_mine, &QCheckBox::toggled, this, [this] { syncButtons(); });
         connect(m_assoc, &QTreeWidget::currentItemChanged, this, [this] { syncButtons(); });
@@ -234,10 +235,10 @@ private:
     QWidget *allPage()
     {
         QWidget *p = page();
-        place(p, new QLabel(QStringLiteral("Профілі кольорів, установлені на цьому комп'ютері:")), dlu(7, 9, 286, 10));
+        place(p, new QLabel(tr7("Color profiles installed on this computer:")), dlu(7, 9, 286, 10));
         m_all = list(p, dlu(7, 22, 286, 162));
-        auto *add = place(p, new QPushButton(QStringLiteral("Додати...")), dlu(7, 190, 60, 14));
-        auto *del = place(p, new QPushButton(QStringLiteral("Видалити")), dlu(71, 190, 60, 14));
+        auto *add = place(p, new QPushButton(tr7("Add...")), dlu(7, 190, 60, 14));
+        auto *del = place(p, new QPushButton(tr7("Delete")), dlu(71, 190, 60, 14));
         connect(add, &QPushButton::clicked, this, [this] { importProfile(); });
         connect(del, &QPushButton::clicked, this, [this] {
             auto *it = m_all->currentItem();
@@ -246,10 +247,10 @@ private:
             }
             const QString file = it->text(1);
             if (!file.startsWith(QDir::homePath())) {
-                QMessageBox::information(this, windowTitle(), QStringLiteral("Системний профіль «%1» не можна видалити.").arg(it->text(0)));
+                QMessageBox::information(this, windowTitle(), tr7("The system profile \"%1\" cannot be removed.").arg(it->text(0)));
                 return;
             }
-            if (QMessageBox::question(this, windowTitle(), QStringLiteral("Видалити профіль «%1»?").arg(it->text(0))) == QMessageBox::Yes) {
+            if (QMessageBox::question(this, windowTitle(), tr7("Remove the profile \"%1\"?").arg(it->text(0))) == QMessageBox::Yes) {
                 colormgr({QStringLiteral("delete-profile"), it->data(0, Qt::UserRole).toString()});
                 QFile::remove(file);
                 reload();
@@ -261,14 +262,13 @@ private:
     QWidget *advancedPage()
     {
         QWidget *p = page();
-        place(p, new QGroupBox(QStringLiteral("Калібрування дисплея")), dlu(7, 7, 286, 54));
-        place(p, new QLabel(QStringLiteral("Калібрування дисплея допомагає точно відтворювати кольори. Профіль, створений колориметром, можна додати на вкладці «Усі профілі».")),
+        place(p, new QGroupBox(tr7("Display Calibration")), dlu(7, 7, 286, 54));
+        place(p, new QLabel(tr7("Display calibration helps to reproduce colors accurately. A profile made with a colorimeter can be added on the All Profiles tab.")),
               dlu(14, 18, 188, 36))
             ->setWordWrap(true);
-        place(p, new QPushButton(QStringLiteral("Калібрувати дисплей")), dlu(206, 26, 80, 14))->setEnabled(false);
-        place(p, new QGroupBox(QStringLiteral("Як працює керування кольорами")), dlu(7, 68, 286, 60));
-        place(p, new QLabel(QStringLiteral("Профіль за замовчуванням кожного монітора застосовує служба кольорів (colord). Програми, що підтримують керування кольорами, "
-                                           "використовують його для точного відображення зображень.")),
+        place(p, new QPushButton(tr7("Calibrate display")), dlu(206, 26, 80, 14))->setEnabled(false);
+        place(p, new QGroupBox(tr7("How color management works")), dlu(7, 68, 286, 60));
+        place(p, new QLabel(tr7("The default profile of each monitor is applied by the color service (colord). Programs that support color management use it to show images accurately.")),
               dlu(14, 80, 270, 44))
             ->setWordWrap(true);
         return p;
@@ -292,7 +292,7 @@ private:
         m_device->blockSignals(false);
         showDevice();
         m_all->clear();
-        auto *group = new QTreeWidgetItem(m_all, {QStringLiteral("Профілі ICC")});
+        auto *group = new QTreeWidgetItem(m_all, {tr7("ICC Profiles")});
         QFont b = group->font(0);
         b.setBold(true);
         group->setFont(0, b);
@@ -310,7 +310,7 @@ private:
         const Device d = currentDevice();
         bool first = true;
         for (const Profile &pr : d.profiles) {
-            auto *it = new QTreeWidgetItem(m_assoc, {first ? pr.title + QStringLiteral(" (за замовчуванням)") : pr.title, QFileInfo(pr.file).fileName()});
+            auto *it = new QTreeWidgetItem(m_assoc, {first ? pr.title + tr7(" (default)") : pr.title, QFileInfo(pr.file).fileName()});
             it->setData(0, Qt::UserRole, pr.path);
             first = false;
         }
@@ -330,12 +330,12 @@ private:
     void associate()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Пов'язати профіль кольорів"));
+        d.setWindowTitle(tr7("Associate Color Profile"));
         auto *v = new QVBoxLayout(&d);
-        v->addWidget(new QLabel(QStringLiteral("Виберіть профіль, який слід пов'язати з пристроєм:")));
+        v->addWidget(new QLabel(tr7("Select the profile you want to associate with the device:")));
         auto *t = new QTreeWidget;
         t->setRootIsDecorated(false);
-        t->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("Ім'я файлу")});
+        t->setHeaderLabels({tr7("Name"), tr7("File name")});
         Win7HeaderView::install(t);
         for (const Profile &pr : allProfiles()) {
             auto *it = new QTreeWidgetItem(t, {pr.title, QFileInfo(pr.file).fileName()});
@@ -344,11 +344,11 @@ private:
         t->setColumnWidth(0, 260);
         v->addWidget(t);
         auto *bar = new QHBoxLayout;
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         bar->addWidget(browse);
         bar->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         bar->addWidget(ok);
         bar->addWidget(cancel);
         v->addLayout(bar);
@@ -378,7 +378,7 @@ private:
     /** an .icc/.icm file into ~/.local/share/icc and colord; returns its object path */
     QString importProfile()
     {
-        const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Установлення профілю"), QDir::homePath(), QStringLiteral("Профілі ICC (*.icc *.icm *.ICC *.ICM)"));
+        const QString f = QFileDialog::getOpenFileName(this, tr7("Install Profile"), QDir::homePath(), tr7("ICC Profiles (*.icc *.icm *.ICC *.ICM)"));
         if (f.isEmpty()) {
             return {};
         }
@@ -399,7 +399,7 @@ private:
             }
         }
         if (code != 0) {
-            QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося встановити профіль «%1».").arg(QFileInfo(f).fileName()));
+            QMessageBox::warning(this, windowTitle(), tr7("The profile \"%1\" could not be installed.").arg(QFileInfo(f).fileName()));
         }
         return {};
     }

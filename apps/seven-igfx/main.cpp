@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * seven-igfx: Intel® HD Graphics Control Panel (driver 15.33 for Windows 7, 2014-2016 look) for the Intel GPU
  * of a Linux system: blue header picture, tiles on the home page (Display, 3D, Power, Options and Support,
@@ -410,7 +411,7 @@ public:
 
 inline QString hz(double r)
 {
-    return QStringLiteral("%1p Гц").arg(qRound(r)).replace(QStringLiteral("p"), QString());
+    return tr7("%1p Hz").arg(qRound(r)).replace(QStringLiteral("p"), QString());
 }
 
 inline QString rotName(int r)
@@ -423,20 +424,20 @@ class DisplayGeneralTab : public Tab
 public:
     DisplayGeneralTab()
     {
-        name = QStringLiteral("Загальні параметри");
+        name = tr7("General Settings");
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         g->setVerticalSpacing(10);
         display = new QComboBox;
         res = new QComboBox;
         rate = new QComboBox;
-        g->addWidget(text(QStringLiteral("Вибір дисплея"), true), 0, 0);
+        g->addWidget(text(tr7("Select Display"), true), 0, 0);
         g->addWidget(display, 1, 0);
-        g->addWidget(text(QStringLiteral("Роздільна здатність"), true), 2, 0);
+        g->addWidget(text(tr7("Resolution"), true), 2, 0);
         g->addWidget(res, 3, 0);
-        g->addWidget(text(QStringLiteral("Частота оновлення"), true), 4, 0);
+        g->addWidget(text(tr7("Refresh Rate"), true), 4, 0);
         g->addWidget(rate, 5, 0);
-        g->addWidget(text(QStringLiteral("Поворот"), true), 0, 1);
+        g->addWidget(text(tr7("Rotation"), true), 0, 1);
         auto *rv = new QHBoxLayout;
         rot = new QButtonGroup(this);
         for (int r : {1, 2, 4, 8}) {
@@ -471,7 +472,7 @@ public:
         for (const Output &o : outputs()) {
             if (o.enabled) {
                 list << o;
-                display->addItem(o.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Цифровий дисплей (%1)").arg(o.name), o.name);
+                display->addItem(o.builtIn() ? tr7("Built-in Display") : tr7("Digital Display (%1)").arg(o.name), o.name);
             }
         }
         fill();
@@ -481,9 +482,9 @@ public:
     {
         const Output old = o;
         kscreen({QStringLiteral("output.%1.mode.%2").arg(o.name, rate->currentData().toString()), QStringLiteral("output.%1.rotation.%2").arg(o.name, rotationWord(rot->checkedId()))});
-        QMessageBox box(QMessageBox::Question, QStringLiteral("Панель керування графікою Intel® HD"), QStringLiteral("Зберегти нові параметри?"), QMessageBox::Yes | QMessageBox::No, this);
-        box.button(QMessageBox::Yes)->setText(QStringLiteral("Так"));
-        box.button(QMessageBox::No)->setText(QStringLiteral("Ні"));
+        QMessageBox box(QMessageBox::Question, tr7("Intel® HD Graphics Control Panel"), tr7("Do you want to keep the new settings?"), QMessageBox::Yes | QMessageBox::No, this);
+        box.button(QMessageBox::Yes)->setText(tr7("Yes"));
+        box.button(QMessageBox::No)->setText(tr7("No"));
         QTimer::singleShot(15000, &box, &QMessageBox::reject);
         if (box.exec() != QMessageBox::Yes) {
             kscreen({QStringLiteral("output.%1.mode.%2").arg(old.name, old.currentMode), QStringLiteral("output.%1.rotation.%2").arg(old.name, rotationWord(old.rotation))});
@@ -544,7 +545,7 @@ private:
         const QSize s = res->currentData().toSize();
         for (const Mode &m : o.modes) {
             if (QSize(m.w, m.h) == s) {
-                rate->addItem(QStringLiteral("%1 Гц").arg(qRound(m.hz)), m.id);
+                rate->addItem(tr7("%1 Hz").arg(qRound(m.hz)), m.id);
             }
         }
         rate->setCurrentIndex(qMax(0, rate->findData(keep)));
@@ -568,18 +569,18 @@ class ColorTab : public Tab
 public:
     ColorTab()
     {
-        name = QStringLiteral("Колір");
+        name = tr7("Color");
         auto *top = new QHBoxLayout;
         display = new QComboBox;
         display->setMinimumWidth(240);
-        top->addWidget(text(QStringLiteral("Вибір дисплея"), true));
+        top->addWidget(text(tr7("Select Display"), true));
         top->addWidget(display);
         top->addStretch(1);
         v->addLayout(top);
         auto *chs = new QHBoxLayout;
         group = new QButtonGroup(this);
         const QStringList cols{QStringLiteral("colorenhance_all.png"), QStringLiteral("colorenhance_red.png"), QStringLiteral("colorenhance_green.png"), QStringLiteral("colorenhance_blue.png")};
-        const QStringList tips{QStringLiteral("Усі кольори"), QStringLiteral("Червоний"), QStringLiteral("Зелений"), QStringLiteral("Синій")};
+        const QStringList tips{tr7("All Colors"), tr7("Red"), tr7("Green"), tr7("Blue")};
         for (int i = 0; i < 4; ++i) {
             auto *b = new QPushButton;
             b->setCheckable(true);
@@ -613,9 +614,9 @@ public:
             });
             return sp;
         };
-        bright = row(0, QStringLiteral("Яскравість"), -100, 100);
-        contrast = row(2, QStringLiteral("Контраст"), 0, 200);
-        gamma = row(4, QStringLiteral("Гамма (×100)"), 30, 280);
+        bright = row(0, tr7("Brightness"), -100, 100);
+        contrast = row(2, tr7("Contrast"), 0, 200);
+        gamma = row(4, tr7("Gamma (×100)"), 30, 280);
         g->setColumnStretch(0, 1);
         auto *h = new QHBoxLayout;
         h->addLayout(g, 1);
@@ -640,7 +641,7 @@ public:
         display->clear();
         for (const Output &o : outputs()) {
             if (o.enabled) {
-                display->addItem(o.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Цифровий дисплей (%1)").arg(o.name), o.name);
+                display->addItem(o.builtIn() ? tr7("Built-in Display") : tr7("Digital Display (%1)").arg(o.name), o.name);
             }
         }
         pick();
@@ -729,8 +730,8 @@ class MultiDisplayTab : public Tab
 public:
     MultiDisplayTab()
     {
-        name = QStringLiteral("Кілька дисплеїв");
-        v->addWidget(text(QStringLiteral("Вибір режиму відображення"), true));
+        name = tr7("Multiple Displays");
+        v->addWidget(text(tr7("Select Display Mode"), true));
         auto *h = new QHBoxLayout;
         group = new QButtonGroup(this);
         auto add = [&](int id, const QString &img, const QString &t) {
@@ -746,12 +747,12 @@ public:
             col->addWidget(text(t));
             h->addLayout(col);
         };
-        add(0, QStringLiteral("single.png"), QStringLiteral("Один дисплей"));
-        add(1, QStringLiteral("dualclone.png"), QStringLiteral("Розширений робочий стіл"));
+        add(0, QStringLiteral("single.png"), tr7("Single Display"));
+        add(1, QStringLiteral("dualclone.png"), tr7("Extended Desktop"));
         h->addStretch(1);
         v->addLayout(h);
         v->addSpacing(10);
-        v->addWidget(text(QStringLiteral("Основний дисплей"), true));
+        v->addWidget(text(tr7("Primary Display"), true));
         primary = new QComboBox;
         primary->setMaximumWidth(280);
         v->addWidget(primary);
@@ -768,7 +769,7 @@ public:
         primary->clear();
         int on = 0;
         for (const Output &o : all) {
-            primary->addItem(o.builtIn() ? QStringLiteral("Вбудований дисплей") : QStringLiteral("Цифровий дисплей (%1)").arg(o.name), o.name);
+            primary->addItem(o.builtIn() ? tr7("Built-in Display") : tr7("Digital Display (%1)").arg(o.name), o.name);
             on += o.enabled;
             if (o.enabled && m_primary.isEmpty()) {
                 m_primary = o.name;
@@ -778,7 +779,7 @@ public:
         group->button(m_mode)->setChecked(true);
         primary->setCurrentIndex(qMax(0, primary->findData(m_primary)));
         group->button(1)->setEnabled(all.size() > 1);
-        info->setText(all.size() > 1 ? QString() : QStringLiteral("Зараз підключено лише один дисплей. Підключіть ще один, щоб розширити робочий стіл."));
+        info->setText(all.size() > 1 ? QString() : tr7("Only one display is connected right now. Connect another one to extend the desktop."));
     }
     bool dirty() const override { return group->checkedId() != m_mode || (group->checkedId() == 0 && primary->currentData().toString() != m_primary); }
     bool apply() override
@@ -810,14 +811,14 @@ class ThreeDTab : public Tab
 public:
     ThreeDTab()
     {
-        name = QStringLiteral("Загальні параметри");
-        v->addWidget(text(QStringLiteral("Вертикальна синхронізація"), true));
+        name = tr7("General Settings");
+        v->addWidget(text(tr7("Vertical Sync"), true));
         vsync = new QComboBox;
-        vsync->addItem(QStringLiteral("Використовувати параметри програми"), 1);
-        vsync->addItem(QStringLiteral("Використовувати параметри драйвера"), 3);
+        vsync->addItem(tr7("Use Application Settings"), 1);
+        vsync->addItem(tr7("Use Driver Settings"), 3);
         vsync->setMaximumWidth(320);
         v->addWidget(vsync);
-        v->addWidget(text(QStringLiteral("«Параметри драйвера» завжди синхронізують кадри з частотою оновлення дисплея. Діє для програм OpenGL під час наступного запуску.")));
+        v->addWidget(text(tr7("\"Use Driver Settings\" always synchronizes frames with the display refresh rate. Applies to OpenGL programs the next time they start.")));
         v->addStretch(1);
         QObject::connect(vsync, &QComboBox::currentIndexChanged, this, [this] { notify(); });
     }
@@ -850,14 +851,14 @@ class PowerTab : public Tab
 public:
     PowerTab()
     {
-        name = QStringLiteral("План електроживлення графіки");
+        name = tr7("Graphics Power Plan");
         state = text(QString(), true);
         v->addWidget(state);
         v->addSpacing(6);
         group = new QButtonGroup(this);
-        const QList<QPair<QString, QString>> modes{{QStringLiteral("performance"), QStringLiteral("Максимальна продуктивність")},
-                                                    {QStringLiteral("balanced"), QStringLiteral("Збалансований режим")},
-                                                    {QStringLiteral("power-saver"), QStringLiteral("Максимальний час роботи від батареї")}};
+        const QList<QPair<QString, QString>> modes{{QStringLiteral("performance"), tr7("Maximum Performance")},
+                                                    {QStringLiteral("balanced"), tr7("Balanced Mode")},
+                                                    {QStringLiteral("power-saver"), tr7("Maximum Battery Life")}};
         const QStringList have = powerProfiles();
         int i = 0;
         for (const auto &m : modes) {
@@ -874,7 +875,7 @@ public:
     void load() override
     {
         m_p = powerProfile();
-        state->setText(onBattery() ? QStringLiteral("Зараз ноутбук працює від батареї") : QStringLiteral("Зараз ноутбук підключено до мережі"));
+        state->setText(onBattery() ? tr7("The laptop is running on battery now") : tr7("The laptop is plugged in now"));
         for (QAbstractButton *b : group->buttons()) {
             if (b->property("profile").toString() == m_p) {
                 b->setChecked(true);
@@ -909,7 +910,7 @@ class InfoTab : public Tab
 public:
     InfoTab()
     {
-        name = QStringLiteral("Інформаційний центр");
+        name = tr7("Information Center");
         table = new QTreeWidget;
         table->setHeaderHidden(true);
         table->setColumnCount(2);
@@ -944,24 +945,24 @@ public:
             }
             it->setExpanded(true);
         };
-        group(QStringLiteral("Система"), {{QStringLiteral("Операційна система"), QSysInfo::prettyProductName()},
-                                          {QStringLiteral("Процесор"), cpu},
-                                          {QStringLiteral("Фізична пам'ять"), mem.hasMatch() ? QStringLiteral("%1 МБ").arg(mem.captured(1).toLongLong() / 1024) : QString()}});
-        group(QStringLiteral("Графіка"), {{QStringLiteral("Графічний пристрій"), g.name},
-                                          {QStringLiteral("Код пристрою"), g.deviceId},
-                                          {QStringLiteral("Код постачальника"), QStringLiteral("8086")},
-                                          {QStringLiteral("Редакція"), g.revision},
-                                          {QStringLiteral("Версія драйвера"), QStringLiteral("Mesa ") + mesaVersion()},
-                                          {QStringLiteral("Драйвер ядра"), QStringLiteral("i915 / xe, Linux ") + QSysInfo::kernelVersion()},
-                                          {QStringLiteral("Версія OpenGL"), gl.value(1).section(QLatin1Char(' '), 0, 0)},
-                                          {QStringLiteral("Версія Vulkan"), vulkanVersion()},
-                                          {QStringLiteral("Адреса PCI"), g.pci}});
+        group(tr7("System"), {{tr7("Operating System"), QSysInfo::prettyProductName()},
+                                          {tr7("Processor"), cpu},
+                                          {tr7("Physical Memory"), mem.hasMatch() ? tr7("%1 MB").arg(mem.captured(1).toLongLong() / 1024) : QString()}});
+        group(tr7("Graphics"), {{tr7("Graphics Device"), g.name},
+                                          {tr7("Device ID"), g.deviceId},
+                                          {tr7("Vendor ID"), QStringLiteral("8086")},
+                                          {tr7("Revision"), g.revision},
+                                          {tr7("Driver Version"), QStringLiteral("Mesa ") + mesaVersion()},
+                                          {tr7("Kernel Driver"), QStringLiteral("i915 / xe, Linux ") + QSysInfo::kernelVersion()},
+                                          {tr7("OpenGL Version"), gl.value(1).section(QLatin1Char(' '), 0, 0)},
+                                          {tr7("Vulkan Version"), vulkanVersion()},
+                                          {tr7("PCI Address"), g.pci}});
         QList<Row> disp;
         for (const Output &o : outputs()) {
             const Mode m = o.mode(o.currentMode);
-            disp << Row{o.builtIn() ? QStringLiteral("Вбудований дисплей") : o.name, o.enabled ? QStringLiteral("%1 x %2, %3 Гц").arg(m.w).arg(m.h).arg(qRound(m.hz)) : QStringLiteral("Вимкнено")};
+            disp << Row{o.builtIn() ? tr7("Built-in Display") : o.name, o.enabled ? tr7("%1 x %2, %3 Hz").arg(m.w).arg(m.h).arg(qRound(m.hz)) : tr7("Off")};
         }
-        group(QStringLiteral("Дисплеї"), disp);
+        group(tr7("Displays"), disp);
     }
 
 private:
@@ -973,11 +974,11 @@ class SupportTab : public Tab
 public:
     SupportTab()
     {
-        name = QStringLiteral("Підтримка");
-        v->addWidget(text(QStringLiteral("Довідку та оновлення драйверів графіки Intel можна знайти на сайті Intel.")));
-        for (const auto &l : QList<QPair<QString, QString>>{{QStringLiteral("Підтримка графіки Intel®"), QStringLiteral("https://www.intel.com/content/www/us/en/support/products/80939/graphics.html")},
-                                                             {QStringLiteral("Завантаження драйверів"), QStringLiteral("https://www.intel.com/content/www/us/en/download-center/home.html")},
-                                                             {QStringLiteral("Відвідати www.intel.com"), QStringLiteral("https://www.intel.com")}}) {
+        name = tr7("Support");
+        v->addWidget(text(tr7("Help and graphics driver updates for Intel graphics are on the Intel website.")));
+        for (const auto &l : QList<QPair<QString, QString>>{{tr7("Intel® Graphics Support"), QStringLiteral("https://www.intel.com/content/www/us/en/support/products/80939/graphics.html")},
+                                                             {tr7("Download Drivers"), QStringLiteral("https://www.intel.com/content/www/us/en/download-center/home.html")},
+                                                             {tr7("Visit www.intel.com"), QStringLiteral("https://www.intel.com")}}) {
             auto *b = new QPushButton(l.first);
             b->setFlat(true);
             b->setCursor(Qt::PointingHandCursor);
@@ -997,8 +998,8 @@ class ProfilesTab : public Tab
 public:
     ProfilesTab()
     {
-        name = QStringLiteral("Профілі");
-        v->addWidget(text(QStringLiteral("Профілі зберігають поточні параметри дисплея, кольору, живлення та 3D, щоб застосувати їх пізніше одним натисканням.")));
+        name = tr7("Profiles");
+        v->addWidget(text(tr7("Profiles save the current display, color, power and 3D settings so that you can apply them later with one click.")));
         list = new QListWidget;
         list->setFont(ufont(14));
         v->addWidget(list, 1);
@@ -1088,7 +1089,7 @@ public:
         }
         const QString old = list->currentItem()->text();
         bool ok = false;
-        const QString n = QInputDialog::getText(parent, QStringLiteral("Перейменувати профіль"), QStringLiteral("Нова назва:"), QLineEdit::Normal, old, &ok).trimmed();
+        const QString n = QInputDialog::getText(parent, tr7("Rename Profile"), tr7("New name:"), QLineEdit::Normal, old, &ok).trimmed();
         if (!ok || n.isEmpty() || n == old) {
             return;
         }
@@ -1123,7 +1124,7 @@ public:
     Window()
     {
         setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-        setWindowTitle(QStringLiteral("Панель керування графікою Intel® HD"));
+        setWindowTitle(tr7("Intel® HD Graphics Control Panel"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-igfx")));
         setMinimumSize(800, 560);
         resize(1024, 660);
@@ -1142,12 +1143,12 @@ public:
         auto *bl = new QHBoxLayout(bar);
         bl->setContentsMargins(20, 4, 20, 4);
         bl->addStretch(1);
-        apply = new AppButton(QStringLiteral("apply"), QStringLiteral("Застосувати"));
-        cancel = new AppButton(QStringLiteral("cancel"), QStringLiteral("Скасувати"));
-        restore = new AppButton(QStringLiteral("restore"), QStringLiteral("Відновити типові"));
-        saveProfile = new AppButton(QStringLiteral("save"), QStringLiteral("Зберегти профіль"));
-        rename = new AppButton(QStringLiteral("rename"), QStringLiteral("Перейменувати"));
-        remove = new AppButton(QStringLiteral("delete"), QStringLiteral("Видалити"));
+        apply = new AppButton(QStringLiteral("apply"), tr7("Apply"));
+        cancel = new AppButton(QStringLiteral("cancel"), tr7("Cancel"));
+        restore = new AppButton(QStringLiteral("restore"), tr7("Restore Defaults"));
+        saveProfile = new AppButton(QStringLiteral("save"), tr7("Save Profile"));
+        rename = new AppButton(QStringLiteral("rename"), tr7("Rename"));
+        remove = new AppButton(QStringLiteral("delete"), tr7("Delete"));
         for (AppButton *b : {saveProfile, rename, remove, restore, cancel, apply}) {
             bl->addWidget(b);
         }
@@ -1183,7 +1184,7 @@ public:
         });
         QObject::connect(saveProfile, &QAbstractButton::clicked, this, [this] {
             bool ok = false;
-            const QString n = QInputDialog::getText(this, QStringLiteral("Зберегти профіль"), QStringLiteral("Назва профілю:"), QLineEdit::Normal, QString(), &ok).trimmed();
+            const QString n = QInputDialog::getText(this, tr7("Save Profile"), tr7("Profile name:"), QLineEdit::Normal, QString(), &ok).trimmed();
             if (ok && !n.isEmpty()) {
                 ProfilesTab::save(n);
                 profiles->load();
@@ -1192,7 +1193,7 @@ public:
         QObject::connect(rename, &QAbstractButton::clicked, this, [this] { profiles->renameCurrent(this); });
         QObject::connect(remove, &QAbstractButton::clicked, this, [this] {
             if (profiles->list->currentItem() &&
-                QMessageBox::question(this, windowTitle(), QStringLiteral("Видалити профіль «%1»?").arg(profiles->list->currentItem()->text())) == QMessageBox::Yes) {
+                QMessageBox::question(this, windowTitle(), tr7("Delete the profile \"%1\"?").arg(profiles->list->currentItem()->text())) == QMessageBox::Yes) {
                 profiles->removeCurrent();
             }
         });
@@ -1201,7 +1202,7 @@ public:
         profiles = new ProfilesTab;
         QObject::connect(profiles->list, &QListWidget::currentRowChanged, this, [this] { refresh(); });
         m_sections = {
-            {QStringLiteral("display"), QStringLiteral("Дисплей"), QStringLiteral("displays_icon.png"), {new DisplayGeneralTab, new ColorTab, new MultiDisplayTab}},
+            {QStringLiteral("display"), tr7("Display"), QStringLiteral("displays_icon.png"), {new DisplayGeneralTab, new ColorTab, new MultiDisplayTab}},
             {QStringLiteral("3d"), QStringLiteral("3D"), QStringLiteral("3d_icon.png"), {new ThreeDTab}},
         };
         bool laptop = false;
@@ -1209,10 +1210,10 @@ public:
             laptop |= o.builtIn();
         }
         if (laptop) {
-            m_sections << Section{QStringLiteral("power"), QStringLiteral("Живлення"), QStringLiteral("power_icon.png"), {new PowerTab}};
+            m_sections << Section{QStringLiteral("power"), tr7("Power"), QStringLiteral("power_icon.png"), {new PowerTab}};
         }
-        m_sections << Section{QStringLiteral("options"), QStringLiteral("Параметри й підтримка"), QStringLiteral("options_icon.png"), {new InfoTab, new SupportTab}};
-        m_sections << Section{QStringLiteral("profiles"), QStringLiteral("Профілі"), QStringLiteral("profiles_icon.png"), {profiles}};
+        m_sections << Section{QStringLiteral("options"), tr7("Options and Support"), QStringLiteral("options_icon.png"), {new InfoTab, new SupportTab}};
+        m_sections << Section{QStringLiteral("profiles"), tr7("Profiles"), QStringLiteral("profiles_icon.png"), {profiles}};
         for (Section &s : m_sections) {
             auto *tile = new Tile(s.title, s.icon);
             const QString id = s.id;
@@ -1313,7 +1314,7 @@ private:
     }
     bool askApply(Tab *t)
     {
-        const auto r = QMessageBox::question(this, windowTitle(), QStringLiteral("Застосувати внесені зміни?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        const auto r = QMessageBox::question(this, windowTitle(), tr7("Apply the changes you made?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
         if (r == QMessageBox::Cancel) {
             return false;
         }
@@ -1333,14 +1334,14 @@ private:
             return;
         }
         m_sec = nullptr;
-        header->set(QStringLiteral("Панель керування графікою Intel® HD"), false);
+        header->set(tr7("Intel® HD Graphics Control Panel"), false);
         pages->setCurrentWidget(m_home);
         bar->hide();
     }
     void sectionMenu()
     {
         QMenu m(this);
-        QAction *h = m.addAction(QStringLiteral("Головна"));
+        QAction *h = m.addAction(tr7("Home"));
         m.addSeparator();
         QHash<QAction *, QString> ids;
         for (const Section &s : m_sections) {
@@ -1380,7 +1381,7 @@ private:
         auto *img = new QLabel;
         img->setPixmap(pic(QStringLiteral("appbadge.png")).scaled(170, 170, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         badge->addWidget(img);
-        auto *desc = new QLabel(QStringLiteral("Налаштуйте дисплеї, 3D-графіку та живлення своєї графіки Intel® HD."));
+        auto *desc = new QLabel(tr7("Set up the displays, 3D graphics and power of your Intel® HD Graphics."));
         desc->setWordWrap(true);
         desc->setFont(ufont(15));
         desc->setStyleSheet(QStringLiteral("color:#0071c5"));
@@ -1415,6 +1416,7 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-igfx"));
     app.setDesktopFileName(QStringLiteral("seven-igfx"));
     app.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-igfx")));
@@ -1424,7 +1426,7 @@ int main(int argc, char **argv)
         return 0;
     }
     if (Igfx::intelGpu().card.isEmpty()) {
-        QMessageBox::critical(nullptr, QStringLiteral("Панель керування графікою Intel® HD"), QStringLiteral("Не вдалося знайти графічний пристрій Intel®."));
+        QMessageBox::critical(nullptr, tr7("Intel® HD Graphics Control Panel"), tr7("No Intel® graphics device was found."));
         return 1;
     }
     Igfx::Window w;

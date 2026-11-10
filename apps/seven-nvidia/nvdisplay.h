@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /*
  * The "Display" and "Video" pages of the NVIDIA Control Panel (driver 474.30 for Windows 7: the layouts of
  * nvDispSR.dll / nvViTvSR.dll dialogs 33521, 6000, 367, 23, 33501, 34612, 32795, 1500, 1393 and the Russian
@@ -50,7 +51,7 @@ inline QSettings &settings()
 inline QString displayName(const Ccc::Output &o)
 {
     if (o.builtIn()) {
-        return QStringLiteral("Дисплей ноутбука");
+        return tr7("Laptop display");
     }
     for (const QString &card : QDir(QStringLiteral("/sys/class/drm")).entryList({QStringLiteral("card?")}, QDir::AllEntries | QDir::System)) {
         const QString n = Ccc::edidName(card, o.name);
@@ -65,7 +66,7 @@ inline QString displayName(const Ccc::Output &o)
 inline QString connectorWord(const QString &output)
 {
     if (output.startsWith(QLatin1String("eDP")) || output.startsWith(QLatin1String("LVDS"))) {
-        return QStringLiteral("Дисплей ноутбука");
+        return tr7("Laptop display");
     }
     if (output.startsWith(QLatin1String("HDMI"))) {
         return QStringLiteral("HDMI");
@@ -222,8 +223,7 @@ inline void setLoginApply()
     QDir().mkpath(QFileInfo(path).path());
     QFile f(path);
     if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        f.write("[Desktop Entry]\nType=Application\nName=Панель керування NVIDIA: параметри дисплея\nExec=seven-nvidia --apply-display\n"
-                "NoDisplay=true\nX-KDE-autostart-phase=2\n");
+        f.write("[Desktop Entry]\nType=Application\nName=NVIDIA Control Panel: display settings\nExec=seven-nvidia --apply-display\nNoDisplay=true\nX-KDE-autostart-phase=2\n");
     }
 }
 
@@ -357,7 +357,7 @@ private:
 inline bool confirmChange(QWidget *parent)
 {
     QDialog d(parent);
-    d.setWindowTitle(QStringLiteral("Застосування змін"));
+    d.setWindowTitle(tr7("Apply Changes"));
     auto *v = new QVBoxLayout(&d);
     auto *row = new QHBoxLayout;
     auto *icon = new QLabel;
@@ -369,14 +369,14 @@ inline bool confirmChange(QWidget *parent)
     v->addLayout(row);
     auto *bb = new QHBoxLayout;
     bb->addStretch(1);
-    auto *yes = new QPushButton(QStringLiteral("Так"));
-    auto *no = new QPushButton(QStringLiteral("Ні"));
+    auto *yes = new QPushButton(tr7("Yes"));
+    auto *no = new QPushButton(tr7("No"));
     bb->addWidget(yes);
     bb->addWidget(no);
     v->addLayout(bb);
     int left = 20;
     auto update = [&] {
-        text->setText(QStringLiteral("Параметри дисплея змінено.\nЗберегти ці параметри?\n\nПопередні параметри буде відновлено через %1 с.").arg(left));
+        text->setText(tr7("The display settings have changed.\nDo you want to keep these settings?\n\nThe previous settings will be restored in %1 seconds.").arg(left));
     };
     update();
     QTimer t;
@@ -463,36 +463,35 @@ public:
     // ---- Change resolution ----
     QWidget *resolution()
     {
-        auto *page = new PageFrame(QStringLiteral("Зміна роздільної здатності"),
-                                   QStringLiteral("Можна змінити роздільну здатність і частоту оновлення дисплея, щоб зменшити мерехтіння або змінити обсяг "
-                                                  "відомостей на екрані."),
+        auto *page = new PageFrame(tr7("Change resolution"),
+                                   tr7("You can change the resolution and refresh rate of the display to reduce flicker or change the amount of information on the screen."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
-        v->addWidget(step(QStringLiteral("2. Виберіть роздільну здатність.")));
+        v->addWidget(step(tr7("2. Choose the resolution.")));
         auto *g = new QGridLayout;
         g->setContentsMargins(22, 0, 0, 0);
         g->setHorizontalSpacing(40);
-        g->addWidget(new QLabel(QStringLiteral("Роз'єм:")), 0, 0);
+        g->addWidget(new QLabel(tr7("Connector:")), 0, 0);
         auto *conn = new QLabel;
         g->addWidget(conn, 1, 0);
-        g->addWidget(new QLabel(QStringLiteral("Роздільна здатність:")), 2, 0);
+        g->addWidget(new QLabel(tr7("Resolution:")), 2, 0);
         auto *list = new QListWidget;
         list->setFixedSize(270, 150);
         g->addWidget(list, 3, 0);
-        g->addWidget(new QLabel(QStringLiteral("Частота оновлення:")), 2, 1, Qt::AlignTop);
+        g->addWidget(new QLabel(tr7("Refresh rate:")), 2, 1, Qt::AlignTop);
         auto *rate = new QComboBox;
         rate->setMinimumWidth(170);
         g->addWidget(rate, 3, 1, Qt::AlignTop);
         g->setColumnStretch(2, 1);
         v->addLayout(g);
-        v->addWidget(step(QStringLiteral("3. Застосуйте такі параметри.")));
-        auto *colorDefault = new QRadioButton(QStringLiteral("Використовувати стандартні параметри кольору"));
-        auto *colorNv = new QRadioButton(QStringLiteral("Використовувати параметри кольору NVIDIA"));
+        v->addWidget(step(tr7("3. Apply the following settings.")));
+        auto *colorDefault = new QRadioButton(tr7("Use default color settings"));
+        auto *colorNv = new QRadioButton(tr7("Use NVIDIA color settings"));
         auto *cg = new QGridLayout;
         cg->setContentsMargins(22, 0, 0, 0);
         cg->addWidget(colorDefault, 0, 0, 1, 4);
@@ -505,18 +504,17 @@ public:
             cg->addWidget(c, row + 1, col);
             return c;
         };
-        auto *depth = combo(2, 0, QStringLiteral("Глибина кольору робочого столу:"), {QStringLiteral("Найвища (32-бітна)")});
-        auto *bpc = combo(2, 1, QStringLiteral("Вихідна глибина кольору:"), {QStringLiteral("8 bpc"), QStringLiteral("10 bpc")});
-        auto *format = combo(4, 0, QStringLiteral("Вихідний формат кольору:"), {QStringLiteral("RGB")});
-        auto *range = combo(4, 1, QStringLiteral("Вихідний динамічний діапазон:"), {QStringLiteral("Повний")});
+        auto *depth = combo(2, 0, tr7("Desktop color depth:"), {tr7("Highest (32-bit)")});
+        auto *bpc = combo(2, 1, tr7("Output color depth:"), {QStringLiteral("8 bpc"), QStringLiteral("10 bpc")});
+        auto *format = combo(4, 0, tr7("Output color format:"), {QStringLiteral("RGB")});
+        auto *range = combo(4, 1, tr7("Output dynamic range:"), {tr7("Full")});
         Q_UNUSED(depth)
         Q_UNUSED(format)
         Q_UNUSED(range)
         v->addLayout(cg);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Роздільна здатність визначає кількість точок на екрані: що вона більша, то менші об'єкти й більше їх вміщується. "
-                                  "Частота оновлення — скільки разів за секунду перемальовується екран."),
-                   QStringLiteral("Вибір власної (рідної) роздільної здатності дисплея для найчіткішого зображення."));
+        page->show(tr7("The resolution sets the number of dots on the screen: the higher it is, the smaller the items and the more of them fit. The refresh rate is how many times per second the screen is redrawn."),
+                   tr7("Choose the native resolution of the display for the sharpest image."));
 
         struct State {
             QString output, mode;
@@ -541,7 +539,7 @@ public:
                 return a.hz > b.hz;
             });
             for (const Ccc::Mode &m : modes) {
-                rate->addItem(QStringLiteral("%1 Гц").arg(qRound(m.hz)), m.id);
+                rate->addItem(tr7("%1 Hz").arg(qRound(m.hz)), m.id);
             }
             rate->setCurrentIndex(qMax(0, rate->findData(st->mode)));
             rate->blockSignals(false);
@@ -553,7 +551,7 @@ public:
                                    connectorWord(o.name)));
             list->blockSignals(true);
             list->clear();
-            auto *hdr = new QListWidgetItem(QStringLiteral("ПК"), list);
+            auto *hdr = new QListWidgetItem(tr7("PC"), list);
             hdr->setFlags(Qt::NoItemFlags);
             hdr->setForeground(QColor(0x1e, 0x50, 0xa0));
             QStringList seen;
@@ -571,7 +569,7 @@ public:
                 seen << key;
                 QString text = QStringLiteral("%1 × %2").arg(m.w).arg(m.h);
                 if (m.w == native.w && m.h == native.h) {
-                    text += QStringLiteral(" (власна)");
+                    text += tr7(" (native)");
                 }
                 auto *it = new QListWidgetItem(QStringLiteral("    ") + text, list);
                 it->setData(Qt::UserRole, key);
@@ -660,21 +658,20 @@ public:
     // ---- Adjust desktop colour settings ----
     QWidget *desktopColor()
     {
-        auto *page = new PageFrame(QStringLiteral("Регулювання параметрів кольору робочого столу"),
-                                   QStringLiteral("Можна відрегулювати параметри кольору робочого столу для дисплеїв або покращити якість зображення, "
-                                                  "якщо використовується телевізор."),
+        auto *page = new PageFrame(tr7("Adjust desktop color settings"),
+                                   tr7("You can adjust the desktop color settings for your displays or improve image quality if you are using a TV."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
         auto *cols = new QHBoxLayout;
         auto *left = new QVBoxLayout;
-        left->addWidget(step(QStringLiteral("2. Виберіть спосіб налаштування кольору.")));
-        auto *other = new QRadioButton(QStringLiteral("Інші програми керують параметрами кольору"));
-        auto *nv = new QRadioButton(QStringLiteral("Використовувати параметри NVIDIA"));
+        left->addWidget(step(tr7("2. Choose how color is set.")));
+        auto *other = new QRadioButton(tr7("Other applications control the color settings"));
+        auto *nv = new QRadioButton(tr7("Use NVIDIA settings"));
         other->setContentsMargins(20, 0, 0, 0);
         left->addWidget(other);
         left->addWidget(nv);
@@ -685,24 +682,24 @@ public:
         auto *chIcon = new QLabel;
         chIcon->setPixmap(QPixmap(pic(QStringLiteral("ch-all"))));
         g->addWidget(chIcon, 0, 0);
-        g->addWidget(new QLabel(QStringLiteral("Колірний канал:")), 0, 1);
+        g->addWidget(new QLabel(tr7("Color channel:")), 0, 1);
         auto *channel = new QComboBox;
-        channel->addItem(QIcon(pic(QStringLiteral("ch-all"))), QStringLiteral("Усі канали"));
-        channel->addItem(QIcon(pic(QStringLiteral("ch-red"))), QStringLiteral("Червоний"));
-        channel->addItem(QIcon(pic(QStringLiteral("ch-green"))), QStringLiteral("Зелений"));
-        channel->addItem(QIcon(pic(QStringLiteral("ch-blue"))), QStringLiteral("Синій"));
+        channel->addItem(QIcon(pic(QStringLiteral("ch-all"))), tr7("All channels"));
+        channel->addItem(QIcon(pic(QStringLiteral("ch-red"))), tr7("Red"));
+        channel->addItem(QIcon(pic(QStringLiteral("ch-green"))), tr7("Green"));
+        channel->addItem(QIcon(pic(QStringLiteral("ch-blue"))), tr7("Blue"));
         g->addWidget(channel, 0, 3, 1, 2);
-        const SliderRow bright = sliderRow(g, 1, QStringLiteral("brightness"), QStringLiteral("Яскравість:"), 0, 100);
-        const SliderRow contrast = sliderRow(g, 2, QStringLiteral("contrast"), QStringLiteral("Контрастність:"), 0, 100);
-        const SliderRow gamma = sliderRow(g, 3, QStringLiteral("gamma"), QStringLiteral("Гамма:"), 30, 280);
-        auto *note = new QLabel(QStringLiteral("Дуже високі й дуже низькі значення яскравості та контрастності\nможуть обмежувати діапазон гамми."));
+        const SliderRow bright = sliderRow(g, 1, QStringLiteral("brightness"), tr7("Brightness:"), 0, 100);
+        const SliderRow contrast = sliderRow(g, 2, QStringLiteral("contrast"), tr7("Contrast:"), 0, 100);
+        const SliderRow gamma = sliderRow(g, 3, QStringLiteral("gamma"), tr7("Gamma:"), 30, 280);
+        auto *note = new QLabel(tr7("Very high and very low brightness and contrast values\nmay limit the gamma range."));
         g->addWidget(note, 4, 1, 1, 5);
         left->addWidget(box);
-        left->addWidget(step(QStringLiteral("3. Застосуйте такі покращення:")));
+        left->addWidget(step(tr7("3. Apply the following enhancements:")));
         auto *eg = new QGridLayout;
         eg->setContentsMargins(24, 0, 0, 0);
-        const SliderRow vib = sliderRow(eg, 0, QStringLiteral("vibrance"), QStringLiteral("Цифрова яскравість кольорів:"), 0, 100);
-        const SliderRow hueRow = sliderRow(eg, 1, QStringLiteral("hue"), QStringLiteral("Відтінок:"), 0, 359);
+        const SliderRow vib = sliderRow(eg, 0, QStringLiteral("vibrance"), tr7("Digital vibrance:"), 0, 100);
+        const SliderRow hueRow = sliderRow(eg, 1, QStringLiteral("hue"), tr7("Hue:"), 0, 359);
         left->addLayout(eg);
         cols->addLayout(left, 1);
         // the reference picture with the settings applied
@@ -712,7 +709,7 @@ public:
         ref->setFixedSize(263, 176);
         right->addWidget(ref);
         auto *refRow = new QHBoxLayout;
-        refRow->addWidget(new QLabel(QStringLiteral("Еталонне зображення:")));
+        refRow->addWidget(new QLabel(tr7("Reference image:")));
         auto *refGroup = new QButtonGroup(page);
         for (int i = 0; i < 3; ++i) {
             auto *r = new QRadioButton(QString::number(i + 1));
@@ -725,10 +722,10 @@ public:
         cols->addLayout(right);
         v->addLayout(cols);
         page->body->addWidget(panel);
-        page->describe(vib.slider, QStringLiteral("Цифрова яскравість кольорів підсилює насиченість кольорів на робочому столі."),
-                       QStringLiteral("Яскравіші кольори в іграх і фільмах."));
-        page->describe(hueRow.slider, QStringLiteral("Відтінок зсуває всі кольори по колу кольорів."), {});
-        page->show(QStringLiteral("Ці параметри впливають на кольори всього робочого столу на вибраному дисплеї."), {});
+        page->describe(vib.slider, tr7("Digital vibrance increases the color saturation of the desktop."),
+                       tr7("Brighter colors in games and movies."));
+        page->describe(hueRow.slider, tr7("Hue shifts all colors around the color wheel."), {});
+        page->show(tr7("These settings affect the colors of the whole desktop on the selected display."), {});
 
         struct State {
             Ccc::Color color;
@@ -892,23 +889,22 @@ public:
     // ---- Rotate display ----
     QWidget *rotate()
     {
-        auto *page = new PageFrame(QStringLiteral("Поворот дисплея"),
-                                   QStringLiteral("Функція NVIDIA NVRotate дає змогу змінити орієнтацію робочого столу. Це корисно, якщо фізичний монітор "
-                                                  "повернуто і потрібно відповідно змінити орієнтацію робочого столу."),
+        auto *page = new PageFrame(tr7("Rotate display"),
+                                   tr7("NVIDIA NVRotate allows you to change the orientation of your desktop. This is useful if you have rotated your physical monitor and want to change the desktop orientation accordingly."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
-        v->addWidget(step(QStringLiteral("2. Виберіть орієнтацію.")));
+        v->addWidget(step(tr7("2. Choose the orientation.")));
         auto *row = new QHBoxLayout;
         row->setContentsMargins(22, 0, 0, 0);
         auto *radios = new QVBoxLayout;
         auto *group = new QButtonGroup(page);
-        const QList<QPair<int, QString>> choices{{1, QStringLiteral("Альбомна")}, {2, QStringLiteral("Книжкова")}, {4, QStringLiteral("Альбомна (перевернута)")},
-                                                 {8, QStringLiteral("Книжкова (перевернута)")}};
+        const QList<QPair<int, QString>> choices{{1, tr7("Landscape")}, {2, tr7("Portrait")}, {4, tr7("Landscape (flipped)")},
+                                                 {8, tr7("Portrait (flipped)")}};
         for (const auto &c : choices) {
             auto *r = new QRadioButton(c.second);
             group->addButton(r, c.first);
@@ -936,8 +932,8 @@ public:
         row->addStretch(1);
         v->addLayout(row);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Повертає зображення на вибраному дисплеї на 90, 180 або 270 градусів."),
-                   QStringLiteral("Монітор, повернутий для читання довгих документів."));
+        page->show(tr7("Rotates the image on the selected display by 90, 180 or 270 degrees."),
+                   tr7("A monitor rotated for reading long documents."));
         auto st = std::make_shared<int>(1);
         auto saved = std::make_shared<int>(1);
         auto fill = [=] {
@@ -1004,15 +1000,14 @@ public:
     // ---- View HDCP status ----
     QWidget *hdcp()
     {
-        auto *page = new PageFrame(QStringLiteral("Перегляд стану HDCP"),
-                                   QStringLiteral("HDCP (High-bandwidth Digital Content Protection) — технологія захисту вмісту високої чіткості. На цій сторінці "
-                                                  "можна перевірити, чи підтримує HDCP ваш комп'ютер."),
+        auto *page = new PageFrame(tr7("View HDCP status"),
+                                   tr7("HDCP (High-bandwidth Digital Content Protection) protects high-definition content. On this page you can check whether your computer supports HDCP."),
                                    QStringLiteral("disp/banner-display.png"));
         page->banner->setRestoreVisible(false);
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("Виберіть дисплей для перегляду фільмів.")));
+        v->addWidget(step(tr7("Select the display you want to watch movies on.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
         auto *head = step(QString());
@@ -1024,15 +1019,15 @@ public:
         picture->setContentsMargins(22, 0, 0, 0);
         v->addWidget(picture);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Для відтворення захищених фільмів (Blu-ray, HD-трансляції) HDCP мають підтримувати і графічний процесор, і дисплей."), {});
+        page->show(tr7("To play protected movies (Blu-ray, HD broadcasts), both the graphics processor and the display must support HDCP."), {});
         auto fill = [=] {
             const QString out = picker->current();
             const QString prop = outputProperty(out, QStringLiteral("Content Protection"));
             const bool ok = !prop.isNull();
-            head->setText(ok ? QStringLiteral("Система підтримує HDCP.") : QStringLiteral("Система не підтримує HDCP."));
+            head->setText(ok ? tr7("This system supports HDCP.") : tr7("This system does not support HDCP."));
             status->setText(QStringLiteral("<img src=\"%1\"> &nbsp;%2")
                                 .arg(pic(ok ? QStringLiteral("1852") : QStringLiteral("1853")),
-                                     ok ? QStringLiteral("Графічний процесор і дисплей підтримують HDCP.") : QStringLiteral("Дисплей не підтримує режим HDCP.")));
+                                     ok ? tr7("The graphics processor and the display support HDCP.") : tr7("The display does not support HDCP mode.")));
             picture->setPixmap(QPixmap(pic(ok ? QStringLiteral("1851") : QStringLiteral("1849"))));
         };
         fill();
@@ -1045,14 +1040,13 @@ public:
     // ---- Set up digital audio ----
     QWidget *digitalAudio()
     {
-        auto *page = new PageFrame(QStringLiteral("Встановлення цифрового аудіо"),
-                                   QStringLiteral("Графічний процесор може передавати звук через роз'єми HDMI і DisplayPort. Тут можна вибрати, які дисплеї "
-                                                  "відображатимуться як аудіопристрої."),
+        auto *page = new PageFrame(tr7("Set up digital audio"),
+                                   tr7("The graphics processor can send audio through HDMI and DisplayPort connectors. Here you can choose which displays appear as audio devices."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Перевірте дисплеї, які відображатимуться як аудіопристрої в параметрах звуку:")));
+        v->addWidget(step(tr7("1. Check the displays that will appear as audio devices in the sound settings:")));
         auto *g = new QGridLayout;
         g->setContentsMargins(22, 0, 0, 0);
         g->setHorizontalSpacing(12);
@@ -1085,29 +1079,29 @@ public:
                         name = displayName(o);
                     }
                 }
-                combo->addItem(name.isEmpty() ? QStringLiteral("Підключений дисплей") : name);
+                combo->addItem(name.isEmpty() ? tr7("Connected display") : name);
             } else {
-                combo->addItem(QStringLiteral("Нічого не підключено"));
+                combo->addItem(tr7("Nothing connected"));
             }
-            combo->addItem(QStringLiteral("Вимкнути аудіо"));
+            combo->addItem(tr7("Turn off audio"));
             g->addWidget(combo, row, 2);
             *combos << combo;
             ++row;
         }
         if (connectors.isEmpty()) {
-            g->addWidget(new QLabel(QStringLiteral("Цей графічний процесор не має роз'ємів HDMI або DisplayPort.")), row, 0, 1, 3);
+            g->addWidget(new QLabel(tr7("This graphics processor has no HDMI or DisplayPort connectors.")), row, 0, 1, 3);
         }
         g->setColumnStretch(3, 1);
         v->addLayout(g);
-        v->addWidget(step(QStringLiteral("2. Налаштуйте пристрої відтворення в параметрах звуку.")));
-        auto *lk = link(QStringLiteral("Відкрити параметри звуку"), [] {
+        v->addWidget(step(tr7("2. Set up the playback devices in the sound settings.")));
+        auto *lk = link(tr7("Open sound settings"), [] {
             QProcess::startDetached(QStringLiteral("seven-control"), {QStringLiteral("--sound")});
         });
         lk->setContentsMargins(22, 0, 0, 0);
         v->addWidget(lk);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Якщо вимкнути аудіо, звукова частина графічного процесора не відображатиметься як пристрій відтворення."),
-                   QStringLiteral("Передавання звуку на телевізор через кабель HDMI."));
+        page->show(tr7("If you turn off audio, the audio part of the graphics processor will not appear as a playback device."),
+                   tr7("Sending sound to a TV through an HDMI cable."));
         auto off = std::make_shared<bool>(!card.isEmpty() && Ccc::run(QStringLiteral("pactl"), {QStringLiteral("list"), QStringLiteral("cards")}).contains(QLatin1String("Active Profile: off")));
         auto saved = std::make_shared<bool>(*off);
         auto fill = [=] {
@@ -1157,60 +1151,59 @@ public:
     // ---- Adjust desktop size and position ----
     QWidget *sizePosition()
     {
-        auto *page = new PageFrame(QStringLiteral("Регулювання розміру й положення робочого столу"),
-                                   QStringLiteral("Можна вибрати режим масштабування для дисплея та змінити розмір робочого столу, якщо його краї обрізаються "
-                                                  "на екрані."),
+        auto *page = new PageFrame(tr7("Adjust desktop size and position"),
+                                   tr7("You can choose the scaling mode for the display and resize the desktop if its edges are cut off on the screen."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
-        v->addWidget(step(QStringLiteral("2. Застосуйте такі параметри.")));
+        v->addWidget(step(tr7("2. Apply the following settings.")));
         auto *tabs = new QTabWidget;
         tabs->setMaximumWidth(520);
         auto *scaleTab = new QWidget;
         auto *sv = new QVBoxLayout(scaleTab);
-        sv->addWidget(new QLabel(QStringLiteral("Виберіть режим масштабування:")));
+        sv->addWidget(new QLabel(tr7("Select a scaling mode:")));
         auto *group = new QButtonGroup(page);
-        const QList<QPair<QString, QString>> modes{{QStringLiteral("Full aspect"), QStringLiteral("Формат зображення")},
-                                                   {QStringLiteral("Full"), QStringLiteral("На весь екран")},
-                                                   {QStringLiteral("Center"), QStringLiteral("Без масштабування")}};
+        const QList<QPair<QString, QString>> modes{{QStringLiteral("Full aspect"), tr7("Aspect ratio")},
+                                                   {QStringLiteral("Full"), tr7("Full-screen")},
+                                                   {QStringLiteral("Center"), tr7("No scaling")}};
         for (int i = 0; i < modes.size(); ++i) {
             auto *r = new QRadioButton(modes[i].second);
             group->addButton(r, i);
             sv->addWidget(r);
         }
         sv->addSpacing(8);
-        sv->addWidget(new QLabel(QStringLiteral("Виконувати масштабування на:")));
+        sv->addWidget(new QLabel(tr7("Perform scaling on:")));
         auto *where = new QComboBox;
-        where->addItems({QStringLiteral("ГП"), QStringLiteral("Дисплей")});
+        where->addItems({tr7("GPU"), tr7("Display")});
         where->setMaximumWidth(170);
         sv->addWidget(where);
-        auto *override_ = new QCheckBox(QStringLiteral("Перевизначати режим масштабування, встановлений іграми й програмами"));
+        auto *override_ = new QCheckBox(tr7("Override the scaling mode set by games and programs"));
         sv->addWidget(override_);
         sv->addStretch(1);
-        tabs->addTab(scaleTab, QStringLiteral("Масштабування"));
+        tabs->addTab(scaleTab, tr7("Scaling"));
         auto *sizeTab = new QWidget;
         auto *zv = new QVBoxLayout(sizeTab);
-        auto *resize = new QCheckBox(QStringLiteral("Увімкнути зміну розміру робочого столу"));
+        auto *resize = new QCheckBox(tr7("Enable desktop resizing"));
         zv->addWidget(resize);
         auto *border = new QGridLayout;
-        border->addWidget(new QLabel(QStringLiteral("По горизонталі:")), 0, 0);
+        border->addWidget(new QLabel(tr7("Width:")), 0, 0);
         auto *hb = new QSpinBox;
         hb->setRange(0, 128);
-        hb->setSuffix(QStringLiteral(" пікс."));
+        hb->setSuffix(tr7(" px"));
         border->addWidget(hb, 0, 1);
-        border->addWidget(new QLabel(QStringLiteral("По вертикалі:")), 1, 0);
+        border->addWidget(new QLabel(tr7("Height:")), 1, 0);
         auto *vb = new QSpinBox;
         vb->setRange(0, 128);
-        vb->setSuffix(QStringLiteral(" пікс."));
+        vb->setSuffix(tr7(" px"));
         border->addWidget(vb, 1, 1);
         border->setColumnStretch(2, 1);
         zv->addLayout(border);
         zv->addStretch(1);
-        tabs->addTab(sizeTab, QStringLiteral("Розмір"));
+        tabs->addTab(sizeTab, tr7("Size"));
         auto *row = new QHBoxLayout;
         row->setContentsMargins(22, 0, 0, 0);
         row->addWidget(tabs, 1);
@@ -1218,9 +1211,9 @@ public:
         row->addWidget(pv, 0, Qt::AlignTop);
         v->addLayout(row);
         page->body->addWidget(panel);
-        page->describe(override_, QStringLiteral("Режим масштабування застосовуватиметься навіть тоді, коли гра на весь екран задає власний."), {});
-        page->show(QStringLiteral("Масштабування визначає, як зображення з роздільною здатністю, нижчою за власну роздільну здатність дисплея, заповнює екран."),
-                   QStringLiteral("Старі ігри формату 4:3 на широкоекранному дисплеї без розтягування."));
+        page->describe(override_, tr7("The scaling mode will be applied even when a full-screen game sets its own."), {});
+        page->show(tr7("Scaling sets how an image with a resolution lower than the native resolution of the display fills the screen."),
+                   tr7("Old 4:3 games on a widescreen display without stretching."));
         struct State {
             int mode = 0, h = 0, v = 0;
             bool resize = false, gpu = true, over = false;
@@ -1335,13 +1328,13 @@ public:
     // ---- Set up multiple displays ----
     QWidget *multipleDisplays()
     {
-        auto *page = new PageFrame(QStringLiteral("Встановлення кількох дисплеїв"),
-                                   QStringLiteral("Технологія NVIDIA nView дає змогу вказати режими використання кількох дисплеїв."),
+        auto *page = new PageFrame(tr7("Set up multiple displays"),
+                                   tr7("NVIDIA nView technology allows you to specify how you use multiple displays."),
                                    QStringLiteral("disp/banner-display.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплеї, які буде використано.")));
+        v->addWidget(step(tr7("1. Select the displays you want to use.")));
         auto *list = new QListWidget;
         list->setFixedSize(400, 100);
         auto *listRow = new QHBoxLayout;
@@ -1349,25 +1342,24 @@ public:
         listRow->addWidget(list);
         listRow->addStretch(1);
         v->addLayout(listRow);
-        auto *missing = link(QStringLiteral("Мого дисплея немає у списку..."), [page] {
-            page->show(QStringLiteral("Перевірте, чи увімкнено дисплей і чи надійно підключено кабель. Після підключення дисплей з'явиться в списку."), {});
+        auto *missing = link(tr7("My display is not shown..."), [page] {
+            page->show(tr7("Check that the display is turned on and the cable is firmly connected. After it is connected, the display appears in the list."), {});
         });
         missing->setContentsMargins(22, 4, 0, 0);
         v->addWidget(missing);
-        v->addWidget(step(QStringLiteral("2. Перевірте конфігурацію дисплеїв.")));
+        v->addWidget(step(tr7("2. Verify the display configuration.")));
         auto *canvas = new Arrangement;
         auto *cr = new QHBoxLayout;
         cr->setContentsMargins(22, 0, 0, 0);
         cr->addWidget(canvas);
         cr->addStretch(1);
         v->addLayout(cr);
-        auto *legend = new QLabel(QStringLiteral("<img src=\"%1\"> Основний дисплей").arg(pic(QStringLiteral("32947"))));
+        auto *legend = new QLabel(tr7("<img src=\"%1\"> Primary display").arg(pic(QStringLiteral("32947"))));
         legend->setContentsMargins(26, 4, 0, 0);
         v->addWidget(legend);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Перетягніть піктограми дисплеїв, щоб розташувати їх так, як дисплеї стоять на столі. Клацніть правою кнопкою, "
-                                  "щоб зробити дисплей основним."),
-                   QStringLiteral("Розширення робочого столу на другий монітор або телевізор."));
+        page->show(tr7("Drag the display icons to arrange them the way the displays stand on your desk. Right-click to make a display primary."),
+                   tr7("Extending the desktop to a second monitor or TV."));
         auto st = std::make_shared<QList<Arrangement::Screen>>();
         auto saved = std::make_shared<QList<Arrangement::Screen>>();
         auto fill = [=] {
@@ -1464,19 +1456,18 @@ public:
     // ---- Video: colour ----
     QWidget *videoColor()
     {
-        auto *page = new PageFrame(QStringLiteral("Регулювання параметрів кольору для відео"),
-                                   QStringLiteral("Регулювання параметрів кольору для відео дає змогу вибрати найкращі параметри відображення відео на дисплеї. "
-                                                  "Рекомендується під час налаштування запустити відтворення відео, щоб бачити зміни."),
+        auto *page = new PageFrame(tr7("Adjust video color settings"),
+                                   tr7("Adjusting the video color settings lets you choose the best display settings for video on your display. It is recommended to play a video while you adjust, so that you can see the changes."),
                                    QStringLiteral("disp/banner-video.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
-        v->addWidget(step(QStringLiteral("2. Як виконувати налаштування кольору?")));
-        auto *player = new QRadioButton(QStringLiteral("З параметрами відеопрогравача"));
-        auto *nv = new QRadioButton(QStringLiteral("З параметрами NVIDIA"));
+        v->addWidget(step(tr7("2. How do you make color adjustments?")));
+        auto *player = new QRadioButton(tr7("With the video player settings"));
+        auto *nv = new QRadioButton(tr7("With the NVIDIA settings"));
         for (auto *r : {player, nv}) {
             auto *h = new QHBoxLayout;
             h->setContentsMargins(22, 0, 0, 0);
@@ -1487,43 +1478,43 @@ public:
         tabs->setMaximumWidth(420);
         auto *colorTab = new QWidget;
         auto *cg = new QGridLayout(colorTab);
-        const SliderRow b = sliderRow(cg, 0, QStringLiteral("v-brightness"), QStringLiteral("Яскравість:"), 0, 100);
-        const SliderRow c = sliderRow(cg, 1, QStringLiteral("v-contrast"), QStringLiteral("Контрастність:"), 0, 100);
-        const SliderRow h = sliderRow(cg, 2, QStringLiteral("v-hue"), QStringLiteral("Відтінок:"), 0, 359);
-        const SliderRow s = sliderRow(cg, 3, QStringLiteral("v-saturation"), QStringLiteral("Насиченість:"), 0, 100);
+        const SliderRow b = sliderRow(cg, 0, QStringLiteral("v-brightness"), tr7("Brightness:"), 0, 100);
+        const SliderRow c = sliderRow(cg, 1, QStringLiteral("v-contrast"), tr7("Contrast:"), 0, 100);
+        const SliderRow h = sliderRow(cg, 2, QStringLiteral("v-hue"), tr7("Hue:"), 0, 359);
+        const SliderRow s = sliderRow(cg, 3, QStringLiteral("v-saturation"), tr7("Saturation:"), 0, 100);
         cg->setRowStretch(4, 1);
-        tabs->addTab(colorTab, QStringLiteral("Колір"));
+        tabs->addTab(colorTab, tr7("Color"));
         auto *gammaTab = new QWidget;
         auto *gg = new QGridLayout(gammaTab);
-        const SliderRow gm = sliderRow(gg, 0, QStringLiteral("gamma"), QStringLiteral("Гамма:"), 30, 280);
+        const SliderRow gm = sliderRow(gg, 0, QStringLiteral("gamma"), tr7("Gamma:"), 30, 280);
         gg->setRowStretch(1, 1);
-        tabs->addTab(gammaTab, QStringLiteral("Гамма"));
+        tabs->addTab(gammaTab, tr7("Gamma"));
         auto *advTab = new QWidget;
         auto *ag = new QVBoxLayout(advTab);
         auto *rangeRow = new QHBoxLayout;
-        rangeRow->addWidget(new QLabel(QStringLiteral("Динамічний діапазон:")));
+        rangeRow->addWidget(new QLabel(tr7("Dynamic range:")));
         auto *range = new QComboBox;
-        range->addItems({QStringLiteral("Обмежений (16-235)"), QStringLiteral("Повний (0-255)")});
+        range->addItems({tr7("Limited (16-235)"), tr7("Full (0-255)")});
         rangeRow->addWidget(range);
         rangeRow->addStretch(1);
         ag->addLayout(rangeRow);
-        ag->addWidget(new QLabel(QStringLiteral("Застосувати такі покращення цифрового зображення")));
-        auto *dyn = new QCheckBox(QStringLiteral("Динамічне посилення контрастності"));
-        auto *enh = new QCheckBox(QStringLiteral("Покращення кольору"));
+        ag->addWidget(new QLabel(tr7("Apply the following digital image enhancements")));
+        auto *dyn = new QCheckBox(tr7("Dynamic contrast enhancement"));
+        auto *enh = new QCheckBox(tr7("Color enhancement"));
         ag->addWidget(dyn);
         ag->addWidget(enh);
         ag->addStretch(1);
-        tabs->addTab(advTab, QStringLiteral("Додатково"));
+        tabs->addTab(advTab, tr7("Advanced"));
         auto *tr = new QHBoxLayout;
         tr->setContentsMargins(40, 4, 0, 0);
         tr->addWidget(tabs);
         tr->addStretch(1);
         v->addLayout(tr);
         page->body->addWidget(panel);
-        page->describe(nv, QStringLiteral("Виберіть цей параметр, якщо потрібно використовувати параметри кольору, задані на панелі керування NVIDIA."),
-                       QStringLiteral("Налаштування кольору у відеопрогравачі незадовільні."));
-        page->show(QStringLiteral("Параметри застосовуються до відеопрогравачів на основі mpv. У Linux драйвер не обробляє кольори відео окремо від робочого столу."),
-                   QStringLiteral("Однакові параметри кольору для всіх відеопрогравачів."));
+        page->describe(nv, tr7("Select this option if you want to use the color settings set in the NVIDIA Control Panel."),
+                       tr7("The color settings of the video player are not satisfactory."));
+        page->show(tr7("The settings apply to mpv-based video players. On Linux the driver does not process video colors separately from the desktop."),
+                   tr7("The same color settings for all video players."));
         return videoPage(page, {{QStringLiteral("brightness"), b, 50, true}, {QStringLiteral("contrast"), c, 50, true}, {QStringLiteral("hue"), h, 0, false},
                                 {QStringLiteral("saturation"), s, 50, true}, {QStringLiteral("gamma"), gm, 100, false}},
                          nv, player, range, {{QStringLiteral("dyncontrast"), dyn}, {QStringLiteral("colorenh"), enh}}, tabs);
@@ -1532,24 +1523,23 @@ public:
     // ---- Video: image ----
     QWidget *videoImage()
     {
-        auto *page = new PageFrame(QStringLiteral("Регулювання параметрів зображення для відео"),
-                                   QStringLiteral("Графічний процесор має технологію PureVideo — спеціальне ядро обробки відео. Щоб отримати найкращі результати, "
-                                                  "запустіть відтворення відео й дивіться, як змінюється зображення."),
+        auto *page = new PageFrame(tr7("Adjust video image settings"),
+                                   tr7("Your graphics processor has PureVideo technology, a dedicated video processing core. For the best results, play a video and watch how the image changes."),
                                    QStringLiteral("disp/banner-video.png"));
         auto *panel = new RoundPanel;
         auto *v = new QVBoxLayout(panel);
         v->setContentsMargins(12, 4, 16, 16);
-        v->addWidget(step(QStringLiteral("1. Виберіть дисплей, параметри якого потрібно змінити.")));
+        v->addWidget(step(tr7("1. Select the display you would like to change.")));
         auto *picker = new DisplayPicker;
         v->addWidget(picker);
-        v->addWidget(step(QStringLiteral("2. Застосувати до відео такі параметри:")));
+        v->addWidget(step(tr7("2. Apply the following settings to video:")));
         auto *row = new QHBoxLayout;
         row->setContentsMargins(22, 0, 0, 0);
         auto group = [&](const QString &title, const QString &key) {
             auto *box = new QGroupBox(title);
             auto *bv = new QGridLayout(box);
-            auto *player = new QRadioButton(QStringLiteral("Використовувати параметр відеопрогравача"));
-            auto *nv = new QRadioButton(QStringLiteral("Використовувати параметр NVIDIA"));
+            auto *player = new QRadioButton(tr7("Use the video player setting"));
+            auto *nv = new QRadioButton(tr7("Use the NVIDIA setting"));
             bv->addWidget(player, 0, 0, 1, 6);
             bv->addWidget(nv, 1, 0, 1, 6);
             const SliderRow s = sliderRow(bv, 2, QStringLiteral("v-contrast"), QString(), 0, 100);
@@ -1575,12 +1565,12 @@ public:
             return box;
         };
         auto *left = new QVBoxLayout;
-        left->addWidget(group(QStringLiteral("Підкреслення контурів"), QStringLiteral("edge")));
-        left->addWidget(group(QStringLiteral("Придушення шумів"), QStringLiteral("noise")));
+        left->addWidget(group(tr7("Edge enhancement"), QStringLiteral("edge")));
+        left->addWidget(group(tr7("Noise reduction"), QStringLiteral("noise")));
         row->addLayout(left);
-        auto *deint = new QGroupBox(QStringLiteral("Згладжування черезрядкової розгортки"));
+        auto *deint = new QGroupBox(tr7("Deinterlacing"));
         auto *dv = new QVBoxLayout(deint);
-        auto *telecine = new QCheckBox(QStringLiteral("Використовувати зворотне телекіно"));
+        auto *telecine = new QCheckBox(tr7("Use inverse telecine"));
         telecine->setChecked(mpvSetting(QStringLiteral("telecine"), 1) != 0);
         dv->addWidget(telecine);
         dv->addStretch(1);
@@ -1592,9 +1582,8 @@ public:
         row->addStretch(1);
         v->addLayout(row);
         page->body->addWidget(panel);
-        page->show(QStringLiteral("Підкреслення контурів робить зображення різкішим, придушення шумів прибирає «зернистість». "
-                                  "Параметри застосовуються до відеопрогравачів на основі mpv."),
-                   QStringLiteral("Перегляд відео низької якості."));
+        page->show(tr7("Edge enhancement makes the image sharper; noise reduction removes the \"grain\". The settings apply to mpv-based video players."),
+                   tr7("Watching low-quality video."));
         m_editors << Editor{[=] {
                                 return m_videoDirty;
                             },
@@ -1706,7 +1695,7 @@ private:
             }
             if (e->button() == Qt::RightButton) {
                 QMenu m;
-                QAction *prim = m.addAction(QStringLiteral("Зробити основним"));
+                QAction *prim = m.addAction(tr7("Make this the primary display"));
                 prim->setEnabled(!screens.at(h).primary);
                 if (m.exec(e->globalPosition().toPoint()) == prim) {
                     for (int i = 0; i < screens.size(); ++i) {

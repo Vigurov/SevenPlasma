@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Device Manager in the style of Windows 7, listing the real hardware of this Linux machine
  * (PCI and USB devices, disks, monitors, input devices, processors, network, battery...).
@@ -20,7 +21,7 @@ class DeviceManager : public QMainWindow
 public:
     DeviceManager()
     {
-        setWindowTitle(QStringLiteral("Диспетчер пристроїв"));
+        setWindowTitle(tr7("Device Manager"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-devmgr-w7"), QIcon::fromTheme(QStringLiteral("computer"))));
 
         m_devices = new DeviceTree(this);
@@ -28,19 +29,19 @@ public:
         setCentralWidget(m_devices);
 
         // Actions (the original MMC / devmgr.dll toolbar pictures)
-        auto *back = new QAction(win7Icon(QStringLiteral("seven-mmc-back")), QStringLiteral("Назад"), this);
-        auto *forward = new QAction(win7Icon(QStringLiteral("seven-mmc-forward")), QStringLiteral("Вперед"), this);
+        auto *back = new QAction(win7Icon(QStringLiteral("seven-mmc-back")), tr7("Back"), this);
+        auto *forward = new QAction(win7Icon(QStringLiteral("seven-mmc-forward")), tr7("Forward"), this);
         back->setEnabled(false);
         forward->setEnabled(false);
-        auto *console = new QAction(win7Icon(QStringLiteral("seven-mmc-console")), QStringLiteral("Показати або приховати дерево консолі"), this);
+        auto *console = new QAction(win7Icon(QStringLiteral("seven-mmc-console")), tr7("Show/Hide Console Tree"), this);
         console->setEnabled(false);
-        auto *actionPane = new QAction(win7Icon(QStringLiteral("seven-mmc-actionpane")), QStringLiteral("Показати або приховати область дій"), this);
+        auto *actionPane = new QAction(win7Icon(QStringLiteral("seven-mmc-actionpane")), tr7("Show/Hide Action Pane"), this);
         actionPane->setEnabled(false);
         QAction *props = m_devices->propertiesAction();
         QAction *scan = m_devices->scanAction();
-        auto *help = new QAction(win7Icon(QStringLiteral("seven-mmc-help")), QStringLiteral("Довідка"), this);
-        auto *exit = new QAction(QStringLiteral("Вихід"), this);
-        auto *showHidden = new QAction(QStringLiteral("Показати приховані пристрої"), this);
+        auto *help = new QAction(win7Icon(QStringLiteral("seven-mmc-help")), tr7("Help"), this);
+        auto *exit = new QAction(tr7("Exit"), this);
+        auto *showHidden = new QAction(tr7("Show hidden devices"), this);
         showHidden->setCheckable(true);
         connect(exit, &QAction::triggered, this, &QWidget::close);
         connect(help, &QAction::triggered, this, []() {
@@ -49,32 +50,32 @@ public:
         connect(showHidden, &QAction::toggled, m_devices, &DeviceTree::setShowHidden);
 
         // Menu bar: File, Action, View, Help
-        QMenu *file = menuBar()->addMenu(QStringLiteral("&Файл"));
+        QMenu *file = menuBar()->addMenu(tr7("&File"));
         file->addAction(exit);
-        QMenu *action = menuBar()->addMenu(QStringLiteral("&Дія"));
+        QMenu *action = menuBar()->addMenu(tr7("&Action"));
         action->addAction(scan);
         action->addSeparator();
         action->addAction(props);
-        QMenu *view = menuBar()->addMenu(QStringLiteral("&Вигляд"));
-        QAction *byType = view->addAction(QStringLiteral("Пристрої за типом"));
+        QMenu *view = menuBar()->addMenu(tr7("&View"));
+        QAction *byType = view->addAction(tr7("Devices by type"));
         byType->setCheckable(true);
         byType->setChecked(true);
         view->addSeparator();
         view->addAction(showHidden);
         // Help menu of mmc.exe: no pictures
-        QMenu *helpMenu = menuBar()->addMenu(QStringLiteral("&Довідка"));
-        connect(helpMenu->addAction(QStringLiteral("Виклик довідки")), &QAction::triggered, help, &QAction::trigger);
-        helpMenu->addAction(QStringLiteral("Веб-сайт TechCenter"), this, []() {
+        QMenu *helpMenu = menuBar()->addMenu(tr7("&Help"));
+        connect(helpMenu->addAction(tr7("Help Topics")), &QAction::triggered, help, &QAction::trigger);
+        helpMenu->addAction(tr7("TechCenter Web Site"), this, []() {
             QDesktopServices::openUrl(QUrl(QStringLiteral("https://learn.microsoft.com/windows-hardware/drivers/install/overview-of-device-manager")));
         });
         helpMenu->addSeparator();
-        helpMenu->addAction(QStringLiteral("Про консоль керування Microsoft..."), this, [this]() {
-            QMessageBox::about(this, QStringLiteral("Консоль керування Microsoft"),
-                               QStringLiteral("Консоль керування Microsoft\nВерсія 3.0"));
+        helpMenu->addAction(tr7("About Microsoft Management Console..."), this, [this]() {
+            QMessageBox::about(this, tr7("Microsoft Management Console"),
+                               tr7("Microsoft Management Console\nVersion 3.0"));
         });
-        helpMenu->addAction(QStringLiteral("Про диспетчер пристроїв..."), this, [this]() {
-            QMessageBox::about(this, QStringLiteral("Диспетчер пристроїв"),
-                               QStringLiteral("Диспетчер пристроїв у стилі Windows 7.\nПоказує обладнання, яке бачить Linux."));
+        helpMenu->addAction(tr7("About Device Manager..."), this, [this]() {
+            QMessageBox::about(this, tr7("Device Manager"),
+                               tr7("Device Manager in the Windows 7 style.\nShows the hardware Linux sees."));
         });
 
         // Toolbar like Windows 7, it follows the selection:
@@ -82,11 +83,11 @@ public:
         //   the computer:      ... | help, action pane | scan
         //   a device type:     ... | console tree | properties (disabled) | help, action pane | scan
         //   a device:          ... | properties | help, action pane | scan | update driver, uninstall
-        auto *update = new QAction(win7Icon(QStringLiteral("seven-devmgr-update")), QStringLiteral("Оновити програмне забезпечення драйвера..."), this);
-        auto *uninstall = new QAction(win7Icon(QStringLiteral("seven-devmgr-uninstall")), QStringLiteral("Видалити"), this);
+        auto *update = new QAction(win7Icon(QStringLiteral("seven-devmgr-update")), tr7("Update Driver Software..."), this);
+        auto *uninstall = new QAction(win7Icon(QStringLiteral("seven-devmgr-uninstall")), tr7("Uninstall"), this);
         connect(update, &QAction::triggered, props, &QAction::trigger);
         connect(uninstall, &QAction::triggered, props, &QAction::trigger);
-        QToolBar *bar = addToolBar(QStringLiteral("Стандартна"));
+        QToolBar *bar = addToolBar(tr7("Standard"));
         bar->setMovable(false);
         bar->setIconSize(QSize(16, 16));
         bar->setFixedHeight(24); // Windows 7 (measured): 24 px with its two lines
@@ -162,13 +163,14 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     Win7TabEdgeFix::install(&app);
     // in Windows 7 Device Manager runs in mmc.exe, so the taskbar shows the MMC toolbox: the taskbar
     // finds seven-devmgr-mmc.desktop by WM_CLASS, while the title bar keeps the window's own icon.
     // KWin takes the title bar icon from the desktop file named in _KDE_NET_WM_DESKTOP_FILE, so that
     // names a file that does not exist (otherwise Qt fills in "seven-devmgr")
     app.setApplicationName(QStringLiteral("seven-devmgr-mmc"));
-    app.setApplicationDisplayName(QStringLiteral("Диспетчер пристроїв"));
+    app.setApplicationDisplayName(tr7("Device Manager"));
     app.setDesktopFileName(QStringLiteral("seven-devmgr-window"));
     // "--properties <name>": only the properties of one device (Sound > Properties > Controller)
     const int propArg = app.arguments().indexOf(QStringLiteral("--properties"));
@@ -189,7 +191,7 @@ int main(int argc, char **argv)
             }
         }
         if (best.name.isEmpty()) {
-            best = {QStringLiteral("sound"), want, {{QStringLiteral("Тип пристрою"), QStringLiteral("Звукові, відео та ігрові пристрої")}}};
+            best = {QStringLiteral("sound"), want, {{tr7("Device type"), tr7("Sound, video and game controllers")}}};
         }
         QString icon = QStringLiteral("seven-devmgr-sound");
         for (const Category &c : categories()) {

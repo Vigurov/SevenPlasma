@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -51,13 +52,13 @@ struct Category {
 /** "0 байт", "996 байт", "55,8 КБ", "1,13 ГБ" like Disk Cleanup */
 inline QString sizeText(qint64 bytes)
 {
-    const QLocale uk(QLocale::Ukrainian);
+    const QLocale uk;
     if (bytes < 1024) {
-        return QStringLiteral("%1 байт").arg(bytes);
+        return tr7("%1 bytes").arg(bytes);
     }
     double v = bytes / 1024.0;
-    QString unit = QStringLiteral("КБ");
-    for (const QString &u : {QStringLiteral("МБ"), QStringLiteral("ГБ")}) {
+    QString unit = tr7("KB");
+    for (const QString &u : {tr7("MB"), tr7("GB")}) {
         if (v < 1000) {
             break;
         }
@@ -171,14 +172,13 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
         };
     };
 
-    Category &net = add({QStringLiteral("internet"), QStringLiteral("Тимчасові файли Інтернету"), QStringLiteral("seven-clean-internet"),
-                         QStringLiteral("Папка «Тимчасові файли Інтернету» містить веб-сторінки, збережені на жорсткому диску веб-оглядачами (Chrome, Firefox) для швидшого "
-                                        "перегляду. Персональні параметри веб-сторінок залишаться без змін."),
+    Category &net = add({QStringLiteral("internet"), tr7("Temporary Internet Files"), QStringLiteral("seven-clean-internet"),
+                         tr7("The Temporary Internet Files folder contains Web pages stored on your hard disk by web browsers (Chrome, Firefox) for quick viewing. Your personalized settings for Web pages will be left intact."),
                          false, true});
     net.view = home + QStringLiteral("/.cache");
     if (running({QStringLiteral("chrome"), QStringLiteral("chromium"), QStringLiteral("firefox"), QStringLiteral("firefox-bin")})) {
         net.checked = false;
-        net.note = QStringLiteral("Закрийте веб-оглядач, щоб очистити ці файли.");
+        net.note = tr7("Close the web browser to clean up these files.");
     }
     for (const QString &d : browsers) {
         net.size += collect(d, net.note.isEmpty() ? &net.files : nullptr, {}, tick(net.title));
@@ -187,9 +187,8 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
         return false;
     }
 
-    Category &tmp = add({QStringLiteral("temp"), QStringLiteral("Тимчасові файли"), QStringLiteral("seven-clean-temp"),
-                         QStringLiteral("Програми іноді зберігають тимчасові дані в папках кешу та TEMP. Перш ніж програма закриється, вона зазвичай видаляє ці дані.\n\n"
-                                        "Тимчасові файли, які не змінювалися понад тиждень, можна видалити."),
+    Category &tmp = add({QStringLiteral("temp"), tr7("Temporary files"), QStringLiteral("seven-clean-temp"),
+                         tr7("Programs sometimes store temporary information in cache and TEMP folders. Before a program closes, it usually deletes this information.\n\nYou can safely delete temporary files that have not been modified in over a week."),
                          false, false});
     tmp.view = home + QStringLiteral("/.cache");
     const uint me = getuid();
@@ -216,24 +215,23 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
         return false;
     }
 
-    Category &th = add({QStringLiteral("thumbs"), QStringLiteral("Ескізи"), QStringLiteral("seven-clean-thumbs"),
-                        QStringLiteral("Windows зберігає копії всіх ескізів зображень, відео та документів, щоб швидко відображати їх під час відкриття папки. "
-                                       "Якщо видалити ці ескізи, за потреби їх буде створено автоматично."),
+    Category &th = add({QStringLiteral("thumbs"), tr7("Thumbnails"), QStringLiteral("seven-clean-thumbs"),
+                        tr7("Windows keeps a copy of all of your picture, video, and document thumbnails so they can be displayed quickly when you open a folder. If you delete these thumbnails, they will be automatically recreated as needed."),
                         false, true});
     th.view = thumbs;
     th.size = collect(thumbs, &th.files, {}, tick(th.title));
 
     const QString trashDir = home + QStringLiteral("/.local/share/Trash");
-    Category &trash = add({QStringLiteral("trash"), QStringLiteral("Кошик"), QStringLiteral("seven-clean-trash-full"),
-                           QStringLiteral("Кошик містить файли, видалені з комп'ютера. Ці файли не видаляються остаточно, доки кошик не буде очищено."), false, false});
+    Category &trash = add({QStringLiteral("trash"), tr7("Recycle Bin"), QStringLiteral("seven-clean-trash-full"),
+                           tr7("The Recycle Bin contains files you have deleted from your computer. These files are not permanently removed until you empty the Recycle Bin."), false, false});
     trash.view = QStringLiteral("trash:/");
     trash.size = collect(trashDir + QStringLiteral("/files"), nullptr, {}, tick(trash.title));
     if (trash.size == 0) {
         trash.icon = QStringLiteral("seven-clean-trash-empty");
     }
 
-    Category &rep = add({QStringLiteral("reports"), QStringLiteral("Файли звітів про помилки"), QStringLiteral("seven-clean-reports"),
-                         QStringLiteral("Файли, створені під час аварійного завершення програм. Їх використовують для пошуку причин помилок; видалення не впливає на роботу програм."),
+    Category &rep = add({QStringLiteral("reports"), tr7("Error report files"), QStringLiteral("seven-clean-reports"),
+                         tr7("Files created when programs stopped working. They are used to find the causes of errors; deleting them does not affect how programs work."),
                          false, false});
     rep.view = QStringLiteral("/var/crash");
     rep.size = collect(QStringLiteral("/var/crash"), &rep.files, [me](const QFileInfo &fi) { return fi.ownerId() == me; }, tick(rep.title));
@@ -244,13 +242,13 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
     if (!system) {
         return true;
     }
-    Category &srep = add({QStringLiteral("sysreports"), QStringLiteral("Системні файли звітів про помилки"), QStringLiteral("seven-clean-reports"),
-                          QStringLiteral("Звіти про аварійне завершення системних служб і програм інших користувачів."), true, false});
+    Category &srep = add({QStringLiteral("sysreports"), tr7("System error report files"), QStringLiteral("seven-clean-reports"),
+                          tr7("Reports of system services and other users' programs that stopped working."), true, false});
     srep.view = QStringLiteral("/var/crash");
     srep.size = collect(QStringLiteral("/var/crash"), nullptr, [me](const QFileInfo &fi) { return fi.ownerId() != me; }, tick(srep.title));
 
-    Category &logs = add({QStringLiteral("logs"), QStringLiteral("Застарілі файли журналів подій"), QStringLiteral("seven-clean-logs"),
-                          QStringLiteral("Архівні системні журнали та старі копії файлів журналів. Поточний журнал залишиться без змін."), true, false});
+    Category &logs = add({QStringLiteral("logs"), tr7("Old event log files"), QStringLiteral("seven-clean-logs"),
+                          tr7("Archived system logs and old copies of log files. The current log is left unchanged."), true, false});
     logs.view = QStringLiteral("/var/log");
     static const QRegularExpression rotated(QStringLiteral("(\\.gz|\\.xz|\\.old|\\.\\d+)$"));
     logs.size = collect(QStringLiteral("/var/log"), nullptr,
@@ -260,18 +258,17 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
                         },
                         tick(logs.title));
 
-    Category &upd = add({QStringLiteral("updates"), QStringLiteral("Завантажені файли оновлень"), QStringLiteral("seven-clean-updates"),
-                         QStringLiteral("Пакети програм і оновлень, які вже встановлено. Після встановлення вони не потрібні: за потреби їх буде завантажено знову."), true, true});
+    Category &upd = add({QStringLiteral("updates"), tr7("Downloaded update files"), QStringLiteral("seven-clean-updates"),
+                         tr7("Program and update packages that are already installed. They are not needed after installation: they are downloaded again if needed."), true, true});
     upd.view = QStringLiteral("/var/cache/apt/archives");
     upd.size = collect(QStringLiteral("/var/cache/apt/archives"), nullptr, [](const QFileInfo &fi) { return fi.suffix() == QLatin1String("deb"); }, tick(upd.title));
     upd.size += collect(QStringLiteral("/var/lib/snapd/cache"), nullptr, {}, tick(upd.title));
-    if (!alive || !progress(QStringLiteral("Попередні версії програм"))) {
+    if (!alive || !progress(tr7("Previous versions of programs"))) {
         return false;
     }
 
-    Category &old = add({QStringLiteral("old"), QStringLiteral("Попередні версії програм"), QStringLiteral("seven-appwiz"),
-                         QStringLiteral("Старі версії програм, які зберігаються після оновлення (snap), і пакети, які більше не потрібні жодній програмі "
-                                        "(наприклад, старі ядра системи)."),
+    Category &old = add({QStringLiteral("old"), tr7("Previous versions of programs"), QStringLiteral("seven-appwiz"),
+                         tr7("Old versions of programs kept after an update (snap), and packages no longer needed by any program (for example, old system kernels)."),
                          true, false});
     old.size = oldSnapsSize() + autoremoveSize();
     return alive;
@@ -328,7 +325,7 @@ public:
         bar->setFixedHeight(14);
         row->addWidget(bar, 1);
         if (cancellable) {
-            auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+            auto *cancel = new QPushButton(tr7("Cancel"));
             row->addWidget(cancel);
             connect(cancel, &QPushButton::clicked, this, [this] { cancelled = true; });
         }
@@ -353,7 +350,7 @@ public:
     explicit CleanupDialog(bool system)
         : m_system(system)
     {
-        setWindowTitle(QStringLiteral("Очищення диска для  (C:)"));
+        setWindowTitle(tr7("Disk Cleanup for  (C:)"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cleanmgr")));
         setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setAttribute(Qt::WA_DeleteOnClose);
@@ -363,9 +360,9 @@ public:
     /** counts first, like cleanmgr.exe; false when the user cancelled */
     bool prepare()
     {
-        ProgressDialog wait(QStringLiteral("Очищення диска"),
-                            QStringLiteral("Програма «Очищення диска» підраховує, скільки місця можна звільнити на  (C:). Це може тривати кілька хвилин."),
-                            QStringLiteral("Підрахунок..."), true);
+        ProgressDialog wait(tr7("Disk Cleanup"),
+                            tr7("Disk Cleanup is calculating how much space you will be able to free on  (C:). This may take a few minutes to complete."),
+                            tr7("Calculating..."), true);
         wait.bar->setRange(0, m_system ? 9 : 5);
         wait.show();
         QString last;
@@ -373,7 +370,7 @@ public:
             if (what != last) {
                 last = what;
                 wait.bar->setValue(wait.bar->value() + 1);
-                wait.status->setText(QStringLiteral("Перевірка:  %1").arg(what));
+                wait.status->setText(tr7("Scanning:  %1").arg(what));
             }
             QCoreApplication::processEvents();
             return !wait.cancelled;
@@ -392,15 +389,15 @@ private:
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(cleanupTab(), QStringLiteral("Очищення диска"));
+        tabs->addTab(cleanupTab(), tr7("Disk Cleanup"));
         if (m_system) {
-            tabs->addTab(moreTab(), QStringLiteral("Додаткові параметри"));
+            tabs->addTab(moreTab(), tr7("More Options"));
         }
         v->addWidget(tabs, 1);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {ok, cancel}) {
             b->setMinimumWidth(75);
             row->addWidget(b);
@@ -425,11 +422,11 @@ private:
         for (const Category &c : std::as_const(m_cats)) {
             all += c.note.isEmpty() ? c.size : 0;
         }
-        auto *intro = new QLabel(QStringLiteral("За допомогою програми «Очищення диска» можна звільнити до %1 місця на диску  (C:).").arg(sizeText(all)));
+        auto *intro = new QLabel(tr7("You can use Disk Cleanup to free up to %1 of disk space on  (C:).").arg(sizeText(all)));
         intro->setWordWrap(true);
         top->addWidget(intro, 1);
         v->addLayout(top);
-        v->addWidget(new QLabel(QStringLiteral("Файли для видалення:")));
+        v->addWidget(new QLabel(tr7("Files to delete:")));
         m_list = new QTreeWidget;
         m_list->setHeaderHidden(true);
         m_list->setRootIsDecorated(false);
@@ -456,12 +453,12 @@ private:
         }
         v->addWidget(m_list);
         auto *totalRow = new QHBoxLayout;
-        totalRow->addWidget(new QLabel(QStringLiteral("Загальний обсяг місця, що звільняється:")));
+        totalRow->addWidget(new QLabel(tr7("Total amount of disk space you gain:")));
         totalRow->addStretch(1);
         m_total = new QLabel;
         totalRow->addWidget(m_total);
         v->addLayout(totalRow);
-        auto *box = new QGroupBox(QStringLiteral("Опис"));
+        auto *box = new QGroupBox(tr7("Description"));
         auto *bv = new QVBoxLayout(box);
         m_desc = new QLabel;
         m_desc->setWordWrap(true);
@@ -469,7 +466,7 @@ private:
         bv->addWidget(m_desc, 1);
         auto *buttons = new QHBoxLayout;
         if (!m_system) {
-            auto *sys = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), QStringLiteral("Очистити системні файли"));
+            auto *sys = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), tr7("Clean up system files"));
             buttons->addWidget(sys);
             connect(sys, &QPushButton::clicked, this, [this] {
                 QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cleanmgr"), QStringLiteral("system")});
@@ -477,15 +474,13 @@ private:
             });
         }
         buttons->addStretch(1);
-        m_view = new QPushButton(QStringLiteral("Переглянути файли"));
+        m_view = new QPushButton(tr7("View Files"));
         buttons->addWidget(m_view);
         bv->addLayout(buttons);
         v->addWidget(box, 1);
-        v->addWidget(new Link(QStringLiteral("Як працює очищення диска?"), [this] {
-            QMessageBox::information(this, QStringLiteral("Очищення диска"),
-                                     QStringLiteral("Програма «Очищення диска» шукає на диску файли, які можна безпечно видалити: тимчасові файли, кеш веб-оглядачів, "
-                                                    "ескізи, вміст кошика тощо.\n\nПозначте категорії, які потрібно видалити, і натисніть кнопку «OK». "
-                                                    "Кнопка «Очистити системні файли» додає до списку системні файли (знадобиться пароль адміністратора)."));
+        v->addWidget(new Link(tr7("How does Disk Cleanup work?"), [this] {
+            QMessageBox::information(this, tr7("Disk Cleanup"),
+                                     tr7("Disk Cleanup looks for files on the drive that can be safely deleted: temporary files, browser caches, thumbnails, the contents of the Recycle Bin and so on.\n\nSelect the categories to delete and click OK. The \"Clean up system files\" button adds system files to the list (the administrator password is needed)."));
         }));
         connect(m_list, &QTreeWidget::itemChanged, this, [this](QTreeWidgetItem *it) {
             m_cats[it->data(0, Qt::UserRole).toInt()].checked = it->checkState(0) == Qt::Checked;
@@ -515,15 +510,15 @@ private:
         auto *w = new QWidget;
         auto *v = new QVBoxLayout(w);
         v->setContentsMargins(10, 10, 10, 8);
-        auto *box = new QGroupBox(QStringLiteral("Програми та засоби"));
+        auto *box = new QGroupBox(tr7("Programs and Features"));
         auto *g = new QGridLayout(box);
         auto *ic = new QLabel;
         ic->setPixmap(QIcon::fromTheme(QStringLiteral("seven-appwiz")).pixmap(32, 32));
         g->addWidget(ic, 0, 0, 2, 1, Qt::AlignTop);
-        auto *t = new QLabel(QStringLiteral("Можна звільнити більше місця на диску, видаливши програми, які не використовуються."));
+        auto *t = new QLabel(tr7("You can free more disk space by removing programs that you do not use."));
         t->setWordWrap(true);
         g->addWidget(t, 0, 1);
-        auto *b = new QPushButton(QStringLiteral("Очистити..."));
+        auto *b = new QPushButton(tr7("Clean up..."));
         g->addWidget(b, 1, 1, Qt::AlignRight);
         v->addWidget(box);
         v->addStretch(1);
@@ -552,21 +547,21 @@ private:
             accept();
             return;
         }
-        QMessageBox ask(QMessageBox::Question, QStringLiteral("Очищення диска"), QStringLiteral("Справді видалити ці файли остаточно?"), QMessageBox::NoButton, this);
-        QPushButton *del = ask.addButton(QStringLiteral("Видалити файли"), QMessageBox::AcceptRole);
-        ask.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+        QMessageBox ask(QMessageBox::Question, tr7("Disk Cleanup"), tr7("Are you sure you want to permanently delete these files?"), QMessageBox::NoButton, this);
+        QPushButton *del = ask.addButton(tr7("Delete Files"), QMessageBox::AcceptRole);
+        ask.addButton(tr7("Cancel"), QMessageBox::RejectRole);
         ask.exec();
         if (ask.clickedButton() != del) {
             return;
         }
         hide();
-        ProgressDialog work(QStringLiteral("Очищення диска"), QStringLiteral("Програма «Очищення диска» видаляє непотрібні файли на комп'ютері."), QString(), false);
-        work.setWindowTitle(QStringLiteral("Очищення диска"));
+        ProgressDialog work(tr7("Disk Cleanup"), tr7("The Disk Cleanup utility is cleaning up unnecessary files on your machine."), QString(), false);
+        work.setWindowTitle(tr7("Disk Cleanup"));
         work.bar->setRange(0, chosen.size() + 1);
         work.show();
         int step = 0;
         for (const Category &c : std::as_const(chosen)) {
-            work.status->setText(QStringLiteral("Очищення диска:  %1").arg(c.title));
+            work.status->setText(tr7("Disk Cleanup:  %1").arg(c.title));
             work.bar->setValue(step++);
             QCoreApplication::processEvents();
             if (c.system) {
@@ -586,7 +581,7 @@ private:
         }
         const QString script = systemScript(chosen);
         if (!script.isEmpty()) {
-            work.status->setText(QStringLiteral("Очищення диска:  системні файли"));
+            work.status->setText(tr7("Disk Cleanup:  system files"));
             QCoreApplication::processEvents();
             QProcess p;
             p.start(QStringLiteral("pkexec"), {QStringLiteral("/bin/sh"), QStringLiteral("-c"), script});

@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7folderopts.h"
 
@@ -214,18 +215,18 @@ class RunDialog : public QDialog
 public:
     RunDialog()
     {
-        setWindowTitle(QStringLiteral("Виконати"));
+        setWindowTitle(tr7("Run"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-run")));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedSize(dlu(0, 0, 227, 92).size());
         auto *icon = new QLabel(this);
         icon->setGeometry(dlu(7, 11, 21, 20));
         icon->setPixmap(QIcon::fromTheme(QStringLiteral("seven-run")).pixmap(32, 32));
-        auto *text = new QLabel(QStringLiteral("Введіть ім'я програми, папки, документа або ресурсу Інтернету, і Windows відкриє їх."), this);
+        auto *text = new QLabel(tr7("Type the name of a program, folder, document, or Internet resource, and Windows will open it for you."), this);
         text->setGeometry(dlu(36, 11, 184, 22));
         text->setWordWrap(true);
         text->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-        auto *label = new QLabel(QStringLiteral("Відкрити:"), this);
+        auto *label = new QLabel(tr7("Open:"), this);
         label->setGeometry(dlu(7, 39, 33, 10));
         m_combo = new QComboBox(this);
         m_combo->setGeometry(dlu(40, 37, 179, 12).adjusted(0, -2, 0, 2));
@@ -252,16 +253,16 @@ public:
         m_ok = new QPushButton(QStringLiteral("OK"), this);
         m_ok->setGeometry(dlu(62, 70, 50, 14));
         m_ok->setDefault(true);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"), this);
+        auto *cancel = new QPushButton(tr7("Cancel"), this);
         cancel->setGeometry(dlu(116, 70, 50, 14));
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."), this);
+        auto *browse = new QPushButton(tr7("Browse..."), this);
         browse->setGeometry(dlu(170, 70, 50, 14));
         m_ok->setEnabled(!m_combo->currentText().trimmed().isEmpty());
         connect(m_combo, &QComboBox::editTextChanged, this, [this](const QString &t) { m_ok->setEnabled(!t.trimmed().isEmpty()); });
         connect(cancel, &QPushButton::clicked, this, &QDialog::close);
         connect(m_ok, &QPushButton::clicked, this, [this] { run(); });
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Огляд"), QStringLiteral("/usr/bin"), QStringLiteral("Програми (*);;Усі файли (*)"));
+            const QString f = QFileDialog::getOpenFileName(this, tr7("Overview"), QStringLiteral("/usr/bin"), tr7("Programs (*);;All Files (*)"));
             if (!f.isEmpty()) {
                 m_combo->setEditText(f.contains(QLatin1Char(' ')) ? QLatin1Char('"') + f + QLatin1Char('"') : f);
                 m_combo->setFocus();
@@ -300,7 +301,7 @@ private:
             QMessageBox box(this);
             box.setIcon(QMessageBox::Critical);
             box.setWindowTitle(typed);
-            box.setText(QStringLiteral("Не вдається знайти «%1». Перевірте правильність імені й повторіть спробу.").arg(typed));
+            box.setText(tr7("Windows cannot find '%1'. Make sure you typed the name correctly, and then try again.").arg(typed));
             box.exec();
             m_combo->lineEdit()->selectAll();
             return;

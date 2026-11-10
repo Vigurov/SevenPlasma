@@ -7,6 +7,7 @@
  */
 
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 #include "win7states.h"
@@ -56,12 +57,12 @@ struct Preset {
 /** Windows 7's 16 colours (ColorizationColor, alpha = intensity), in its order */
 inline const QList<Preset> &presets()
 {
-    static const QList<Preset> list{{"Небо", 0x6B74B8FC, "2_1"},       {"Сутінки", 0xA80046AD, "2_2"},  {"Море", 0x8032CDCD, "2_3"},
-                                    {"Листя", 0x6614A600, "2_4"},      {"Лайм", 0x6697D937, "2_5"},     {"Сонце", 0x54FADC0E, "2_6"},
-                                    {"Гарбуз", 0x80FF9C00, "2_7"},     {"Рубін", 0xA8CE0F0F, "2_8"},    {"Фуксія", 0x66FF0099, "2_21"},
-                                    {"Рум'янець", 0x70FCC7F8, "2_22"}, {"Фіалка", 0x856E3BA1, "2_23"}, {"Лаванда", 0x528D5A94, "2_24"},
-                                    {"Сіро-коричневий", 0x6698844C, "2_25"}, {"Шоколад", 0xA84F1B1B, "2_26"}, {"Сланець", 0x80555555, "2_27"},
-                                    {"Іній", 0x54FCFCFC, "2_28"}};
+    static const QList<Preset> list{{"Sky", 0x6B74B8FC, "2_1"},       {"Twilight", 0xA80046AD, "2_2"},  {"Sea", 0x8032CDCD, "2_3"},
+                                    {"Leaf", 0x6614A600, "2_4"},      {"Lime", 0x6697D937, "2_5"},     {"Sun", 0x54FADC0E, "2_6"},
+                                    {"Pumpkin", 0x80FF9C00, "2_7"},     {"Ruby", 0xA8CE0F0F, "2_8"},    {"Fuchsia", 0x66FF0099, "2_21"},
+                                    {"Blush", 0x70FCC7F8, "2_22"}, {"Violet", 0x856E3BA1, "2_23"}, {"Lavender", 0x528D5A94, "2_24"},
+                                    {"Taupe", 0x6698844C, "2_25"}, {"Chocolate", 0xA84F1B1B, "2_26"}, {"Slate", 0x80555555, "2_27"},
+                                    {"Frost", 0x54FCFCFC, "2_28"}};
     return list;
 }
 
@@ -136,7 +137,7 @@ public:
     {
         setFixedSize(68, 68);
         setAttribute(Qt::WA_Hover);
-        setToolTip(QString::fromUtf8(presets().at(i - 1).name));
+        setToolTip(tr7(presets().at(i - 1).name));
     }
 
 protected:
@@ -285,10 +286,10 @@ public:
             gl->addWidget(b, i / 4, i % 4);
             ++i;
         }
-        auto *other = new QPushButton(QStringLiteral("Інші..."));
+        auto *other = new QPushButton(tr7("More..."));
         connect(other, &QPushButton::clicked, this, [this, menu] {
             menu->close();
-            const QColor c = QColorDialog::getColor(color, window(), QStringLiteral("Колір"));
+            const QColor c = QColorDialog::getColor(color, window(), tr7("Color"));
             if (c.isValid()) {
                 set(c);
             }
@@ -365,28 +366,28 @@ protected:
             }
             return bar;
         };
-        window(QRect(16, 14, 330, 120), QStringLiteral("Неактивне вікно"), false, true);
-        const QRect bar = window(QRect(26, 38, 330, 150), QStringLiteral("Активне вікно"), true, true);
+        window(QRect(16, 14, 330, 120), tr7("Inactive Window"), false, true);
+        const QRect bar = window(QRect(26, 38, 330, 150), tr7("Active Window"), true, true);
         int x = bar.left() + 6;
         const int y = bar.bottom() + 2;
-        for (const auto &[text, col] : {std::pair{QStringLiteral("Звичайний"), QColor(Qt::black)}, std::pair{QStringLiteral("Вимкнений"), QColor(0x8d, 0x8d, 0x8d)}}) {
+        for (const auto &[text, col] : {std::pair{tr7("Regular"), QColor(Qt::black)}, std::pair{tr7("Disabled", "color item"), QColor(0x8d, 0x8d, 0x8d)}}) {
             p.setPen(col);
             p.drawText(QRect(x, y, 80, 17), Qt::AlignLeft | Qt::AlignVCenter, text);
             x += fontMetrics().horizontalAdvance(text) + 12;
         }
         p.setPen(Qt::black);
-        p.drawText(QRect(x, y, 80, 17), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Вибраний"));
+        p.drawText(QRect(x, y, 80, 17), Qt::AlignLeft | Qt::AlignVCenter, tr7("Selected"));
         const QRect text(bar.left(), y + 19, bar.width(), 105);
         p.fillRect(text, Qt::white);
         p.setPen(QColor(0x82, 0x87, 0x90));
         p.drawRect(text.adjusted(0, 0, -1, -1));
         p.setPen(Qt::black);
-        p.drawText(text.adjusted(4, 2, 0, 0), Qt::AlignLeft | Qt::AlignTop, QStringLiteral("Текст вікна"));
+        p.drawText(text.adjusted(4, 2, 0, 0), Qt::AlignLeft | Qt::AlignTop, tr7("Window Text"));
         p.fillRect(QRect(text.right() - 15, text.top() + 1, 15, text.height() - 2), QColor(0xe8, 0xe8, 0xe8));
         const QRect box(42, 120, 228, 72);
-        const QRect mbar = window(box, QStringLiteral("Вікно повідомлення"), true, false);
+        const QRect mbar = window(box, tr7("Message Box"), true, false);
         p.setPen(Qt::black);
-        p.drawText(QRect(mbar.left() + 4, mbar.bottom() + 4, 200, 16), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("Текст повідомлення"));
+        p.drawText(QRect(mbar.left() + 4, mbar.bottom() + 4, 200, 16), Qt::AlignLeft | Qt::AlignVCenter, tr7("Message Text"));
         const QRect ok(box.center().x() - 34, box.bottom() - 24, 68, 20);
         p.fillRect(ok, QColor(0xf0, 0xf0, 0xf0));
         p.setPen(QColor(0x70, 0x70, 0x70));
@@ -404,79 +405,78 @@ public:
     explicit AdvancedDialog(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Колір і оформлення вікна"));
+        setWindowTitle(tr7("Window Color and Appearance"));
         setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-desk")));
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         auto *tabs = new QTabWidget;
         auto *page = new QWidget;
-        tabs->addTab(page, QStringLiteral("Колір і оформлення вікна"));
+        tabs->addTab(page, tr7("Window Color and Appearance"));
         v->addWidget(tabs);
         auto *pv = new QVBoxLayout(page);
         pv->setContentsMargins(11, 11, 11, 11);
         pv->setSpacing(8);
         pv->addWidget(new AppearancePreview, 0, Qt::AlignHCenter);
-        auto *info = new QLabel(QStringLiteral("Щоб увімкнути Windows Aero, виберіть тему Windows 7. Деякі кольори, шрифти та розміри, вибрані тут, "
-                                               "застосовуються, лише якщо вибрано тему «Windows 7 — спрощений стиль» або тему з високою контрастністю."));
+        auto *info = new QLabel(tr7("To enable Windows Aero, select a Windows 7 theme. Colors, fonts, and sizes selected here apply only if you have selected the Windows 7 Basic theme or a High Contrast theme."));
         info->setWordWrap(true);
         pv->addWidget(info);
 
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(8);
         g->setVerticalSpacing(3);
-        g->addWidget(new QLabel(QStringLiteral("Елемент:")), 0, 0);
+        g->addWidget(new QLabel(tr7("Item:")), 0, 0);
         m_item = new QComboBox;
         m_item->setMinimumWidth(210);
-        static const char *items[] = {"Тривимірні об'єкти", "Заголовок активного вікна", "Межа активного вікна", "Фон програми", "Відступ межі",
-                                      "Кнопки заголовка", "Робочий стіл", "Неактивний елемент", "Гіперпосилання", "Значок",
-                                      "Інтервал між значками (горизонтальний)", "Інтервал між значками (вертикальний)", "Заголовок неактивного вікна",
-                                      "Межа неактивного вікна", "Меню", "Вікно повідомлення", "Заголовок палітри", "Смуга прокрутки",
-                                      "Вибрані елементи", "Підказка", "Вікно"};
+        static const char *items[] = {"3D Objects", "Active Title Bar", "Active Window Border", "Application Background", "Border Padding",
+                                      "Caption Buttons", "Desktop", "Disabled Item", "Hyperlink", "Icon",
+                                      "Icon Spacing (Horizontal)", "Icon Spacing (Vertical)", "Inactive Title Bar",
+                                      "Inactive Window Border", "Menu", "Message Box", "Palette Title", "Scrollbar",
+                                      "Selected Items", "ToolTip", "Window"};
         for (const char *it : items) {
-            m_item->addItem(QString::fromUtf8(it));
+            m_item->addItem(tr7(it));
         }
         g->addWidget(m_item, 1, 0);
-        m_sizeLabel = new QLabel(QStringLiteral("Розмір:"));
+        m_sizeLabel = new QLabel(tr7("Size:"));
         g->addWidget(m_sizeLabel, 0, 1);
         m_size = new QSpinBox;
         m_size->setRange(0, 200);
         m_size->setFixedWidth(52);
         g->addWidget(m_size, 1, 1);
-        m_c1Label = new QLabel(QStringLiteral("Колір 1:"));
+        m_c1Label = new QLabel(tr7("Color 1:"));
         g->addWidget(m_c1Label, 0, 2);
         m_color1 = new ColorButton;
         g->addWidget(m_color1, 1, 2);
-        m_c2Label = new QLabel(QStringLiteral("Колір 2:"));
+        m_c2Label = new QLabel(tr7("Color 2:"));
         g->addWidget(m_c2Label, 0, 3);
         m_color2 = new ColorButton;
         g->addWidget(m_color2, 1, 3);
-        m_fontLabel = new QLabel(QStringLiteral("Шрифт:"));
+        m_fontLabel = new QLabel(tr7("Font:"));
         g->addWidget(m_fontLabel, 2, 0);
         m_font = new QComboBox;
         m_font->addItems(QFontDatabase::families());
         g->addWidget(m_font, 3, 0);
-        m_fontSizeLabel = new QLabel(QStringLiteral("Розмір:"));
+        m_fontSizeLabel = new QLabel(tr7("Size:"));
         g->addWidget(m_fontSizeLabel, 2, 1);
         m_fontSize = new QComboBox;
         for (int s : {6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24}) {
             m_fontSize->addItem(QString::number(s), s);
         }
         g->addWidget(m_fontSize, 3, 1);
-        m_fontColorLabel = new QLabel(QStringLiteral("Колір:"));
+        m_fontColorLabel = new QLabel(tr7("Color:"));
         g->addWidget(m_fontColorLabel, 2, 2);
         m_fontColor = new ColorButton;
         g->addWidget(m_fontColor, 3, 2);
         auto *bi = new QHBoxLayout;
         bi->setSpacing(3);
         m_bold = new QToolButton;
-        m_bold->setText(QStringLiteral("Ж"));
+        m_bold->setText(tr7("B"));
         m_bold->setCheckable(true);
         QFont bf = m_bold->font();
         bf.setBold(true);
         m_bold->setFont(bf);
         m_italic = new QToolButton;
-        m_italic->setText(QStringLiteral("К"));
+        m_italic->setText(tr7("I"));
         m_italic->setCheckable(true);
         QFont itf = m_italic->font();
         itf.setItalic(true);
@@ -490,8 +490,8 @@ public:
 
         auto *buttons = new QDialogButtonBox;
         auto *ok = buttons->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        buttons->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
-        m_apply = buttons->addButton(QStringLiteral("Застосувати"), QDialogButtonBox::ApplyRole);
+        buttons->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
+        m_apply = buttons->addButton(tr7("Apply"), QDialogButtonBox::ApplyRole);
         m_apply->setEnabled(false);
         for (QAbstractButton *b : buttons->buttons()) {
             b->setMinimumWidth(75);
@@ -524,7 +524,7 @@ public:
         connect(m_fontSize, &QComboBox::currentIndexChanged, this, dirty);
         connect(m_bold, &QToolButton::toggled, this, dirty);
         connect(m_italic, &QToolButton::toggled, this, dirty);
-        m_item->setCurrentText(QStringLiteral("Робочий стіл"));
+        m_item->setCurrentText(tr7("Desktop"));
         showItem();
         setFixedSize(sizeHint()); // not resizable, only the close button, as on Windows 7
     }
@@ -698,7 +698,7 @@ public:
         auto *v = new QVBoxLayout(body);
         v->setContentsMargins(101, 14, 101, 0);
         v->setSpacing(0);
-        auto *title = new QLabel(QStringLiteral("Змініть колір меж вікон, меню «Пуск» і панелі завдань"));
+        auto *title = new QLabel(tr7("Change the color of your window borders, Start menu, and taskbar"));
         QFont tf = title->font();
         tf.setPixelSize(16);
         title->setFont(tf);
@@ -726,12 +726,12 @@ public:
         v->addWidget(m_current);
         v->addSpacing(14);
 
-        m_transparency = new QCheckBox(QStringLiteral("Увімкнути прозорість"));
+        m_transparency = new QCheckBox(tr7("Enable transparent glass"));
         v->addWidget(m_transparency);
         v->addSpacing(10);
         auto *inten = new QHBoxLayout;
         inten->setSpacing(12);
-        auto *il = new QLabel(QStringLiteral("Інтенсивність кольору:"));
+        auto *il = new QLabel(tr7("Color intensity:"));
         il->setFixedWidth(150);
         inten->addWidget(il);
         m_intensity = new MixSlider(217);
@@ -787,7 +787,7 @@ public:
             g.setColorAt(1, QColor::fromHsv(m_now.hue, int(m_now.saturation * 2.55), 255));
             return g;
         };
-        const QList<QPair<QString, MixSlider *>> rows{{QStringLiteral("Відтінок:"), m_hue}, {QStringLiteral("Насиченість:"), m_sat}, {QStringLiteral("Яскравість:"), m_bright}};
+        const QList<QPair<QString, MixSlider *>> rows{{tr7("Hue:"), m_hue}, {tr7("Saturation:"), m_sat}, {tr7("Brightness:"), m_bright}};
         for (int i = 0; i < rows.size(); ++i) {
             auto *l = new QLabel(rows.at(i).first);
             l->setFixedWidth(126);
@@ -798,7 +798,7 @@ public:
         m_mixer->setVisible(false);
         v->addWidget(m_mixer);
         v->addSpacing(18);
-        v->addWidget(new Link(QStringLiteral("Додаткові параметри оформлення..."), [] {
+        v->addWidget(new Link(tr7("Advanced appearance settings..."), [] {
             // its own window and taskbar button with the desk.cpl icon, like Windows 7
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--appearance-advanced")});
         }));
@@ -814,9 +814,9 @@ public:
         fh->setContentsMargins(101, 14, 101, 14);
         fh->setSpacing(12);
         fh->addStretch(1);
-        auto *save = new QPushButton(QStringLiteral("Зберегти зміни"));
+        auto *save = new QPushButton(tr7("Save changes"));
         save->setMinimumWidth(101);
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         cancel->setMinimumWidth(74);
         fh->addWidget(save);
         fh->addWidget(cancel);
@@ -877,8 +877,8 @@ private:
             s->chosen = s->index == m_now.accent;
             s->update();
         }
-        m_current->setText(QStringLiteral("Поточний колір: %1")
-                               .arg(m_now.accent >= 1 && m_now.accent <= 16 ? QString::fromUtf8(presets().at(m_now.accent - 1).name) : QStringLiteral("Власний")));
+        m_current->setText(tr7("Current color: %1")
+                               .arg(m_now.accent >= 1 && m_now.accent <= 16 ? tr7(presets().at(m_now.accent - 1).name) : tr7("Custom")));
         m_transparency->setChecked(m_now.transparency);
         m_intensity->setValue(m_now.intensity);
         m_hue->setValue(m_now.hue);
@@ -895,7 +895,7 @@ private:
         const bool open = m_mixer->isVisible();
         m_expander->expanded = open;
         m_expander->update();
-        m_mixLink->setText(open ? QStringLiteral("Приховати змішувач кольорів") : QStringLiteral("Показати змішувач кольорів"));
+        m_mixLink->setText(open ? tr7("Hide color mixer") : tr7("Show color mixer"));
     }
 
     Glass m_saved, m_now;

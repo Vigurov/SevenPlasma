@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -70,8 +71,8 @@ struct Kind {
 /** Windows 7's list, in its (alphabetical) order */
 inline const QList<Kind> &kinds()
 {
-    static const QList<Kind> list{{"none", "(Немає)"},        {"text3d", "Тривимірний текст"}, {"blank", "Пустий екран"}, {"bubbles", "Бульбашки"},
-                                  {"mystify", "Містифікація"}, {"photos", "Фотографії"},        {"ribbons", "Стрічки"}};
+    static const QList<Kind> list{{"none", "(None)"},        {"text3d", "3D Text"}, {"blank", "Blank"}, {"bubbles", "Bubbles"},
+                                  {"mystify", "Mystify"}, {"photos", "Photos"},        {"ribbons", "Ribbons"}};
     return list;
 }
 
@@ -501,7 +502,7 @@ protected:
         drawFit(p, m_cur, m_fade);
         if (m_files.isEmpty()) {
             p.setPen(Qt::white);
-            p.drawText(rect(), Qt::AlignCenter, QStringLiteral("Фотографій не знайдено"));
+            p.drawText(rect(), Qt::AlignCenter, tr7("No pictures found"));
         }
     }
 
@@ -751,14 +752,14 @@ public:
     explicit SettingsDialog(QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Параметри заставки"));
+        setWindowTitle(tr7("Screen Saver Settings"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-desk")));
         setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 7, 7, 7);
         auto *tabs = new QTabWidget;
         auto *page = new QWidget;
-        tabs->addTab(page, QStringLiteral("Заставка"));
+        tabs->addTab(page, tr7("Screen Saver"));
         v->addWidget(tabs);
         auto *pv = new QVBoxLayout(page);
         pv->setContentsMargins(11, 13, 11, 11);
@@ -768,19 +769,19 @@ public:
         pv->addWidget(m_monitor, 0, Qt::AlignHCenter);
         pv->addSpacing(14);
 
-        auto *box = new QGroupBox(QStringLiteral("Заставка"));
+        auto *box = new QGroupBox(tr7("Screen Saver"));
         auto *bv = new QVBoxLayout(box);
         bv->setSpacing(8);
         auto *row = new QHBoxLayout;
         row->setSpacing(8);
         m_saver = new QComboBox;
         for (const Kind &k : kinds()) {
-            m_saver->addItem(QString::fromUtf8(k.name), QLatin1String(k.id));
+            m_saver->addItem(tr7(k.name), QLatin1String(k.id));
         }
         m_saver->setMinimumWidth(200);
         row->addWidget(m_saver, 1);
-        m_settings = new QPushButton(QStringLiteral("Параметри..."));
-        m_preview = new QPushButton(QStringLiteral("Переглянути"));
+        m_settings = new QPushButton(tr7("Options..."));
+        m_preview = new QPushButton(tr7("Preview", "screen saver"));
         for (QPushButton *b : {m_settings, m_preview}) {
             b->setMinimumWidth(87);
             row->addWidget(b);
@@ -788,35 +789,35 @@ public:
         bv->addLayout(row);
         auto *wait = new QHBoxLayout;
         wait->setSpacing(6);
-        m_waitLabel = new QLabel(QStringLiteral("Чекати:"));
+        m_waitLabel = new QLabel(tr7("Wait:"));
         wait->addWidget(m_waitLabel);
         m_wait = new QSpinBox;
         m_wait->setRange(1, 9999);
         m_wait->setFixedWidth(60);
         wait->addWidget(m_wait);
-        m_minutes = new QLabel(QStringLiteral("хв."));
+        m_minutes = new QLabel(tr7("minutes"));
         wait->addWidget(m_minutes);
-        m_lock = new QCheckBox(QStringLiteral("Починати з екрана входу в систему"));
+        m_lock = new QCheckBox(tr7("On resume, display logon screen"));
         wait->addWidget(m_lock);
         wait->addStretch(1);
         bv->addLayout(wait);
         pv->addWidget(box);
 
-        auto *power = new QGroupBox(QStringLiteral("Керування живленням"));
+        auto *power = new QGroupBox(tr7("Power management"));
         auto *pw = new QVBoxLayout(power);
-        auto *pt = new QLabel(QStringLiteral("Заощаджуйте енергію або досягайте максимальної продуктивності, налаштовуючи яскравість дисплея та інші параметри живлення."));
+        auto *pt = new QLabel(tr7("Conserve energy or maximize performance by adjusting display brightness and other power settings."));
         pt->setWordWrap(true);
         pw->addWidget(pt);
         pw->addSpacing(4);
-        pw->addWidget(new Link(QStringLiteral("Змінити параметри живлення"), [] {
+        pw->addWidget(new Link(tr7("Change power settings"), [] {
             QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--power")});
         }));
         pv->addWidget(power);
 
         auto *buttons = new QDialogButtonBox;
         auto *ok = buttons->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        buttons->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
-        m_apply = buttons->addButton(QStringLiteral("Застосувати"), QDialogButtonBox::ApplyRole);
+        buttons->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
+        m_apply = buttons->addButton(tr7("Apply"), QDialogButtonBox::ApplyRole);
         for (QAbstractButton *b : buttons->buttons()) {
             b->setMinimumWidth(75);
         }
@@ -892,13 +893,13 @@ private:
     {
         if (id() == QLatin1String("text3d")) {
             QDialog d(this);
-            d.setWindowTitle(QStringLiteral("Параметри тривимірного тексту"));
+            d.setWindowTitle(tr7("3D Text Settings"));
             auto *f = new QFormLayout(&d);
             auto *text = new QLineEdit(config().readEntry("Text3D", QStringLiteral("Windows 7")));
             text->setMaxLength(20);
-            f->addRow(QStringLiteral("Власний текст:"), text);
+            f->addRow(tr7("Custom Text:"), text);
             auto *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-            bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+            bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
             f->addRow(bb);
             connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
             connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
@@ -910,33 +911,33 @@ private:
             }
         } else if (id() == QLatin1String("photos")) {
             QDialog d(this);
-            d.setWindowTitle(QStringLiteral("Параметри заставки «Фотографії»"));
+            d.setWindowTitle(tr7("Photos Screen Saver Settings"));
             auto *f = new QFormLayout(&d);
             KConfigGroup g = config();
             auto *dirRow = new QHBoxLayout;
             auto *dir = new QLineEdit(g.readEntry("PhotosFolder", QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)));
-            auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+            auto *browse = new QPushButton(tr7("Browse..."));
             dirRow->addWidget(dir, 1);
             dirRow->addWidget(browse);
-            f->addRow(QStringLiteral("Використовувати рисунки з:"), dirRow);
+            f->addRow(tr7("Use pictures from:"), dirRow);
             connect(browse, &QPushButton::clicked, &d, [dir, &d] {
-                const QString picked = QFileDialog::getExistingDirectory(&d, QStringLiteral("Огляд папок"), dir->text());
+                const QString picked = QFileDialog::getExistingDirectory(&d, tr7("Browse For Folder"), dir->text());
                 if (!picked.isEmpty()) {
                     dir->setText(picked);
                 }
             });
             auto *speed = new QComboBox;
-            speed->addItem(QStringLiteral("Повільна"), 10);
-            speed->addItem(QStringLiteral("Середня"), 6);
-            speed->addItem(QStringLiteral("Швидка"), 3);
+            speed->addItem(tr7("Slow", "slide show"), 10);
+            speed->addItem(tr7("Medium", "slide show"), 6);
+            speed->addItem(tr7("Fast", "slide show"), 3);
             speed->setCurrentIndex(qMax(0, speed->findData(g.readEntry("PhotosSeconds", 6))));
-            f->addRow(QStringLiteral("Швидкість показу слайдів:"), speed);
-            auto *shuffle = new QCheckBox(QStringLiteral("Перемішати рисунки"));
+            f->addRow(tr7("Slide show speed:"), speed);
+            auto *shuffle = new QCheckBox(tr7("Shuffle pictures"));
             shuffle->setChecked(g.readEntry("PhotosShuffle", true));
             f->addRow(QString(), shuffle);
             auto *bb = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
-            bb->button(QDialogButtonBox::Save)->setText(QStringLiteral("Зберегти"));
-            bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Скасувати"));
+            bb->button(QDialogButtonBox::Save)->setText(tr7("Save"));
+            bb->button(QDialogButtonBox::Cancel)->setText(tr7("Cancel"));
             f->addRow(bb);
             connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
             connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
@@ -949,7 +950,7 @@ private:
             }
         } else {
             // what Windows 7 says for the savers without options
-            QMessageBox::information(this, QStringLiteral("Параметри заставки"), QStringLiteral("Ця заставка не має параметрів, які можна настроїти."));
+            QMessageBox::information(this, tr7("Screen Saver Settings"), tr7("This screen saver has no options that you can set."));
         }
     }
 

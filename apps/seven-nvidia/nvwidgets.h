@@ -1,4 +1,5 @@
 #pragma once
+#include "win7i18n.h"
 /* The NVIDIA Control Panel's own pieces, measured on the Windows 7 screenshots (~/Desktop/win7, 10-18) */
 #include "nvbackend.h"
 
@@ -233,7 +234,7 @@ protected:
 private:
     static QString restoreText()
     {
-        return QStringLiteral("Відновити стандартні параметри");
+        return tr7("Restore Defaults");
     }
     QRect restoreRect() const
     {
@@ -278,7 +279,7 @@ public:
     SettingsTable()
     {
         setColumnCount(2);
-        setHeaderLabels({QStringLiteral("Функція"), QStringLiteral("Параметр")});
+        setHeaderLabels({tr7("Feature"), tr7("Setting")});
         setRootIsDecorated(false);
         setUniformRowHeights(true);
         setAllColumnsShowFocus(true);
@@ -338,10 +339,10 @@ private:
     QString text(const Feature &f) const
     {
         if (!f.supported()) {
-            return perProgram ? QStringLiteral("Не підтримується для цієї програми") : QStringLiteral("Не підтримується в Linux");
+            return perProgram ? tr7("Not supported for this program") : tr7("Not supported on Linux");
         }
         if (perProgram && f.globalOnly) {
-            return QStringLiteral("Не підтримується для цієї програми");
+            return tr7("Not supported for this program");
         }
         const int v = value(f.id);
         if (v < 0) {
@@ -542,7 +543,7 @@ protected:
         const double bw = cpu ? 120 : 185, gap = cpu ? 8 : 10;
         double x = 6;
         if (cpu) {
-            boxes.append({QStringLiteral("ЦП"), QRectF(x, 116, bw, 96)});
+            boxes.append({tr7("CPU"), QRectF(x, 116, bw, 96)});
             x += bw + gap;
         }
         boxes.append({gpuName(), QRectF(x, 116, bw, 96)});
@@ -606,7 +607,7 @@ protected:
         QFont f = font();
         f.setPixelSize(11);
         p.setFont(f);
-        p.drawText(disp.adjusted(2, 2, -2, -2), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, QStringLiteral("Дисплей ноутбука"));
+        p.drawText(disp.adjusted(2, 2, -2, -2), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, tr7("Laptop display"));
         p.setPen(QPen(QColor(0x50, 0x50, 0x50), 1));
         p.drawLine(QPointF(disp.center().x(), disp.bottom()), QPointF(disp.center().x(), igpu.top() + 20));
         p.setBrush(Qt::white);

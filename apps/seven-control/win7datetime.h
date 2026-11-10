@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7trayicons.h"
 
@@ -30,12 +31,12 @@ inline const QString kClockWidget = QStringLiteral("io.gitgud.wackyideas.digital
 
 inline QLocale uk()
 {
-    return QLocale(QLocale::Ukrainian, QLocale::Ukraine);
+    return QLocale{};
 }
 
 inline QString longDate(const QDate &d)
 {
-    return uk().toString(d, QStringLiteral("d MMMM yyyy 'р.'"));
+    return uk().toString(d, tr7("MMMM d, yyyy"));
 }
 
 inline void fixedDialog(QDialog *d, const QString &title, const QString &icon)
@@ -88,107 +89,107 @@ inline const QList<Zone> &zones()
     if (!list.isEmpty()) {
         return list;
     }
-    // Windows time zone id -> the cities Windows 7 shows (Ukrainian)
+    // Windows time zone id -> the cities Windows 7 shows (translated with tr7)
     static const QList<QPair<const char *, const char *>> table{
-        {"Dateline Standard Time", "Лінія зміни дат"},
-        {"UTC-11", "Всесвітній координований час -11"},
-        {"Hawaiian Standard Time", "Гаваї"},
-        {"Alaskan Standard Time", "Аляска"},
-        {"Pacific Standard Time (Mexico)", "Нижня Каліфорнія"},
-        {"Pacific Standard Time", "Тихоокеанський час (США і Канада)"},
-        {"US Mountain Standard Time", "Аризона"},
-        {"Mountain Standard Time (Mexico)", "Чіуауа, Ла-Пас, Масатлан"},
-        {"Mountain Standard Time", "Гірський час (США і Канада)"},
-        {"Central America Standard Time", "Центральна Америка"},
-        {"Central Standard Time", "Центральний час (США і Канада)"},
-        {"Central Standard Time (Mexico)", "Гвадалахара, Мехіко, Монтеррей"},
-        {"Canada Central Standard Time", "Саскачеван"},
-        {"SA Pacific Standard Time", "Богота, Ліма, Кіто"},
-        {"Eastern Standard Time", "Східний час (США і Канада)"},
-        {"US Eastern Standard Time", "Індіана (схід)"},
-        {"Venezuela Standard Time", "Каракас"},
-        {"Paraguay Standard Time", "Асунсьйон"},
-        {"Atlantic Standard Time", "Атлантичний час (Канада)"},
-        {"Central Brazilian Standard Time", "Куяба"},
-        {"SA Western Standard Time", "Джорджтаун, Ла-Пас, Манаус, Сан-Хуан"},
-        {"Pacific SA Standard Time", "Сантьяго"},
-        {"Newfoundland Standard Time", "Ньюфаундленд"},
-        {"E. South America Standard Time", "Бразиліа"},
-        {"Argentina Standard Time", "Буенос-Айрес"},
-        {"SA Eastern Standard Time", "Кайєнна, Форталеза"},
-        {"Greenland Standard Time", "Гренландія"},
-        {"Montevideo Standard Time", "Монтевідео"},
-        {"UTC-02", "Всесвітній координований час -02"},
-        {"Azores Standard Time", "Азорські острови"},
-        {"Cape Verde Standard Time", "Острови Кабо-Верде"},
-        {"Morocco Standard Time", "Касабланка"},
-        {"UTC", "Всесвітній координований час"},
-        {"GMT Standard Time", "Дублін, Единбург, Лісабон, Лондон"},
-        {"Greenwich Standard Time", "Монровія, Рейк'явік"},
-        {"W. Europe Standard Time", "Амстердам, Берлін, Берн, Рим, Стокгольм, Відень"},
-        {"Central Europe Standard Time", "Белград, Братислава, Будапешт, Любляна, Прага"},
-        {"Romance Standard Time", "Брюссель, Копенгаген, Мадрид, Париж"},
-        {"Central European Standard Time", "Сараєво, Скоп'є, Варшава, Загреб"},
-        {"W. Central Africa Standard Time", "Західна Центральна Африка"},
-        {"Namibia Standard Time", "Віндгук"},
-        {"Jordan Standard Time", "Амман"},
-        {"GTB Standard Time", "Афіни, Бухарест"},
-        {"Middle East Standard Time", "Бейрут"},
-        {"Egypt Standard Time", "Каїр"},
-        {"Syria Standard Time", "Дамаск"},
-        {"South Africa Standard Time", "Хараре, Преторія"},
-        {"FLE Standard Time", "Гельсінкі, Київ, Рига, Софія, Таллінн, Вільнюс"},
-        {"Turkey Standard Time", "Стамбул"},
-        {"Israel Standard Time", "Єрусалим"},
-        {"E. Europe Standard Time", "Кишинів"},
-        {"Kaliningrad Standard Time", "Калінінград"},
-        {"Belarus Standard Time", "Мінськ"},
-        {"Arabic Standard Time", "Багдад"},
-        {"Arab Standard Time", "Кувейт, Ер-Ріяд"},
-        {"Russian Standard Time", "Москва, Санкт-Петербург"},
-        {"E. Africa Standard Time", "Найробі"},
-        {"Iran Standard Time", "Тегеран"},
-        {"Arabian Standard Time", "Абу-Дабі, Маскат"},
-        {"Azerbaijan Standard Time", "Баку"},
-        {"Mauritius Standard Time", "Порт-Луї"},
-        {"Georgian Standard Time", "Тбілісі"},
-        {"Caucasus Standard Time", "Єреван"},
-        {"Afghanistan Standard Time", "Кабул"},
-        {"Ekaterinburg Standard Time", "Єкатеринбург"},
-        {"Pakistan Standard Time", "Ісламабад, Карачі"},
-        {"West Asia Standard Time", "Ташкент"},
-        {"India Standard Time", "Ченнаї, Колката, Мумбаї, Нью-Делі"},
-        {"Sri Lanka Standard Time", "Шрі-Джаяварденепура-Котте"},
-        {"Nepal Standard Time", "Катманду"},
-        {"Central Asia Standard Time", "Астана"},
-        {"Bangladesh Standard Time", "Дакка"},
-        {"N. Central Asia Standard Time", "Новосибірськ"},
-        {"Myanmar Standard Time", "Янгон (Рангун)"},
-        {"SE Asia Standard Time", "Бангкок, Ханой, Джакарта"},
-        {"North Asia Standard Time", "Красноярськ"},
-        {"China Standard Time", "Пекін, Чунцин, Гонконг, Урумчі"},
-        {"North Asia East Standard Time", "Іркутськ"},
-        {"Singapore Standard Time", "Куала-Лумпур, Сінгапур"},
-        {"W. Australia Standard Time", "Перт"},
-        {"Taipei Standard Time", "Тайбей"},
-        {"Ulaanbaatar Standard Time", "Улан-Батор"},
-        {"Tokyo Standard Time", "Осака, Саппоро, Токіо"},
-        {"Korea Standard Time", "Сеул"},
-        {"Yakutsk Standard Time", "Якутськ"},
-        {"Cen. Australia Standard Time", "Аделаїда"},
-        {"AUS Central Standard Time", "Дарвін"},
-        {"E. Australia Standard Time", "Брисбен"},
-        {"AUS Eastern Standard Time", "Канберра, Мельбурн, Сідней"},
-        {"West Pacific Standard Time", "Гуам, Порт-Морсбі"},
-        {"Tasmania Standard Time", "Хобарт"},
-        {"Vladivostok Standard Time", "Владивосток"},
-        {"Magadan Standard Time", "Магадан"},
-        {"Central Pacific Standard Time", "Соломонові Острови, Нова Каледонія"},
-        {"New Zealand Standard Time", "Окленд, Веллінгтон"},
-        {"UTC+12", "Всесвітній координований час +12"},
-        {"Fiji Standard Time", "Фіджі"},
-        {"Tonga Standard Time", "Нукуалофа"},
-        {"Samoa Standard Time", "Самоа"},
+        {"Dateline Standard Time", "International Date Line West"},
+        {"UTC-11", "Coordinated Universal Time-11"},
+        {"Hawaiian Standard Time", "Hawaii"},
+        {"Alaskan Standard Time", "Alaska"},
+        {"Pacific Standard Time (Mexico)", "Baja California"},
+        {"Pacific Standard Time", "Pacific Time (US & Canada)"},
+        {"US Mountain Standard Time", "Arizona"},
+        {"Mountain Standard Time (Mexico)", "Chihuahua, La Paz, Mazatlan"},
+        {"Mountain Standard Time", "Mountain Time (US & Canada)"},
+        {"Central America Standard Time", "Central America"},
+        {"Central Standard Time", "Central Time (US & Canada)"},
+        {"Central Standard Time (Mexico)", "Guadalajara, Mexico City, Monterrey"},
+        {"Canada Central Standard Time", "Saskatchewan"},
+        {"SA Pacific Standard Time", "Bogota, Lima, Quito"},
+        {"Eastern Standard Time", "Eastern Time (US & Canada)"},
+        {"US Eastern Standard Time", "Indiana (East)"},
+        {"Venezuela Standard Time", "Caracas"},
+        {"Paraguay Standard Time", "Asuncion"},
+        {"Atlantic Standard Time", "Atlantic Time (Canada)"},
+        {"Central Brazilian Standard Time", "Cuiaba"},
+        {"SA Western Standard Time", "Georgetown, La Paz, Manaus, San Juan"},
+        {"Pacific SA Standard Time", "Santiago"},
+        {"Newfoundland Standard Time", "Newfoundland"},
+        {"E. South America Standard Time", "Brasilia"},
+        {"Argentina Standard Time", "Buenos Aires"},
+        {"SA Eastern Standard Time", "Cayenne, Fortaleza"},
+        {"Greenland Standard Time", "Greenland"},
+        {"Montevideo Standard Time", "Montevideo"},
+        {"UTC-02", "Coordinated Universal Time-02"},
+        {"Azores Standard Time", "Azores"},
+        {"Cape Verde Standard Time", "Cape Verde Is."},
+        {"Morocco Standard Time", "Casablanca"},
+        {"UTC", "Coordinated Universal Time"},
+        {"GMT Standard Time", "Dublin, Edinburgh, Lisbon, London"},
+        {"Greenwich Standard Time", "Monrovia, Reykjavik"},
+        {"W. Europe Standard Time", "Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"},
+        {"Central Europe Standard Time", "Belgrade, Bratislava, Budapest, Ljubljana, Prague"},
+        {"Romance Standard Time", "Brussels, Copenhagen, Madrid, Paris"},
+        {"Central European Standard Time", "Sarajevo, Skopje, Warsaw, Zagreb"},
+        {"W. Central Africa Standard Time", "West Central Africa"},
+        {"Namibia Standard Time", "Windhoek"},
+        {"Jordan Standard Time", "Amman"},
+        {"GTB Standard Time", "Athens, Bucharest"},
+        {"Middle East Standard Time", "Beirut"},
+        {"Egypt Standard Time", "Cairo"},
+        {"Syria Standard Time", "Damascus"},
+        {"South Africa Standard Time", "Harare, Pretoria"},
+        {"FLE Standard Time", "Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"},
+        {"Turkey Standard Time", "Istanbul"},
+        {"Israel Standard Time", "Jerusalem"},
+        {"E. Europe Standard Time", "Chisinau"},
+        {"Kaliningrad Standard Time", "Kaliningrad"},
+        {"Belarus Standard Time", "Minsk"},
+        {"Arabic Standard Time", "Baghdad"},
+        {"Arab Standard Time", "Kuwait, Riyadh"},
+        {"Russian Standard Time", "Moscow, St. Petersburg"},
+        {"E. Africa Standard Time", "Nairobi"},
+        {"Iran Standard Time", "Tehran"},
+        {"Arabian Standard Time", "Abu Dhabi, Muscat"},
+        {"Azerbaijan Standard Time", "Baku"},
+        {"Mauritius Standard Time", "Port Louis"},
+        {"Georgian Standard Time", "Tbilisi"},
+        {"Caucasus Standard Time", "Yerevan"},
+        {"Afghanistan Standard Time", "Kabul"},
+        {"Ekaterinburg Standard Time", "Ekaterinburg"},
+        {"Pakistan Standard Time", "Islamabad, Karachi"},
+        {"West Asia Standard Time", "Tashkent"},
+        {"India Standard Time", "Chennai, Kolkata, Mumbai, New Delhi"},
+        {"Sri Lanka Standard Time", "Sri Jayawardenepura"},
+        {"Nepal Standard Time", "Kathmandu"},
+        {"Central Asia Standard Time", "Astana"},
+        {"Bangladesh Standard Time", "Dhaka"},
+        {"N. Central Asia Standard Time", "Novosibirsk"},
+        {"Myanmar Standard Time", "Yangon (Rangoon)"},
+        {"SE Asia Standard Time", "Bangkok, Hanoi, Jakarta"},
+        {"North Asia Standard Time", "Krasnoyarsk"},
+        {"China Standard Time", "Beijing, Chongqing, Hong Kong, Urumqi"},
+        {"North Asia East Standard Time", "Irkutsk"},
+        {"Singapore Standard Time", "Kuala Lumpur, Singapore"},
+        {"W. Australia Standard Time", "Perth"},
+        {"Taipei Standard Time", "Taipei"},
+        {"Ulaanbaatar Standard Time", "Ulaanbaatar"},
+        {"Tokyo Standard Time", "Osaka, Sapporo, Tokyo"},
+        {"Korea Standard Time", "Seoul"},
+        {"Yakutsk Standard Time", "Yakutsk"},
+        {"Cen. Australia Standard Time", "Adelaide"},
+        {"AUS Central Standard Time", "Darwin"},
+        {"E. Australia Standard Time", "Brisbane"},
+        {"AUS Eastern Standard Time", "Canberra, Melbourne, Sydney"},
+        {"West Pacific Standard Time", "Guam, Port Moresby"},
+        {"Tasmania Standard Time", "Hobart"},
+        {"Vladivostok Standard Time", "Vladivostok"},
+        {"Magadan Standard Time", "Magadan"},
+        {"Central Pacific Standard Time", "Solomon Is., New Caledonia"},
+        {"New Zealand Standard Time", "Auckland, Wellington"},
+        {"UTC+12", "Coordinated Universal Time+12"},
+        {"Fiji Standard Time", "Fiji"},
+        {"Tonga Standard Time", "Nuku'alofa"},
+        {"Samoa Standard Time", "Samoa"},
     };
     const QByteArray current = QTimeZone::systemTimeZoneId();
     const QDateTime now = QDateTime::currentDateTimeUtc();
@@ -206,7 +207,7 @@ inline const QList<Zone> &zones()
             iana = current; // keep the exact zone the system uses
         }
         const int off = QTimeZone(iana).standardTimeOffset(now);
-        sorted.append({off, {iana, offsetText(off) + QLatin1Char(' ') + QString::fromUtf8(e.second)}});
+        sorted.append({off, {iana, offsetText(off) + QLatin1Char(' ') + tr7(e.second)}});
     }
     std::stable_sort(sorted.begin(), sorted.end(), [](const auto &a, const auto &b) {
         return a.first < b.first;
@@ -255,22 +256,22 @@ inline void fillZones(QComboBox *box, const QByteArray &select)
 inline QString dstText(const QTimeZone &tz)
 {
     if (!tz.hasTransitions()) {
-        return QStringLiteral("У цьому часовому поясі перехід на літній час не використовується.");
+        return tr7("Daylight Saving Time is not observed in this time zone.");
     }
     const QDateTime now = QDateTime::currentDateTimeUtc();
     const QTimeZone::OffsetData next = tz.nextTransition(now);
     if (!next.atUtc.isValid() || next.atUtc > now.addYears(1)) {
-        return QStringLiteral("У цьому часовому поясі перехід на літній час не використовується.");
+        return tr7("Daylight Saving Time is not observed in this time zone.");
     }
     const int before = tz.offsetFromUtc(next.atUtc.addSecs(-1));
     const int after = next.offsetFromUtc;
     const QDateTime local = next.atUtc.addSecs(before).toUTC();
     const int hours = qAbs(after - before) / 3600;
     const bool winter = after < before;
-    return QStringLiteral("Перехід на %1 час відбудеться %2 о %3. Годинник буде переведено на %4 %5 %6.")
-        .arg(winter ? QStringLiteral("зимовий") : QStringLiteral("літній"), longDate(local.date()), local.time().toString(QStringLiteral("H:mm")))
+    return tr7("The change to %1 time happens on %2 at %3. The clock is set to go %6 %4 %5 at that time.")
+        .arg(winter ? tr7("standard") : tr7("daylight saving"), longDate(local.date()), local.time().toString(QStringLiteral("H:mm")))
         .arg(hours)
-        .arg(hours == 1 ? QStringLiteral("годину") : QStringLiteral("години"), winter ? QStringLiteral("назад") : QStringLiteral("вперед"));
+        .arg(hours == 1 ? tr7("hour") : tr7("hours"), winter ? tr7("back") : tr7("forward"));
 }
 
 /* ---------------- the analog clock of the taskbar popup ---------------- */
@@ -372,7 +373,7 @@ protected:
         p.drawPolygon(QPolygonF({QPointF(width() - 12, 13), QPointF(width() - 16, 9.5), QPointF(width() - 16, 16.5)}));
         p.setRenderHint(QPainter::Antialiasing, false);
         p.setBrush(Qt::NoBrush);
-        static const QStringList days{QStringLiteral("Пн"), QStringLiteral("Вт"), QStringLiteral("Ср"), QStringLiteral("Чт"), QStringLiteral("Пт"), QStringLiteral("Сб"), QStringLiteral("Нд")};
+        static const QStringList days{tr7("Mon"), tr7("Tue"), tr7("Wed"), tr7("Thu"), tr7("Fri"), tr7("Sat"), tr7("Sun", "weekday")};
         p.setPen(Qt::black);
         for (int i = 0; i < 7; ++i) {
             p.drawText(QRect(6 + i * kCell, 22, kCell, 16), Qt::AlignCenter, days.at(i));
@@ -455,8 +456,8 @@ inline bool ntpActive()
 inline bool setTime(QWidget *parent, const QDateTime &when)
 {
     if (ntpActive()) {
-        if (QMessageBox::question(parent, QStringLiteral("Дата й час"),
-                                  QStringLiteral("Увімкнено синхронізацію з сервером часу в Інтернеті. Щоб установити час вручну, її потрібно вимкнути.\n\nВимкнути синхронізацію?"))
+        if (QMessageBox::question(parent, tr7("Date and Time"),
+                                  tr7("Synchronization with an Internet time server is on. To set the time manually, it must be turned off.\n\nTurn synchronization off?"))
             != QMessageBox::Yes) {
             return false;
         }
@@ -470,7 +471,7 @@ inline bool setTime(QWidget *parent, const QDateTime &when)
     QString err;
     run(QStringLiteral("timedatectl"), {QStringLiteral("set-time"), when.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"))}, &code, &err);
     if (code != 0 && !err.isEmpty() && !err.contains(QLatin1String("authoriz"), Qt::CaseInsensitive)) {
-        QMessageBox::warning(parent, QStringLiteral("Дата й час"), QStringLiteral("Не вдалося змінити час:\n%1").arg(err));
+        QMessageBox::warning(parent, tr7("Date and Time"), tr7("The time could not be changed:\n%1").arg(err));
     }
     return code == 0;
 }
@@ -483,22 +484,22 @@ public:
     explicit DateTimeSettings(QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Настроювання часу й дати"), QStringLiteral("seven-datetime"));
+        fixedDialog(this, tr7("Date and Time Settings"), QStringLiteral("seven-datetime"));
         setMinimumWidth(450);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
-        v->addWidget(new QLabel(QStringLiteral("Установіть дату й час:")));
+        v->addWidget(new QLabel(tr7("Set the date and time:")));
         v->addSpacing(8);
         auto *row = new QHBoxLayout;
         auto *left = new QVBoxLayout;
-        left->addWidget(new QLabel(QStringLiteral("Дата:")));
+        left->addWidget(new QLabel(tr7("Date:")));
         m_month = new MonthView(QDate::currentDate());
         left->addWidget(m_month);
         left->addStretch(1);
         row->addLayout(left);
         row->addSpacing(18);
         auto *right = new QVBoxLayout;
-        right->addWidget(new QLabel(QStringLiteral("Час:")));
+        right->addWidget(new QLabel(tr7("Time:")));
         m_clock = new AnalogClock(128);
         right->addWidget(m_clock, 0, Qt::AlignHCenter);
         m_time = new QTimeEdit(QTime::currentTime());
@@ -509,7 +510,7 @@ public:
         row->addLayout(right);
         v->addLayout(row);
         v->addSpacing(14);
-        auto *link = new Link(QStringLiteral("Змінення параметрів календаря"), [this] {
+        auto *link = new Link(tr7("Change calendar settings"), [this] {
             if (openCalendarSettings) {
                 openCalendarSettings();
             }
@@ -520,7 +521,7 @@ public:
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         m_ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         m_ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         m_ok->setDefault(true);
@@ -570,19 +571,19 @@ public:
     explicit TimeZoneSettings(QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Вибір часового поясу"), QStringLiteral("seven-datetime"));
+        fixedDialog(this, tr7("Time Zone Settings"), QStringLiteral("seven-datetime"));
         setFixedWidth(460);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
-        v->addWidget(new QLabel(QStringLiteral("Установіть часовий пояс:")));
+        v->addWidget(new QLabel(tr7("Set the time zone:")));
         v->addSpacing(12);
-        v->addWidget(new QLabel(QStringLiteral("Часовий пояс:")));
+        v->addWidget(new QLabel(tr7("Time zone:")));
         m_zone = new QComboBox;
         fillZones(m_zone, QTimeZone::systemTimeZoneId());
         v->addWidget(m_zone);
         v->addSpacing(12);
         auto *now = new QHBoxLayout;
-        now->addWidget(new QLabel(QStringLiteral("Поточні дата й час:")));
+        now->addWidget(new QLabel(tr7("Current date and time:")));
         now->addSpacing(20);
         m_now = new QLabel;
         now->addWidget(m_now, 1);
@@ -591,7 +592,7 @@ public:
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         ok->setDefault(true);
@@ -652,18 +653,18 @@ public:
     explicit InternetTimeSettings(QWidget *parent)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Настроювання часу через Інтернет"), QStringLiteral("seven-datetime"));
+        fixedDialog(this, tr7("Internet Time Settings"), QStringLiteral("seven-datetime"));
         setFixedWidth(440);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(12, 12, 12, 12);
-        v->addWidget(new QLabel(QStringLiteral("Настройте параметри часу через Інтернет:")));
+        v->addWidget(new QLabel(tr7("Configure Internet time settings:")));
         v->addSpacing(6);
-        m_sync = new QCheckBox(QStringLiteral("Синхронізувати із сервером часу в Інтернеті"));
+        m_sync = new QCheckBox(tr7("Synchronize with an Internet time server"));
         m_sync->setChecked(ntpActive());
         v->addWidget(m_sync);
         auto *row = new QHBoxLayout;
         row->setContentsMargins(18, 0, 0, 0);
-        row->addWidget(new QLabel(QStringLiteral("Сервер:")));
+        row->addWidget(new QLabel(tr7("Server:")));
         m_server = new QComboBox;
         m_server->setEditable(true);
         m_oldServer = timeServer();
@@ -675,18 +676,18 @@ public:
         }
         m_server->setMinimumWidth(190);
         row->addWidget(m_server, 1);
-        auto *now = new QPushButton(QStringLiteral("Оновити зараз"));
+        auto *now = new QPushButton(tr7("Update now"));
         row->addWidget(now);
         v->addLayout(row);
         v->addSpacing(10);
-        m_status = new QLabel(QStringLiteral("Цей комп'ютер налаштовано на автоматичну синхронізацію за розкладом."));
+        m_status = new QLabel(tr7("This computer is set to automatically synchronize on a scheduled basis."));
         m_status->setWordWrap(true);
         v->addWidget(m_status);
         v->addSpacing(28);
         auto *btns = new QHBoxLayout;
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         ok->setMinimumWidth(75);
         cancel->setMinimumWidth(75);
         ok->setDefault(true);
@@ -707,12 +708,12 @@ public:
             if (code != 0) {
                 return;
             }
-            m_status->setText(QStringLiteral("Синхронізація з %1...").arg(m_server->currentText()));
+            m_status->setText(tr7("Synchronizing with %1...").arg(m_server->currentText()));
             QTimer::singleShot(3000, this, [this] {
                 const bool ok = run(QStringLiteral("timedatectl"), {QStringLiteral("show"), QStringLiteral("-p"), QStringLiteral("NTPSynchronized"), QStringLiteral("--value")}) == QLatin1String("yes");
                 const QDateTime t = QDateTime::currentDateTime();
-                m_status->setText(ok ? QStringLiteral("Час успішно синхронізовано з %1 %2 о %3.").arg(m_server->currentText(), longDate(t.date()), t.time().toString(QStringLiteral("H:mm")))
-                                     : QStringLiteral("Під час синхронізації з %1 сталася помилка.").arg(m_server->currentText()));
+                m_status->setText(ok ? tr7("The clock was successfully synchronized with %1 on %2 at %3.").arg(m_server->currentText(), longDate(t.date()), t.time().toString(QStringLiteral("H:mm")))
+                                     : tr7("An error occurred while Windows was synchronizing with %1.").arg(m_server->currentText()));
             });
         });
         connect(ok, &QPushButton::clicked, this, [this] {
@@ -766,7 +767,7 @@ inline QString findClock()
 
 inline QList<ExtraClock> readExtraClocks()
 {
-    QList<ExtraClock> list{{false, QTimeZone::systemTimeZoneId(), QStringLiteral("Годинник 1")}, {false, QTimeZone::systemTimeZoneId(), QStringLiteral("Годинник 2")}};
+    QList<ExtraClock> list{{false, QTimeZone::systemTimeZoneId(), tr7("Clock 1")}, {false, QTimeZone::systemTimeZoneId(), tr7("Clock 2")}};
     const QString out = Win7Tray::runScript(findClock() + QStringLiteral(" if (c) print(String(c.readConfig('win7ExtraClocks') || ''));"));
     const QJsonArray a = QJsonDocument::fromJson(out.toUtf8()).array();
     for (int i = 0; i < qMin(2, int(a.size())); ++i) {
@@ -798,23 +799,23 @@ public:
     explicit DateTimeDialog(int tab, QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        fixedDialog(this, QStringLiteral("Дата й час"), QStringLiteral("seven-datetime"));
+        fixedDialog(this, tr7("Date and Time"), QStringLiteral("seven-datetime"));
         setAttribute(Qt::WA_DeleteOnClose);
         setFixedWidth(480);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(7, 9, 7, 9);
         auto *tabs = new QTabWidget;
-        tabs->addTab(dateTab(), QStringLiteral("Дата й час"));
-        tabs->addTab(clocksTab(), QStringLiteral("Додаткові годинники"));
-        tabs->addTab(internetTab(), QStringLiteral("Час в Інтернеті"));
+        tabs->addTab(dateTab(), tr7("Date and Time"));
+        tabs->addTab(clocksTab(), tr7("Additional Clocks"));
+        tabs->addTab(internetTab(), tr7("Internet Time"));
         tabs->setCurrentIndex(tab);
         v->addWidget(tabs, 1);
         auto *btns = new QHBoxLayout;
         btns->setContentsMargins(0, 4, 0, 0);
         btns->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
-        m_apply = new QPushButton(QStringLiteral("Застосувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
+        m_apply = new QPushButton(tr7("Apply"));
         for (QPushButton *b : {ok, cancel, m_apply}) {
             b->setMinimumWidth(75);
             btns->addWidget(b);
@@ -865,21 +866,21 @@ private:
         top->addSpacing(24);
         auto *info = new QVBoxLayout;
         info->addSpacing(14);
-        info->addWidget(new QLabel(QStringLiteral("Дата:")));
+        info->addWidget(new QLabel(tr7("Date:")));
         m_date = new QLabel;
         info->addWidget(m_date);
         info->addSpacing(16);
-        info->addWidget(new QLabel(QStringLiteral("Час:")));
+        info->addWidget(new QLabel(tr7("Time:")));
         m_time = new QLabel;
         info->addWidget(m_time);
         info->addSpacing(10);
-        auto *change = shieldButton(QStringLiteral("Змінити дату й час..."));
+        auto *change = shieldButton(tr7("Change date and time..."));
         info->addWidget(change, 0, Qt::AlignRight);
         top->addLayout(info, 1);
         v->addLayout(top);
         v->addSpacing(8);
         auto *zoneHead = new QHBoxLayout;
-        zoneHead->addWidget(new QLabel(QStringLiteral("Часовий пояс")));
+        zoneHead->addWidget(new QLabel(tr7("Time zone", "group")));
         auto *line = new QFrame;
         line->setFrameShape(QFrame::HLine);
         line->setStyleSheet(QStringLiteral("color: #d5dfe5;"));
@@ -889,7 +890,7 @@ private:
         m_zone = new QLabel;
         v->addWidget(m_zone);
         v->addSpacing(6);
-        auto *changeZone = new QPushButton(QStringLiteral("Змінити часовий пояс..."));
+        auto *changeZone = new QPushButton(tr7("Change time zone..."));
         changeZone->setMinimumWidth(changeZone->sizeHint().width() + 30);
         v->addWidget(changeZone, 0, Qt::AlignRight);
         v->addSpacing(12);
@@ -924,20 +925,19 @@ private:
         auto *v = new QVBoxLayout(page);
         v->setContentsMargins(14, 14, 14, 10);
         v->setSpacing(10);
-        v->addWidget(text(QStringLiteral("Додаткові годинники можуть показувати час в інших часових поясах. Щоб переглянути їх, клацніть годинник на панелі завдань "
-                                         "або наведіть на нього вказівник миші.")));
+        v->addWidget(text(tr7("Additional clocks can display the time in other time zones. You can view them by clicking on or hovering over the taskbar clock.")));
         m_oldClocks = readExtraClocks();
         for (int i = 0; i < 2; ++i) {
             auto *box = new QGroupBox;
             auto *bv = new QVBoxLayout(box);
             bv->setSpacing(4);
-            auto *show = new QCheckBox(QStringLiteral("Показати цей годинник"));
+            auto *show = new QCheckBox(tr7("Show this clock"));
             show->setChecked(m_oldClocks[i].show);
-            auto *zoneLabel = new QLabel(QStringLiteral("Виберіть часовий пояс:"));
+            auto *zoneLabel = new QLabel(tr7("Select time zone:"));
             auto *zone = new QComboBox;
             fillZones(zone, m_oldClocks[i].zone);
-            auto *nameLabel = new QLabel(QStringLiteral("Відображуване ім'я:"));
-            auto *name = new QLineEdit(m_oldClocks[i].name.isEmpty() ? QStringLiteral("Годинник %1").arg(i + 1) : m_oldClocks[i].name);
+            auto *nameLabel = new QLabel(tr7("Enter display name:"));
+            auto *name = new QLineEdit(m_oldClocks[i].name.isEmpty() ? tr7("Clock %1").arg(i + 1) : m_oldClocks[i].name);
             name->setMaxLength(15);
             name->setFixedWidth(220);
             bv->addWidget(show);
@@ -980,7 +980,7 @@ private:
         m_internet2 = text(QString());
         v->addWidget(m_internet2);
         v->addSpacing(30);
-        auto *change = shieldButton(QStringLiteral("Змінити параметри..."));
+        auto *change = shieldButton(tr7("Change settings..."));
         change->setMinimumWidth(change->sizeHint().width() + 40);
         v->addWidget(change, 0, Qt::AlignRight);
         v->addStretch(1);
@@ -996,10 +996,10 @@ private:
     void refreshInternet()
     {
         if (ntpActive()) {
-            m_internet->setText(QStringLiteral("Комп'ютер налаштовано на автоматичну синхронізацію з «%1».").arg(timeServer()));
-            m_internet2->setText(QStringLiteral("Цей комп'ютер налаштовано на автоматичну синхронізацію за розкладом."));
+            m_internet->setText(tr7("This computer is set to automatically synchronize with '%1'.").arg(timeServer()));
+            m_internet2->setText(tr7("This computer is set to automatically synchronize on a scheduled basis."));
         } else {
-            m_internet->setText(QStringLiteral("Цей комп'ютер не налаштовано на автоматичну синхронізацію."));
+            m_internet->setText(tr7("This computer is not set to synchronize automatically."));
             m_internet2->clear();
         }
     }

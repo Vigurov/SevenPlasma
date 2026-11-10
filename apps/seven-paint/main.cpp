@@ -1,3 +1,4 @@
+#include "win7i18n.h"
 /*
  * Paint of Windows 7 (mspaint.exe 6.1): the Scenic Ribbon (Home / View, the contextual Text tab), the application
  * menu, the work area and the status bar with the zoom slider, after ~/VMs/sevenplasma/refs/paint*.png.
@@ -687,7 +688,7 @@ protected:
                 p.drawText(QRect(r.x() + 44, r.y() + 3 + fm.height(), r.width() - 50, r.height() - fm.height() - 4), Qt::TextWordWrap, std::get<2>(it.sub[i]));
             }
         } else {
-            header(QStringLiteral("Останні рисунки"));
+            header(tr7("Recent pictures"));
             for (int i = 0; i < recent.size(); ++i) {
                 const QRect r = recentRect(i);
                 if (i == m_recentHot) {
@@ -1028,7 +1029,7 @@ public:
         v->setContentsMargins(0, 0, 0, 0);
         v->setSpacing(0);
 
-        m_bar = new Rib::Bar({QStringLiteral("Основне"), QStringLiteral("Вигляд")}, this);
+        m_bar = new Rib::Bar({tr7("Home"), tr7("View")}, this);
         v->addWidget(m_bar);
 
         auto *mid = new QGridLayout;
@@ -1091,7 +1092,7 @@ public:
 
         // canvas -> ui
         m_canvas->cursorMoved = [this](const QPoint &p) {
-            m_status->pos = p.x() >= 0 ? QStringLiteral("%1, %2пкс").arg(p.x()).arg(p.y()) : QString();
+            m_status->pos = p.x() >= 0 ? tr7("%1, %2px").arg(p.x()).arg(p.y()) : QString();
             m_status->update();
             m_hruler->mark = p.x();
             m_vruler->mark = p.y();
@@ -1101,7 +1102,7 @@ public:
             }
         };
         m_canvas->selectionChanged = [this](const QSize &s) {
-            m_status->sel = s.isEmpty() ? QString() : QStringLiteral("%1 × %2пкс").arg(s.width()).arg(s.height());
+            m_status->sel = s.isEmpty() ? QString() : tr7("%1 × %2px").arg(s.width()).arg(s.height());
             m_status->update();
             const bool has = m_canvas->hasSelection();
             m_cut->setEnabled(has);
@@ -1109,7 +1110,7 @@ public:
             m_crop->setEnabled(has);
         };
         m_canvas->imageChanged = [this] {
-            m_status->size = QStringLiteral("%1 × %2пкс").arg(m_canvas->image().width()).arg(m_canvas->image().height());
+            m_status->size = tr7("%1 × %2px").arg(m_canvas->image().width()).arg(m_canvas->image().height());
             m_status->update();
             setModified(true);
         };
@@ -1133,9 +1134,9 @@ public:
                 QObject::connect(t, &QTextEdit::copyAvailable, m_textCut, &QWidget::setEnabled);
                 QObject::connect(t, &QTextEdit::copyAvailable, m_textCopy, &QWidget::setEnabled);
             }
-            m_bar->setTabs(on ? QStringList{QStringLiteral("Основне"), QStringLiteral("Вигляд"), QStringLiteral("Текст")}
-                              : QStringList{QStringLiteral("Основне"), QStringLiteral("Вигляд")});
-            m_bar->setContextual(on ? 2 : -1, QStringLiteral("Знаряддя для тексту"));
+            m_bar->setTabs(on ? QStringList{tr7("Home"), tr7("View"), tr7("Text")}
+                              : QStringList{tr7("Home"), tr7("View")});
+            m_bar->setContextual(on ? 2 : -1, tr7("Text Tools"));
             m_bar->setCurrent(on ? 2 : (m_bar->current() == 2 ? 0 : m_bar->current()));
         };
         m_status->zoomTo = [this](qreal z) {
@@ -1147,7 +1148,7 @@ public:
                 m_canvas->setZoom(z);
             }
         };
-        m_status->size = QStringLiteral("%1 × %2пкс").arg(m_canvas->image().width()).arg(m_canvas->image().height());
+        m_status->size = tr7("%1 × %2px").arg(m_canvas->image().width()).arg(m_canvas->image().height());
 
         // keyboard
         auto key = [this](const QKeySequence &k, std::function<void()> f) {
@@ -1306,19 +1307,19 @@ public:
         setTool(Tool::Text);
         drag(Qt::LeftButton, line({700, 60}, {950, 120}));
         if (auto *t = m_canvas->textEdit()) {
-            t->setPlainText(QStringLiteral("Привіт, Paint!"));
+            t->setPlainText(tr7("Hello, Paint!"));
         }
         {
             // the drop-downs, rendered next to each other on white
             Rib::Menu sel;
-            sel.addHeader(QStringLiteral("Фігури виділення"));
-            sel.add(60341, QStringLiteral("&Прямокутна область"), nullptr);
-            sel.add(60357, QStringLiteral("&Довільна область"), nullptr);
-            sel.addHeader(QStringLiteral("Параметри виділення"));
-            sel.add(60365, QStringLiteral("Виділити &все"), nullptr);
-            sel.add(60369, QStringLiteral("&Обернути виділення"), nullptr, false);
-            sel.add(60373, QStringLiteral("В&идалити"), nullptr, false);
-            sel.add(0, QStringLiteral("&Прозоре виділення"), nullptr, true, true);
+            sel.addHeader(tr7("Selection shapes"));
+            sel.add(60341, tr7("&Rectangular selection"), nullptr);
+            sel.add(60357, tr7("&Free-form selection"), nullptr);
+            sel.addHeader(tr7("Selection options"));
+            sel.add(60365, tr7("Select &all"), nullptr);
+            sel.add(60369, tr7("&Invert selection"), nullptr, false);
+            sel.add(60373, tr7("&Delete"), nullptr, false);
+            sel.add(0, tr7("&Transparent selection"), nullptr, true, true);
             sel.prepare();
             QList<QPixmap> pics;
             for (int i = 0; i < 9; ++i) {
@@ -1337,7 +1338,7 @@ public:
             sp.end();
             sheet.save(QString(out).replace(QStringLiteral(".png"), QStringLiteral("-menus.png")));
             AppMenu *am = buildAppMenu();
-            am->recent = {QStringLiteral("/home/x/Рисунки/кіт.png"), QStringLiteral("/home/x/Рисунки/схема.bmp")};
+            am->recent = {tr7("/home/x/Pictures/cat.png"), tr7("/home/x/Pictures/diagram.bmp")};
             am->popupAt(QPoint(0, 0));
             am->grab().save(QString(out).replace(QStringLiteral(".png"), QStringLiteral("-app.png")));
             am->close();
@@ -1361,7 +1362,7 @@ public:
         QImage img = r.read();
         if (img.isNull()) {
             QMessageBox::warning(this, QStringLiteral("Paint"),
-                                 QStringLiteral("Paint не може прочитати цей файл.\n%1\nЦе не правильний файл точкового рисунка або цей формат не підтримується.")
+                                 tr7("Paint cannot read this file.\n%1\nThis is not a valid bitmap file, or its format is not currently supported.")
                                      .arg(QFileInfo(file).absoluteFilePath()));
             return false;
         }
@@ -1417,19 +1418,19 @@ private:
         auto *h = static_cast<QHBoxLayout *>(m_home->layout());
 
         // Clipboard
-        auto *clip = group(m_home, QStringLiteral("Буфер обміну"));
-        auto *paste = new Rib::Button(Rib::Button::Large, 60317, QStringLiteral("Вставити"));
+        auto *clip = group(m_home, tr7("Clipboard"));
+        auto *paste = new Rib::Button(Rib::Button::Large, 60317, tr7("Paste"));
         m_paste = paste;
         paste->clicked = [this] {
             m_canvas->paste();
         };
         paste->dropdown = [this](const QPoint &pt) {
             Rib::Menu m;
-            m.add(60321, QStringLiteral("&Вставити"), [this] {
+            m.add(60321, tr7("&Paste"), [this] {
                 m_canvas->paste();
             }, m_paste->topEnabled());
-            m.add(60329, QStringLiteral("Вставити &з"), [this] {
-                const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Вставити з"), picturesDir(), openFilter());
+            m.add(60329, tr7("Paste &from"), [this] {
+                const QString f = QFileDialog::getOpenFileName(this, tr7("Paste from"), picturesDir(), openFilter());
                 if (!f.isEmpty()) {
                     QImageReader r(f);
                     r.setAutoTransform(true);
@@ -1441,11 +1442,11 @@ private:
         paste->setSplit(true);
         clip->row->addWidget(paste);
         auto *cc = Rib::column(clip->row);
-        m_cut = new Rib::Button(Rib::Button::Small, 60333, QStringLiteral("Вирізати"));
+        m_cut = new Rib::Button(Rib::Button::Small, 60333, tr7("Cut"));
         m_cut->clicked = [this] {
             m_canvas->cut();
         };
-        m_copy = new Rib::Button(Rib::Button::Small, 60337, QStringLiteral("Копіювати"));
+        m_copy = new Rib::Button(Rib::Button::Small, 60337, tr7("Copy"));
         m_copy->clicked = [this] {
             m_canvas->copy();
         };
@@ -1454,33 +1455,33 @@ private:
         cc->addStretch();
 
         // Image
-        auto *img = group(m_home, QStringLiteral("Зображення"));
-        m_select = new Rib::Button(Rib::Button::Large, 60345, QStringLiteral("Виділити"));
+        auto *img = group(m_home, tr7("Image"));
+        m_select = new Rib::Button(Rib::Button::Large, 60345, tr7("Select"));
         m_select->clicked = [this] {
             setTool(m_freeSelect ? Tool::FreeSelect : Tool::Select);
         };
         m_select->dropdown = [this](const QPoint &pt) {
             Rib::Menu m;
-            m.addHeader(QStringLiteral("Фігури виділення"));
-            m.add(60341, QStringLiteral("&Прямокутна область"), [this] {
+            m.addHeader(tr7("Selection shapes"));
+            m.add(60341, tr7("&Rectangular selection"), [this] {
                 m_freeSelect = false;
                 setTool(Tool::Select);
             });
-            m.add(60357, QStringLiteral("&Довільна область"), [this] {
+            m.add(60357, tr7("&Free-form selection"), [this] {
                 m_freeSelect = true;
                 setTool(Tool::FreeSelect);
             });
-            m.addHeader(QStringLiteral("Параметри виділення"));
-            m.add(60365, QStringLiteral("Виділити &все"), [this] {
+            m.addHeader(tr7("Selection options"));
+            m.add(60365, tr7("Select &all"), [this] {
                 m_canvas->selectAll();
             });
-            m.add(60369, QStringLiteral("&Обернути виділення"), [this] {
+            m.add(60369, tr7("&Invert selection"), [this] {
                 m_canvas->invertSelection();
             }, m_canvas->hasSelection());
-            m.add(60373, QStringLiteral("В&идалити"), [this] {
+            m.add(60373, tr7("&Delete"), [this] {
                 m_canvas->deleteSelection();
             }, m_canvas->hasSelection());
-            m.add(0, QStringLiteral("&Прозоре виділення"), [this] {
+            m.add(0, tr7("&Transparent selection"), [this] {
                 m_canvas->transparentSelection = !m_canvas->transparentSelection;
                 m_canvas->update();
             }, true, m_canvas->transparentSelection);
@@ -1489,38 +1490,38 @@ private:
         m_select->setSplit(true);
         img->row->addWidget(m_select);
         auto *ic = Rib::column(img->row);
-        m_crop = new Rib::Button(Rib::Button::Small, 60377, QStringLiteral("Обрізати"));
+        m_crop = new Rib::Button(Rib::Button::Small, 60377, tr7("Crop"));
         m_crop->clicked = [this] {
             m_canvas->crop();
         };
-        auto *resize = new Rib::Button(Rib::Button::Small, 60381, QStringLiteral("Змінити розмір"));
+        auto *resize = new Rib::Button(Rib::Button::Small, 60381, tr7("Resize"));
         resize->clicked = [this] {
             resizeDialog();
         };
-        auto *rotate = new Rib::Button(Rib::Button::Small, 60385, QStringLiteral("Повернути"));
+        auto *rotate = new Rib::Button(Rib::Button::Small, 60385, tr7("Rotate"));
         rotate->dropdown = [this](const QPoint &pt) {
             Rib::Menu m;
-            m.add(60389, QStringLiteral("Повернути &праворуч на 90°"), [this] {
+            m.add(60389, tr7("Rotate &right 90°"), [this] {
                 m_canvas->transform([](const QImage &i) {
                     return i.transformed(QTransform().rotate(90));
                 });
             });
-            m.add(60393, QStringLiteral("Повернути &ліворуч на 90°"), [this] {
+            m.add(60393, tr7("Rotate &left 90°"), [this] {
                 m_canvas->transform([](const QImage &i) {
                     return i.transformed(QTransform().rotate(-90));
                 });
             });
-            m.add(60397, QStringLiteral("Повернути на &180°"), [this] {
+            m.add(60397, tr7("Rotate &180°"), [this] {
                 m_canvas->transform([](const QImage &i) {
                     return i.transformed(QTransform().rotate(180));
                 });
             });
-            m.add(60401, QStringLiteral("Відобразити &згори вниз"), [this] {
+            m.add(60401, tr7("Flip &vertical"), [this] {
                 m_canvas->transform([](const QImage &i) {
                     return i.flipped(Qt::Vertical);
                 });
             });
-            m.add(60405, QStringLiteral("Відобразити з&ліва направо"), [this] {
+            m.add(60405, tr7("Flip &horizontal"), [this] {
                 m_canvas->transform([](const QImage &i) {
                     return i.flipped(Qt::Horizontal);
                 });
@@ -1535,10 +1536,10 @@ private:
         ic->addWidget(rotate);
 
         // Tools
-        auto *tools = group(m_home, QStringLiteral("Інструменти"));
+        auto *tools = group(m_home, tr7("Tools"));
         m_tools = new ToolGrid({60409, 60413, 60417, 60421, 60425, 60429},
-                               {QStringLiteral("Олівець"), QStringLiteral("Заливка кольором"), QStringLiteral("Текст"), QStringLiteral("Гумка"),
-                                QStringLiteral("Вибір кольору"), QStringLiteral("Лупа")});
+                               {tr7("Pencil"), tr7("Fill with color"), tr7("Text"), tr7("Eraser"),
+                                tr7("Color picker"), tr7("Magnifier")});
         m_tools->picked = [this](int i) {
             static const Tool map[6] = {Tool::Pencil, Tool::Fill, Tool::Text, Tool::Eraser, Tool::Picker, Tool::Magnifier};
             setTool(map[i]);
@@ -1550,7 +1551,7 @@ private:
 
         // Brushes (its own group without a label)
         auto *brushes = group(m_home, QString());
-        m_brushes = new Rib::Button(Rib::Button::Large, 40304, QStringLiteral("Пензлі"));
+        m_brushes = new Rib::Button(Rib::Button::Large, 40304, tr7("Brushes"));
         m_brushes->clicked = [this] {
             setTool(Tool::Brush);
         };
@@ -1571,7 +1572,7 @@ private:
         brushes->row->addWidget(m_brushes);
 
         // Shapes
-        auto *shapes = group(m_home, QStringLiteral("Фігури"));
+        auto *shapes = group(m_home, tr7("Shapes"));
         m_gallery = new ShapeGallery(shapeNames());
         m_gallery->picked = [this](int i) {
             m_canvas->shape = Shape(i);
@@ -1596,8 +1597,8 @@ private:
         gv->addWidget(m_gallery);
         gv->addStretch();
         auto *sv = Rib::column(shapes->row);
-        m_outline = new Rib::Button(Rib::Button::Small, 60441, QStringLiteral("Контур"));
-        m_fill = new Rib::Button(Rib::Button::Small, 60445, QStringLiteral("Заливка"));
+        m_outline = new Rib::Button(Rib::Button::Small, 60441, tr7("Outline"));
+        m_fill = new Rib::Button(Rib::Button::Small, 60445, tr7("Fill"));
         m_outline->dropdown = [this](const QPoint &pt) {
             styleMenu(true, pt);
         };
@@ -1612,14 +1613,14 @@ private:
 
         // Size (a group of its own)
         auto *sizeG = group(m_home, QString());
-        m_size = new Rib::Button(Rib::Button::Large, 60453, QStringLiteral("Розмір"));
+        m_size = new Rib::Button(Rib::Button::Large, 60453, tr7("Size"));
         m_size->dropdown = [this](const QPoint &pt) {
             static QList<int> sz;
             sz = m_canvas->sizes();
             QList<QPixmap> pics(sz.size());
             QStringList tips;
             for (int s : sz) {
-                tips << QStringLiteral("%1пкс").arg(s);
+                tips << tr7("%1px").arg(s);
             }
             auto *pop = new PicturePopup(pics, tips, 1, QSize(128, 40), m_canvas->sizeIdx());
             pop->m_lines = &sz;
@@ -1634,15 +1635,15 @@ private:
         sizeG->row->addWidget(m_size);
 
         // Colours
-        auto *colors = group(m_home, QStringLiteral("Кольори"));
+        auto *colors = group(m_home, tr7("Colors"));
         buildColors(colors, m_c1, m_c2, m_palette);
         h->addStretch();
     }
 
     void buildColors(Rib::Group *g, ColorButton *&c1, ColorButton *&c2, Palette *&pal)
     {
-        c1 = new ColorButton(QStringLiteral("Колір\n1"));
-        c2 = new ColorButton(QStringLiteral("Колір\n2"));
+        c1 = new ColorButton(tr7("Color\n1"));
+        c2 = new ColorButton(tr7("Color\n2"));
         c1->clicked = [this] {
             m_which = 1;
             syncColors();
@@ -1662,10 +1663,10 @@ private:
         pv->addSpacing(1);
         pv->addWidget(pal);
         pv->addStretch();
-        auto *edit = new Rib::Button(Rib::Button::Large, 60461, QStringLiteral("Змінити\nкольори"));
+        auto *edit = new Rib::Button(Rib::Button::Large, 60461, tr7("Edit\ncolors"));
         edit->clicked = [this] {
             QColorDialog dlg(m_which == 1 ? m_canvas->color1 : m_canvas->color2, this);
-            dlg.setWindowTitle(QStringLiteral("Змінення кольорів"));
+            dlg.setWindowTitle(tr7("Edit Colors"));
             dlg.setOption(QColorDialog::DontUseNativeDialog);
             if (dlg.exec() == QDialog::Accepted) {
                 (m_which == 1 ? m_canvas->color1 : m_canvas->color2) = dlg.selectedColor();
@@ -1684,9 +1685,9 @@ private:
     {
         m_view = newPage();
         auto *h = static_cast<QHBoxLayout *>(m_view->layout());
-        auto *zoom = group(m_view, QStringLiteral("Масштаб"));
-        auto *zin = new Rib::Button(Rib::Button::Large, 60469, QStringLiteral("Збільшити"));
-        auto *zout = new Rib::Button(Rib::Button::Large, 60477, QStringLiteral("Зменшити"));
+        auto *zoom = group(m_view, tr7("Zoom"));
+        auto *zin = new Rib::Button(Rib::Button::Large, 60469, tr7("Zoom in"));
+        auto *zout = new Rib::Button(Rib::Button::Large, 60477, tr7("Zoom out"));
         auto *z100 = new Rib::Button(Rib::Button::Large, 60485, QStringLiteral("100\n%"));
         zin->clicked = [this] {
             m_canvas->zoomIn();
@@ -1703,11 +1704,11 @@ private:
         zoom->row->addWidget(zout);
         zoom->row->addWidget(z100);
 
-        auto *show = group(m_view, QStringLiteral("Показати або сховати"));
+        auto *show = group(m_view, tr7("Show or hide"));
         auto *cv = Rib::column(show->row);
-        m_rulers = new RibbonCheck(QStringLiteral("Лінійки"));
-        m_grid = new RibbonCheck(QStringLiteral("Лінії сітки"));
-        m_statusCheck = new RibbonCheck(QStringLiteral("Рядок стану"));
+        m_rulers = new RibbonCheck(tr7("Rulers"));
+        m_grid = new RibbonCheck(tr7("Gridlines"));
+        m_statusCheck = new RibbonCheck(tr7("Status bar"));
         m_statusCheck->setChecked(true);
         QObject::connect(m_rulers, &QCheckBox::toggled, [this](bool on) {
             toggleRulers(on);
@@ -1725,12 +1726,12 @@ private:
         cv->addWidget(m_statusCheck);
         cv->addStretch();
 
-        auto *disp = group(m_view, QStringLiteral("Відображення"));
-        auto *full = new Rib::Button(Rib::Button::Large, 60501, QStringLiteral("На весь\nекран"));
+        auto *disp = group(m_view, tr7("Display"));
+        auto *full = new Rib::Button(Rib::Button::Large, 60501, tr7("Full\nscreen"));
         full->clicked = [this] {
             fullScreen();
         };
-        m_thumb = new Rib::Button(Rib::Button::Large, 60493, QStringLiteral("Ескіз"));
+        m_thumb = new Rib::Button(Rib::Button::Large, 60493, tr7("Thumbnail"));
         m_thumb->clicked = [this] {
             toggleThumbnail();
         };
@@ -1743,8 +1744,8 @@ private:
     {
         m_textPage = newPage();
         auto *h = static_cast<QHBoxLayout *>(m_textPage->layout());
-        auto *clip = group(m_textPage, QStringLiteral("Буфер обміну"));
-        auto *paste = new Rib::Button(Rib::Button::Large, 60317, QStringLiteral("Вставити"));
+        auto *clip = group(m_textPage, tr7("Clipboard"));
+        auto *paste = new Rib::Button(Rib::Button::Large, 60317, tr7("Paste"));
         paste->clicked = [this] {
             if (auto *t = m_canvas->textEdit()) {
                 t->paste();
@@ -1752,8 +1753,8 @@ private:
         };
         clip->row->addWidget(paste);
         auto *cc = Rib::column(clip->row);
-        auto *cut = new Rib::Button(Rib::Button::Small, 60333, QStringLiteral("Вирізати"));
-        auto *copy = new Rib::Button(Rib::Button::Small, 60337, QStringLiteral("Копіювати"));
+        auto *cut = new Rib::Button(Rib::Button::Small, 60333, tr7("Cut"));
+        auto *copy = new Rib::Button(Rib::Button::Small, 60337, tr7("Copy"));
         m_textCut = cut;
         m_textCopy = copy;
         m_textPaste = paste;
@@ -1771,7 +1772,7 @@ private:
         cc->addWidget(copy);
         cc->addStretch();
 
-        auto *font = group(m_textPage, QStringLiteral("Шрифт"));
+        auto *font = group(m_textPage, tr7("Font"));
         auto *fv = Rib::column(font->row);
         m_fontBox = new Rib::Combo;
         m_fontBox->fontPreview = true;
@@ -1822,13 +1823,13 @@ private:
             };
             styles->addWidget(b);
         };
-        styleBtn(QStringLiteral("Ж"), [](QFont &f, bool on) {
+        styleBtn(tr7("B"), [](QFont &f, bool on) {
             f.setBold(on);
         });
-        styleBtn(QStringLiteral("К"), [](QFont &f, bool on) {
+        styleBtn(tr7("I"), [](QFont &f, bool on) {
             f.setItalic(on);
         });
-        styleBtn(QStringLiteral("П"), [](QFont &f, bool on) {
+        styleBtn(tr7("U"), [](QFont &f, bool on) {
             f.setUnderline(on);
         });
         styleBtn(QStringLiteral("abc"), [](QFont &f, bool on) {
@@ -1845,10 +1846,10 @@ private:
         stylesFrame->setParent(box);
         stylesFrame->setGeometry(46, 37, 94, 24);
         fv->addWidget(box);
-        auto *bg = group(m_textPage, QStringLiteral("Фон"));
+        auto *bg = group(m_textPage, tr7("Background"));
         auto *bv = Rib::column(bg->row);
-        m_opaque = new Rib::Button(Rib::Button::Small, 60509, QStringLiteral("Непрозорий"));
-        m_transparent = new Rib::Button(Rib::Button::Small, 60505, QStringLiteral("Прозорий"));
+        m_opaque = new Rib::Button(Rib::Button::Small, 60509, tr7("Opaque"));
+        m_transparent = new Rib::Button(Rib::Button::Small, 60505, tr7("Transparent"));
         m_opaque->clicked = [this] {
             m_canvas->textOpaque = true;
             m_canvas->styleText();
@@ -1863,7 +1864,7 @@ private:
         bv->addWidget(m_transparent);
         bv->addStretch();
 
-        auto *colors = group(m_textPage, QStringLiteral("Кольори"));
+        auto *colors = group(m_textPage, tr7("Colors"));
         ColorButton *c1, *c2;
         Palette *pal;
         buildColors(colors, c1, c2, pal);
@@ -1877,19 +1878,19 @@ private:
     }
     static QStringList brushNames()
     {
-        return {QStringLiteral("Пензель"), QStringLiteral("Каліграфічний пензель 1"), QStringLiteral("Каліграфічний пензель 2"), QStringLiteral("Розпилювач"),
-                QStringLiteral("Пензель для олії"), QStringLiteral("Пастельний пензель"), QStringLiteral("Маркер"), QStringLiteral("Звичайний олівець"),
-                QStringLiteral("Пензель для акварелі")};
+        return {tr7("Brush"), tr7("Calligraphy brush 1"), tr7("Calligraphy brush 2"), tr7("Airbrush"),
+                tr7("Oil brush"), tr7("Crayon"), tr7("Marker"), tr7("Natural pencil"),
+                tr7("Watercolor brush")};
     }
     static QStringList shapeNames()
     {
-        return {QStringLiteral("Лінія"), QStringLiteral("Крива"), QStringLiteral("Овал"), QStringLiteral("Прямокутник"),
-                QStringLiteral("Округлений прямокутник"), QStringLiteral("Багатокутник"), QStringLiteral("Трикутник"),
-                QStringLiteral("Прямокутний трикутник"), QStringLiteral("Ромб"), QStringLiteral("П'ятикутник"), QStringLiteral("Шестикутник"),
-                QStringLiteral("Стрілка вправо"), QStringLiteral("Стрілка вліво"), QStringLiteral("Стрілка вгору"), QStringLiteral("Стрілка вниз"),
-                QStringLiteral("Чотирикутна зірка"), QStringLiteral("П'ятикутна зірка"), QStringLiteral("Шестикутна зірка"),
-                QStringLiteral("Прямокутна виноска"), QStringLiteral("Овальна виноска"), QStringLiteral("Виноска-хмарка"), QStringLiteral("Серце"),
-                QStringLiteral("Блискавка")};
+        return {tr7("Line"), tr7("Curve"), tr7("Oval"), tr7("Rectangle"),
+                tr7("Rounded rectangle"), tr7("Polygon"), tr7("Triangle"),
+                tr7("Right triangle"), tr7("Diamond"), tr7("Pentagon"), tr7("Hexagon"),
+                tr7("Right arrow"), tr7("Left arrow"), tr7("Up arrow"), tr7("Down arrow"),
+                tr7("Four-point star"), tr7("Five-point star"), tr7("Six-point star"),
+                tr7("Rounded rectangular callout"), tr7("Oval callout"), tr7("Cloud callout"), tr7("Heart"),
+                tr7("Lightning")};
     }
 
     void styleMenu(bool outline, const QPoint &pt)
@@ -1902,13 +1903,13 @@ private:
             QString text;
         };
         const QList<Entry> entries = {
-            {Style::None, outline ? 41001 : 41021, outline ? QStringLiteral("&Без контуру") : QStringLiteral("&Без заливки")},
-            {Style::Solid, outline ? 41011 : 41031, QStringLiteral("&Суцільний колір")},
-            {Style::Crayon, 41051, QStringLiteral("&Пастель")},
-            {Style::Marker, 41061, QStringLiteral("&Маркер")},
-            {Style::Oil, 41041, QStringLiteral("&Олія")},
-            {Style::NaturalPencil, 41071, QStringLiteral("&Звичайний олівець")},
-            {Style::Watercolor, 41081, QStringLiteral("&Акварель")},
+            {Style::None, outline ? 41001 : 41021, outline ? tr7("&No outline") : tr7("&No fill")},
+            {Style::Solid, outline ? 41011 : 41031, tr7("&Solid color")},
+            {Style::Crayon, 41051, tr7("&Crayon")},
+            {Style::Marker, 41061, tr7("&Marker")},
+            {Style::Oil, 41041, tr7("&Oil")},
+            {Style::NaturalPencil, 41071, tr7("&Natural pencil")},
+            {Style::Watercolor, 41081, tr7("&Watercolor")},
         };
         for (const Entry &e : entries) {
             m.add(e.icon, e.text, [this, outline, e] {
@@ -1980,20 +1981,18 @@ private:
     }
     static QString openFilter()
     {
-        return QStringLiteral("Усі файли рисунків (*.bmp *.dib *.jpg *.jpeg *.jpe *.jfif *.gif *.tif *.tiff *.png *.ico *.webp);;"
-                              "Точкові рисунки (*.bmp *.dib);;JPEG (*.jpg *.jpeg *.jpe *.jfif);;GIF (*.gif);;TIFF (*.tif *.tiff);;PNG (*.png);;"
-                              "ICO (*.ico);;Усі файли (*)");
+        return tr7("All Picture Files (*.bmp *.dib *.jpg *.jpeg *.jpe *.jfif *.gif *.tif *.tiff *.png *.ico *.webp);;Bitmap Files (*.bmp *.dib);;JPEG (*.jpg *.jpeg *.jpe *.jfif);;GIF (*.gif);;TIFF (*.tif *.tiff);;PNG (*.png);;ICO (*.ico);;All Files (*)");
     }
     QString title() const
     {
-        return m_file.isEmpty() ? QStringLiteral("Без імені") : QFileInfo(m_file).fileName();
+        return m_file.isEmpty() ? tr7("Untitled") : QFileInfo(m_file).fileName();
     }
     void setModified(bool on)
     {
         m_modified = on;
         setWindowTitle(title() + QStringLiteral(" - Paint"));
         if (!m_file.isEmpty() && QFileInfo::exists(m_file)) {
-            m_status->file = QStringLiteral("Розмір: %1").arg(QLocale().formattedDataSize(QFileInfo(m_file).size(), 1, QLocale::DataSizeTraditionalFormat));
+            m_status->file = tr7("Size: %1").arg(QLocale().formattedDataSize(QFileInfo(m_file).size(), 1, QLocale::DataSizeTraditionalFormat));
         } else {
             m_status->file.clear();
         }
@@ -2006,10 +2005,10 @@ private:
         }
         QMessageBox box(this);
         box.setWindowTitle(QStringLiteral("Paint"));
-        box.setText(QStringLiteral("Зберегти зміни у файлі %1?").arg(title()));
-        auto *save = box.addButton(QStringLiteral("Зберегти"), QMessageBox::AcceptRole);
-        auto *no = box.addButton(QStringLiteral("Не зберігати"), QMessageBox::DestructiveRole);
-        box.addButton(QStringLiteral("Скасувати"), QMessageBox::RejectRole);
+        box.setText(tr7("Do you want to save changes to %1?").arg(title()));
+        auto *save = box.addButton(tr7("Save"), QMessageBox::AcceptRole);
+        auto *no = box.addButton(tr7("Don't Save"), QMessageBox::DestructiveRole);
+        box.addButton(tr7("Cancel"), QMessageBox::RejectRole);
         box.setDefaultButton(save);
         box.exec();
         if (box.clickedButton() == save) {
@@ -2034,7 +2033,7 @@ private:
         if (!askSave()) {
             return;
         }
-        const QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Відкрити"), m_file.isEmpty() ? picturesDir() : QFileInfo(m_file).path(), openFilter());
+        const QString f = QFileDialog::getOpenFileName(this, tr7("Open"), m_file.isEmpty() ? picturesDir() : QFileInfo(m_file).path(), openFilter());
         if (!f.isEmpty()) {
             load(f);
         }
@@ -2048,10 +2047,10 @@ private:
     }
     bool saveAs(const QString &format)
     {
-        const QStringList filters = {QStringLiteral("Монохромний рисунок (*.bmp *.dib)"),
-                                     QStringLiteral("16-кольоровий рисунок (*.bmp *.dib)"),
-                                     QStringLiteral("256-кольоровий рисунок (*.bmp *.dib)"),
-                                     QStringLiteral("24-розрядний рисунок (*.bmp *.dib)"),
+        const QStringList filters = {tr7("Monochrome Bitmap (*.bmp *.dib)"),
+                                     tr7("16 Color Bitmap (*.bmp *.dib)"),
+                                     tr7("256 Color Bitmap (*.bmp *.dib)"),
+                                     tr7("24-bit Bitmap (*.bmp *.dib)"),
                                      QStringLiteral("JPEG (*.jpg *.jpeg *.jpe *.jfif)"),
                                      QStringLiteral("GIF (*.gif)"),
                                      QStringLiteral("TIFF (*.tif *.tiff)"),
@@ -2064,8 +2063,8 @@ private:
         } else if (format == QLatin1String("gif")) {
             sel = filters[5];
         }
-        QString base = m_file.isEmpty() ? picturesDir() + QStringLiteral("/Без імені") : QFileInfo(m_file).path() + QLatin1Char('/') + QFileInfo(m_file).completeBaseName();
-        QString f = QFileDialog::getSaveFileName(this, QStringLiteral("Зберегти як"), base, filters.join(QStringLiteral(";;")), &sel);
+        QString base = m_file.isEmpty() ? picturesDir() + tr7("/Untitled") : QFileInfo(m_file).path() + QLatin1Char('/') + QFileInfo(m_file).completeBaseName();
+        QString f = QFileDialog::getSaveFileName(this, tr7("Save As"), base, filters.join(QStringLiteral(";;")), &sel);
         if (f.isEmpty()) {
             return false;
         }
@@ -2077,7 +2076,7 @@ private:
                                                                      : QStringLiteral("bmp");
             f += QLatin1Char('.') + ext;
         }
-        m_saveDepth = sel.startsWith(QLatin1String("Монохромний")) ? 1 : sel.startsWith(QLatin1String("16-")) ? 4 : sel.startsWith(QLatin1String("256")) ? 8 : 24;
+        m_saveDepth = sel.startsWith(tr7("Monochrome")) ? 1 : sel.startsWith(QLatin1String("16-")) ? 4 : sel.startsWith(QLatin1String("256")) ? 8 : 24;
         if (!writeTo(f)) {
             return false;
         }
@@ -2098,7 +2097,7 @@ private:
             w.setQuality(90);
         }
         if (!w.write(img)) {
-            QMessageBox::warning(this, QStringLiteral("Paint"), QStringLiteral("Не вдалося зберегти %1.\n%2").arg(f, w.errorString()));
+            QMessageBox::warning(this, QStringLiteral("Paint"), tr7("%1 could not be saved.\n%2").arg(f, w.errorString()));
             return false;
         }
         m_modified = false;
@@ -2131,16 +2130,16 @@ private:
         };
         if (what == 1) {
             QPageSetupDialog d(&printer, this);
-            d.setWindowTitle(QStringLiteral("Параметри сторінки"));
+            d.setWindowTitle(tr7("Page setup"));
             d.exec();
         } else if (what == 2) {
             QPrintPreviewDialog d(&printer, this);
-            d.setWindowTitle(QStringLiteral("Попередній перегляд"));
+            d.setWindowTitle(tr7("Print preview"));
             QObject::connect(&d, &QPrintPreviewDialog::paintRequested, render);
             d.exec();
         } else {
             QPrintDialog d(&printer, this);
-            d.setWindowTitle(QStringLiteral("Друк"));
+            d.setWindowTitle(tr7("Print"));
             if (d.exec() == QDialog::Accepted) {
                 render(&printer);
             }
@@ -2149,7 +2148,7 @@ private:
     void setWallpaper(const QString &mode)
     {
         if (m_file.isEmpty() || m_modified) {
-            QMessageBox::information(this, QStringLiteral("Paint"), QStringLiteral("Перш ніж зробити рисунок фоном робочого стола, його потрібно зберегти."));
+            QMessageBox::information(this, QStringLiteral("Paint"), tr7("Before you can set the picture as your desktop background, you must save it."));
             if (!save()) {
                 return;
             }
@@ -2169,7 +2168,7 @@ private:
     {
         QString f = m_file;
         if (f.isEmpty() || m_modified) {
-            f = QDir::tempPath() + QLatin1Char('/') + (m_file.isEmpty() ? QStringLiteral("Без імені.png") : QFileInfo(m_file).completeBaseName() + QStringLiteral(".png"));
+            f = QDir::tempPath() + QLatin1Char('/') + (m_file.isEmpty() ? tr7("Untitled.png") : QFileInfo(m_file).completeBaseName() + QStringLiteral(".png"));
             m_canvas->flattened().save(f);
         }
         QProcess::startDetached(QStringLiteral("xdg-email"), {QStringLiteral("--attach"), f});
@@ -2196,31 +2195,31 @@ private:
         using Sub = QList<std::tuple<int, QString, QString, std::function<void()>>>;
         const bool saved = !m_file.isEmpty();
         m->items = {
-            {60005, QStringLiteral("&Створити"), [this] { newPicture(); }, {}, {}},
-            {60013, QStringLiteral("&Відкрити"), [this] { openPicture(); }, {}, {}},
-            {60021, QStringLiteral("&Зберегти"), [this] { save(); }, {}, {}},
-            {60029, QStringLiteral("Зберегти &як"), nullptr,
-             Sub{{60053, QStringLiteral("Рисунок &PNG"), QStringLiteral("Збереження фотографії або рисунка з високою якістю для використання на комп'ютері чи в Інтернеті."), [this] { saveAs(QStringLiteral("png")); }},
-                 {60061, QStringLiteral("Рисунок &JPEG"), QStringLiteral("Збереження фотографії з високою якістю для використання на комп'ютері, в електронній пошті чи в Інтернеті."), [this] { saveAs(QStringLiteral("jpg")); }},
-                 {60069, QStringLiteral("Рисунок &BMP"), QStringLiteral("Збереження будь-якого рисунка з високою якістю для використання на комп'ютері."), [this] { saveAs(QStringLiteral("bmp")); }},
-                 {60077, QStringLiteral("Рисунок &GIF"), QStringLiteral("Збереження простого рисунка для використання в електронній пошті чи в Інтернеті."), [this] { saveAs(QStringLiteral("gif")); }},
-                 {60085, QStringLiteral("&Інші формати"), QStringLiteral("Відкриття діалогового вікна «Зберегти як» для вибору з-поміж усіх можливих типів файлів."), [this] { saveAs(QString()); }}},
-             QStringLiteral("Зберегти копію документа"), true, true},
-            {60093, QStringLiteral("&Друк"), nullptr,
-             Sub{{60101, QStringLiteral("&Друк"), QStringLiteral("Вибір принтера, кількості копій та інших параметрів друку перед друком."), [this] { print(0); }},
-                 {60109, QStringLiteral("&Параметри сторінки"), QStringLiteral("Змінення макета рисунка."), [this] { print(1); }},
-                 {60125, QStringLiteral("Попередній &перегляд"), QStringLiteral("Попередній перегляд і внесення змін перед друком."), [this] { print(2); }}},
-             QStringLiteral("Попередній перегляд і друк документа"), true, false},
-            {60133, QStringLiteral("Зі с&канера або камери"), [] {}, {}, {}, false, false},
-            {60141, QStringLiteral("Надіслати &електронною поштою"), [this] { sendMail(); }, {}, {}, true, true},
-            {60149, QStringLiteral("Зробити &фоном робочого стола"), nullptr,
-             Sub{{60189, QStringLiteral("&Заповнення"), QString(), [this] { setWallpaper(QStringLiteral("fill")); }},
-                 {60173, QStringLiteral("&Мозаїка"), QString(), [this] { setWallpaper(QStringLiteral("tile")); }},
-                 {60181, QStringLiteral("По &центру"), QString(), [this] { setWallpaper(QStringLiteral("center")); }}},
-             QStringLiteral("Зробити фоном робочого стола"), saved, true},
-            {60197, QStringLiteral("Вл&астивості"), [this] { propertiesDialog(); }, {}, {}, true, true},
-            {60205, QStringLiteral("Про &програму Paint"), [this] { about(); }, {}, {}, true, true},
-            {60213, QStringLiteral("Ви&хід"), [this] { close(); }, {}, {}},
+            {60005, tr7("&New"), [this] { newPicture(); }, {}, {}},
+            {60013, tr7("&Open"), [this] { openPicture(); }, {}, {}},
+            {60021, tr7("&Save"), [this] { save(); }, {}, {}},
+            {60029, tr7("Save &as"), nullptr,
+             Sub{{60053, tr7("&PNG picture"), tr7("Save a photograph or drawing with high quality and use it on your computer or on the web."), [this] { saveAs(QStringLiteral("png")); }},
+                 {60061, tr7("&JPEG picture"), tr7("Save a photograph with good quality and use it on your computer, in e-mail or on the web."), [this] { saveAs(QStringLiteral("jpg")); }},
+                 {60069, tr7("&BMP picture"), tr7("Save any kind of picture with high quality and use it on your computer."), [this] { saveAs(QStringLiteral("bmp")); }},
+                 {60077, tr7("&GIF picture"), tr7("Save a simple drawing and use it in e-mail or on a website."), [this] { saveAs(QStringLiteral("gif")); }},
+                 {60085, tr7("&Other formats"), tr7("Open the Save As dialog box to select from all possible file types."), [this] { saveAs(QString()); }}},
+             tr7("Save a copy of the document"), true, true},
+            {60093, tr7("&Print"), nullptr,
+             Sub{{60101, tr7("&Print"), tr7("Select a printer, number of copies, and other printing options before printing."), [this] { print(0); }},
+                 {60109, tr7("Page set&up"), tr7("Change the layout of the picture."), [this] { print(1); }},
+                 {60125, tr7("Print pre&view"), tr7("Preview and make changes before printing."), [this] { print(2); }}},
+             tr7("Preview and print the document"), true, false},
+            {60133, tr7("Fro&m scanner or camera"), [] {}, {}, {}, false, false},
+            {60141, tr7("Sen&d in e-mail"), [this] { sendMail(); }, {}, {}, true, true},
+            {60149, tr7("Set as desktop &background"), nullptr,
+             Sub{{60189, tr7("&Fill"), QString(), [this] { setWallpaper(QStringLiteral("fill")); }},
+                 {60173, tr7("&Tile"), QString(), [this] { setWallpaper(QStringLiteral("tile")); }},
+                 {60181, tr7("&Center"), QString(), [this] { setWallpaper(QStringLiteral("center")); }}},
+             tr7("Set as desktop background"), saved, true},
+            {60197, tr7("Prop&erties"), [this] { propertiesDialog(); }, {}, {}, true, true},
+            {60205, tr7("Abou&t Paint"), [this] { about(); }, {}, {}, true, true},
+            {60213, tr7("E&xit"), [this] { close(); }, {}, {}},
         };
         return m;
     }
@@ -2229,15 +2228,15 @@ private:
     void resizeDialog()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Змінення розміру та нахилу"));
+        d.setWindowTitle(tr7("Resize and Skew"));
         auto *v = new QVBoxLayout(&d);
-        auto *rs = new QGroupBox(QStringLiteral("Змінення розміру"));
+        auto *rs = new QGroupBox(tr7("Resize", "dialog"));
         auto *rg = new QGridLayout(rs);
         auto *by = new QHBoxLayout;
-        auto *pct = new QRadioButton(QStringLiteral("&Відсотки"));
-        auto *pix = new QRadioButton(QStringLiteral("&Пікселі"));
+        auto *pct = new QRadioButton(tr7("P&ercentage"));
+        auto *pix = new QRadioButton(tr7("Pi&xels"));
         pct->setChecked(true);
-        by->addWidget(new QLabel(QStringLiteral("За:")));
+        by->addWidget(new QLabel(tr7("By:")));
         by->addWidget(pct);
         by->addWidget(pix);
         by->addStretch();
@@ -2257,16 +2256,16 @@ private:
             return l;
         };
         rg->addWidget(pic(QStringLiteral("rsz-h")), 1, 0);
-        rg->addWidget(new QLabel(QStringLiteral("По &горизонталі:")), 1, 1);
+        rg->addWidget(new QLabel(tr7("&Horizontal:")), 1, 1);
         rg->addWidget(hw, 1, 2);
         rg->addWidget(pic(QStringLiteral("rsz-v")), 2, 0);
-        rg->addWidget(new QLabel(QStringLiteral("По &вертикалі:")), 2, 1);
+        rg->addWidget(new QLabel(tr7("&Vertical:")), 2, 1);
         rg->addWidget(vw, 2, 2);
-        auto *keep = new QCheckBox(QStringLiteral("&Зберігати пропорції"));
+        auto *keep = new QCheckBox(tr7("&Maintain aspect ratio"));
         keep->setChecked(true);
         rg->addWidget(keep, 3, 0, 1, 3);
         v->addWidget(rs);
-        auto *sk = new QGroupBox(QStringLiteral("Нахил (у градусах)"));
+        auto *sk = new QGroupBox(tr7("Skew (Degrees)"));
         auto *sg = new QGridLayout(sk);
         auto *sh = new QSpinBox;
         auto *sv = new QSpinBox;
@@ -2276,15 +2275,15 @@ private:
             s->setFixedWidth(60);
         }
         sg->addWidget(pic(QStringLiteral("skw-h")), 0, 0);
-        sg->addWidget(new QLabel(QStringLiteral("П&о горизонталі:")), 0, 1);
+        sg->addWidget(new QLabel(tr7("H&orizontal:")), 0, 1);
         sg->addWidget(sh, 0, 2);
         sg->addWidget(pic(QStringLiteral("skw-v")), 1, 0);
-        sg->addWidget(new QLabel(QStringLiteral("По в&ертикалі:")), 1, 1);
+        sg->addWidget(new QLabel(tr7("V&ertical:")), 1, 1);
         sg->addWidget(sv, 1, 2);
         v->addWidget(sk);
         auto *bb = new QDialogButtonBox;
         bb->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+        bb->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
         QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
         QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
         v->addWidget(bb);
@@ -2344,29 +2343,29 @@ private:
     void propertiesDialog()
     {
         QDialog d(this);
-        d.setWindowTitle(QStringLiteral("Властивості зображення"));
+        d.setWindowTitle(tr7("Image Properties"));
         auto *v = new QVBoxLayout(&d);
-        auto *attrs = new QGroupBox(QStringLiteral("Атрибути файлу"));
+        auto *attrs = new QGroupBox(tr7("File attributes"));
         auto *af = new QFormLayout(attrs);
         const QFileInfo fi(m_file);
-        af->addRow(QStringLiteral("Останнє збереження:"), new QLabel(m_file.isEmpty() ? QStringLiteral("Недоступно") : QLocale().toString(fi.lastModified(), QLocale::ShortFormat)));
-        af->addRow(QStringLiteral("Розмір на диску:"), new QLabel(m_file.isEmpty() ? QStringLiteral("Недоступно") : QLocale().formattedDataSize(fi.size(), 1, QLocale::DataSizeTraditionalFormat)));
-        af->addRow(QStringLiteral("Роздільна здатність:"), new QLabel(QStringLiteral("96 точок на дюйм")));
+        af->addRow(tr7("Last Saved:"), new QLabel(m_file.isEmpty() ? tr7("Not Available") : QLocale().toString(fi.lastModified(), QLocale::ShortFormat)));
+        af->addRow(tr7("Size on disk:"), new QLabel(m_file.isEmpty() ? tr7("Not Available") : QLocale().formattedDataSize(fi.size(), 1, QLocale::DataSizeTraditionalFormat)));
+        af->addRow(tr7("Resolution:"), new QLabel(tr7("96 Dots Per Inch")));
         v->addWidget(attrs);
         auto *row = new QHBoxLayout;
-        auto *units = new QGroupBox(QStringLiteral("Одиниці"));
+        auto *units = new QGroupBox(tr7("Units"));
         auto *uv = new QVBoxLayout(units);
-        auto *in = new QRadioButton(QStringLiteral("&Дюйми"));
-        auto *cm = new QRadioButton(QStringLiteral("&Сантиметри"));
-        auto *px = new QRadioButton(QStringLiteral("&Пікселі"));
+        auto *in = new QRadioButton(tr7("&Inches"));
+        auto *cm = new QRadioButton(tr7("C&entimeters"));
+        auto *px = new QRadioButton(tr7("Pi&xels"));
         px->setChecked(true);
         uv->addWidget(in);
         uv->addWidget(cm);
         uv->addWidget(px);
-        auto *colors = new QGroupBox(QStringLiteral("Кольори"));
+        auto *colors = new QGroupBox(tr7("Colors"));
         auto *cv = new QVBoxLayout(colors);
-        auto *bw = new QRadioButton(QStringLiteral("&Чорно-білі"));
-        auto *col = new QRadioButton(QStringLiteral("&Кольорові"));
+        auto *bw = new QRadioButton(tr7("&Black and white"));
+        auto *col = new QRadioButton(tr7("&Color"));
         col->setChecked(true);
         cv->addWidget(bw);
         cv->addWidget(col);
@@ -2379,12 +2378,12 @@ private:
         auto *h = new QLineEdit(QString::number(m_canvas->image().height()));
         w->setFixedWidth(60);
         h->setFixedWidth(60);
-        sz->addWidget(new QLabel(QStringLiteral("&Ширина:")));
+        sz->addWidget(new QLabel(tr7("&Width:")));
         sz->addWidget(w);
         sz->addSpacing(12);
-        sz->addWidget(new QLabel(QStringLiteral("&Висота:")));
+        sz->addWidget(new QLabel(tr7("&Height:")));
         sz->addWidget(h);
-        auto *def = new QPushButton(QStringLiteral("&За промовчанням"));
+        auto *def = new QPushButton(tr7("&Default"));
         sz->addSpacing(12);
         sz->addWidget(def);
         v->addLayout(sz);
@@ -2423,7 +2422,7 @@ private:
         });
         auto *bb = new QDialogButtonBox;
         bb->addButton(QStringLiteral("OK"), QDialogButtonBox::AcceptRole);
-        bb->addButton(QStringLiteral("Скасувати"), QDialogButtonBox::RejectRole);
+        bb->addButton(tr7("Cancel"), QDialogButtonBox::RejectRole);
         QObject::connect(bb, &QDialogButtonBox::accepted, &d, &QDialog::accept);
         QObject::connect(bb, &QDialogButtonBox::rejected, &d, &QDialog::reject);
         v->addWidget(bb);
@@ -2446,7 +2445,7 @@ private:
     {
         // the Windows "About" box (shell32 ShellAbout) as the rest of the desktop shows it
         if (!QProcess::startDetached(QStringLiteral("seven-control"), {QStringLiteral("--winver"), QStringLiteral("Paint")})) {
-            QMessageBox::about(this, QStringLiteral("Про програму Paint"), QStringLiteral("Paint\nВерсія 6.1"));
+            QMessageBox::about(this, tr7("About Paint"), tr7("Paint\nVersion 6.1"));
         }
     }
 
@@ -2493,7 +2492,7 @@ private:
         auto *t = new QLabel(nullptr);
         t->setWindowFlags(Qt::Tool);
         t->setAttribute(Qt::WA_DeleteOnClose);
-        t->setWindowTitle(QStringLiteral("Ескіз"));
+        t->setWindowTitle(tr7("Thumbnail"));
         t->setAlignment(Qt::AlignTop | Qt::AlignLeft);
         t->resize(200, 150);
         m_thumbWin = t;
@@ -2545,6 +2544,7 @@ private:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    Win7I18n::install(&app);
     app.setApplicationName(QStringLiteral("seven-paint"));
     app.setApplicationDisplayName(QString());
     app.setDesktopFileName(QStringLiteral("seven-paint"));

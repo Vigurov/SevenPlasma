@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7i18n.h"
 
 #include "win7chrome.h"
 
@@ -143,9 +144,9 @@ inline QString gb(qint64 bytes)
 {
     const double v = bytes / 1024.0 / 1024.0 / 1024.0;
     if (v < 1) {
-        return QLocale(QLocale::Ukrainian).toString(bytes / 1024.0 / 1024.0, 'f', 1) + QStringLiteral(" МБ");
+        return QLocale{}.toString(bytes / 1024.0 / 1024.0, 'f', 1) + tr7(" MB");
     }
-    return QLocale(QLocale::Ukrainian).toString(v, 'f', 2) + QStringLiteral(" ГБ");
+    return QLocale{}.toString(v, 'f', 2) + tr7(" GB");
 }
 
 inline QString dateText(const QDateTime &d)
@@ -236,7 +237,7 @@ inline bool runAsRoot(QWidget *parent, const QString &commands, QString *output 
         *output = QString::fromUtf8(p.readAll());
     }
     if (p.exitCode() != 0 && p.exitCode() != 126 && p.exitCode() != 127 && parent) {
-        QMessageBox::warning(parent, QStringLiteral("Архівація і відновлення"), QStringLiteral("Не вдалося виконати операцію.\n\n%1").arg(output ? output->right(600) : QString()));
+        QMessageBox::warning(parent, tr7("Backup and Restore"), tr7("The operation failed.\n\n%1").arg(output ? output->right(600) : QString()));
     }
     return p.exitCode() == 0;
 }
@@ -333,7 +334,7 @@ inline QList<Volume> volumes()
             v.sameDiskAsSystem = hasSystem;
             const QString name = o.value(QStringLiteral("label")).toString();
             const QString kname = v.dev.section(QLatin1Char('/'), -1);
-            v.label = QStringLiteral("%1 (%2)").arg(name.isEmpty() ? (rm ? QStringLiteral("Знімний диск") : QStringLiteral("Новий том")) : name, kname);
+            v.label = QStringLiteral("%1 (%2)").arg(name.isEmpty() ? (rm ? tr7("Removable Disk") : tr7("New Volume")) : name, kname);
             out.append(v);
         }
     }
@@ -458,24 +459,24 @@ inline void save(const Settings &s)
 
 inline QString weekdayEvery(int d)
 {
-    static const QStringList n{QStringLiteral("Щопонеділка"), QStringLiteral("Щовівторка"), QStringLiteral("Щосереди"), QStringLiteral("Щочетверга"),
-                               QStringLiteral("Щоп'ятниці"), QStringLiteral("Щосуботи"), QStringLiteral("Щонеділі")};
+    static const QStringList n{tr7("Every Monday"), tr7("Every Tuesday"), tr7("Every Wednesday"), tr7("Every Thursday"),
+                               tr7("Every Friday"), tr7("Every Saturday"), tr7("Every Sunday")};
     return n.value(qBound(1, d, 7) - 1);
 }
 
 inline QString weekdayName(int d)
 {
-    return QLocale(QLocale::Ukrainian).dayName(qBound(1, d, 7), QLocale::LongFormat);
+    return QLocale{}.dayName(qBound(1, d, 7), QLocale::LongFormat);
 }
 
 inline QString scheduleText(const Settings &s)
 {
-    const QString at = QStringLiteral("о %1:00").arg(s.hour);
+    const QString at = tr7("at %1:00").arg(s.hour);
     switch (s.frequency) {
     case 0:
-        return QStringLiteral("Щодня ") + at;
+        return tr7("Every day ") + at;
     case 2:
-        return QStringLiteral("Щомісяця %1-го числа ").arg(s.day) + at;
+        return tr7("Every month on day %1 ").arg(s.day) + at;
     }
     return weekdayEvery(s.day) + QLatin1Char(' ') + at;
 }
@@ -526,14 +527,14 @@ inline void applySchedule(const Settings &s)
     }
     QFile svc(dir + QStringLiteral("/seven-backup.service"));
     if (svc.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        svc.write(QStringLiteral("[Unit]\nDescription=Архівація даних (Windows 7)\n\n[Service]\nType=oneshot\nNice=10\nIOSchedulingClass=idle\nExecStart=%1 --backup-run\n")
+        svc.write(tr7("[Unit]\nDescription=Backup (Windows 7)\n\n[Service]\nType=oneshot\nNice=10\nIOSchedulingClass=idle\nExecStart=%1 --backup-run\n")
                       .arg(QCoreApplication::applicationFilePath())
                       .toUtf8());
         svc.close();
     }
     QFile timer(dir + QStringLiteral("/seven-backup.timer"));
     if (timer.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        timer.write(QStringLiteral("[Unit]\nDescription=Розклад архівації даних\n\n[Timer]\nOnCalendar=%1\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n").arg(cal).toUtf8());
+        timer.write(tr7("[Unit]\nDescription=Backup schedule\n\n[Timer]\nOnCalendar=%1\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n").arg(cal).toUtf8());
         timer.close(); // an unflushed (empty) unit file counts as masked
     }
     systemctl({QStringLiteral("daemon-reload")});
@@ -557,12 +558,12 @@ inline QList<Library> libraries()
             l.append({title, p});
         }
     };
-    add(QStringLiteral("Документи"), QStandardPaths::DocumentsLocation);
-    add(QStringLiteral("Зображення"), QStandardPaths::PicturesLocation);
-    add(QStringLiteral("Музика"), QStandardPaths::MusicLocation);
-    add(QStringLiteral("Відео"), QStandardPaths::MoviesLocation);
-    add(QStringLiteral("Робочий стіл"), QStandardPaths::DesktopLocation);
-    add(QStringLiteral("Завантаження"), QStandardPaths::DownloadLocation);
+    add(tr7("Documents"), QStandardPaths::DocumentsLocation);
+    add(tr7("Pictures"), QStandardPaths::PicturesLocation);
+    add(tr7("Music"), QStandardPaths::MusicLocation);
+    add(tr7("Videos"), QStandardPaths::MoviesLocation);
+    add(tr7("Desktop"), QStandardPaths::DesktopLocation);
+    add(tr7("Downloads"), QStandardPaths::DownloadLocation);
     return l;
 }
 
@@ -646,7 +647,7 @@ inline QString destinationRoot(const Settings &s, QString *error = nullptr)
     }
     const QString mp = mountVolume(s.uuid);
     if (mp.isEmpty() && error) {
-        *error = QStringLiteral("Не вдалося знайти диск для архівації «%1». Підключіть його та повторіть спробу.").arg(s.label);
+        *error = tr7("The backup drive \"%1\" could not be found. Connect it and try again.").arg(s.label);
     }
     return mp;
 }
@@ -740,15 +741,15 @@ inline bool ensureTimeshift(QWidget *parent)
     if (haveTimeshift() || !qEnvironmentVariableIsEmpty("WIN7_BACKUP_TEST")) {
         return true;
     }
-    if (QMessageBox::question(parent, QStringLiteral("Архівація і відновлення"),
-                              QStringLiteral("Для точок відновлення та образів системи потрібен компонент Timeshift.\n\nВстановити його зараз? (потрібне підключення до Інтернету)"))
+    if (QMessageBox::question(parent, tr7("Backup and Restore"),
+                              tr7("Restore points and system images need the Timeshift component.\n\nInstall it now? (An Internet connection is needed.)"))
         != QMessageBox::Yes) {
         return false;
     }
     QDialog wait(parent);
-    wait.setWindowTitle(QStringLiteral("Встановлення компонента"));
+    wait.setWindowTitle(tr7("Installing a component"));
     auto *v = new QVBoxLayout(&wait);
-    v->addWidget(new QLabel(QStringLiteral("Зачекайте, триває встановлення Timeshift...")));
+    v->addWidget(new QLabel(tr7("Please wait while Timeshift is installed...")));
     auto *bar = new QProgressBar;
     bar->setRange(0, 0);
     v->addWidget(bar);
@@ -828,7 +829,7 @@ inline bool runTimeshift(QWidget *parent, const QString &title, const QString &l
     auto *row = new QHBoxLayout;
     row->setContentsMargins(10, 10, 10, 10);
     row->addStretch(1);
-    auto *stop = new QPushButton(stopText.isEmpty() ? QStringLiteral("Припинити архівацію") : stopText);
+    auto *stop = new QPushButton(stopText.isEmpty() ? tr7("Stop backup") : stopText);
     stop->setMinimumWidth(150);
     row->addWidget(stop);
     outer->addLayout(row);
@@ -850,7 +851,7 @@ inline bool runTimeshift(QWidget *parent, const QString &title, const QString &l
         dlg.accept();
     });
     QObject::connect(stop, &QPushButton::clicked, &dlg, [&] {
-        if (QMessageBox::question(&dlg, title, QStringLiteral("Припинити операцію?")) == QMessageBox::Yes) {
+        if (QMessageBox::question(&dlg, title, tr7("Stop the operation?")) == QMessageBox::Yes) {
             QProcess::execute(QStringLiteral("pkexec"), {QStringLiteral("pkill"), QStringLiteral("-INT"), QStringLiteral("-x"), QStringLiteral("timeshift")});
         }
     });
@@ -880,7 +881,7 @@ inline bool runTimeshift(QWidget *parent, const QString &title, const QString &l
     dw->setStyleSheet(QStringLiteral("#win7bkwhite { background: white; }"));
     auto *dwv = new QVBoxLayout(dw);
     dwv->setContentsMargins(16, 16, 16, 16);
-    dwv->addWidget(new QLabel(ok ? QStringLiteral("Операцію виконано успішно.") : QStringLiteral("Не вдалося виконати операцію.")));
+    dwv->addWidget(new QLabel(ok ? tr7("The operation completed successfully.") : tr7("The operation failed.")));
     auto *full = new QProgressBar;
     full->setRange(0, 100);
     full->setValue(ok ? 100 : bar->value());
@@ -902,7 +903,7 @@ inline bool runTimeshift(QWidget *parent, const QString &title, const QString &l
     auto *dr = new QHBoxLayout;
     dr->setContentsMargins(10, 10, 10, 10);
     dr->addStretch(1);
-    auto *close = new QPushButton(QStringLiteral("Закрити"));
+    auto *close = new QPushButton(tr7("Close"));
     close->setMinimumWidth(150);
     close->setDefault(true);
     dr->addWidget(close);
@@ -916,7 +917,7 @@ inline bool runTimeshift(QWidget *parent, const QString &title, const QString &l
 
 inline void notify(const QString &title, const QString &body, const QString &icon = QStringLiteral("seven-cpi-backup"))
 {
-    QProcess::startDetached(QStringLiteral("notify-send"), {QStringLiteral("-a"), QStringLiteral("Архівація даних"), QStringLiteral("-i"), icon, title, body});
+    QProcess::startDetached(QStringLiteral("notify-send"), {QStringLiteral("-a"), tr7("Windows Backup", "title"), QStringLiteral("-i"), icon, title, body});
 }
 
 /** runs a file backup (and the system image when it is part of the plan); exit code 0 on success */
@@ -930,10 +931,10 @@ inline int runBackup()
         return 1;
     }
     signal(SIGTERM, [](int) {
-        writeStatus(false, 0, QStringLiteral("Архівацію зупинено"));
+        writeStatus(false, 0, tr7("Backup stopped"));
         _exit(3);
     });
-    writeStatus(true, 0, QStringLiteral("Підготовка до архівації..."));
+    writeStatus(true, 0, tr7("Preparing to back up..."));
     auto fail = [&s](const QString &why) {
         s = load();
         s.lastFailed = true;
@@ -941,13 +942,13 @@ inline int runBackup()
         s.lastBackup = QDateTime::currentSecsSinceEpoch();
         save(s);
         writeStatus(false, 0, why);
-        notify(QStringLiteral("Не вдалося виконати архівацію"), why, QStringLiteral("seven-bk-nodrive"));
+        notify(tr7("The backup failed"), why, QStringLiteral("seven-bk-nodrive"));
         return 2;
     };
     QString error;
     const QString root = destinationRoot(s, &error);
     if (root.isEmpty()) {
-        return fail(error.isEmpty() ? QStringLiteral("Розташування архіву недоступне.") : error);
+        return fail(error.isEmpty() ? tr7("The backup location is not available.") : error);
     }
     const QString computerDir = root + QLatin1Char('/') + host();
     const QList<BackupSet> before = setsIn(root);
@@ -960,7 +961,7 @@ inline int runBackup()
     }
     const QString target = computerDir + QStringLiteral("/Backup Set ") + QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HHmmss"));
     if (!QDir().mkpath(target)) {
-        return fail(QStringLiteral("Не вдалося створити папку архіву в «%1».").arg(root));
+        return fail(tr7("Could not create the backup folder on \"%1\".").arg(root));
     }
     QFile marker(target + QStringLiteral("/.incomplete"));
     marker.open(QIODevice::WriteOnly);
@@ -985,7 +986,7 @@ inline int runBackup()
     rsync.setProcessChannelMode(QProcess::SeparateChannels);
     rsync.start(QStringLiteral("rsync"), args);
     if (!rsync.waitForStarted(5000)) {
-        return fail(QStringLiteral("Не вдалося запустити копіювання файлів."));
+        return fail(tr7("Could not start copying the files."));
     }
     static const QRegularExpression pct(QStringLiteral("\\s([0-9]{1,3})%\\s"));
     QString current;
@@ -1006,7 +1007,7 @@ inline int runBackup()
                 const int p = m.captured(1).toInt() * imageShare / 100;
                 if (p != lastPercent) {
                     lastPercent = p;
-                    writeStatus(true, p, QStringLiteral("Копіювання файлів..."), current, rsync.processId());
+                    writeStatus(true, p, tr7("Copying files..."), current, rsync.processId());
                 }
             } else if (!line.trimmed().isEmpty()) {
                 current = line.trimmed().startsWith(QLatin1Char('/')) ? line.trimmed() : QLatin1Char('/') + line.trimmed();
@@ -1017,22 +1018,22 @@ inline int runBackup()
     // 23/24: some files could not be read or vanished meanwhile, the rest is saved (Windows 7 reports it as a warning)
     if (rc != 0 && rc != 23 && rc != 24) {
         QDir(target).removeRecursively();
-        return fail(QStringLiteral("Помилка під час копіювання файлів (код %1). %2").arg(rc).arg(QString::fromUtf8(rsync.readAllStandardError()).trimmed().section(QLatin1Char('\n'), -1)));
+        return fail(tr7("Error while copying files (code %1). %2").arg(rc).arg(QString::fromUtf8(rsync.readAllStandardError()).trimmed().section(QLatin1Char('\n'), -1)));
     }
     QFile::remove(target + QStringLiteral("/.incomplete"));
 
     if (s.image && !s.network) {
-        writeStatus(true, imageShare, QStringLiteral("Створення образу системи..."));
+        writeStatus(true, imageShare, tr7("Creating a system image..."));
         QProcess ts;
         ts.setProcessChannelMode(QProcess::MergedChannels);
         ts.start(QStringLiteral("pkexec"), {QStringLiteral("timeshift"), QStringLiteral("--create"), QStringLiteral("--scripted"), QStringLiteral("--comments"),
-                                            QStringLiteral("Образ системи"), QStringLiteral("--snapshot-device"), QStringLiteral("UUID=") + s.uuid});
+                                            tr7("System image"), QStringLiteral("--snapshot-device"), QStringLiteral("UUID=") + s.uuid});
         static const QRegularExpression tpct(QStringLiteral("([0-9]+(?:\\.[0-9]+)?)% complete"));
         while (ts.state() != QProcess::NotRunning) {
             ts.waitForReadyRead(1000);
             auto it = tpct.globalMatch(QString::fromUtf8(ts.readAll()));
             while (it.hasNext()) {
-                writeStatus(true, imageShare + int(it.next().captured(1).toDouble() * (100 - imageShare) / 100), QStringLiteral("Створення образу системи..."),
+                writeStatus(true, imageShare + int(it.next().captured(1).toDouble() * (100 - imageShare) / 100), tr7("Creating a system image..."),
                             QString(), ts.processId());
             }
         }
@@ -1048,9 +1049,9 @@ inline int runBackup()
     s.lastFailed = false;
     s.lastError.clear();
     save(s);
-    writeStatus(false, 100, rc == 0 ? QStringLiteral("Архівацію виконано успішно") : QStringLiteral("Архівацію виконано, але деякі файли пропущено"));
-    notify(QStringLiteral("Архівацію виконано"), rc == 0 ? QStringLiteral("Резервну копію збережено в «%1».").arg(s.label)
-                                                          : QStringLiteral("Деякі файли не вдалося прочитати, решту збережено в «%1».").arg(s.label));
+    writeStatus(false, 100, rc == 0 ? tr7("The backup completed successfully") : tr7("The backup completed, but some files were skipped"));
+    notify(tr7("The backup completed"), rc == 0 ? tr7("The backup was saved to \"%1\".").arg(s.label)
+                                                          : tr7("Some files could not be read; the rest were saved to \"%1\".").arg(s.label));
     return 0;
 }
 
@@ -1099,10 +1100,10 @@ public:
         setWindowIcon(QIcon::fromTheme(icon));
         setOption(QWizard::NoBackButtonOnStartPage, true);
         setOption(QWizard::NoBackButtonOnLastPage, true);
-        setButtonText(QWizard::NextButton, QStringLiteral("Далі"));
-        setButtonText(QWizard::CancelButton, QStringLiteral("Скасувати"));
-        setButtonText(QWizard::FinishButton, QStringLiteral("Готово"));
-        setButtonText(QWizard::BackButton, QStringLiteral("Назад"));
+        setButtonText(QWizard::NextButton, tr7("Next"));
+        setButtonText(QWizard::CancelButton, tr7("Cancel"));
+        setButtonText(QWizard::FinishButton, tr7("Done"));
+        setButtonText(QWizard::BackButton, tr7("Back"));
         // Windows 7 has no Back button at the bottom: the round arrow in the title area goes back
         setButtonLayout({QWizard::Stretch, QWizard::NextButton, QWizard::FinishButton, QWizard::CancelButton});
         Aero::Wizard::convert(this);
@@ -1127,23 +1128,23 @@ class NetworkDialog : public AeroWizard
 {
 public:
     explicit NetworkDialog(QWidget *parent)
-        : AeroWizard(parent, QStringLiteral("Настроювання архівації"), QStringLiteral("seven-cpi-backup"), QSize(640, 500))
+        : AeroWizard(parent, tr7("Set up backup", "title"), QStringLiteral("seven-cpi-backup"), QSize(640, 500))
     {
         QVBoxLayout *v;
-        Page *p = addPage(0, QStringLiteral("Виберіть мережеве розташування"), v);
-        v->addWidget(text(QStringLiteral("Укажіть мережеве розташування архівних файлів і облікові дані, які використовуватимуться програмою архівації даних для доступу до розташування.")));
+        Page *p = addPage(0, tr7("Select a network location"), v);
+        v->addWidget(text(tr7("Specify the network location for your backup files and the credentials Windows Backup will use to access the location.")));
         v->addSpacing(6);
-        v->addWidget(new QLabel(QStringLiteral("Мережеве розташування:")));
+        v->addWidget(new QLabel(tr7("Network Location:")));
         auto *row = new QHBoxLayout;
         m_path = new QLineEdit;
         row->addWidget(m_path, 1);
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         row->addWidget(browse);
         v->addLayout(row);
-        v->addWidget(new QLabel(QStringLiteral("Приклад: \\\\сервер\\спільний_ресурс")));
+        v->addWidget(new QLabel(tr7("Example: \\\\server\\share")));
         v->addSpacing(10);
-        v->addWidget(new QLabel(QStringLiteral("Мережеві облікові дані")));
-        v->addWidget(text(QStringLiteral("Програмі архівації даних знадобляться ім'я користувача та пароль для доступу до мережевого розташування під час збереження архіву.")));
+        v->addWidget(new QLabel(tr7("Network credentials")));
+        v->addWidget(text(tr7("Windows Backup will need the username and password to access the network location when saving your backup.")));
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         m_user = new QLineEdit;
@@ -1151,9 +1152,9 @@ public:
         m_password->setEchoMode(QLineEdit::Password);
         m_user->setFixedWidth(270);
         m_password->setFixedWidth(270);
-        g->addWidget(new QLabel(QStringLiteral("Користувач:")), 0, 0);
+        g->addWidget(new QLabel(tr7("Username:")), 0, 0);
         g->addWidget(m_user, 0, 1, Qt::AlignLeft);
-        g->addWidget(new QLabel(QStringLiteral("Пароль:")), 1, 0);
+        g->addWidget(new QLabel(tr7("Password:")), 1, 0);
         g->addWidget(m_password, 1, 1, Qt::AlignLeft);
         g->setColumnStretch(1, 1);
         v->addLayout(g);
@@ -1167,7 +1168,7 @@ public:
             p->changed();
         });
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QUrl u = QFileDialog::getExistingDirectoryUrl(this, QStringLiteral("Огляд папок"), QUrl(QStringLiteral("smb://")), QFileDialog::ShowDirsOnly,
+            const QUrl u = QFileDialog::getExistingDirectoryUrl(this, tr7("Browse For Folder"), QUrl(QStringLiteral("smb://")), QFileDialog::ShowDirsOnly,
                                                                 {QStringLiteral("smb")});
             if (u.isValid() && !u.isEmpty()) {
                 m_path->setText(networkLabel(u.toString(QUrl::RemoveUserInfo)));
@@ -1186,8 +1187,8 @@ public:
             const QString mounted = mountNetwork(url, m_user->text(), m_password->text(), &error);
             QApplication::restoreOverrideCursor();
             if (mounted.isEmpty() || !QFileInfo(mounted).isDir()) {
-                QMessageBox::warning(this, QStringLiteral("Настроювання архівації"),
-                                     QStringLiteral("Не вдалося отримати доступ до мережевого розташування «%1».\n\n%2").arg(m_path->text(), error));
+                QMessageBox::warning(this, tr7("Set up backup", "title"),
+                                     tr7("Could not access the network location \"%1\".\n\n%2").arg(m_path->text(), error));
                 return false;
             }
             m_url = url;
@@ -1225,13 +1226,13 @@ class ScheduleDialog : public AeroWizard
 {
 public:
     ScheduleDialog(QWidget *parent, Settings &s)
-        : AeroWizard(parent, QStringLiteral("Настроювання архівації"), QStringLiteral("seven-cpi-backup"), QSize(640, 500))
+        : AeroWizard(parent, tr7("Set up backup", "title"), QStringLiteral("seven-cpi-backup"), QSize(640, 500))
     {
         QVBoxLayout *v;
-        Page *p = addPage(0, QStringLiteral("Як часто слід виконувати архівацію?"), v);
-        v->addWidget(text(QStringLiteral("Змінені файли та нові файли, створені після останньої архівації, додаватимуться до архіву відповідно до вказаного нижче розкладу.")));
+        Page *p = addPage(0, tr7("How often do you want to back up?"), v);
+        v->addWidget(text(tr7("Files that have changed and new files that have been created since your last backup will be added to your backup according to the schedule you set below.")));
         v->addSpacing(8);
-        auto *on = new QCheckBox(QStringLiteral("Виконувати резервне копіювання за розкладом (рекомендовано)"));
+        auto *on = new QCheckBox(tr7("Run backup on a schedule (recommended)"));
         on->setChecked(s.scheduled);
         v->addWidget(on);
         v->addSpacing(6);
@@ -1239,7 +1240,7 @@ public:
         g->setHorizontalSpacing(14);
         g->setVerticalSpacing(14);
         auto *freq = new QComboBox;
-        freq->addItems({QStringLiteral("Щодня"), QStringLiteral("Щотижня"), QStringLiteral("Щомісяця")});
+        freq->addItems({tr7("Daily"), tr7("Weekly"), tr7("Monthly")});
         freq->setCurrentIndex(s.frequency);
         auto *day = new QComboBox;
         auto *time = new QComboBox;
@@ -1266,11 +1267,11 @@ public:
             day->setEnabled(freq->currentIndex() != 0 && freq->isEnabled());
         };
         fillDays();
-        g->addWidget(new QLabel(QStringLiteral("Як часто:")), 0, 0);
+        g->addWidget(new QLabel(tr7("How often:")), 0, 0);
         g->addWidget(freq, 0, 1, Qt::AlignLeft);
-        g->addWidget(new QLabel(QStringLiteral("У які дні:")), 1, 0);
+        g->addWidget(new QLabel(tr7("What day:")), 1, 0);
         g->addWidget(day, 1, 1, Qt::AlignLeft);
-        g->addWidget(new QLabel(QStringLiteral("О котрій годині:")), 2, 0);
+        g->addWidget(new QLabel(tr7("What time:")), 2, 0);
         g->addWidget(time, 2, 1, Qt::AlignLeft);
         g->setColumnStretch(1, 1);
         v->addLayout(g);
@@ -1304,7 +1305,7 @@ public:
     enum { WherePage, WhatPage, ChoosePage, ReviewPage };
 
     explicit SetupWizard(QWidget *parent)
-        : AeroWizard(parent, QStringLiteral("Настроювання архівації"), QStringLiteral("seven-cpi-backup"), QSize(690, 560))
+        : AeroWizard(parent, tr7("Set up backup", "title"), QStringLiteral("seven-cpi-backup"), QSize(690, 560))
         , m_s(load())
     {
         buildWhere();
@@ -1323,20 +1324,19 @@ private:
     void buildWhere()
     {
         QVBoxLayout *v;
-        Page *p = addPage(WherePage, QStringLiteral("Виберіть, де зберігати створювані архіви"), v);
+        Page *p = addPage(WherePage, tr7("Select where you want to save your backup"), v);
         auto *intro = new QHBoxLayout;
         intro->setSpacing(4);
-        intro->addWidget(new QLabel(QStringLiteral("Рекомендовано зберігати архів на зовнішньому жорсткому диску.")));
-        intro->addWidget(helpLink(this, QStringLiteral("Рекомендації щодо вибору розташування архіву"), QStringLiteral("Вибір розташування архіву"),
-                                  QStringLiteral("Найкраще зберігати архів на зовнішньому жорсткому диску: якщо внутрішній диск вийде з ладу, архів залишиться неушкодженим.\n\n"
-                                                 "Диск із Windows не пропонується: Linux його не змінює.")),
+        intro->addWidget(new QLabel(tr7("We recommend that you save your backup on an external hard drive.")));
+        intro->addWidget(helpLink(this, tr7("Guidelines for choosing a backup destination"), tr7("Choosing a backup destination"),
+                                  tr7("It's best to save your backup on an external hard drive: if the internal drive fails, the backup stays intact.\n\nThe Windows drive is not offered: Linux does not change it.")),
                          1);
         v->addLayout(intro);
         v->addSpacing(4);
-        v->addWidget(new QLabel(QStringLiteral("Зберегти резервну копію на:")));
+        v->addWidget(new QLabel(tr7("Save backup on:")));
         m_where = new QTreeWidget;
         m_where->setRootIsDecorated(false);
-        m_where->setHeaderLabels({QStringLiteral("Місце призначення архівації"), QStringLiteral("Вільно"), QStringLiteral("Повний розмір")});
+        m_where->setHeaderLabels({tr7("Backup Destination"), tr7("Free Space"), tr7("Total Size")});
         m_where->header()->setStretchLastSection(false);
         m_where->header()->setSectionResizeMode(0, QHeaderView::Stretch);
         m_where->setColumnWidth(1, 110);
@@ -1345,8 +1345,8 @@ private:
         m_where->setMinimumHeight(200);
         v->addWidget(m_where, 1);
         auto *row = new QHBoxLayout;
-        auto *refresh = new QPushButton(QStringLiteral("Оновити"));
-        auto *net = new QPushButton(QStringLiteral("Зберегти в мережі..."));
+        auto *refresh = new QPushButton(tr7("Refresh"));
+        auto *net = new QPushButton(tr7("Save on a network..."));
         refresh->setMinimumWidth(120);
         net->setMinimumWidth(220);
         row->addWidget(refresh);
@@ -1403,7 +1403,7 @@ private:
                 m_s.label = it->text(0);
                 const QString mp = mountVolume(m_s.uuid);
                 if (mp.isEmpty()) {
-                    QMessageBox::warning(this, windowTitle(), QStringLiteral("Не вдалося підключити диск «%1».").arg(m_s.label));
+                    QMessageBox::warning(this, windowTitle(), tr7("Could not mount the drive \"%1\".").arg(m_s.label));
                     return false;
                 }
                 // a drive with a Linux file system belongs to root: the folder of this computer is made ours once
@@ -1454,15 +1454,15 @@ private:
         QTreeWidgetItem *it = m_where->currentItem();
         QString msg;
         if (m_where->topLevelItemCount() == 0) {
-            msg = QStringLiteral("Архівація даних не виявила дисків для збереження архівів. Підключіть зовнішній диск і натисніть «Оновити».");
+            msg = tr7("Windows Backup did not find any drives to save backups on. Connect an external drive and click Refresh.");
         } else if (!it) {
             msg = QString();
         } else if (it->data(0, Qt::UserRole + 1).toBool()) {
-            msg = QStringLiteral("Інші користувачі мережі можуть мати доступ до вашого архіву.");
+            msg = tr7("Other people on the network might be able to access your backup.");
         } else if (it->data(0, Qt::UserRole + 2).toBool()) {
-            msg = QStringLiteral("Вибраний диск розташовано на тому самому фізичному диску, що й система. У разі збою цього диска архіви буде втрачено.");
+            msg = tr7("The selected drive is on the same physical disk as the system. If this disk fails, your backups will be lost.");
         } else if (it->data(0, Qt::UserRole + 3).toString() == QLatin1String("vfat")) {
-            msg = QStringLiteral("Файлова система FAT32 не зберігає файли розміром понад 4 ГБ, такі файли не потраплять до архіву.");
+            msg = tr7("The FAT32 file system cannot store files larger than 4 GB; such files will not be included in the backup.");
         }
         m_info->setText(msg);
         m_infoIcon->setVisible(!msg.isEmpty());
@@ -1471,18 +1471,15 @@ private:
     void buildWhat()
     {
         QVBoxLayout *v;
-        Page *p = addPage(WhatPage, QStringLiteral("Що слід архівувати?"), v);
-        m_auto = new QRadioButton(QStringLiteral("Надати вибір Windows (рекомендовано)"));
-        m_manual = new QRadioButton(QStringLiteral("Надати мені вибір"));
-        auto *autoText = text(QStringLiteral("Windows виконає архівацію файлів, збережених у бібліотеках, на робочому столі та в стандартних папках вашого профілю. "
-                                             "Ці об'єкти регулярно архівуватимуться за розкладом."));
-        auto *manualText = text(QStringLiteral("Можна вибрати бібліотеки та папки, а також указати, чи слід включати до архіву образ системи. "
-                                               "Вибрані елементи регулярно архівуватимуться за розкладом."));
+        Page *p = addPage(WhatPage, tr7("What do you want to back up?"), v);
+        m_auto = new QRadioButton(tr7("Let Windows choose (recommended)"));
+        m_manual = new QRadioButton(tr7("Let me choose"));
+        auto *autoText = text(tr7("Windows will back up data files saved in libraries, on the desktop, and in default folders of your profile. These items will be backed up on a regular schedule."));
+        auto *manualText = text(tr7("You can select libraries and folders and whether to include a system image in the backup. The items you choose will be backed up on a regular schedule."));
         autoText->setContentsMargins(20, 0, 0, 0);
         manualText->setContentsMargins(20, 0, 0, 0);
-        auto *how = helpLink(this, QStringLiteral("Як вибираються файли для архівації?"), QStringLiteral("Вибір файлів"),
-                             QStringLiteral("Архівуються всі файли вашої домашньої папки, крім тимчасових: кешів програм, кошика, бібліотек ігор Steam "
-                                            "та файлів, що ще завантажуються."));
+        auto *how = helpLink(this, tr7("How does Windows choose what files to back up?"), tr7("Choosing files"),
+                             tr7("All files in your home folder are backed up except temporary ones: program caches, the Recycle Bin, Steam game libraries and files still downloading."));
         how->setContentsMargins(20, 0, 0, 0);
         (m_s.automatic ? m_auto : m_manual)->setChecked(true);
         v->addWidget(m_auto);
@@ -1507,14 +1504,12 @@ private:
     void buildChoose()
     {
         QVBoxLayout *v;
-        Page *p = addPage(ChoosePage, QStringLiteral("Виберіть об'єкти для архівації"), v);
-        auto *intro = new QLabel(QStringLiteral("Установіть прапорці для елементів, які необхідно включити до резервної копії. "
-                                                "<a href=\"#\" style=\"color:#0066cc\">Які файли за замовчуванням виключаються з архіву?</a>"));
+        Page *p = addPage(ChoosePage, tr7("Select what you want to back up"), v);
+        auto *intro = new QLabel(tr7("Select the check box of the items that you want to include in the backup. <a href=\"#\" style=\"color:#0066cc\">Which files are excluded by default from the backup?</a>"));
         intro->setWordWrap(true);
         connect(intro, &QLabel::linkActivated, this, [this] {
-            QMessageBox::information(this, QStringLiteral("Виключені файли"),
-                                     QStringLiteral("До архіву не потрапляють тимчасові файли: кеші програм (.cache), кошик, бібліотеки ігор Steam, "
-                                                    "незавершені завантаження (*.part) і тимчасові файли (*.tmp)."));
+            QMessageBox::information(this, tr7("Excluded files"),
+                                     tr7("Temporary files are not backed up: program caches (.cache), the Recycle Bin, Steam game libraries, unfinished downloads (*.part) and temporary files (*.tmp)."));
         });
         v->addWidget(intro);
         m_tree = new QTreeWidget;
@@ -1522,9 +1517,9 @@ private:
         m_tree->setIconSize(QSize(16, 16));
         m_tree->setStyleSheet(treeArrows());
         v->addWidget(m_tree, 1);
-        auto *data = new QTreeWidgetItem(m_tree, {QStringLiteral("Файли даних")});
+        auto *data = new QTreeWidgetItem(m_tree, {tr7("Data Files")});
         data->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-users")));
-        auto *libs = new QTreeWidgetItem(data, {QStringLiteral("%1 — Бібліотеки").arg(displayName())});
+        auto *libs = new QTreeWidgetItem(data, {tr7("%1's Libraries").arg(displayName())});
         libs->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-users")));
         QFont bold = libs->font(0);
         bold.setBold(true);
@@ -1537,20 +1532,19 @@ private:
             it->setFlags(it->flags() | Qt::ItemIsUserCheckable);
             it->setCheckState(0, m_s.automatic || m_s.items.contains(l.path) ? Qt::Checked : Qt::Unchecked);
         }
-        auto *computer = new QTreeWidgetItem(m_tree, {QStringLiteral("Комп'ютер")});
+        auto *computer = new QTreeWidgetItem(m_tree, {tr7("Computer")});
         computer->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-computer")));
-        auto *disk = dirItem(computer, QStringLiteral("Локальний диск (/)"), QStringLiteral("/"));
+        auto *disk = dirItem(computer, tr7("Local Disk (/)"), QStringLiteral("/"));
         disk->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-sysdrive")));
         data->setExpanded(true);
         computer->setExpanded(true);
         connect(m_tree, &QTreeWidget::itemExpanded, this, [this](QTreeWidgetItem *it) {
             populate(it);
         });
-        m_imageBox = new QCheckBox(QStringLiteral("Включити образ системи дисків: (/)"));
+        m_imageBox = new QCheckBox(tr7("Include a system image of drives: (/)"));
         m_imageBox->setChecked(m_s.image);
         v->addWidget(m_imageBox);
-        auto *imgText = text(QStringLiteral("Образ системи — це копія дисків, необхідних для роботи системи. Його можна використати для відновлення "
-                                            "комп'ютера в разі несправностей."));
+        auto *imgText = text(tr7("A system image is a copy of the drives required for the system to run. You can use it to restore your computer if it stops working."));
         imgText->setContentsMargins(20, 0, 0, 0);
         v->addWidget(imgText);
         p->complete = [this] {
@@ -1566,7 +1560,7 @@ private:
             m_s.items = checkedPaths();
             m_s.image = m_imageBox->isChecked();
             if (m_s.image && m_s.network) {
-                QMessageBox::information(this, windowTitle(), QStringLiteral("Образ системи не можна зберегти в мережевому розташуванні. Буде виконано лише архівацію файлів."));
+                QMessageBox::information(this, windowTitle(), tr7("A system image cannot be saved on a network location. Only the files will be backed up."));
                 m_s.image = false;
             }
             return true;
@@ -1632,27 +1626,27 @@ private:
     void buildReview()
     {
         QVBoxLayout *v;
-        Page *p = addPage(ReviewPage, QStringLiteral("Перевірте ще раз параметри архівації"), v);
+        Page *p = addPage(ReviewPage, tr7("Review your backup settings"), v);
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(30);
         m_reviewWhere = new QLabel;
-        g->addWidget(new QLabel(QStringLiteral("Розташування архіву:")), 0, 0);
+        g->addWidget(new QLabel(tr7("Backup Location:")), 0, 0);
         g->addWidget(m_reviewWhere, 0, 1);
         g->setColumnStretch(1, 1);
         v->addLayout(g);
-        v->addWidget(new QLabel(QStringLiteral("Зведення архівації:")));
+        v->addWidget(new QLabel(tr7("Backup Summary:")));
         m_summary = new QTreeWidget;
         m_summary->setRootIsDecorated(false);
-        m_summary->setHeaderLabels({QStringLiteral("Елементи"), QStringLiteral("Включено до резервної копії")});
+        m_summary->setHeaderLabels({tr7("Items"), tr7("Included in backup")});
         m_summary->setColumnWidth(0, 330);
         m_summary->setMinimumHeight(180);
         v->addWidget(m_summary, 1);
         auto *sched = new QHBoxLayout;
         sched->setSpacing(30);
-        sched->addWidget(new QLabel(QStringLiteral("Розклад:")));
+        sched->addWidget(new QLabel(tr7("Schedule:")));
         m_reviewSchedule = new QLabel;
         sched->addWidget(m_reviewSchedule);
-        auto *change = new QLabel(QStringLiteral("<a href=\"#\" style=\"color:#0066cc\">Змінити розклад</a>"));
+        auto *change = new QLabel(tr7("<a href=\"#\" style=\"color:#0066cc\">Change schedule</a>"));
         sched->addWidget(change);
         sched->addStretch(1);
         v->addLayout(sched);
@@ -1666,7 +1660,7 @@ private:
             }
         });
         p->setFinalPage(true);
-        p->setButtonText(QWizard::FinishButton, QStringLiteral("Зберегти параметри й запустити архівацію"));
+        p->setButtonText(QWizard::FinishButton, tr7("Save settings and run backup"));
         p->enter = [this] {
             fillReview();
         };
@@ -1675,10 +1669,10 @@ private:
     void fillReview()
     {
         m_reviewWhere->setText(m_s.label);
-        m_reviewSchedule->setText(m_s.scheduled ? scheduleText(m_s) : QStringLiteral("Відсутній"));
+        m_reviewSchedule->setText(m_s.scheduled ? scheduleText(m_s) : tr7("None", "image"));
         m_summary->clear();
         if (m_s.automatic) {
-            auto *it = new QTreeWidgetItem(m_summary, {QStringLiteral("%1 — Бібліотеки").arg(displayName()), QStringLiteral("Стандартні папки та бібліотеки")});
+            auto *it = new QTreeWidgetItem(m_summary, {tr7("%1's Libraries").arg(displayName()), tr7("Default folders and libraries")});
             it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-users")));
         } else {
             for (const QString &path : std::as_const(m_s.items)) {
@@ -1688,11 +1682,11 @@ private:
                         name = l.title;
                     }
                 }
-                auto *it = new QTreeWidgetItem(m_summary, {name, QStringLiteral("Усі локальні файли даних")});
+                auto *it = new QTreeWidgetItem(m_summary, {name, tr7("All local data files")});
                 it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-folder")));
             }
             if (m_s.image) {
-                auto *it = new QTreeWidgetItem(m_summary, {QStringLiteral("Образ системи"), QStringLiteral("Включено")});
+                auto *it = new QTreeWidgetItem(m_summary, {tr7("System image"), tr7("Included")});
                 it->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-sysdrive")));
             }
         }
@@ -1744,14 +1738,14 @@ public:
     explicit DetailsDialog(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Архівація даних"));
+        setWindowTitle(tr7("Windows Backup", "title"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-bk-running")));
         setFixedSize(520, 210);
         auto *v = new QVBoxLayout(this);
         v->setContentsMargins(16, 14, 16, 12);
         auto *top = new QHBoxLayout;
         top->addWidget(iconLabel(QStringLiteral("seven-bk-running"), 32), 0, Qt::AlignTop);
-        m_phase = heading(QStringLiteral("Виконується архівація..."));
+        m_phase = heading(tr7("Backup in progress..."));
         top->addWidget(m_phase, 1);
         v->addLayout(top);
         m_bar = new QProgressBar;
@@ -1765,8 +1759,8 @@ public:
         v->addStretch(1);
         auto *row = new QHBoxLayout;
         row->addStretch(1);
-        auto *stop = new QPushButton(QStringLiteral("Зупинити архівацію"));
-        auto *close = new QPushButton(QStringLiteral("Закрити"));
+        auto *stop = new QPushButton(tr7("Stop backup", "button"));
+        auto *close = new QPushButton(tr7("Close"));
         for (QPushButton *b : {stop, close}) {
             b->setMinimumWidth(130);
             row->addWidget(b);
@@ -1775,8 +1769,8 @@ public:
         v->addLayout(row);
         connect(close, &QPushButton::clicked, this, &QDialog::accept);
         connect(stop, &QPushButton::clicked, this, [this] {
-            if (QMessageBox::question(this, QStringLiteral("Архівація даних"),
-                                      QStringLiteral("Зупинити архівацію?\n\nУже скопійовані файли цього разу до архіву не потраплять.")) == QMessageBox::Yes) {
+            if (QMessageBox::question(this, tr7("Windows Backup", "title"),
+                                      tr7("Stop the backup?\n\nFiles already copied this time will not be added to the backup.")) == QMessageBox::Yes) {
                 stopBackup();
                 accept();
             }
@@ -1794,14 +1788,14 @@ private:
     {
         const Status s = status();
         if (!s.running) {
-            m_phase->setText(s.phase.isEmpty() ? QStringLiteral("Архівацію завершено") : s.phase);
+            m_phase->setText(s.phase.isEmpty() ? tr7("The backup is complete") : s.phase);
             m_bar->setValue(100);
             m_file->clear();
             return;
         }
-        m_phase->setText(QStringLiteral("Виконується архівація... (%1%)").arg(s.percent));
+        m_phase->setText(tr7("Backup in progress... (%1%)").arg(s.percent));
         m_bar->setValue(s.percent);
-        m_file->setText(fontMetrics().elidedText(s.file.isEmpty() ? s.phase : QStringLiteral("Копіювання: ") + s.file, Qt::ElideMiddle, 480));
+        m_file->setText(fontMetrics().elidedText(s.file.isEmpty() ? s.phase : tr7("Copying: ") + s.file, Qt::ElideMiddle, 480));
     }
 
     QLabel *m_phase;
@@ -1816,29 +1810,29 @@ inline void manageSpace(QWidget *parent, const Settings &s, const std::function<
     QString error;
     const QString root = destinationRoot(s, &error);
     if (root.isEmpty()) {
-        QMessageBox::warning(parent, QStringLiteral("Керування простором"), error);
+        QMessageBox::warning(parent, tr7("Manage space"), error);
         return;
     }
     QDialog dlg(parent);
-    dlg.setWindowTitle(QStringLiteral("Керування місцем на диску для архівації даних"));
+    dlg.setWindowTitle(tr7("Manage Windows Backup disk space"));
     dlg.setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-cpi-backup")));
     dlg.resize(560, 430);
     auto *v = new QVBoxLayout(&dlg);
-    v->addWidget(heading(QStringLiteral("Виберіть місце, яке займатимуть архіви")));
+    v->addWidget(heading(tr7("Select how disk space is used by Windows Backup")));
     auto *g = new QGridLayout;
     g->setHorizontalSpacing(20);
     const QStorageInfo st(root);
-    g->addWidget(new QLabel(QStringLiteral("Розташування архіву:")), 0, 0);
+    g->addWidget(new QLabel(tr7("Backup Location:")), 0, 0);
     g->addWidget(new QLabel(s.label), 0, 1);
-    g->addWidget(new QLabel(QStringLiteral("Вільне місце:")), 1, 0);
-    g->addWidget(new QLabel(QStringLiteral("%1 вільно з %2").arg(gb(st.bytesAvailable()), gb(st.bytesTotal()))), 1, 1);
+    g->addWidget(new QLabel(tr7("Free space:")), 1, 0);
+    g->addWidget(new QLabel(tr7("%1 free of %2").arg(gb(st.bytesAvailable()), gb(st.bytesTotal()))), 1, 1);
     g->setColumnStretch(1, 1);
     v->addLayout(g);
     v->addSpacing(6);
-    v->addWidget(new QLabel(QStringLiteral("Архіви файлів даних цього комп'ютера:")));
+    v->addWidget(new QLabel(tr7("Data file backups of this computer:")));
     auto *list = new QTreeWidget;
     list->setRootIsDecorated(false);
-    list->setHeaderLabels({QStringLiteral("Період архівації"), QStringLiteral("Комп'ютер")});
+    list->setHeaderLabels({tr7("Backup Period"), tr7("Computer")});
     list->setColumnWidth(0, 300);
     list->setSelectionMode(QAbstractItemView::ExtendedSelection);
     for (const BackupSet &b : setsIn(root)) {
@@ -1847,16 +1841,16 @@ inline void manageSpace(QWidget *parent, const Settings &s, const std::function<
         it->setData(0, Qt::UserRole, b.path);
     }
     v->addWidget(list, 1);
-    v->addWidget(text(QStringLiteral("Незмінені файли спільні для всіх архівів, тому видалення старого архіву звільняє місце лише від файлів, яких більше немає в новіших.")));
+    v->addWidget(text(tr7("Unchanged files are shared by all backups, so deleting an old backup frees only the space of files that are no longer in newer ones.")));
     const QList<Snapshot> images = snapshotsIn(root);
-    v->addWidget(new QLabel(images.isEmpty() ? QStringLiteral("Образ системи: немає")
-                                             : QStringLiteral("Образ системи: %1 (останній від %2)").arg(images.size()).arg(dateText(images.first().when))));
+    v->addWidget(new QLabel(images.isEmpty() ? tr7("System image: none")
+                                             : tr7("System image: %1 (latest from %2)").arg(images.size()).arg(dateText(images.first().when))));
     auto *row = new QHBoxLayout;
-    auto *del = new QPushButton(QStringLiteral("Видалити"));
+    auto *del = new QPushButton(tr7("Delete"));
     del->setEnabled(false);
     row->addWidget(del);
     row->addStretch(1);
-    auto *close = new QPushButton(QStringLiteral("Закрити"));
+    auto *close = new QPushButton(tr7("Close"));
     close->setMinimumWidth(90);
     row->addWidget(close);
     v->addLayout(row);
@@ -1864,7 +1858,7 @@ inline void manageSpace(QWidget *parent, const Settings &s, const std::function<
         del->setEnabled(!list->selectedItems().isEmpty() && list->selectedItems().size() < list->topLevelItemCount());
     });
     QObject::connect(del, &QPushButton::clicked, &dlg, [&dlg, list, changed] {
-        if (QMessageBox::question(&dlg, dlg.windowTitle(), QStringLiteral("Видалити вибрані архіви?")) != QMessageBox::Yes) {
+        if (QMessageBox::question(&dlg, dlg.windowTitle(), tr7("Delete the selected backups?")) != QMessageBox::Yes) {
             return;
         }
         QApplication::setOverrideCursor(Qt::WaitCursor);
@@ -1888,7 +1882,7 @@ public:
 
     /** pick = true: "Select another backup to restore files from" starts by choosing the backup */
     RestoreWizard(QWidget *parent, bool pick, const QString &root)
-        : AeroWizard(parent, QStringLiteral("Відновлення файлів"), QStringLiteral("seven-bk-disc"), QSize(700, 540))
+        : AeroWizard(parent, tr7("Restore Files"), QStringLiteral("seven-bk-disc"), QSize(700, 540))
         , m_root(root)
     {
         buildPick();
@@ -1914,16 +1908,16 @@ private:
     void buildPick()
     {
         QVBoxLayout *v;
-        Page *p = addPage(PickPage, QStringLiteral("Виберіть резервну копію, з якої потрібно відновити файли"), v);
+        Page *p = addPage(PickPage, tr7("Select the backup that you want to restore files from"), v);
         m_sets = new QTreeWidget;
         m_sets->setRootIsDecorated(false);
-        m_sets->setHeaderLabels({QStringLiteral("Період архівації"), QStringLiteral("Комп'ютер"), QStringLiteral("Розташування резервної копії")});
+        m_sets->setHeaderLabels({tr7("Backup Period"), tr7("Computer"), tr7("Backup location")});
         m_sets->setColumnWidth(0, 170);
         m_sets->setColumnWidth(1, 130);
         v->addWidget(m_sets, 1);
         auto *row = new QHBoxLayout;
-        auto *refresh = new QPushButton(QStringLiteral("Оновити"));
-        auto *browse = new QPushButton(QStringLiteral("Огляд мережевого розташування..."));
+        auto *refresh = new QPushButton(tr7("Refresh"));
+        auto *browse = new QPushButton(tr7("Browse network location..."));
         row->addWidget(refresh);
         row->addStretch(1);
         row->addWidget(browse);
@@ -1952,7 +1946,7 @@ private:
         fill();
         connect(refresh, &QPushButton::clicked, this, fill);
         connect(browse, &QPushButton::clicked, this, [this, fill] {
-            const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Огляд папок"), QDir::homePath());
+            const QString dir = QFileDialog::getExistingDirectory(this, tr7("Browse For Folder"), QDir::homePath());
             if (!dir.isEmpty()) {
                 m_extra = dir;
                 fill();
@@ -1975,7 +1969,7 @@ private:
     void buildFiles()
     {
         QVBoxLayout *v;
-        Page *p = addPage(FilesPage, QStringLiteral("Перегляньте або знайдіть у резервній копії файли та папки для відновлення"), v);
+        Page *p = addPage(FilesPage, tr7("Browse or search your backup for files and folders to restore"), v);
         m_dateLine = new QLabel;
         m_dateLine->setTextFormat(Qt::RichText);
         v->addWidget(m_dateLine);
@@ -1985,18 +1979,18 @@ private:
         auto *h = new QHBoxLayout;
         m_list = new QTreeWidget;
         m_list->setRootIsDecorated(false);
-        m_list->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("У папці"), QStringLiteral("Дата зміни")});
+        m_list->setHeaderLabels({tr7("Name"), tr7("In Folder"), tr7("Date modified")});
         m_list->setColumnWidth(0, 170);
         m_list->setColumnWidth(1, 210);
         m_list->setSelectionMode(QAbstractItemView::ExtendedSelection);
         m_list->setIconSize(QSize(16, 16));
         h->addWidget(m_list, 1);
         auto *buttons = new QVBoxLayout;
-        auto *search = new QPushButton(QStringLiteral("Пошук..."));
-        auto *files = new QPushButton(QStringLiteral("Огляд файлів"));
-        auto *folders = new QPushButton(QStringLiteral("Огляд папок"));
-        auto *remove = new QPushButton(QStringLiteral("Видалити"));
-        auto *clear = new QPushButton(QStringLiteral("Видалити все"));
+        auto *search = new QPushButton(tr7("Search..."));
+        auto *files = new QPushButton(tr7("Browse for files"));
+        auto *folders = new QPushButton(tr7("Browse For Folder"));
+        auto *remove = new QPushButton(tr7("Delete"));
+        auto *clear = new QPushButton(tr7("Remove all"));
         for (QPushButton *b : {search, files, folders}) {
             b->setMinimumWidth(110);
             buttons->addWidget(b);
@@ -2030,7 +2024,7 @@ private:
             p->changed();
         };
         connect(files, &QPushButton::clicked, this, [this, add] {
-            QFileDialog dlg(this, QStringLiteral("Огляд архіву для пошуку файлів"), m_set.path + QDir::homePath());
+            QFileDialog dlg(this, tr7("Browse the backup for files"), m_set.path + QDir::homePath());
             dlg.setFileMode(QFileDialog::ExistingFiles);
             dlg.setOption(QFileDialog::DontUseNativeDialog, true); // stays inside the backup
             if (dlg.exec() == QDialog::Accepted) {
@@ -2042,7 +2036,7 @@ private:
             }
         });
         connect(folders, &QPushButton::clicked, this, [this, add] {
-            QFileDialog dlg(this, QStringLiteral("Огляд архіву для пошуку папок або дисків"), m_set.path + QDir::homePath());
+            QFileDialog dlg(this, tr7("Browse the backup for folders or drives"), m_set.path + QDir::homePath());
             dlg.setFileMode(QFileDialog::Directory);
             dlg.setOption(QFileDialog::ShowDirsOnly, true);
             dlg.setOption(QFileDialog::DontUseNativeDialog, true);
@@ -2069,19 +2063,19 @@ private:
 
     void updateDateLine()
     {
-        m_dateLine->setText(QStringLiteral("Усі файли буде відновлено з архіву від %1. <a href=\"#\" style=\"color:#0066cc\">Вибрати іншу дату</a>").arg(dateText(m_set.when)));
+        m_dateLine->setText(tr7("All files will be restored to their state on %1. <a href=\"#\" style=\"color:#0066cc\">Choose a different date</a>").arg(dateText(m_set.when)));
     }
 
     void chooseDate()
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Відновлення файлів"));
+        dlg.setWindowTitle(tr7("Restore Files"));
         dlg.resize(420, 320);
         auto *v = new QVBoxLayout(&dlg);
-        v->addWidget(new QLabel(QStringLiteral("Виберіть дату, з якої потрібно відновити файли:")));
+        v->addWidget(new QLabel(tr7("Choose the date to restore files from:")));
         auto *list = new QTreeWidget;
         list->setRootIsDecorated(false);
-        list->setHeaderLabels({QStringLiteral("Дата й час"), QStringLiteral("Комп'ютер")});
+        list->setHeaderLabels({tr7("Date and Time"), tr7("Computer")});
         list->setColumnWidth(0, 200);
         for (const BackupSet &b : setsIn(m_root)) {
             auto *it = new QTreeWidgetItem(list, {dateText(b.when), b.computer});
@@ -2095,7 +2089,7 @@ private:
         auto *row = new QHBoxLayout;
         row->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         row->addWidget(ok);
         row->addWidget(cancel);
         v->addLayout(row);
@@ -2113,28 +2107,28 @@ private:
     void searchDialog(const std::function<void(const QString &)> &add)
     {
         QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Пошук файлів для відновлення"));
+        dlg.setWindowTitle(tr7("Search for files to restore"));
         dlg.resize(560, 400);
         auto *v = new QVBoxLayout(&dlg);
         auto *row = new QHBoxLayout;
-        row->addWidget(new QLabel(QStringLiteral("Шукати:")));
+        row->addWidget(new QLabel(tr7("Search for:")));
         auto *edit = new QLineEdit;
         row->addWidget(edit, 1);
-        auto *go = new QPushButton(QStringLiteral("Пошук"));
+        auto *go = new QPushButton(tr7("Search"));
         row->addWidget(go);
         v->addLayout(row);
         auto *results = new QTreeWidget;
         results->setRootIsDecorated(false);
-        results->setHeaderLabels({QStringLiteral("Ім'я"), QStringLiteral("У папці"), QStringLiteral("Дата зміни")});
+        results->setHeaderLabels({tr7("Name"), tr7("In Folder"), tr7("Date modified")});
         results->setColumnWidth(0, 170);
         results->setColumnWidth(1, 220);
         v->addWidget(results, 1);
-        auto *all = new QCheckBox(QStringLiteral("Вибрати всі"));
+        auto *all = new QCheckBox(tr7("Select all"));
         v->addWidget(all);
         auto *bottom = new QHBoxLayout;
         bottom->addStretch(1);
         auto *ok = new QPushButton(QStringLiteral("OK"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         bottom->addWidget(ok);
         bottom->addWidget(cancel);
         v->addLayout(bottom);
@@ -2180,20 +2174,20 @@ private:
     void buildWhere()
     {
         QVBoxLayout *v;
-        Page *p = addPage(WherePage, QStringLiteral("Куди відновити файли?"), v);
-        m_original = new QRadioButton(QStringLiteral("У вихідне розташування"));
-        m_other = new QRadioButton(QStringLiteral("У таке розташування:"));
+        Page *p = addPage(WherePage, tr7("Where do you want to restore your files?"), v);
+        m_original = new QRadioButton(tr7("In the original location"));
+        m_other = new QRadioButton(tr7("In the following location:"));
         m_original->setChecked(true);
         v->addWidget(m_original);
         v->addWidget(m_other);
         auto *row = new QHBoxLayout;
         row->setContentsMargins(20, 0, 0, 0);
         m_otherPath = new QLineEdit;
-        auto *browse = new QPushButton(QStringLiteral("Огляд..."));
+        auto *browse = new QPushButton(tr7("Browse..."));
         row->addWidget(m_otherPath, 1);
         row->addWidget(browse);
         v->addLayout(row);
-        m_subfolders = new QCheckBox(QStringLiteral("Відновлювати файли у вихідні вкладені папки"));
+        m_subfolders = new QCheckBox(tr7("Restore the files to their original subfolders"));
         m_subfolders->setChecked(true);
         m_subfolders->setContentsMargins(20, 0, 0, 0);
         v->addWidget(m_subfolders);
@@ -2211,7 +2205,7 @@ private:
             p->changed();
         });
         connect(browse, &QPushButton::clicked, this, [this] {
-            const QString d = QFileDialog::getExistingDirectory(this, QStringLiteral("Огляд папок"), QDir::homePath());
+            const QString d = QFileDialog::getExistingDirectory(this, tr7("Browse For Folder"), QDir::homePath());
             if (!d.isEmpty()) {
                 m_other->setChecked(true);
                 m_otherPath->setText(d);
@@ -2220,7 +2214,7 @@ private:
         p->complete = [this] {
             return m_original->isChecked() || QFileInfo(m_otherPath->text()).isDir();
         };
-        p->setButtonText(QWizard::NextButton, QStringLiteral("Відновити"));
+        p->setButtonText(QWizard::NextButton, tr7("Restore"));
         p->validate = [this] {
             return restore();
         };
@@ -2239,11 +2233,11 @@ private:
         }
         bool replace = true;
         if (exists) {
-            QMessageBox box(QMessageBox::Question, QStringLiteral("Копіювання файлу"), QStringLiteral("У цьому розташуванні вже є файли з такими самими іменами."),
+            QMessageBox box(QMessageBox::Question, tr7("Copy File"), tr7("There are already files with the same names in this location."),
                             QMessageBox::NoButton, this);
-            QPushButton *rep = box.addButton(QStringLiteral("Копіювати й замінити"), QMessageBox::AcceptRole);
-            QPushButton *keep = box.addButton(QStringLiteral("Не копіювати"), QMessageBox::RejectRole);
-            box.addButton(QStringLiteral("Скасувати"), QMessageBox::DestructiveRole);
+            QPushButton *rep = box.addButton(tr7("Copy and Replace"), QMessageBox::AcceptRole);
+            QPushButton *keep = box.addButton(tr7("Don't copy"), QMessageBox::RejectRole);
+            box.addButton(tr7("Cancel"), QMessageBox::DestructiveRole);
             box.exec();
             if (box.clickedButton() == rep) {
                 replace = true;
@@ -2289,8 +2283,8 @@ private:
     void buildDone()
     {
         QVBoxLayout *v;
-        Page *p = addPage(DonePage, QStringLiteral("Файли відновлено"), v);
-        auto *view = new QLabel(QStringLiteral("<a href=\"#\" style=\"color:#0066cc\">Переглянути відновлені файли</a>"));
+        Page *p = addPage(DonePage, tr7("Your files have been restored"), v);
+        auto *view = new QLabel(tr7("<a href=\"#\" style=\"color:#0066cc\">View restored files</a>"));
         auto *result = new QLabel;
         result->setWordWrap(true);
         v->addWidget(result);
@@ -2300,8 +2294,8 @@ private:
             launch(QStringLiteral("dolphin"), {m_restoredTo});
         });
         p->enter = [this, p, result] {
-            p->setTitle(m_failed ? QStringLiteral("Деякі файли не вдалося відновити") : QStringLiteral("Файли відновлено"));
-            result->setText(m_failed ? QStringLiteral("Не вдалося відновити об'єктів: %1. Перевірте, чи достатньо місця на диску.").arg(m_failed) : QString());
+            p->setTitle(m_failed ? tr7("Some files could not be restored") : tr7("Your files have been restored"));
+            result->setText(m_failed ? tr7("%1 items could not be restored. Check that there is enough disk space.").arg(m_failed) : QString());
         };
         p->setFinalPage(true);
     }
@@ -2328,23 +2322,19 @@ public:
     enum { WherePage, ConfirmPage };
 
     explicit ImageWizard(QWidget *parent)
-        : AeroWizard(parent, QStringLiteral("Створення образу системи"), QStringLiteral("seven-bk-image"), QSize(680, 520))
+        : AeroWizard(parent, tr7("Create a system image"), QStringLiteral("seven-bk-image"), QSize(680, 520))
     {
         QVBoxLayout *v;
-        Page *p = addPage(WherePage, QStringLiteral("Де слід зберігати архів?"), v);
-        auto *intro = new QLabel(QStringLiteral("Образ системи — це копія дисків, необхідних для роботи системи. Образ системи можна використовувати для відновлення "
-                                                "комп'ютера в разі несправності жорсткого диска або комп'ютера, але при цьому не можна вибирати окремі елементи "
-                                                "для відновлення. <a href=\"#\" style=\"color:#0066cc\">Як відновити комп'ютер за допомогою образу системи?</a>"));
+        Page *p = addPage(WherePage, tr7("Where do you want to save the backup?"), v);
+        auto *intro = new QLabel(tr7("A system image is a copy of the drives required for the system to run. It can be used to restore your computer if your hard drive or computer ever stops working; however, you can't choose individual items to restore. <a href=\"#\" style=\"color:#0066cc\">How do I restore my computer from a system image?</a>"));
         intro->setWordWrap(true);
         connect(intro, &QLabel::linkActivated, this, [this] {
             QMessageBox::information(this, windowTitle(),
-                                     QStringLiteral("Відкрийте «Панель керування» → «Відновлення» → «Розширені методи відновлення» і виберіть "
-                                                    "«Використати образ системи, створений раніше для відновлення комп'ютера». Після перезапуску "
-                                                    "системні файли буде повернуто до стану з образу."));
+                                     tr7("Open Control Panel → Recovery → Advanced recovery methods and choose \"Use a system image you created earlier to recover your computer\". After the restart, the system files are returned to their state in the image."));
         });
         v->addWidget(intro);
         v->addSpacing(8);
-        m_hdd = new QRadioButton(QStringLiteral("На жорсткому диску"));
+        m_hdd = new QRadioButton(tr7("On a hard disk"));
         m_hdd->setChecked(true);
         v->addWidget(m_hdd);
         m_disks = new QComboBox;
@@ -2364,14 +2354,14 @@ public:
         warnRow->addWidget(m_warn, 1);
         v->addLayout(warnRow);
         v->addSpacing(12);
-        m_dvd = new QRadioButton(QStringLiteral("На DVD-дисках"));
+        m_dvd = new QRadioButton(tr7("On one or more DVDs"));
         v->addWidget(m_dvd);
         auto *dvdCombo = new QComboBox;
         dvdCombo->setFixedWidth(340);
         dvdCombo->setEnabled(false);
         const bool hasDvd = QFileInfo::exists(QStringLiteral("/dev/sr0"));
         if (hasDvd) {
-            dvdCombo->addItem(QIcon::fromTheme(QStringLiteral("seven-bk-dvd")), QStringLiteral("DVD RW дисковод (sr0)"));
+            dvdCombo->addItem(QIcon::fromTheme(QStringLiteral("seven-bk-dvd")), tr7("DVD RW Drive (sr0)"));
         }
         m_dvd->setEnabled(false); // writing images to DVD is not supported here
         auto *dvl = new QHBoxLayout;
@@ -2396,16 +2386,15 @@ public:
             const Volume vol = current();
             if (!vol.linuxFs()) {
                 QMessageBox::warning(this, windowTitle(),
-                                     QStringLiteral("Диск «%1» має файлову систему %2. Образ системи можна зберегти лише на диску з файловою системою "
-                                                    "Linux (ext4, btrfs або xfs).\n\nВідформатуйте диск у «Керування дисками» або виберіть інший.")
+                                     tr7("The drive \"%1\" has the %2 file system. A system image can only be saved on a drive with a Linux file system (ext4, btrfs or xfs).\n\nFormat the drive in Disk Management or choose another one.")
                                          .arg(vol.label, vol.fstype.toUpper()));
                 return false;
             }
             return ensureTimeshift(this);
         };
         QVBoxLayout *c;
-        Page *cp = addPage(ConfirmPage, QStringLiteral("Підтвердження параметрів архівації"), c);
-        c->addWidget(new QLabel(QStringLiteral("Розташування резервної копії:")));
+        Page *cp = addPage(ConfirmPage, tr7("Confirm your backup settings"), c);
+        c->addWidget(new QLabel(tr7("Backup location:")));
         auto *where = new QHBoxLayout;
         where->setContentsMargins(20, 0, 0, 0);
         where->addWidget(iconLabel(QStringLiteral("seven-bk-drive"), 32));
@@ -2415,18 +2404,18 @@ public:
         m_need = new QLabel;
         c->addWidget(m_need);
         c->addSpacing(30);
-        c->addWidget(new QLabel(QStringLiteral("Буде виконано архівацію таких дисків:")));
+        c->addWidget(new QLabel(tr7("The following drives will be backed up:")));
         auto *list = new QTreeWidget;
         list->setHeaderHidden(true);
         list->setRootIsDecorated(false);
         list->setIconSize(QSize(32, 32));
         list->setFixedHeight(120);
-        auto *sys = new QTreeWidgetItem(list, {QStringLiteral("(/) (система)")});
+        auto *sys = new QTreeWidgetItem(list, {tr7("(/) (System)")});
         sys->setIcon(0, QIcon::fromTheme(QStringLiteral("seven-bk-sysdrive")));
         c->addWidget(list);
         c->addStretch(1);
         cp->setFinalPage(true);
-        cp->setButtonText(QWizard::FinishButton, QStringLiteral("Архівувати"));
+        cp->setButtonText(QWizard::FinishButton, tr7("Start backup"));
         cp->enter = [this] {
             const Volume vol = current();
             m_confirmWhere->setText(vol.label);
@@ -2443,7 +2432,7 @@ public:
                 const QStorageInfo root(QStringLiteral("/"));
                 need = (root.bytesTotal() - root.bytesFree()) / 4;
             }
-            m_need->setText(QStringLiteral("Для архівації може знадобитися близько %1.").arg(gb(need)));
+            m_need->setText(tr7("The backup could take up to %1 of disk space.").arg(gb(need)));
         };
         // "Looking for backup devices..."
         QTimer::singleShot(0, this, [this] {
@@ -2465,15 +2454,15 @@ private:
     void fill()
     {
         QDialog wait(this);
-        wait.setWindowTitle(QStringLiteral("Створення образу системи"));
+        wait.setWindowTitle(tr7("Create a system image"));
         wait.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
         auto *wv = new QVBoxLayout(&wait);
         auto *frame = new QFrame;
         frame->setObjectName(QStringLiteral("win7bkwait"));
         frame->setStyleSheet(QStringLiteral("#win7bkwait { background: white; border: 1px solid #8e8f8f; }"));
         auto *fv = new QVBoxLayout(frame);
-        fv->addWidget(new QLabel(QStringLiteral("Створення образу системи")));
-        fv->addWidget(new QLabel(QStringLiteral("Очікування пристроїв архівації...")));
+        fv->addWidget(new QLabel(tr7("Create a system image")));
+        fv->addWidget(new QLabel(tr7("Looking for backup devices...")));
         auto *bar = new QProgressBar;
         bar->setRange(0, 0);
         bar->setTextVisible(false);
@@ -2497,10 +2486,10 @@ private:
                 mp = mountVolume(vol.uuid);
             }
             const QStorageInfo st(mp);
-            const QString free = st.isValid() && !mp.isEmpty() ? QStringLiteral("  Вільно %1").arg(gb(st.bytesAvailable())) : QString();
+            const QString free = st.isValid() && !mp.isEmpty() ? tr7("  %1 free").arg(gb(st.bytesAvailable())) : QString();
             m_disks->addItem(QIcon::fromTheme(QStringLiteral("seven-bk-drive")), vol.label + free, vol.uuid);
         }
-        m_disks->addItem(QStringLiteral("<Оновити>"), QStringLiteral("refresh"));
+        m_disks->addItem(tr7("<Refresh>"), QStringLiteral("refresh"));
         m_disks->setCurrentIndex(m_vols.isEmpty() ? -1 : 0);
         updateWarning();
     }
@@ -2510,11 +2499,11 @@ private:
         const Volume vol = current();
         QString msg;
         if (m_vols.isEmpty()) {
-            msg = QStringLiteral("Не знайдено дисків для збереження образу. Підключіть зовнішній жорсткий диск і виберіть «<Оновити>».");
+            msg = tr7("No drives were found to save the image on. Connect an external hard drive and choose \"<Refresh>\".");
         } else if (vol.sameDiskAsSystem) {
-            msg = QStringLiteral("Вибраний диск розташовано на тому самому фізичному диску, архівація якого виконується. У разі збою цього диска архіви буде втрачено.");
+            msg = tr7("The selected drive is on the same physical disk that is being backed up. If this disk fails, your backups will be lost.");
         } else if (!vol.uuid.isEmpty() && !vol.linuxFs()) {
-            msg = QStringLiteral("Для образу системи потрібна файлова система Linux (ext4).");
+            msg = tr7("A system image needs a Linux file system (ext4).");
         }
         m_warn->setText(msg);
         m_warnIcon->setVisible(!msg.isEmpty());
@@ -2538,8 +2527,8 @@ inline void createSystemImage(QWidget *parent)
         return;
     }
     const Volume vol = w.current();
-    runTimeshift(parent, QStringLiteral("Створення образу системи"), QStringLiteral("Виконується збереження архіву..."),
-                 {QStringLiteral("--create"), QStringLiteral("--scripted"), QStringLiteral("--comments"), QStringLiteral("Образ системи"), QStringLiteral("--snapshot-device"),
+    runTimeshift(parent, tr7("Create a system image"), tr7("Saving the backup..."),
+                 {QStringLiteral("--create"), QStringLiteral("--scripted"), QStringLiteral("--comments"), tr7("System image"), QStringLiteral("--snapshot-device"),
                   vol.dev});
 }
 
@@ -2552,7 +2541,7 @@ public:
     explicit SystemRestore(QWidget *parent)
         : QDialog(parent)
     {
-        setWindowTitle(QStringLiteral("Відновлення системи"));
+        setWindowTitle(tr7("System Restore"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-rstrui")));
         setFixedSize(620, 470);
         auto *outer = new QVBoxLayout(this);
@@ -2581,9 +2570,9 @@ public:
         auto *row = new QHBoxLayout;
         row->setContentsMargins(10, 10, 10, 10);
         row->addStretch(1);
-        m_back = new QPushButton(QStringLiteral("< Назад"));
-        m_next = new QPushButton(QStringLiteral("Далі >"));
-        auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+        m_back = new QPushButton(tr7("< Back"));
+        m_next = new QPushButton(tr7("Next >"));
+        auto *cancel = new QPushButton(tr7("Cancel"));
         for (QPushButton *b : {m_back, m_next, cancel}) {
             b->setMinimumWidth(80);
             row->addWidget(b);
@@ -2599,30 +2588,28 @@ public:
         });
 
         // 1: introduction
-        auto *intro = page(QStringLiteral("Відновлення системних файлів і параметрів"));
-        intro->addWidget(text(QStringLiteral("Відновлення системи може усунути проблеми, що сповільнюють роботу комп'ютера або блокують її.")));
+        auto *intro = page(tr7("Restore system files and settings"));
+        intro->addWidget(text(tr7("System Restore can help fix problems that might be making your computer run slowly or stop responding.")));
         intro->addSpacing(14);
-        auto *rev = new QLabel(QStringLiteral("Відновлення системи не впливає на документи, зображення або інші особисті дані. Нещодавно встановлені програми й "
-                                              "драйвери може бути видалено. <a href=\"#\" style=\"color:#0066cc\">Чи можна скасувати цю дію?</a>"));
+        auto *rev = new QLabel(tr7("System Restore does not affect any of your documents, pictures, or other personal data. Recently installed programs and drivers might be uninstalled. <a href=\"#\" style=\"color:#0066cc\">Is this process reversible?</a>"));
         rev->setWordWrap(true);
         connect(rev, &QLabel::linkActivated, this, [this] {
             QMessageBox::information(this, windowTitle(),
-                                     QStringLiteral("Так. Перед відновленням автоматично створюється нова точка відновлення, тож систему можна повернути "
-                                                    "до поточного стану, ще раз запустивши «Відновлення системи»."));
+                                     tr7("Yes. A new restore point is created automatically before restoring, so the system can be returned to its current state by running System Restore again."));
         });
         intro->addWidget(rev);
         intro->addStretch(1);
 
         // 2: restore points
-        auto *pts = page(QStringLiteral("Відновлення комп'ютера до попереднього стану"));
-        pts->addWidget(new QLabel(QStringLiteral("Часовий пояс: %1").arg(QString::fromUtf8(QTimeZone::systemTimeZoneId()))));
+        auto *pts = page(tr7("Restore your computer to the state it was in before the selected event"));
+        pts->addWidget(new QLabel(tr7("Time zone: %1").arg(QString::fromUtf8(QTimeZone::systemTimeZoneId()))));
         m_points = new QTreeWidget;
         m_points->setRootIsDecorated(false);
-        m_points->setHeaderLabels({QStringLiteral("Дата й час"), QStringLiteral("Опис"), QStringLiteral("Тип")});
+        m_points->setHeaderLabels({tr7("Date and Time"), tr7("Description"), tr7("Type")});
         m_points->setColumnWidth(0, 130);
         m_points->setColumnWidth(1, 170);
         pts->addWidget(m_points, 1);
-        m_empty = new QLabel(QStringLiteral("На системному диску ще немає точок відновлення. <a href=\"#\" style=\"color:#0066cc\">Створити точку відновлення зараз</a>"));
+        m_empty = new QLabel(tr7("There are no restore points on the system drive yet. <a href=\"#\" style=\"color:#0066cc\">Create a restore point now</a>"));
         m_empty->setWordWrap(true);
         connect(m_empty, &QLabel::linkActivated, this, [this] {
             createRestorePoint(this);
@@ -2634,24 +2621,23 @@ public:
         });
 
         // 3: confirm
-        auto *conf = page(QStringLiteral("Підтвердження точки відновлення"));
-        conf->addWidget(new QLabel(QStringLiteral("Комп'ютер буде повернуто до стану, у якому він перебував до події, указаної в полі «Опис».")));
+        auto *conf = page(tr7("Confirm your restore point"));
+        conf->addWidget(new QLabel(tr7("Your computer will be restored to the state it was in before the event in the Description field below.")));
         conf->addSpacing(8);
         auto *g = new QGridLayout;
         g->setHorizontalSpacing(14);
         m_confTime = new QLabel;
         m_confDesc = new QLabel;
-        g->addWidget(new QLabel(QStringLiteral("<b>Час:</b>")), 0, 0);
+        g->addWidget(new QLabel(tr7("<b>Time:</b>")), 0, 0);
         g->addWidget(m_confTime, 0, 1);
-        g->addWidget(new QLabel(QStringLiteral("<b>Опис:</b>")), 1, 0);
+        g->addWidget(new QLabel(tr7("<b>Description:</b>")), 1, 0);
         g->addWidget(m_confDesc, 1, 1);
-        g->addWidget(new QLabel(QStringLiteral("<b>Диски:</b>")), 2, 0);
-        g->addWidget(new QLabel(QStringLiteral("/ (система)")), 2, 1);
+        g->addWidget(new QLabel(tr7("<b>Drives:</b>")), 2, 0);
+        g->addWidget(new QLabel(tr7("/ (System)")), 2, 1);
         g->setColumnStretch(1, 1);
         conf->addLayout(g);
         conf->addSpacing(14);
-        conf->addWidget(text(QStringLiteral("Відновлення системи потребує перезапуску комп'ютера, щоб застосувати зміни. Перед продовженням збережіть усі "
-                                            "відкриті файли та закрийте всі програми.")));
+        conf->addWidget(text(tr7("System Restore needs to restart your computer to apply these changes. Before you proceed, save any open files and close all programs.")));
         conf->addStretch(1);
         go(0);
     }
@@ -2661,10 +2647,10 @@ public:
         if (!ensureTimeshift(parent)) {
             return;
         }
-        runTimeshift(parent, QStringLiteral("Захист системи"), QStringLiteral("Створення точки відновлення..."),
-                     {QStringLiteral("--create"), QStringLiteral("--scripted"), QStringLiteral("--comments"), QStringLiteral("Точка відновлення, створена вручну"),
+        runTimeshift(parent, tr7("System Protection"), tr7("Creating a restore point..."),
+                     {QStringLiteral("--create"), QStringLiteral("--scripted"), QStringLiteral("--comments"), tr7("Manually created restore point"),
                       QStringLiteral("--snapshot-device"), rootDevice()},
-                     QStringLiteral("Скасувати"));
+                     tr7("Cancel"));
     }
 
 private:
@@ -2690,8 +2676,8 @@ private:
         m_points->clear();
         for (const Snapshot &s : snapshotsIn(QString())) {
             auto *it = new QTreeWidgetItem(m_points, {s.when.toString(QStringLiteral("dd.MM.yyyy H:mm:ss")),
-                                                      s.comment.isEmpty() ? QStringLiteral("Автоматична точка відновлення") : s.comment,
-                                                      s.comment.isEmpty() ? QStringLiteral("Система") : QStringLiteral("Вручну")});
+                                                      s.comment.isEmpty() ? tr7("Automatic restore point") : s.comment,
+                                                      s.comment.isEmpty() ? tr7("System") : tr7("Manual")});
             it->setData(0, Qt::UserRole, s.name);
         }
         if (m_points->topLevelItemCount()) {
@@ -2705,7 +2691,7 @@ private:
     {
         m_stack->setCurrentIndex(i);
         m_back->setEnabled(i > 0);
-        m_next->setText(i == 2 ? QStringLiteral("Готово") : QStringLiteral("Далі >"));
+        m_next->setText(i == 2 ? tr7("Done") : tr7("Next >"));
         m_next->setEnabled(true);
         if (i == 1) {
             fillPoints();
@@ -2723,16 +2709,16 @@ private:
             return;
         }
         if (QMessageBox::question(this, windowTitle(),
-                                  QStringLiteral("Після запуску відновлення системи його неможливо перервати. Продовжити?"))
+                                  tr7("Once started, System Restore cannot be interrupted. Do you want to continue?"))
             != QMessageBox::Yes) {
             return;
         }
         const QString snap = m_points->currentItem()->data(0, Qt::UserRole).toString();
         hide();
-        if (runTimeshift(parentWidget(), QStringLiteral("Відновлення системи"), QStringLiteral("Зачекайте, триває відновлення системних файлів і параметрів..."),
+        if (runTimeshift(parentWidget(), tr7("System Restore"), tr7("Please wait while your system files and settings are being restored..."),
                          {QStringLiteral("--restore"), QStringLiteral("--snapshot"), snap, QStringLiteral("--snapshot-device"), rootDevice(), QStringLiteral("--target-device"),
                           rootDevice(), QStringLiteral("--skip-grub"), QStringLiteral("--scripted"), QStringLiteral("--yes")},
-                         QStringLiteral("Скасувати"))) {
+                         tr7("Cancel"))) {
             QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("reboot")});
         }
         accept();
@@ -2777,25 +2763,25 @@ inline void reimage(QWidget *parent)
 {
     const QList<Image> images = systemImages();
     if (images.isEmpty()) {
-        QMessageBox::warning(parent, QStringLiteral("Повторне створення образу комп'ютера"),
-                             QStringLiteral("Не вдалося знайти образ системи на цьому комп'ютері.\n\nПідключіть диск з образом системи та повторіть спробу."));
+        QMessageBox::warning(parent, tr7("Re-image your computer"),
+                             tr7("Windows cannot find a system image on this computer.\n\nAttach the drive that contains the system image and try again."));
         return;
     }
-    AeroWizard w(parent, QStringLiteral("Повторне створення образу комп'ютера"), QStringLiteral("seven-bk-image"), QSize(640, 480));
+    AeroWizard w(parent, tr7("Re-image your computer"), QStringLiteral("seven-bk-image"), QSize(640, 480));
     QVBoxLayout *v;
-    Page *p = w.addPage(0, QStringLiteral("Виберіть резервну копію образу системи"), v);
-    v->addWidget(text(QStringLiteral("Комп'ютер буде відновлено за допомогою образу системи. Усі дані на системному диску буде замінено даними з образу.")));
-    auto *latest = new QRadioButton(QStringLiteral("Використати останній доступний образ системи (рекомендовано)"));
-    auto *pick = new QRadioButton(QStringLiteral("Вибрати образ системи"));
+    Page *p = w.addPage(0, tr7("Select a system image backup"), v);
+    v->addWidget(text(tr7("This computer will be restored using the system image. Everything on the system drive will be replaced with the data in the image.")));
+    auto *latest = new QRadioButton(tr7("Use the latest available system image (recommended)"));
+    auto *pick = new QRadioButton(tr7("Select a system image"));
     latest->setChecked(true);
     v->addWidget(latest);
-    auto *info = new QLabel(QStringLiteral("Розташування: %1\nДата й час: %2").arg(images.first().vol.label, dateText(images.first().snap.when)));
+    auto *info = new QLabel(tr7("Location: %1\nDate and time: %2").arg(images.first().vol.label, dateText(images.first().snap.when)));
     info->setContentsMargins(20, 0, 0, 0);
     v->addWidget(info);
     v->addWidget(pick);
     auto *list = new QTreeWidget;
     list->setRootIsDecorated(false);
-    list->setHeaderLabels({QStringLiteral("Розташування"), QStringLiteral("Дата й час"), QStringLiteral("Опис")});
+    list->setHeaderLabels({tr7("Location"), tr7("Date and Time"), tr7("Description")});
     list->setColumnWidth(0, 190);
     list->setColumnWidth(1, 140);
     for (int i = 0; i < images.size(); ++i) {
@@ -2816,23 +2802,22 @@ inline void reimage(QWidget *parent)
         return latest->isChecked() || list->currentItem();
     };
     p->setFinalPage(true);
-    p->setButtonText(QWizard::FinishButton, QStringLiteral("Готово"));
+    p->setButtonText(QWizard::FinishButton, tr7("Done"));
     if (w.exec() != QDialog::Accepted) {
         return;
     }
     const Image img = latest->isChecked() ? images.first() : images.at(list->currentItem()->data(0, Qt::UserRole).toInt());
-    if (QMessageBox::warning(parent, QStringLiteral("Повторне створення образу комп'ютера"),
-                             QStringLiteral("Усі системні файли буде замінено даними з образу від %1. Після відновлення комп'ютер буде перезапущено.\n\n"
-                                            "Продовжити?")
+    if (QMessageBox::warning(parent, tr7("Re-image your computer"),
+                             tr7("All system files will be replaced with the data from the image of %1. The computer restarts after the restore.\n\nDo you want to continue?")
                                  .arg(dateText(img.snap.when)),
                              QMessageBox::Yes | QMessageBox::No)
         != QMessageBox::Yes) {
         return;
     }
-    if (runTimeshift(parent, QStringLiteral("Повторне створення образу комп'ютера"), QStringLiteral("Відновлення комп'ютера з образу системи..."),
+    if (runTimeshift(parent, tr7("Re-image your computer"), tr7("Restoring your computer from a system image..."),
                      {QStringLiteral("--restore"), QStringLiteral("--snapshot"), img.snap.name, QStringLiteral("--snapshot-device"), img.vol.dev,
                       QStringLiteral("--target-device"), rootDevice(), QStringLiteral("--skip-grub"), QStringLiteral("--scripted"), QStringLiteral("--yes")},
-                     QStringLiteral("Скасувати"))) {
+                     tr7("Cancel"))) {
         QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("reboot")});
     }
 }
@@ -2863,7 +2848,7 @@ inline QWidget *sidePane(const QList<std::tuple<QString, std::function<void()>, 
         row->addWidget(new Link(t, std::move(open), color), 1);
         sv->addLayout(row);
     };
-    addRow(QStringLiteral("Панель керування — домашня сторінка"), nav.home, false);
+    addRow(tr7("Control Panel Home"), nav.home, false);
     sv->addSpacing(9);
     for (const auto &[t, open, shield] : links) {
         addRow(t, open, shield);
@@ -2872,7 +2857,7 @@ inline QWidget *sidePane(const QList<std::tuple<QString, std::function<void()>, 
     if (!seeAlso.isEmpty()) {
         auto *seeRow = new QHBoxLayout;
         seeRow->setContentsMargins(22, 0, 0, 0);
-        seeRow->addWidget(grey(QStringLiteral("Див. також")));
+        seeRow->addWidget(grey(tr7("See also")));
         sv->addLayout(seeRow);
         for (const auto &[t, open, shield] : seeAlso) {
             addRow(t, open, shield);
@@ -2913,7 +2898,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(heading(QStringLiteral("Архівація або відновлення файлів")));
+    cv->addWidget(heading(tr7("Back up or restore your files")));
     cv->addSpacing(14);
     auto reload = [nav] {
         nav.open(BackupView);
@@ -2935,7 +2920,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
         bh->addSpacing(14);
         auto *bv = new QVBoxLayout;
         bv->setContentsMargins(0, 16, 0, 16);
-        auto *phase = new QLabel(QStringLiteral("Виконується архівація..."));
+        auto *phase = new QLabel(tr7("Backup in progress..."));
         bv->addWidget(phase);
         auto *progress = new QProgressBar;
         progress->setRange(0, 100);
@@ -2945,7 +2930,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
         bv->addWidget(progress);
         bh->addLayout(bv);
         bh->addStretch(1);
-        auto *details = shieldButton(QStringLiteral("Переглянути відомості"));
+        auto *details = shieldButton(tr7("View details"));
         bh->addWidget(details);
         cv->addWidget(box);
         cv->addSpacing(12);
@@ -2965,14 +2950,14 @@ inline QWidget *buildBackupPage(const Nav &nav)
         poll->start(700);
     }
 
-    cv->addWidget(new SectionHeader(QStringLiteral("Архівація")));
+    cv->addWidget(new SectionHeader(tr7("Backup")));
     cv->addSpacing(8);
     if (!s.configured) {
         auto *row = new QHBoxLayout;
         row->setContentsMargins(28, 0, 0, 0);
-        row->addWidget(new QLabel(QStringLiteral("Архівацію даних не настроєно.")));
+        row->addWidget(new QLabel(tr7("Windows Backup has not been set up.", "status")));
         row->addStretch(1);
-        row->addWidget(shieldLink(QStringLiteral("Настроїти резервне копіювання"), [main, reload] {
+        row->addWidget(shieldLink(tr7("Set up backup", "link"), [main, reload] {
             if (setupBackup(main)) {
                 reload();
             }
@@ -2996,7 +2981,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
         int r = 0;
         auto *loc = new QVBoxLayout;
         loc->setSpacing(6);
-        loc->addWidget(new QLabel(s.network ? QStringLiteral("Мережевий шлях: ") + s.label : s.label));
+        loc->addWidget(new QLabel(s.network ? tr7("Network path: ") + s.label : s.label));
         const QStorageInfo info(root);
         if (!root.isEmpty() && info.isValid()) {
             auto *use = new QProgressBar;
@@ -3006,19 +2991,19 @@ inline QWidget *buildBackupPage(const Nav &nav)
             use->setFixedSize(186, 16);
             use->setStyleSheet(QStringLiteral("QProgressBar { border: 1px solid #a5a5a5; background: white; } QProgressBar::chunk { background: #2b9de4; }"));
             loc->addWidget(use);
-            loc->addWidget(new QLabel(QStringLiteral("%1 вільно з %2").arg(gb(info.bytesAvailable()), gb(info.bytesTotal()))));
+            loc->addWidget(new QLabel(tr7("%1 free of %2").arg(gb(info.bytesAvailable()), gb(info.bytesTotal()))));
         } else {
-            loc->addWidget(new QLabel(QStringLiteral("Розташування архіву зараз недоступне. Підключіть диск.")));
+            loc->addWidget(new QLabel(tr7("The backup location is not available right now. Connect the drive.")));
         }
         loc->addSpacing(6);
-        loc->addWidget(new QLabel(QStringLiteral("Розмір архіву: %1").arg(s.setSize > 0 ? gb(s.setSize) : QStringLiteral("Недоступно"))));
-        loc->addWidget(shieldLink(QStringLiteral("Керування простором"), [main, s, reload] {
+        loc->addWidget(new QLabel(tr7("Backup size: %1").arg(s.setSize > 0 ? gb(s.setSize) : tr7("Not available"))));
+        loc->addWidget(shieldLink(tr7("Manage space"), [main, s, reload] {
             manageSpace(main, s, reload);
         }, !root.isEmpty() && !st.running));
         auto *locWrap = new QHBoxLayout;
         locWrap->addLayout(loc);
         locWrap->addStretch(1);
-        auto *backupNow = shieldButton(QStringLiteral("Архівувати"));
+        auto *backupNow = shieldButton(tr7("Start backup"));
         backupNow->setMinimumWidth(180);
         backupNow->setEnabled(!st.running);
         locWrap->addWidget(backupNow, 0, Qt::AlignTop);
@@ -3028,7 +3013,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
         });
         auto *leftCol = new QVBoxLayout;
         leftCol->setSpacing(4);
-        leftCol->addWidget(new QLabel(QStringLiteral("Розміщення:")));
+        leftCol->addWidget(new QLabel(tr7("Location:", "backup status")));
         leftCol->addSpacing(8);
         leftCol->addWidget(iconLabel(s.network ? QStringLiteral("seven-bk-netdrive") : QStringLiteral("seven-bk-drive"), 48), 0, Qt::AlignHCenter);
         leftCol->addStretch(1);
@@ -3044,13 +3029,13 @@ inline QWidget *buildBackupPage(const Nav &nav)
             ++r;
         };
         g->setRowMinimumHeight(r++, 14);
-        addRow(QStringLiteral("Наступна архівація:"), new QLabel(st.running ? QStringLiteral("Виконується...")
-                                                                         : s.scheduled ? dateText(nextRun(s)) : QStringLiteral("Не призначено")));
-        QString last = QStringLiteral("Ніколи");
+        addRow(tr7("Next backup:"), new QLabel(st.running ? tr7("In progress...")
+                                                                         : s.scheduled ? dateText(nextRun(s)) : tr7("Not scheduled")));
+        QString last = tr7("Never");
         if (s.lastBackup > 0) {
             last = dateText(QDateTime::fromSecsSinceEpoch(s.lastBackup));
             if (s.lastFailed) {
-                last = QStringLiteral("Не вдалося (%1)").arg(last);
+                last = tr7("Failed (%1)").arg(last);
             }
         }
         auto *lastLabel = new QLabel(last);
@@ -3058,20 +3043,20 @@ inline QWidget *buildBackupPage(const Nav &nav)
         if (s.lastFailed) {
             lastLabel->setToolTip(s.lastError);
         }
-        addRow(QStringLiteral("Остання архівація:"), lastLabel);
-        auto *what = new QLabel(s.automatic ? QStringLiteral("Файли в бібліотеках і особисті папки користувача")
-                                            : s.image ? QStringLiteral("Файли у вибраних папках і образ системи") : QStringLiteral("Файли у вибраних папках"));
+        addRow(tr7("Last backup:"), lastLabel);
+        auto *what = new QLabel(s.automatic ? tr7("Files in libraries and personal folders for all users")
+                                            : s.image ? tr7("Files in selected folders and the system image") : tr7("Files in selected folders"));
         what->setWordWrap(true);
-        addRow(QStringLiteral("Вміст:"), what);
+        addRow(tr7("Contents:"), what);
         auto *sched = new QWidget;
         auto *schv = new QVBoxLayout(sched);
         schv->setContentsMargins(0, 0, 0, 0);
         schv->setSpacing(4);
-        auto *schText = new QLabel(s.scheduled ? scheduleText(s) : QStringLiteral("Відсутній. Виберіть «Архівувати», щоб запустити архівацію вручну."));
+        auto *schText = new QLabel(s.scheduled ? scheduleText(s) : tr7("None. Choose \"Back up now\" to start a backup manually."));
         schText->setWordWrap(true);
         schv->addWidget(schText);
         if (!s.scheduled) {
-            schv->addWidget(shieldLink(QStringLiteral("Увімкнути розклад"), [main, reload] {
+            schv->addWidget(shieldLink(tr7("Turn on schedule"), [main, reload] {
                 Settings cur = load();
                 ScheduleDialog dlg(main, cur);
                 cur.scheduled = true;
@@ -3082,18 +3067,18 @@ inline QWidget *buildBackupPage(const Nav &nav)
                 }
             }));
         }
-        schv->addWidget(shieldLink(QStringLiteral("Змінити параметри"), [main, reload] {
+        schv->addWidget(shieldLink(tr7("Change settings"), [main, reload] {
             if (setupBackup(main)) {
                 reload();
             }
         }, !st.running));
-        addRow(QStringLiteral("Розклад:"), sched);
+        addRow(tr7("Schedule:"), sched);
         g->setColumnStretch(1, 1);
         cv->addLayout(g);
     }
 
     cv->addSpacing(18);
-    cv->addWidget(new SectionHeader(QStringLiteral("Відновлення")));
+    cv->addWidget(new SectionHeader(tr7("Recovery")));
     cv->addSpacing(8);
     auto *rv = new QVBoxLayout;
     rv->setContentsMargins(28, 0, 0, 0);
@@ -3111,9 +3096,9 @@ inline QWidget *buildBackupPage(const Nav &nav)
     const bool haveSets = !root.isEmpty() && !setsIn(root).isEmpty();
     if (haveSets) {
         auto *row = new QHBoxLayout;
-        auto *t = text(QStringLiteral("Можна відновити файли користувача з архіву, розташованого в поточному розміщенні."));
+        auto *t = text(tr7("You can restore your files that were backed up on the current location."));
         row->addWidget(t, 1);
-        auto *restore = new QPushButton(QStringLiteral("Відновити мої файли"));
+        auto *restore = new QPushButton(tr7("Restore my files"));
         restore->setMinimumWidth(180);
         row->addWidget(restore, 0, Qt::AlignTop);
         rv->addLayout(row);
@@ -3121,14 +3106,14 @@ inline QWidget *buildBackupPage(const Nav &nav)
             RestoreWizard(main, false, root).exec();
         });
     } else {
-        rv->addWidget(text(s.configured ? QStringLiteral("Архіви в заданому розташуванні архівів відсутні. Можна відновити файли з іншого розташування.")
-                                        : QStringLiteral("Не вдалося знайти архів для цього комп'ютера.")));
+        rv->addWidget(text(s.configured ? tr7("There are no backups in the backup location. You can restore files from another location.")
+                                        : tr7("Windows could not find a backup for this computer.")));
     }
-    rv->addWidget(shieldLink(QStringLiteral("Вибрати іншу резервну копію для відновлення файлів"), [main] {
+    rv->addWidget(shieldLink(tr7("Select another backup to restore files from"), [main] {
         RestoreWizard(main, true, QString()).exec();
     }));
     rv->addSpacing(18);
-    rv->addWidget(new Link(QStringLiteral("Відновити системні параметри або комп'ютер"), [nav] {
+    rv->addWidget(new Link(tr7("Recover system settings or your computer"), [nav] {
         nav.open(RecoveryView);
     }));
     cv->addLayout(rv);
@@ -3137,7 +3122,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
 
     QList<std::tuple<QString, std::function<void()>, bool>> links;
     if (s.configured && s.scheduled) {
-        links.append({QStringLiteral("Вимкнути розклад"), [reload] {
+        links.append({tr7("Turn off schedule"), [reload] {
                           Settings cur = load();
                           cur.scheduled = false;
                           save(cur);
@@ -3146,7 +3131,7 @@ inline QWidget *buildBackupPage(const Nav &nav)
                       },
                       true});
     }
-    links.append({QStringLiteral("Створення образу системи"), [main, reload] {
+    links.append({tr7("Create a system image"), [main, reload] {
                       createSystemImage(main);
                       reload();
                   },
@@ -3166,21 +3151,19 @@ inline QWidget *buildRecoveryPage(const Nav &nav)
     auto *cv = new QVBoxLayout(content);
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(0);
-    cv->addWidget(heading(QStringLiteral("Відновлення раніше збереженого стану цього комп'ютера")));
+    cv->addWidget(heading(tr7("Restore this computer to an earlier point in time")));
     cv->addSpacing(10);
-    cv->addWidget(text(QStringLiteral("Відновлення системи дає змогу усунути багато неполадок у системі; цей засіб рекомендовано використовувати для усунення "
-                                      "неполадок у першу чергу. Для усунення серйозніших неполадок використовуйте розширені методи відновлення.")));
+    cv->addWidget(text(tr7("System Restore can solve many system problems. It is the best method to try first. For serious problems, use the advanced recovery methods.")));
     cv->addSpacing(20);
-    cv->addWidget(new SectionHeader(QStringLiteral("Відновлення системи")));
+    cv->addWidget(new SectionHeader(tr7("System Restore")));
     cv->addSpacing(8);
     auto *row = new QHBoxLayout;
     row->setContentsMargins(12, 0, 0, 0);
-    auto *t = text(QStringLiteral("Скасування останніх змін у системі; файли користувача, наприклад документи, зображення та музика, залишаються без змін. "
-                                  "Можливе видалення нещодавно встановлених програм і драйверів."));
+    auto *t = text(tr7("Undo recent system changes, but leave files such as documents, pictures, and music unchanged. This might remove recently installed programs and drivers."));
     t->setMaximumWidth(300);
     row->addWidget(t, 0, Qt::AlignTop);
     row->addStretch(1);
-    auto *start = shieldButton(QStringLiteral("Запуск відновлення системи"));
+    auto *start = shieldButton(tr7("Open System Restore"));
     start->setMinimumWidth(240);
     row->addWidget(start, 0, Qt::AlignTop);
     cv->addLayout(row);
@@ -3190,16 +3173,16 @@ inline QWidget *buildRecoveryPage(const Nav &nav)
         }
     });
     cv->addSpacing(16);
-    cv->addWidget(new Link(QStringLiteral("Розширені методи відновлення"), [nav] {
+    cv->addWidget(new Link(tr7("Advanced Recovery Methods"), [nav] {
         nav.open(AdvancedView);
     }));
     mv->addWidget(content);
     mv->addStretch(1);
-    return withSide(sidePane({{QStringLiteral("Видалення програми"), [nav] {
+    return withSide(sidePane({{tr7("Uninstall a program"), [nav] {
                                    nav.openOther(30); // Programs and Features
                                },
                                false},
-                              {QStringLiteral("Відновлення файлів"), [nav] {
+                              {tr7("Restore Files"), [nav] {
                                    nav.open(BackupView);
                                },
                                false}},
@@ -3252,13 +3235,11 @@ inline QWidget *buildAdvancedPage(const Nav &nav)
     auto *v = new QVBoxLayout(body);
     v->setContentsMargins(0, 0, 0, 0);
     v->setSpacing(4);
-    auto *intro = new QLabel(QStringLiteral("Після вибору методу у вас буде можливість виконати архівацію файлів, наприклад документів, зображень і музики. "
-                                            "<a href=\"#\" style=\"color:#0066cc\">Вибір методу відновлення</a>"));
+    auto *intro = new QLabel(tr7("When you choose a method, you will have the option to back up your files, such as documents, pictures and music. <a href=\"#\" style=\"color:#0066cc\">Choose an advanced recovery method</a>"));
     intro->setWordWrap(true);
     QObject::connect(intro, &QLabel::linkActivated, body, [body] {
-        QMessageBox::information(body, QStringLiteral("Розширені методи відновлення"),
-                                 QStringLiteral("Образ системи повертає всі системні файли до стану на момент створення образу. Файли користувачів "
-                                                "зберігаються окремо в архіві файлів, тому перед відновленням варто їх заархівувати."));
+        QMessageBox::information(body, tr7("Advanced Recovery Methods"),
+                                 tr7("A system image returns all system files to their state when the image was made. User files are kept separately in the file backup, so it's worth backing them up before restoring."));
     });
     v->addWidget(intro);
     v->addSpacing(50);
@@ -3267,23 +3248,22 @@ inline QWidget *buildAdvancedPage(const Nav &nav)
     opt->addWidget(iconLabel(QStringLiteral("seven-cp-shield"), 16), 0, Qt::AlignTop);
     auto *ov = new QVBoxLayout;
     ov->setSpacing(2);
-    auto *link = new Link(QStringLiteral("Використати образ системи, створений раніше для відновлення комп'ютера"), [nav] {
+    auto *link = new Link(tr7("Use a system image you created earlier to recover your computer"), [nav] {
         nav.open(UserFilesView);
     }, QStringLiteral("#1e3287"));
     QFont f = link->font();
     f.setPixelSize(15);
     link->setFont(f);
     ov->addWidget(link);
-    ov->addWidget(text(QStringLiteral("Якщо створено образ системи, його можна використати для заміни всього, що є на системному диску, включно з "
-                                      "системою та програмами, даними, збереженими в образі.")));
+    ov->addWidget(text(tr7("If you've created a system image, you can use it to replace everything on the system drive, including the system and programs, with the data saved in the image.")));
     opt->addLayout(ov, 1);
     v->addLayout(opt);
     v->addSpacing(30);
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     QObject::connect(cancel, &QPushButton::clicked, body, [nav] {
         nav.open(RecoveryView);
     });
-    return flowPage(QStringLiteral("Виберіть розширені методи відновлення"), body, {cancel});
+    return flowPage(tr7("Choose an advanced recovery method"), body, {cancel});
 }
 
 /** "Back up your files?" before re-imaging */
@@ -3304,20 +3284,18 @@ inline QWidget *buildUserFilesPage(const Nav &nav)
     auto *v = new QVBoxLayout(body);
     v->setContentsMargins(0, 0, 0, 0);
     v->setSpacing(10);
-    v->addWidget(text(QStringLiteral("Перед продовженням можна провести архівацію файлів користувача, наприклад документів, зображень і музики, і зберегти "
-                                     "архів на зовнішньому жорсткому диску або USB-пристрої флеш-пам'яті.")));
-    v->addWidget(text(QStringLiteral("Після завершення процесу відновлення ці файли можна буде відновити на комп'ютері. Якщо пропустити цей крок, файли "
-                                     "користувача, змінені після створення образу, можуть бути втрачені.")));
+    v->addWidget(text(tr7("Before continuing, you can back up your files, such as documents, pictures and music, to an external hard disk or USB flash drive.")));
+    v->addWidget(text(tr7("After the recovery process is complete, you can restore these files to your computer. If you skip this step, user files changed after the image was created might be lost.")));
     v->addSpacing(14);
     auto *warn = new QHBoxLayout;
     warn->addWidget(iconLabel(QStringLiteral("seven-ev-warning"), 16), 0, Qt::AlignTop);
-    warn->addWidget(text(have ? QStringLiteral("Останній архів файлів створено %1.").arg(dateText(setsIn(root).first().when))
-                              : QStringLiteral("Не вдалося знайти на комп'ютері архіви файлів користувача. Для створення архіву файлів натисніть кнопку «Архівувати».")),
+    warn->addWidget(text(have ? tr7("The most recent file backup was created on %1.").arg(dateText(setsIn(root).first().when))
+                              : tr7("Windows couldn't find any backups of user files on this computer. To create a file backup, click Back Up Now.")),
                     1);
     v->addLayout(warn);
     v->addSpacing(10);
-    auto *backup = new QPushButton(QStringLiteral("Архівувати"));
-    auto *skip = new QPushButton(QStringLiteral("Пропустити"));
+    auto *backup = new QPushButton(tr7("Start backup"));
+    auto *skip = new QPushButton(tr7("Skip"));
     QObject::connect(backup, &QPushButton::clicked, body, [body, nav] {
         if (!load().configured && !setupBackup(body)) {
             return;
@@ -3335,7 +3313,7 @@ inline QWidget *buildUserFilesPage(const Nav &nav)
         g_backupDone = false;
         nav.open(RestartView);
     });
-    return flowPage(QStringLiteral("Виконати архівацію файлів користувача?"), body, {backup, skip});
+    return flowPage(tr7("Do you want to back up your files?"), body, {backup, skip});
 }
 
 /** "Restart your computer and continue the recovery" */
@@ -3345,23 +3323,21 @@ inline QWidget *buildRestartPage(const Nav &nav)
     auto *v = new QVBoxLayout(body);
     v->setContentsMargins(0, 0, 0, 0);
     v->setSpacing(10);
-    v->addWidget(text(QStringLiteral("Якщо виконується відновлення системи з резервної копії, за наявності кількох копій можна вибрати потрібну за датою "
-                                     "архівації.")));
+    v->addWidget(text(tr7("If you are restoring your system from a backup and have several backups, you can choose the one you need by its date.")));
     if (!g_backupDone) {
         v->addSpacing(14);
         auto *warn = new QHBoxLayout;
         warn->addWidget(iconLabel(QStringLiteral("seven-ev-warning"), 16), 0, Qt::AlignTop);
-        auto *t = text(QStringLiteral("<b>Ви не вибрали створення резервної копії файлів. Під час продовження змінені після створення образу системні файли "
-                                      "буде замінено.</b>"));
+        auto *t = text(tr7("<b>You chose not to back up your files. If you continue, system files changed after the image was created will be replaced.</b>"));
         warn->addWidget(t, 1);
         v->addLayout(warn);
     }
     v->addSpacing(10);
-    auto *restart = new QPushButton(QStringLiteral("Перезапустити"));
-    auto *cancel = new QPushButton(QStringLiteral("Скасувати"));
+    auto *restart = new QPushButton(tr7("Restart"));
+    auto *cancel = new QPushButton(tr7("Cancel"));
     QObject::connect(restart, &QPushButton::clicked, body, [body] {
         if (status().running) {
-            QMessageBox::information(body, QStringLiteral("Відновлення"), QStringLiteral("Зачекайте завершення архівації файлів, а потім повторіть спробу."));
+            QMessageBox::information(body, tr7("Recovery"), tr7("Wait for the file backup to finish, and then try again."));
             return;
         }
         if (ensureTimeshift(body)) {
@@ -3371,7 +3347,7 @@ inline QWidget *buildRestartPage(const Nav &nav)
     QObject::connect(cancel, &QPushButton::clicked, body, [nav] {
         nav.open(RecoveryView);
     });
-    return flowPage(QStringLiteral("Перезапустити комп'ютер і продовжити відновлення"), body, {restart, cancel});
+    return flowPage(tr7("Restart the computer and continue recovery"), body, {restart, cancel});
 }
 
 inline QWidget *build(int view, const Nav &nav)
@@ -3393,15 +3369,15 @@ inline QString viewTitle(int view)
 {
     switch (view) {
     case RecoveryView:
-        return QStringLiteral("Відновлення");
+        return tr7("Recovery");
     case AdvancedView:
-        return QStringLiteral("Розширені методи відновлення");
+        return tr7("Advanced Recovery Methods");
     case UserFilesView:
-        return QStringLiteral("Архівація файлів користувача");
+        return tr7("Backup and Restore", "user files backup");
     case RestartView:
-        return QStringLiteral("Перезапустити");
+        return tr7("Restart");
     }
-    return QStringLiteral("Архівація і відновлення");
+    return tr7("Backup and Restore");
 }
 
 inline bool isBackupView(int v)
