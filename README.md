@@ -32,6 +32,20 @@ animation, program pictures and the games are extracted **on your computer from 
 (`install.wim` in the ISO), following the recipes in `extract/recipes.json`. Without an image the theme still
 installs, with AeroThemePlasma's icons and sounds and the free Selawik font, but without the games.
 
+## Where to get a Windows 7 image
+
+Microsoft no longer offers Windows 7 for download (support ended in 2020), and SevenPlasma does not link to
+copies of it. Use one you are entitled to:
+
+- **your own Windows 7 disc** (retail box or the one that came with a computer); make an ISO of it, e.g.
+  `dd if=/dev/sr0 of=Windows7.iso`;
+- **a Microsoft subscription** of your work or school (MSDN / Visual Studio), where Windows 7 images are often
+  still available.
+
+Windows is not installed or activated: no product key is needed, only the files in the image are read. Any
+edition, language and architecture works (tested with 64-bit Ultimate and 32-bit Professional SP1, which give
+the same result). Without an image SevenPlasma installs with free replacements and without the games.
+
 ## Installation
 
 Tested on a clean **Kubuntu 26.04** (Plasma 6.6, KDE Frameworks 6.24, Dolphin 25.12, Kvantum 1.1.5), **X11**
@@ -101,6 +115,11 @@ git clone https://github.com/Vigurov/SevenPlasma.git
 cd SevenPlasma
 ./install.sh --iso ~/Завантаження/Windows7.iso
 ```
+
+**Де взяти образ.** Microsoft більше не дає завантажити Windows 7, а SevenPlasma не дає посилань на її копії.
+Візьміть свій диск Windows 7 (і зробіть з нього ISO, напр. `dd if=/dev/sr0 of=Windows7.iso`) або образ із
+підписки MSDN / Visual Studio вашої роботи чи навчання. Windows не встановлюється й не активується, ключ не
+потрібен; підходить будь-яка версія, мова й розрядність.
 
 Скрипт спитає пароль адміністратора, встановить пакети, збере все потрібне та витягне ресурси з образу (10–40
 хвилин). Потім перезавантажте комп'ютер: на екрані входу вже вибрано сеанс «AeroThemePlasma (X11)», а під час
