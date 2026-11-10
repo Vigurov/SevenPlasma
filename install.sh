@@ -77,8 +77,15 @@ fetch() {   # fetch NAME DIR -> checkout of the pinned commit with our patch app
     run git -C "$dir" clean -fdq -e build -e 'build*'
     if [ -s "$REPO/patches/$name.patch" ]; then run git -C "$dir" apply --whitespace=nowarn "$REPO/patches/$name.patch"; fi
 }
+# a build folder left by an install from another copy of SevenPlasma cannot be reused (CMake refuses it)
+fresh_build() {   # fresh_build SRC BUILD
+    if [ -f "$2/CMakeCache.txt" ] && ! grep -qx "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd "$1" && pwd)" "$2/CMakeCache.txt"; then
+        rm -rf "$2"
+    fi
+}
 cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and installs to /usr with sudo
     local src=$1 build=$2; shift 2
+    fresh_build "$src" "$build"
     run cmake -S "$src" -B "$build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_CXX_FLAGS="-I$WORK/src" "$@"
     mkdir -p "$build/bin/x11"   # the KWin effects link to bin/x11/NAME.so, but nothing creates that folder
@@ -180,6 +187,7 @@ for d in "$REPO"/apps/seven-*/; do
     if [ "$n" = seven-folderthumb ]; then
         cmake_install "$d" "$WORK/build/$n"
     else
+        fresh_build "$d" "$WORK/build/$n"
         run cmake -S "$d" -B "$WORK/build/$n" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/.local" -DCMAKE_CXX_FLAGS="-I$WORK/src"
         run cmake --build "$WORK/build/$n" -j"$JOBS"
         run cmake --install "$WORK/build/$n"
