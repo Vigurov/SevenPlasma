@@ -247,9 +247,10 @@ fetch libaero-qt "$WORK/src/libaero-qt"
 cmake_install "$WORK/src/libaero-qt" "$WORK/src/libaero-qt/build"
 KIOPKG=libkf6kio-dev; KVPKG=qt6-style-kvantum
 [ $PM = pacman ] && { KIOPKG=kio; KVPKG=kvantum; }
-# the versions our patches are made for (Kubuntu 26.04; Arch: Dolphin not yet)
-KIOVER=6.24.0; DOLVER=25.12.3; KVVER=1.1.5
-[ $WAYLAND = 1 ] && { KIOVER=6.31.0; DOLVER=none; KVVER=1.1.9; }
+# the versions our patches are made for; Explorer: dolphin-aero (Kubuntu), Dolphin with dolphin-aero's and our
+# changes in one patch (Plasma 6.8)
+KIOVER=6.24.0; DOLVER=25.12.3; KVVER=1.1.5; DOLSRC=dolphin-aero
+[ $WAYLAND = 1 ] && { KIOVER=6.31.0; DOLVER=26.08.3; KVVER=1.1.9; DOLSRC=dolphin; }
 if [ $FORKS -eq 1 ]; then
     if [ "$(v $KIOPKG)" = "$KIOVER" ]; then
         fetch kio "$WORK/src/kio"
@@ -257,8 +258,8 @@ if [ $FORKS -eq 1 ]; then
         run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
     else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни ($KIOVER): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for ($KIOVER): file dialogs stay as they are")"; fi
     if [ "$(v dolphin)" = "$DOLVER" ]; then
-        fetch dolphin-aero "$WORK/src/dolphin-aero"
-        cmake_install "$WORK/src/dolphin-aero" "$WORK/src/dolphin-aero/build" -DBUILD_TESTING=OFF
+        fetch $DOLSRC "$WORK/src/$DOLSRC"
+        cmake_install "$WORK/src/$DOLSRC" "$WORK/src/$DOLSRC/build" -DBUILD_TESTING=OFF
     else warn "$(L "Dolphin $(v dolphin) не та версія, для якої зроблені зміни: Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not a version the changes are made for: Explorer stays plain Dolphin")"; fi
     if [ "$(v $KVPKG)" = "$KVVER" ]; then
         fetch kvantum "$WORK/src/kvantum"

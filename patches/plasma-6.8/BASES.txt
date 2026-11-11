@@ -8,3 +8,4 @@ atp-aeroshell-sddm-kcm https://gitgud.io/aeroshell/aeroshell-sddm-kcm.git 8c9428
 libaero-qt https://gitgud.io/atmk/libaero-qt.git 0bd71cc7f34718dc7726a72fc402bf0ece12c0d0
 kio https://invent.kde.org/frameworks/kio.git 2dd4bdc916a6f46d297d8788f5b628181483315d
 kvantum https://github.com/tsujan/Kvantum.git 7ffda1bab2a08f566eaa8d371a2381357e5b1f8b
+dolphin https://invent.kde.org/system/dolphin.git 2fdee206603fd3a21928984e9a3d404e82ae9890
