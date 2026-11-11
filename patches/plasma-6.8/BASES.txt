@@ -1,0 +1,8 @@
+aerothemeplasma https://gitgud.io/wackyideas/aerothemeplasma.git f51ca15f4668a81d908505b422e5d560f35fe241
+atp-libplasma https://gitgud.io/aeroshell/libplasma.git c962fb360e5b8288b274a5294c14e8125c02aba0
+atp-smod https://gitgud.io/aeroshell/smod.git 67e24c0212a955a8684701cdde05c27215618e7b
+atp-aeroshell-workspace https://gitgud.io/aeroshell/aeroshell-workspace.git abb45d8d00e128e2cb85ec608161ad498abd3a20
+atp-aeroshell-kwin-components https://gitgud.io/aeroshell/aeroshell-kwin-components.git 4a28963f1f751e93350e86e2b5bf1afb5380fcd6
+atp-uac-polkit-agent https://gitgud.io/aeroshell/uac-polkit-agent.git 5627680e94bf1d24769b1b0d25e21679e269d9b6
+atp-aeroshell-sddm-kcm https://gitgud.io/aeroshell/aeroshell-sddm-kcm.git 8c94283c2689b3f0837efda0be8107e42a265e0f
+libaero-qt https://gitgud.io/atmk/libaero-qt.git 0bd71cc7f34718dc7726a72fc402bf0ece12c0d0

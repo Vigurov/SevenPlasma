@@ -23,6 +23,8 @@ ask() {   # ask "question" -> 0 for yes (the default)
     case "$a" in ""|[TtYyТт]*) return 0 ;; *) return 1 ;; esac
 }
 [ "$(id -u)" -ne 0 ] || { echo "$(T "запускайте від звичайного користувача" "run as your normal user")"; exit 1; }
+if command -v apt-get >/dev/null; then PM=apt; else PM=pacman; fi
+installed() { if [ $PM = apt ]; then dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 2>/dev/null | awk '$1 == "ii" {print $2}' | sort -u; else pacman -Qq | sort -u; fi; }
 
 echo "$(T "SevenPlasma буде видалено, а система повернеться до стану перед встановленням." "SevenPlasma will be removed and the system put back the way it was before the install.")"
 echo "$(T "Журнал: $LOG" "Log: $LOG")"
@@ -72,9 +74,14 @@ if [ -s "$BK/system-files.txt" ]; then
 fi
 if [ ${#PKGS[@]} -gt 0 ]; then
     echo "$(T "Перевстановлюю оригінальні пакети (${#PKGS[@]}): потрібен інтернет..." "Reinstalling the original packages (${#PKGS[@]}): the internet is needed...")"
-    if ! sudo NEEDRESTART_SUSPEND=1 apt-get -q -o DPkg::Lock::Timeout=900 install -y --reinstall "${PKGS[@]}" >> "$LOG" 2>&1; then
+    if [ $PM = apt ]; then
+        sudo NEEDRESTART_SUSPEND=1 apt-get -q -o DPkg::Lock::Timeout=900 install -y --reinstall "${PKGS[@]}" >> "$LOG" 2>&1
+    else
+        sudo pacman -S --noconfirm "${PKGS[@]}" >> "$LOG" 2>&1
+    fi
+    if [ $? -ne 0 ]; then
         echo "$(T "Не вдалося перевстановити пакети. Повторіть пізніше:" "Could not reinstall the packages. Try again later:")"
-        echo "  sudo apt-get install --reinstall ${PKGS[*]}"
+        if [ $PM = apt ]; then echo "  sudo apt-get install --reinstall ${PKGS[*]}"; else echo "  sudo pacman -S ${PKGS[*]}"; fi
     fi
 fi
 
@@ -100,22 +107,35 @@ if [ -d "$S" ]; then
     else sudo update-alternatives --auto default.plymouth >/dev/null 2>&1 || true; fi
 fi
 echo "$(T "Оновлюю initramfs (заставка завантаження)..." "Updating the initramfs (boot screen)...")"
-sudo update-initramfs -u >> "$LOG" 2>&1 || true
+[ $PM = apt ] && { sudo update-initramfs -u >> "$LOG" 2>&1 || true; }
 sudo systemctl daemon-reload
 sudo fc-cache -f >/dev/null 2>&1
 
 # ------------------------------------------------------------------ packages installed for SevenPlasma
 if [ -s "$BK/packages-added.txt" ]; then
-    mapfile -t ADDED < <(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 2>/dev/null | awk '$1 == "ii" {print $2}' | sort -u | comm -12 "$BK/packages-added.txt" -)
+    mapfile -t ADDED < <(installed | comm -12 "$BK/packages-added.txt" -)
     if [ ${#ADDED[@]} -gt 0 ] && ask "$(T "Видалити пакети, встановлені для збирання SevenPlasma (${#ADDED[@]})?" "Remove the packages installed for building SevenPlasma (${#ADDED[@]})?")"; then
         # marked as automatically installed, then removed if nothing else needs them (Ubuntu's autoremove keeps
         # packages another one merely suggests or recommends, like gcc, cmake or plymouth-themes: those of ours go
         # too, never any other package; nothing that something depends on is offered by apt here)
-        sudo apt-mark auto "${ADDED[@]}" >/dev/null
-        mapfile -t GONE < <(apt-get -s -o APT::AutoRemove::SuggestsImportant=false -o APT::AutoRemove::RecommendsImportant=false autoremove 2>/dev/null \
-            | awk '/^Remv /{sub(/:.*/, "", $2); print $2}' | sort -u | comm -12 - "$BK/packages-added.txt")
-        if [ ${#GONE[@]} -gt 0 ]; then
-            if [ $YES -eq 1 ]; then sudo NEEDRESTART_SUSPEND=1 apt-get purge -y "${GONE[@]}"; else sudo NEEDRESTART_SUSPEND=1 apt-get purge "${GONE[@]}"; fi
+        if [ $PM = apt ]; then
+            sudo apt-mark auto "${ADDED[@]}" >/dev/null
+            mapfile -t GONE < <(apt-get -s -o APT::AutoRemove::SuggestsImportant=false -o APT::AutoRemove::RecommendsImportant=false autoremove 2>/dev/null \
+                | awk '/^Remv /{sub(/:.*/, "", $2); print $2}' | sort -u | comm -12 - "$BK/packages-added.txt")
+            if [ ${#GONE[@]} -gt 0 ]; then
+                if [ $YES -eq 1 ]; then sudo NEEDRESTART_SUSPEND=1 apt-get purge -y "${GONE[@]}"; else sudo NEEDRESTART_SUSPEND=1 apt-get purge "${GONE[@]}"; fi
+            fi
+        else
+            # Arch: ours become dependencies; those nothing needs any more (orphans) are removed with what only
+            # they needed (pacman lists them first)
+            sudo pacman -D --asdeps "${ADDED[@]}" >/dev/null
+            # several rounds: some become orphans only once the packages that needed them are gone; -tt: also
+            # those another package merely lists as optional (pacman offers base-devel), only ours anyway
+            for _ in 1 2 3 4 5 6; do
+                mapfile -t GONE < <(pacman -Qdttq 2>/dev/null | sort -u | comm -12 - "$BK/packages-added.txt")
+                [ ${#GONE[@]} -gt 0 ] || break
+                if [ $YES -eq 1 ]; then sudo pacman -Rns --noconfirm "${GONE[@]}" || break; else sudo pacman -Rns "${GONE[@]}" || break; fi
+            done
         fi
     fi
 fi

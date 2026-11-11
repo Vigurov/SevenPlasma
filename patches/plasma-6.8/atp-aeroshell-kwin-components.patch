@@ -1,0 +1,13 @@
+diff --git a/kwin/effects/loginaero/contents/code/main.js b/kwin/effects/loginaero/contents/code/main.js
+index 90f037e..7dcc82b 100644
+--- a/kwin/effects/loginaero/contents/code/main.js
++++ b/kwin/effects/loginaero/contents/code/main.js
+@@ -11,7 +11,7 @@
+ "use strict";
+ 
+ var loginEffect = {
+-    duration: animationTime(600),
++    duration: animationTime(900),   // about 0.45 s with the 0.5 animation speed factor, as in Windows 7
+     isFadeToBlack: false,
+     loadConfig: function () {
+         loginEffect.isFadeToBlack = effect.readConfig("FadeToBlack", false);

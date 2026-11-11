@@ -1,0 +1,90 @@
+diff --git a/kdecoration/smodbutton.cpp b/kdecoration/smodbutton.cpp
+index 6e9b49d..4836c8f 100644
+--- a/kdecoration/smodbutton.cpp
++++ b/kdecoration/smodbutton.cpp
+@@ -80,7 +80,7 @@ Button *Button::create(KDecoration3::DecorationButtonType type, KDecoration3::De
+             b->setEnabled(c->isCloseable());
+             break;
+         case KDecoration3::DecorationButtonType::Maximize:
+-            b->setVisible(c->isMaximizeable() || c->isMinimizeable());
++            b->setVisible((c->isMaximizeable() || c->isMinimizeable()) && !d->hideMinMax());
+             b->setEnabled(c->isMaximizeable());
+             QObject::connect(c, &KDecoration3::DecoratedWindow::maximizeableChanged, b, [b](bool maximizeable) {
+                 auto d = qobject_cast<Decoration *>(b->decoration());
+@@ -90,13 +90,13 @@ Button *Button::create(KDecoration3::DecorationButtonType type, KDecoration3::De
+                     return;
+                 }
+ 
+-                b->setVisible(c->isMaximizeable() || c->isMinimizeable());
++                b->setVisible((c->isMaximizeable() || c->isMinimizeable()) && !d->hideMinMax());
+                 b->setEnabled(maximizeable);
+                 b->forcePixmapReload();
+             });
+             break;
+         case KDecoration3::DecorationButtonType::Minimize:
+-            b->setVisible(c->isMinimizeable() || c->isMaximizeable());
++            b->setVisible((c->isMinimizeable() || c->isMaximizeable()) && !d->hideMinMax());
+             b->setEnabled(c->isMinimizeable());
+             QObject::connect(c, &KDecoration3::DecoratedWindow::minimizeableChanged, b, [b](bool minimizeable) {
+                 auto d = qobject_cast<Decoration *>(b->decoration());
+@@ -106,7 +106,7 @@ Button *Button::create(KDecoration3::DecorationButtonType type, KDecoration3::De
+                     return;
+                 }
+ 
+-                b->setVisible(c->isMinimizeable() || c->isMaximizeable());
++                b->setVisible((c->isMinimizeable() || c->isMaximizeable()) && !d->hideMinMax());
+                 b->setEnabled(minimizeable);
+                 b->forcePixmapReload();
+             });
+diff --git a/kdecoration/smoddecoration.h b/kdecoration/smoddecoration.h
+index f7bbbac..ab96abe 100644
+--- a/kdecoration/smoddecoration.h
++++ b/kdecoration/smoddecoration.h
+@@ -91,6 +91,11 @@ public:
+ 
+     inline bool hideTitleBar() const;
+     inline bool hideIcon() const;
++    //! Windows 7 common dialogs (Save As / Open): only the close button
++    inline bool hideMinMax() const
++    {
++        return m_internalSettings->hideMinMax();
++    }
+     inline bool hideCaption() const;
+     inline bool hideInnerBorder() const;
+ 
+diff --git a/kdecoration/smodexceptionlist.cpp b/kdecoration/smodexceptionlist.cpp
+index 5f89129..33cfe8d 100644
+--- a/kdecoration/smodexceptionlist.cpp
++++ b/kdecoration/smodexceptionlist.cpp
+@@ -43,6 +43,7 @@ void ExceptionList::readConfig(KSharedConfig::Ptr config)
+         configuration->setHideTitleBar(exception.hideTitleBar());
+         configuration->setHideIcon(exception.hideIcon());
+         configuration->setHideCaption(exception.hideCaption());
++        configuration->setHideMinMax(exception.hideMinMax());
+         configuration->setHideInnerBorder(exception.hideInnerBorder());
+ 
+         // append to exceptions
+@@ -78,7 +79,7 @@ void ExceptionList::writeConfig(KCoreConfigSkeleton *skeleton, KConfig *config,
+ {
+     // list of items to be written
+     const QStringList keys =
+-        {"Enabled", "ExceptionPattern", "ExceptionType", "HideTitleBar", "HideIcon", "HideCaption", "HideInnerBorder", "Mask", "BorderSize"};
++        {"Enabled", "ExceptionPattern", "ExceptionType", "HideTitleBar", "HideIcon", "HideMinMax", "HideCaption", "HideInnerBorder", "Mask", "BorderSize"};
+ 
+     // write all items
+     for (auto key : keys) {
+diff --git a/kdecoration/smodsettingsdata.kcfg b/kdecoration/smodsettingsdata.kcfg
+index d75cd1a..1ea54e1 100644
+--- a/kdecoration/smodsettingsdata.kcfg
++++ b/kdecoration/smodsettingsdata.kcfg
+@@ -45,6 +45,10 @@
+        <default>false</default>
+     </entry>
+ 
++    <entry name="HideMinMax" type = "Bool">
++       <default>false</default>
++    </entry>
++
+     <entry name="HideCaption" type = "Bool">
+        <default>false</default>
+     </entry>

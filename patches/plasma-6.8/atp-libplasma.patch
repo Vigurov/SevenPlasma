@@ -1,0 +1,68 @@
+diff --git a/src/declarativeimports/core/private/DefaultToolTip.qml b/src/declarativeimports/core/private/DefaultToolTip.qml
+index 010af5179..73863cb45 100644
+--- a/src/declarativeimports/core/private/DefaultToolTip.qml
++++ b/src/declarativeimports/core/private/DefaultToolTip.qml
+@@ -13,7 +13,7 @@ import org.kde.ksvg as KSvg
+ Item {
+     id: root
+     property Item toolTip
+-    property int preferredTextWidth: Kirigami.Units.gridUnit * 10
++    property int preferredTextWidth: Kirigami.Units.gridUnit * 22
+ 
+     implicitWidth: mainLayout.implicitWidth
+     implicitHeight: mainLayout.implicitHeight
+@@ -44,20 +44,20 @@ Item {
+             Layout.leftMargin: Kirigami.Units.smallSpacing*2
+         }
+ 
++        // Windows 7 tooltip text: plain dark grey Segoe UI 9, the title is just the first line
+         ColumnLayout {
+             Layout.maximumWidth: root.preferredTextWidth
+             spacing: 0
+ 
+-            Kirigami.Heading {
+-                id: heading
+-                level: 5
++            PlasmaComponents.Label {
+                 Layout.fillWidth: true
+                 elide: Text.ElideRight
+                 wrapMode: Text.Wrap
+                 text: root.toolTip ? root.toolTip.mainText : ""
+                 textFormat: Text.PlainText
+                 visible: text !== ""
+-                opacity: heading.visible ? 0.75 : 1
++                color: "#4c4c4c"
++                font: Kirigami.Theme.defaultFont
+             }
+ 
+             PlasmaComponents.Label {
+@@ -65,9 +65,11 @@ Item {
+                 wrapMode: Text.Wrap
+                 text: root.toolTip ? root.toolTip.subText : ""
+                 textFormat: root.toolTip ? root.toolTip.textFormat : Text.AutoText
+-                opacity: heading.visible? 0.75 : 1
+                 visible: text !== ""
+                 maximumLineCount: 8
++                color: "#4c4c4c"
++                linkColor: "#0066cc"
++                font: Kirigami.Theme.defaultFont
+             }
+         }
+     }
+diff --git a/src/declarativeimports/core/tooltiparea.cpp b/src/declarativeimports/core/tooltiparea.cpp
+index a18476046..7ca61e3f9 100644
+--- a/src/declarativeimports/core/tooltiparea.cpp
++++ b/src/declarativeimports/core/tooltiparea.cpp
+@@ -186,6 +186,12 @@ void ToolTipArea::showToolTip()
+ 
+     dlg->setBackgroundHints(m_backgroundHints);
+     dlg->setTitle(m_windowTitle); // Wayland sees this just fine
++    // A plain tooltip lets the mouse through, like a Windows one: shown under the cursor it would otherwise take
++    // the hover from its owner, hide, and show again in a loop (the flicker over desktop icons)
++    {
++        Qt::WindowFlags flags = dlg->flags();
++        dlg->setFlags(m_interactive ? (flags & ~Qt::WindowTransparentForInput) : (flags | Qt::WindowTransparentForInput));
++    }
+ 
+     dlg->setVisible(true);
+     // In case the last owner triggered a dismiss but the dialog is still shown,

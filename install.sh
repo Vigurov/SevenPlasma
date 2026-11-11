@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SevenPlasma - the Windows 7 experience for KDE Plasma 6 (X11), based on AeroThemePlasma.
+# SevenPlasma - the Windows 7 experience for KDE Plasma 6, based on AeroThemePlasma.
 #
 #   ./install.sh [--iso Windows7.iso] [--no-games] [--no-forks] [--yes]
 #
@@ -9,7 +9,7 @@
 # --no-games   do not install the Windows 7 games (they need Wine)
 # --no-forks   do not build the patched Dolphin / KIO / Kvantum (Explorer look, Windows 7 file dialogs)
 #
-# Tested on Kubuntu 26.04 (Plasma 6.6, KDE Frameworks 6.24, Dolphin 25.12, Kvantum 1.1.5), X11 session.
+# Tested on Kubuntu 26.04 (Plasma 6.6, X11 session) and Arch Linux (Plasma 6.8, Wayland session).
 set -Eeuo pipefail
 
 REPO=$(cd "$(dirname "$0")" && pwd)
@@ -62,12 +62,21 @@ trap 'die "$(L "команда завершилася невдало (рядок
 
 # ------------------------------------------------------------------ checks
 [ "$(id -u)" -ne 0 ] || die "$(L "запускайте від звичайного користувача, не від root (пароль спитають, коли треба)" "run as your normal user, not as root (the password is asked when needed)")"
-command -v apt-get >/dev/null || die "$(L "потрібен дистрибутив на основі Ubuntu / Debian (Kubuntu)" "an Ubuntu / Debian based distribution is needed (Kubuntu)")"
+if command -v apt-get >/dev/null; then PM=apt; elif command -v pacman >/dev/null; then PM=pacman
+else die "$(L "потрібна Kubuntu / Ubuntu або Arch Linux" "Kubuntu / Ubuntu or Arch Linux is needed")"; fi
 command -v plasmashell >/dev/null || die "$(L "KDE Plasma не встановлено" "KDE Plasma is not installed")"
-PLASMA=$(dpkg-query -W -f='${Version}' plasma-workspace 2>/dev/null | sed 's/^[0-9]*://; s/-.*//')
-case "$PLASMA" in 6.6.*) ;; *) die "$(L "потрібна Plasma 6.6 (знайдено: ${PLASMA:-?})" "Plasma 6.6 is needed (found: ${PLASMA:-?})")" ;; esac
+# installed packages and their versions (without epoch and release)
+installed() { if [ $PM = apt ]; then dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u; else pacman -Qq | sort -u; fi; }
+v() { if [ $PM = apt ]; then dpkg-query -W -f='${Version}' "$1" 2>/dev/null; else pacman -Q "$1" 2>/dev/null | awk '{print $2}'; fi | sed 's/^[0-9]*://; s/-.*//'; }
+PLASMA=$(v plasma-workspace)
+# Plasma 6.6 (Kubuntu 26.04): X11 session, patches/; Plasma 6.8 (Arch): Wayland session (6.8 has no X11), patches/plasma-6.8/
+case "$PLASMA" in
+    6.6.*) WAYLAND=0; PD=$REPO/patches ;;
+    6.8.*) WAYLAND=1; PD=$REPO/patches/plasma-6.8 ;;
+    *) die "$(L "потрібна Plasma 6.6 або 6.8 (знайдено: ${PLASMA:-?})" "Plasma 6.6 or 6.8 is needed (found: ${PLASMA:-?})")" ;;
+esac
 [ -z "$ISO" ] || [ -f "$ISO" ] || die "$(L "файл образу не знайдено: $ISO" "image file not found: $ISO")"
-[ "${XDG_SESSION_TYPE:-x11}" = x11 ] || warn "$(L "зараз сесія $XDG_SESSION_TYPE; SevenPlasma розрахована на X11 (її можна вибрати на екрані входу)" "this is a $XDG_SESSION_TYPE session; SevenPlasma is made for X11 (choose it on the logon screen)")"
+[ $WAYLAND = 1 ] || [ "${XDG_SESSION_TYPE:-x11}" = x11 ] || warn "$(L "зараз сесія $XDG_SESSION_TYPE; SevenPlasma розрахована на X11 (її можна вибрати на екрані входу)" "this is a $XDG_SESSION_TYPE session; SevenPlasma is made for X11 (choose it on the logon screen)")"
 
 echo "$(L "SevenPlasma: вигляд Windows 7 для KDE Plasma" "SevenPlasma: the Windows 7 experience for KDE Plasma")"
 echo "$(L "Журнал встановлення: $LOG" "Install log: $LOG")"
@@ -90,7 +99,7 @@ STAMP=$WORK/run.stamp
 mkdir -p "$BK"
 touch "$BK/system-files.txt" "$BK/user-files.txt"
 if [ ! -f "$BK/saved" ]; then
-    dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u > "$BK/packages-before.txt"
+    installed > "$BK/packages-before.txt"
     # Plasma settings the theme changes (restored at the first login after uninstall.sh, before Plasma starts)
     : > "$BK/absent.txt"
     keep=()
@@ -125,7 +134,7 @@ retry() {   # network steps: up to 3 tries (a dropped connection is not the end 
     return 1
 }
 # pinned upstream versions the patches are made for: name url commit
-pin() { awk -v n="$1" '$1 == n {print $2, $3}' "$REPO/patches/BASES.txt"; }
+pin() { awk -v n="$1" '$1 == n {print $2, $3}' "$PD/BASES.txt"; }
 fetch() {   # fetch NAME DIR -> checkout of the pinned commit with our patch applied
     local name=$1 dir=$2 url commit
     read -r url commit < <(pin "$name")
@@ -133,7 +142,7 @@ fetch() {   # fetch NAME DIR -> checkout of the pinned commit with our patch app
     retry git -C "$dir" fetch --quiet origin
     retry git -C "$dir" checkout --quiet --force "$commit"   # fetches the files it needs
     run git -C "$dir" clean -fdq -e build -e 'build*'
-    if [ -s "$REPO/patches/$name.patch" ]; then run git -C "$dir" apply --whitespace=nowarn "$REPO/patches/$name.patch"; fi
+    if [ -s "$PD/$name.patch" ]; then run git -C "$dir" apply --whitespace=nowarn "$PD/$name.patch"; fi
 }
 # a build folder left by an install from another copy of SevenPlasma cannot be reused (CMake refuses it)
 fresh_build() {   # fresh_build SRC BUILD
@@ -173,11 +182,22 @@ PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unz
       libdrm-dev qt6-wayland-private-dev wayland-protocols libwayland-dev libxslt1-dev libxml2-dev
       qt6-style-kvantum plymouth plymouth-themes ufw libxtst6 x11-xserver-utils)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && PKGS+=(wine)
-run sudo apt-get -o DPkg::Lock::Timeout=900 update
-run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
+# Arch: AeroThemePlasma's list for Arch and what our programs need
+APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-virtualkeyboard qt6-multimedia qt6-5compat
+       qt6-wayland qt6-svg qt6-tools qt6-declarative plasma-wayland-protocols wayland-protocols vulkan-headers plasma5support
+       kvantum sddm sddm-kcm plasma-nm plasma-pa plasma-workspace plasma-desktop libplasma packagekit-qt6 libksysguard
+       baloo-widgets polkit-qt6 python-pyqt6 python-pillow 7zip fontconfig freetype2 kio kparts kxmlgui knotifications
+       kglobalaccel kwindowsystem kiconthemes kcmutils kitemmodels ktextwidgets kuserfeedback kdoctools plasma-activities-stats
+       plymouth xorg-xrandr)
+[ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine)
+if [ $PM = apt ]; then
+    run sudo apt-get -o DPkg::Lock::Timeout=900 update
+    run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
+else
+    run sudo pacman -Syu --noconfirm --needed "${APKGS[@]}"
+fi
 # the packages installed for SevenPlasma (uninstall.sh offers to remove them again)
-dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u \
-    | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
+installed | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
 sort -u -o "$BK/packages-added.txt" "$BK/packages-added.txt"
 note "$(L "готово" "done")"
 
@@ -194,22 +214,24 @@ for r in aerothemeplasma-icons aerothemeplasma-sounds; do
     [ -d "$WORK/atp/repos/$r/.git" ] || retry git clone --depth 1 "https://gitgud.io/aeroshell/atp/$r" "$WORK/atp/repos/$r"
 done
 fetch aerothemeplasma "$WORK/atp/main"
-run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-local-overrides.patch"
-run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-sddm.patch"
+if [ $WAYLAND = 0 ]; then   # (in patches/plasma-6.8 they are part of aerothemeplasma.patch)
+    run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-local-overrides.patch"
+    run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-sddm.patch"
+fi
 R=$WORK/atp/repos
 cmake_install "$R/libplasma" "$R/libplasma/build"
 cmake_install "$R/uac-polkit-agent" "$R/uac-polkit-agent/build" -DCMAKE_INSTALL_LIBEXECDIR=lib
 cmake_install "$R/smod" "$R/smod/build"
-cmake_install "$R/smod" "$R/smod/build-x11" -DBUILD_DECORATION=OFF -DBUILD_EFFECTX11=ON
+[ $WAYLAND = 1 ] || cmake_install "$R/smod" "$R/smod/build-x11" -DBUILD_DECORATION=OFF -DBUILD_EFFECTX11=ON
 cmake_install "$R/aeroshell-workspace" "$R/aeroshell-workspace/build"
 run sudo update-mime-database /usr/local/share/mime || true
 cmake_install "$R/aeroshell-kwin-components" "$R/aeroshell-kwin-components/build" -DKWIN_BUILD_WAYLAND=ON
-cmake_install "$R/aeroshell-kwin-components" "$R/aeroshell-kwin-components/build_x11" -DKWIN_BUILD_WAYLAND=OFF -DKWIN_INSTALL_MISC=OFF
+[ $WAYLAND = 1 ] || cmake_install "$R/aeroshell-kwin-components" "$R/aeroshell-kwin-components/build_x11" -DKWIN_BUILD_WAYLAND=OFF -DKWIN_INSTALL_MISC=OFF
 cmake_install "$R/aeroshell-sddm-kcm" "$R/aeroshell-sddm-kcm/build"
 cmake_install "$R/aerothemeplasma-icons" "$R/aerothemeplasma-icons/build"
 cmake_install "$R/aerothemeplasma-sounds" "$R/aerothemeplasma-sounds/build"
 cmake_install "$WORK/atp/main" "$WORK/atp/main/build" -DCMAKE_INSTALL_LIBEXECDIR=lib
-cmake_install "$WORK/atp/main" "$WORK/atp/main/build_x11" -DCMAKE_INSTALL_LIBEXECDIR=lib -DINSTALL_X11_COMPONENTS=ON
+[ $WAYLAND = 1 ] || cmake_install "$WORK/atp/main" "$WORK/atp/main/build_x11" -DCMAKE_INSTALL_LIBEXECDIR=lib -DINSTALL_X11_COMPONENTS=ON
 # the small user tile of an account without a password (lock screen) uses the logon screen's frames
 SH=/usr/share/plasma/shells/io.gitgud.wackyideas.desktop/contents/images/pfp
 A=/usr/share/sddm/themes/sddm-theme-mod/Assets
@@ -221,23 +243,24 @@ note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 3. Explorer (Dolphin / KIO / Kvantum forks)
 step "$(L "Провідник, діалоги файлів і стиль вікон (Dolphin, KIO, Kvantum)" "Explorer, file dialogs and widget style (Dolphin, KIO, Kvantum)")"
-v() { dpkg-query -W -f='${Version}' "$1" 2>/dev/null | sed 's/^[0-9]*://; s/-.*//'; }
 fetch libaero-qt "$WORK/src/libaero-qt"
 cmake_install "$WORK/src/libaero-qt" "$WORK/src/libaero-qt/build"
+KIOPKG=libkf6kio-dev; KVPKG=qt6-style-kvantum
+[ $PM = pacman ] && { KIOPKG=kio; KVPKG=kvantum; }
 if [ $FORKS -eq 1 ]; then
-    if [ "$(v libkf6kio-dev)" = 6.24.0 ]; then
+    if [ "$(v $KIOPKG)" = 6.24.0 ]; then
         fetch kio "$WORK/src/kio"
         cmake_install "$WORK/src/kio" "$WORK/src/kio/build" -DBUILD_TESTING=OFF
         run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
-    else warn "$(L "KIO $(v libkf6kio-dev) не та версія, для якої зроблені зміни (6.24.0): діалоги файлів лишаться звичайні" "KIO $(v libkf6kio-dev) is not the version the changes are made for (6.24.0): file dialogs stay as they are")"; fi
+    else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни (6.24.0): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for (6.24.0): file dialogs stay as they are")"; fi
     if [ "$(v dolphin)" = 25.12.3 ]; then
         fetch dolphin-aero "$WORK/src/dolphin-aero"
         cmake_install "$WORK/src/dolphin-aero" "$WORK/src/dolphin-aero/build" -DBUILD_TESTING=OFF
     else warn "$(L "Dolphin $(v dolphin) не та версія (25.12.3): Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not the expected version (25.12.3): Explorer stays plain Dolphin")"; fi
-    if [ "$(v qt6-style-kvantum)" = 1.1.5 ]; then
+    if [ "$(v $KVPKG)" = 1.1.5 ]; then
         fetch kvantum "$WORK/src/kvantum"
         cmake_install "$WORK/src/kvantum/Kvantum" "$WORK/src/kvantum/Kvantum/build" -DENABLE_QT5=OFF
-    else warn "$(L "Kvantum $(v qt6-style-kvantum) не та версія (1.1.5): меню без лінії-розділювача Windows 7" "Kvantum $(v qt6-style-kvantum) is not the expected version (1.1.5): menus lack the Windows 7 separator line")"; fi
+    else warn "$(L "Kvantum $(v $KVPKG) не та версія (1.1.5): меню без лінії-розділювача Windows 7" "Kvantum $(v $KVPKG) is not the expected version (1.1.5): menus lack the Windows 7 separator line")"; fi
 fi
 note "$(L "готово" "done")"
 
@@ -335,12 +358,15 @@ note "$(L "готово" "done")"
 step "$(L "Завантаження, вхід і завершення роботи" "Boot, logon and shutdown")"
 B=$REPO/apps/seven-common/boot
 run sudo install -D -m 755 "$B/seven-nopass-users" /usr/local/libexec/seven-nopass-users
-run sudo install -D -m 755 "$B/seven-sddm-xsetup" /usr/local/libexec/seven-sddm-xsetup
-run sudo install -D -m 755 "$B/seven-shutdown-hold" /usr/local/libexec/seven-shutdown-hold
-run sudo install -D -m 755 "$B/seven-splash-hold" /usr/local/libexec/seven-splash-hold
-run sudo install -D -m 644 "$B/seven-shutdown-hold.conf" /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf
-run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf
-run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf
+if [ $WAYLAND = 0 ]; then
+    # X11: the logon screen's X setup, the shutdown picture kept on X, "Starting Windows" held on screen
+    run sudo install -D -m 755 "$B/seven-sddm-xsetup" /usr/local/libexec/seven-sddm-xsetup
+    run sudo install -D -m 755 "$B/seven-shutdown-hold" /usr/local/libexec/seven-shutdown-hold
+    run sudo install -D -m 755 "$B/seven-splash-hold" /usr/local/libexec/seven-splash-hold
+    run sudo install -D -m 644 "$B/seven-shutdown-hold.conf" /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf
+    run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf
+    run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf
+fi
 run sudo install -D -m 644 "$B/seven-stop-timeout.conf" /etc/systemd/system.conf.d/seven-stop-timeout.conf
 # the logon screen gets the same keyboard layouts as the user, now and whenever they change
 run sudo install -D -m 755 "$B/seven-keyboard-sync" /usr/local/libexec/seven-keyboard-sync
@@ -350,11 +376,17 @@ done
 run sudo systemctl daemon-reload
 run sudo systemctl enable seven-keyboard-sync.path seven-keyboard-sync.service
 run sudo systemctl start seven-keyboard-sync.service || true
-printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
+if [ $WAYLAND = 0 ]; then
+    printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
+else   # the logon screen on Wayland, in KWin (as Plasma's own logon settings set it up)
+    printf '[General]\nDisplayServer=wayland\nGreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[Wayland]\nCompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1\n' > "$WORK/zz-sevenplasma.conf"
+    run sudo systemctl enable sddm.service || true
+fi
 run sudo install -D -m 644 "$WORK/zz-sevenplasma.conf" /etc/sddm.conf.d/zz-sevenplasma.conf
-# the logon screen preselects the last session: make it AeroThemePlasma on X11 (SevenPlasma is X11 only;
-# the Wayland session would close at once and bring the logon screen back)
+# the logon screen preselects the last session: make it AeroThemePlasma (on Plasma 6.6 the X11 one: our
+# parts are X11 there, the Wayland session would close at once and bring the logon screen back)
 XS=/usr/share/xsessions/aerothemeplasmax11.desktop
+[ $WAYLAND = 1 ] && XS=/usr/share/wayland-sessions/aerothemeplasma.desktop
 if [ -f "$XS" ]; then
     ST=/var/lib/sddm/state.conf
     if sudo test -f "$ST" && sudo grep -q '^Session=' "$ST"; then
@@ -367,8 +399,10 @@ if [ -f "$XS" ]; then
     fi
 fi
 # one continuous shutdown screen: the session's picture stays on X until the end (no Plymouth shutdown screen)
-run sudo systemctl mask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
-if [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
+[ $WAYLAND = 1 ] || run sudo systemctl mask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
+# the "Starting Windows" boot screen (Ubuntu; on Arch Plymouth needs its initramfs hook and the "splash" kernel
+# option, which are left to the user: the theme is installed as "sevenplasma")
+if [ $PM = apt ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
     run sudo plymouth-set-default-theme sevenplasma || run sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth 200
     note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
     run sudo update-initramfs -u
@@ -434,6 +468,7 @@ note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 8. done
 step "$(L "Готово" "Done")"
-echo "$(L "      Перезавантажте комп'ютер. На екрані входу вже вибрано сеанс «AeroThemePlasma (X11)»." "      Restart the computer. The logon screen already has the \"AeroThemePlasma (X11)\" session selected.")"
+if [ $WAYLAND = 1 ]; then SN="AeroThemePlasma"; else SN="AeroThemePlasma (X11)"; fi
+echo "$(L "      Перезавантажте комп'ютер. На екрані входу вже вибрано сеанс «$SN»." "      Restart the computer. The logon screen already has the \"$SN\" session selected.")"
 echo "$(L "      Видалення: ./uninstall.sh" "      To remove: ./uninstall.sh")"
 trap - ERR

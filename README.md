@@ -48,8 +48,14 @@ the same result). Without an image SevenPlasma installs with free replacements a
 
 ## Installation
 
-Tested on a clean **Kubuntu 26.04** (Plasma 6.6, KDE Frameworks 6.24, Dolphin 25.12, Kvantum 1.1.5), **X11**
-session. You need your Windows 7 image (`.iso`, see above) and an internet connection.
+Two systems are supported, tested on clean installs:
+
+- **Kubuntu 26.04** (Plasma 6.6, X11 session): everything described here;
+- **Arch Linux** (Plasma 6.8, Wayland session; Plasma 6.8 has no X11 session): early support, see
+  [Known limitations](#known-limitations).
+
+You need your Windows 7 image (`.iso`, see above) and an internet connection. The steps are the same on both
+(the pictures are from Kubuntu).
 
 **1.** Open a terminal (**Konsole**, in the application menu) and type these commands, pressing Enter after each:
 
@@ -138,7 +144,13 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
 
 ## Known limitations
 
-- X11 and Plasma 6.6 only; other Plasma versions are not supported yet.
+- Plasma 6.6 (Kubuntu 26.04, X11) and Plasma 6.8 (Arch Linux, Wayland) only; other versions and distributions
+  are not supported yet.
+- On Arch (Plasma 6.8, Wayland), not yet: the Explorer look of Dolphin and the Windows 7 file dialogs (the
+  patched Dolphin / KIO / Kvantum are made for Kubuntu's versions and are skipped), the "Starting Windows" boot
+  screen (the theme is installed, but Plymouth needs its initramfs hook and the `splash` kernel option, which
+  are left to you), and on Wayland the Snipping Tool, On-Screen Keyboard, display pages, screen savers and the
+  colour settings of the graphics card panels. The work is tracked in `docs/porting-plasma-6.8.md`.
 - A few dozen small interface pictures have no extraction recipe yet (see `extract/TODO-assets.txt`).
 - Translations of the programs: English and Ukrainian (the language follows the system, like the display language of
   Windows 7). More languages are welcome: add `apps/<program>/i18n/<lang>.ts` (Qt Linguist) for the programs and

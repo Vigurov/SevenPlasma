@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Files SevenPlasma put into the system, for install.sh and uninstall.sh (run as root).
 
-    sevenplasma-files.py unowned < paths          the paths that belong to no distribution package
+    sevenplasma-files.py unowned < paths          the paths that belong to no distribution package (dpkg or pacman)
                                                   (install.sh keeps this for the files under /usr before
                                                   the install: generated caches and the like, never removed)
     sevenplasma-files.py remove FILES BEFORE KEEP  removes the files of FILES that belong to no package and were
@@ -18,10 +18,23 @@ def owner(p):
     global _owner
     if _owner is None:
         _owner = {}
-        for lst in glob.glob('/var/lib/dpkg/info/*.list'):
+        for lst in glob.glob('/var/lib/dpkg/info/*.list'):              # Debian / Ubuntu
             pkg = os.path.basename(lst)[:-5].split(':')[0]
             for line in open(lst, encoding='utf-8', errors='replace'):
                 _owner.setdefault(line.rstrip('\n'), pkg)
+        for d in glob.glob('/var/lib/pacman/local/*/'):                 # Arch: desc (%NAME%) and files (%FILES%)
+            try:
+                desc = open(d + 'desc', encoding='utf-8', errors='replace').read().split('\n')
+                pkg = desc[desc.index('%NAME%') + 1]
+                section = None
+                for line in open(d + 'files', encoding='utf-8', errors='replace'):
+                    line = line.rstrip('\n')
+                    if line.startswith('%'):
+                        section = line
+                    elif section == '%FILES%' and line:
+                        _owner.setdefault('/' + line.rstrip('/'), pkg)
+            except (OSError, ValueError, IndexError):
+                pass
     if p in _owner:
         return _owner[p]
     for a, b in (('/usr/lib/', '/lib/'), ('/usr/bin/', '/bin/'), ('/usr/sbin/', '/sbin/')):   # merged /usr

@@ -1,0 +1,80 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ecef739..c9840fd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -98,7 +98,7 @@ write_basic_package_version_file(
+ 
+ file(WRITE
+     "${CMAKE_CURRENT_BINARY_DIR}/AeroQtConfig.cmake"
+-    "include(\"\${CMAKE_CURRENT_LIST_DIR}/AeroQtTargets.cmake\")"
++    "include(CMakeFindDependencyMacro)\nfind_dependency(Qt6 COMPONENTS Widgets UiPlugin)\nfind_dependency(KF6WidgetsAddons)\nfind_dependency(KF6WindowSystem)\nfind_dependency(KF6FrameworkIntegration)\nfind_dependency(KF6Config)\nif(NOT TARGET KF6::KIOCore)\n    find_dependency(KF6KIO)\nendif()\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/AeroQtTargets.cmake\")\n"
+ )
+ 
+ install(FILES
+diff --git a/src/AeroQt/private/customqstyle.cpp b/src/AeroQt/private/customqstyle.cpp
+index 6558407..064b0ca 100644
+--- a/src/AeroQt/private/customqstyle.cpp
++++ b/src/AeroQt/private/customqstyle.cpp
+@@ -60,8 +60,8 @@ void CustomQStyle::drawPrimitive(QStyle::PrimitiveElement element, const QStyleO
+ {
+     if (_w) {
+         if (element == QStyle::PE_Widget) {
+-            if (option == &_amGettingThemed_dummy) {    // used by amGettingThemed()
+-                _amGettingThemed_dummy.version = -10;
++            if (option == &amGettingThemedDummy()) {    // used by amGettingThemed()
++                amGettingThemedDummy().version = -10;
+ 
+                 return;
+             }
+diff --git a/src/AeroQt/private/themewatcher.cpp b/src/AeroQt/private/themewatcher.cpp
+index f77db78..995abbd 100644
+--- a/src/AeroQt/private/themewatcher.cpp
++++ b/src/AeroQt/private/themewatcher.cpp
+@@ -59,7 +59,13 @@ bool ThemeWatcher::themeIsAero()
+ 	return m_themeIsAero;
+ }
+ 
+-QStyleOption _amGettingThemed_dummy;
++// Built on first use: a global QStyleOption would construct a QFont while the library is loaded, before the
++// platform theme exists, and QGuiApplication would keep that default font (Noto Sans 12) for good.
++QStyleOption &amGettingThemedDummy()
++{
++    static QStyleOption option;
++    return option;
++}
+ 
+ bool amGettingThemed(QWidget *_this)
+ {
+@@ -67,16 +73,16 @@ bool amGettingThemed(QWidget *_this)
+      * what style it is overriding, so we have to use this dirty, non-thread-safe hack to find out
+      */
+ 
+-    _amGettingThemed_dummy.version = 0;
++    amGettingThemedDummy().version = 0;
+ 
+     {
+         QPainter p;
+         QWidget w;
+ 
+-        _this->style()->drawPrimitive(QStyle::PE_Widget, &_amGettingThemed_dummy, &p, &w);    // If style() or one of its base styles is the Aero style, it will set _amGettingThemed_dummy->wasStyledByAero to true.
++        _this->style()->drawPrimitive(QStyle::PE_Widget, &amGettingThemedDummy(), &p, &w);    // If style() or one of its base styles is the Aero style, it will set _amGettingThemed_dummy->wasStyledByAero to true.
+     }
+ 
+-    return _amGettingThemed_dummy.version == -10;
++    return amGettingThemedDummy().version == -10;
+ }
+ 
+ } // namespace Private
+diff --git a/src/AeroQt/private/themewatcher.h b/src/AeroQt/private/themewatcher.h
+index 1408cdd..351cff7 100644
+--- a/src/AeroQt/private/themewatcher.h
++++ b/src/AeroQt/private/themewatcher.h
+@@ -30,7 +30,7 @@ private:
+ };
+ 
+ bool amGettingThemed(QWidget *w);
+-extern QStyleOption _amGettingThemed_dummy;
++QStyleOption &amGettingThemedDummy();
+ 
+ } // namespace Private
+ } // namespace Aero
