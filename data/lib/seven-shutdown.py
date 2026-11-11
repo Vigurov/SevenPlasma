@@ -13,7 +13,8 @@ os.environ.pop('SESSION_MANAGER', None)        # stay out of the session: KDE mu
 # which lives until the user manager itself stops (the X server keeps the last picture after that).
 if os.environ.get('SEVEN_SHUTDOWN_DETACHED') != '1' and len(sys.argv) > 1 and sys.argv[1] != 'test':
     env = ['-E', 'SEVEN_SHUTDOWN_DETACHED=1']
-    for k in ('DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'DBUS_SESSION_BUS_ADDRESS', 'QT_QPA_PLATFORMTHEME'):
+    for k in ('DISPLAY', 'XAUTHORITY', 'WAYLAND_DISPLAY', 'XDG_SESSION_TYPE', 'QT_QPA_PLATFORM', 'XDG_RUNTIME_DIR',
+              'DBUS_SESSION_BUS_ADDRESS', 'QT_QPA_PLATFORMTHEME'):
         if os.environ.get(k):
             env += ['-E', '%s=%s' % (k, os.environ[k])]
     try:
@@ -81,7 +82,9 @@ class OtherWindows:
             self.x.XFree(kids)
         return found
 
-ASSETS = os.path.expanduser('~/src/seven-common/boot/shutdown')
+# the pictures of the Plymouth shutdown screen (the installed theme; the development folder otherwise)
+ASSETS = next((d for d in ('/usr/share/plymouth/themes/sevenplasma', os.path.expanduser('~/src/seven-common/boot/shutdown'))
+               if os.path.exists(os.path.join(d, 'logon_bg.png'))), '/usr/share/plymouth/themes/sevenplasma')
 ACTION = sys.argv[1] if len(sys.argv) > 1 else 'shutdown'
 
 
@@ -105,7 +108,7 @@ class Screen(QWidget):
         self.update()
         # once KWin has quit nothing keeps the stacking order: a program that maps or raises a window while
         # it closes (Steam, Discord, a "save changes?" question) would pop up over the shutdown screen
-        if not self._held:
+        if not self._held and not WAYLAND:
             self.raise_()
             if ending['on']:
                 self.raise_timer_fast()
@@ -134,6 +137,32 @@ class Screen(QWidget):
 
 app = QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
+WAYLAND = QGuiApplication.platformName().startswith('wayland')
+
+
+def kwin_on_top():
+    # Wayland: a client cannot put itself above others or full screen; KWin does it for our windows
+    path = os.path.join(os.environ.get('XDG_RUNTIME_DIR', '/tmp'), 'seven-shutdown-%d.js' % os.getpid())
+    with open(path, 'w') as f:
+        f.write('workspace.windowList().forEach(function (w) { if (w.pid === %d) { w.keepAbove = true; '
+                'w.skipTaskbar = true; w.skipSwitcher = true; w.skipPager = true; w.onAllDesktops = true; '
+                'w.fullScreen = true; workspace.activeWindow = w; } });' % os.getpid())
+    name = 'seven-shutdown-%d' % os.getpid()
+    try:
+        r = subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.loadScript', path, name],
+                           capture_output=True, text=True, timeout=5)
+        subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting/Script' + r.stdout.strip(), 'org.kde.kwin.Script.run'],
+                       capture_output=True, timeout=5)
+        subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.unloadScript', name],
+                       capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
 screens = []
 for s in QGuiApplication.screens():
     w = Screen(s.geometry())
@@ -146,6 +175,8 @@ for s in QGuiApplication.screens():
     a.setEasingCurve(QEasingCurve.Type.InOutQuad)
     a.start()
     screens.append((w, a))
+if WAYLAND:
+    QTimer.singleShot(200, kwin_on_top)
 
 
 def leave():
@@ -179,6 +210,10 @@ def on_term(*_):
     if ending['on']:
         return
     ending['on'] = True
+    if WAYLAND:
+        # on Wayland the programs' windows go together with KWin (and this one with them): just stay up
+        QTimer.singleShot(4000, app.quit)
+        return
     QTimer.singleShot(0, wait_others)
 
 
