@@ -22,6 +22,7 @@
 #include <QtEndian>
 
 #include <fontconfig/fontconfig.h>
+#include <fontconfig/fcfreetype.h>   // FcFreeTypeQueryAll (not pulled in by fontconfig.h everywhere)
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_LCD_FILTER_H
