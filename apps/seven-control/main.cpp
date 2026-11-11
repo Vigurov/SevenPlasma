@@ -1835,6 +1835,7 @@ private:
 };
 }
 
+#include "win7kwin.h"
 #define WIN7_WINDOWCLASS_XCB
 #include "win7windowclass.h"
 
@@ -2314,8 +2315,8 @@ int main(int argc, char **argv)
     if (app.arguments().contains(QStringLiteral("--magnifier"))) {
         app.setDesktopFileName(QStringLiteral("seven-magnifier"));
         auto *m = new Win7Access::MagnifierWindow;
-        m->move(QGuiApplication::primaryScreen()->availableGeometry().topLeft() + QPoint(60, 40));
         m->show();
+        Win7KWin::moveTo(m, QGuiApplication::primaryScreen()->availableGeometry().topLeft() + QPoint(60, 40));
         return app.exec();
     }
     if (app.arguments().contains(QStringLiteral("--narrator"))) {

@@ -104,9 +104,25 @@ inline void unload(const QString &name)
 /** the same once the window is on screen (a Wayland window reaches KWin a moment after show()) */
 inline void forWindow(QWidget *w, const QString &body)
 {
+    if (w->windowTitle().isEmpty()) { // an untitled window would match all of this program's windows
+        w->setWindowTitle(QStringLiteral("seven-window-%1").arg(quintptr(w), 0, 16));
+    }
     QTimer::singleShot(300, w, [w, body]() {
         forOwnWindows(w->windowTitle(), body);
     });
+}
+
+/** places a top-level window: move() on X11; on Wayland clients cannot place their windows, so KWin puts
+ *  it there once it is shown (call before or right after show()) */
+inline void moveTo(QWidget *w, const QPoint &pos)
+{
+    if (!wayland()) {
+        w->move(pos);
+        return;
+    }
+    forWindow(w, QStringLiteral("w.frameGeometry = {x: %1, y: %2, width: w.frameGeometry.width, height: w.frameGeometry.height};")
+                     .arg(pos.x())
+                     .arg(pos.y()));
 }
 
 /** "Always on top": the flag on X11, KWin's keepAbove on Wayland (the state is kept in a property there) */

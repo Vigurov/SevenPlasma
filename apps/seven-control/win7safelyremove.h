@@ -1,4 +1,5 @@
 #pragma once
+#include "win7kwin.h"
 #include "win7i18n.h"
 /*
  * "Безпечне видалення пристрою та виймання носія" (hotplug.dll) in the notification area, run inside the AutoPlay
@@ -166,6 +167,17 @@ public:
             const int shift = pos.x() + width() - avail.right();
             pos.rx() -= shift;
             m_tailX += shift;
+        }
+        if (Win7KWin::wayland()) {
+            // a parentless tooltip cannot be placed on Wayland: a tool window that KWin puts there, above all
+            setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowDoesNotAcceptFocus);
+            setWindowTitle(QStringLiteral("seven-balloon-%1").arg(quintptr(this), 0, 16));
+            show();
+            Win7KWin::forWindow(this, QStringLiteral("w.keepAbove = true; w.skipTaskbar = true; w.skipSwitcher = true; "
+                                                     "w.frameGeometry = {x: %1, y: %2, width: w.frameGeometry.width, height: w.frameGeometry.height};")
+                                          .arg(pos.x())
+                                          .arg(pos.y()));
+            return;
         }
         move(pos);
         show();

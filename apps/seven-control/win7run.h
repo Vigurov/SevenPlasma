@@ -8,6 +8,7 @@
  */
 #pragma once
 #include "win7i18n.h"
+#include "win7kwin.h"
 
 #include "win7folderopts.h"
 
@@ -284,6 +285,16 @@ private:
     /** Windows 7 opens Run in the bottom-left corner of the work area, just above the Start button */
     void placeAboveStart()
     {
+        if (Win7KWin::wayland()) {
+            // KWin knows the work area (above the taskbar) and the frame: it places the window there
+            if (isVisible() && !m_placed) {
+                m_placed = true;
+                Win7KWin::forWindow(this, QStringLiteral("const a = workspace.clientArea(KWin.MaximizeArea, w); "
+                                                         "w.frameGeometry = {x: a.x + 12, y: a.y + a.height - w.frameGeometry.height - 12, "
+                                                         "width: w.frameGeometry.width, height: w.frameGeometry.height};"));
+            }
+            return;
+        }
         QScreen *scr = QGuiApplication::screenAt(QCursor::pos());
         if (!scr) {
             scr = QGuiApplication::primaryScreen();
@@ -317,6 +328,7 @@ private:
 
     QComboBox *m_combo = nullptr;
     QPushButton *m_ok = nullptr;
+    bool m_placed = false;
 };
 
 } // namespace Win7Run

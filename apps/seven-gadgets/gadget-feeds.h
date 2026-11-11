@@ -479,14 +479,20 @@ private:
         m_flyout->setItem(item);
         // beside the gadget, on the side with room
         const QRect avail = screen()->availableGeometry();
-        const QRect g = frameGeometry();
+        // on Wayland the gadget does not know its place: the one KWin reported (and we saved) instead
+        const QRect g = Win7KWin::wayland() ? QRect(store().value(id + QStringLiteral("/Pos")).toPoint(), frameGeometry().size()) : frameGeometry();
         QPoint at(g.left() - m_flyout->width(), g.top());
         if (at.x() < avail.left()) {
             at.setX(g.left() + bodySize().width());
         }
         at.setY(qBound(avail.top(), at.y(), avail.bottom() - m_flyout->height()));
-        m_flyout->move(at);
-        m_flyout->show();
+        if (Win7KWin::wayland()) {
+            m_flyout->show();
+            Win7KWin::moveTo(m_flyout, at);
+        } else {
+            m_flyout->move(at);
+            m_flyout->show();
+        }
         m_flyout->raise();
         m_flyout->activateWindow();
         update();
