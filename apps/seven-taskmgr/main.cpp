@@ -1,4 +1,6 @@
 #include "win7kwin.h"
+#include <taskmanager/abstracttasksmodel.h>
+#include <taskmanager/windowtasksmodel.h>
 #include "win7i18n.h"
 /*
  * "Windows Task Manager" in the style of Windows 7, showing the real state of this Linux machine:
@@ -341,10 +343,10 @@ QList<CpuTimes> readCpuTimes()
 
 /* ---------------- main window ---------------- */
 
-class TaskManager : public QMainWindow
+class TaskManagerWindow : public QMainWindow
 {
 public:
-    TaskManager()
+    TaskManagerWindow()
     {
         setWindowTitle(tr7("Windows Task Manager"));
         setWindowIcon(QIcon::fromTheme(QStringLiteral("utilities-system-monitor")));
@@ -428,23 +430,28 @@ private:
             buttons->addWidget(b);
         }
         v->addLayout(buttons);
-        connect(end, &QPushButton::clicked, this, &TaskManager::endTask);
-        connect(sw, &QPushButton::clicked, this, &TaskManager::switchTo);
-        connect(task, &QPushButton::clicked, this, &TaskManager::newTask);
-        connect(m_appView, &QTreeView::doubleClicked, this, &TaskManager::switchTo);
+        connect(end, &QPushButton::clicked, this, &TaskManagerWindow::endTask);
+        connect(sw, &QPushButton::clicked, this, &TaskManagerWindow::switchTo);
+        connect(task, &QPushButton::clicked, this, &TaskManagerWindow::newTask);
+        connect(m_appView, &QTreeView::doubleClicked, this, &TaskManagerWindow::switchTo);
         connect(m_appView, &QWidget::customContextMenuRequested, this, [this, end](const QPoint &pos) {
             if (!m_appView->indexAt(pos).isValid()) {
                 return;
             }
             QMenu menu(this);
-            QAction *s = menu.addAction(tr7("Switch To"), this, &TaskManager::switchTo);
+            QAction *s = menu.addAction(tr7("Switch To"), this, &TaskManagerWindow::switchTo);
             QFont f = s->font();
             f.setBold(true);
             s->setFont(f);
-            menu.addAction(tr7("Bring To Front"), this, &TaskManager::switchTo);
+            menu.addAction(tr7("Bring To Front"), this, &TaskManagerWindow::switchTo);
             menu.addSeparator();
             menu.addAction(tr7("Minimize"), this, [this] {
-                if (const WId w = currentWindow()) {
+                if (Win7KWin::wayland()) {
+                    const QModelIndex t = currentTask();
+                    if (t.isValid() && !t.data(TaskManager::AbstractTasksModel::IsMinimized).toBool()) {
+                        m_tasks->requestToggleMinimized(t);
+                    }
+                } else if (const WId w = currentWindow()) {
                     KX11Extras::minimizeWindow(w);
                 }
             });
@@ -452,8 +459,12 @@ private:
             menu.addAction(tr7("End Task"), end, &QPushButton::click);
             menu.addSeparator();
             menu.addAction(tr7("Go To Process"), this, [this] {
-                const WId w = currentWindow();
-                const int pid = w ? KWindowInfo(w, NET::WMPid).pid() : 0;
+                int pid = 0;
+                if (Win7KWin::wayland()) {
+                    pid = currentTask().data(TaskManager::AbstractTasksModel::AppPid).toInt();
+                } else if (const WId w = currentWindow()) {
+                    pid = KWindowInfo(w, NET::WMPid).pid();
+                }
                 if (pid > 0) {
                     m_tabs->setCurrentWidget(m_procPage);
                     refresh(true);
@@ -471,10 +482,56 @@ private:
         return idx.isValid() ? WId(idx.siblingAtColumn(0).data(Qt::UserRole).toULongLong()) : 0;
     }
 
+    /** Wayland: the row of the selected application in KDE's window list (by its window ids) */
+    QModelIndex currentTask() const
+    {
+        const QModelIndex idx = m_appView->currentIndex();
+        if (!idx.isValid() || !m_tasks) {
+            return {};
+        }
+        const QString key = idx.siblingAtColumn(0).data(Qt::UserRole).toString();
+        for (int r = 0; r < m_tasks->rowCount(); ++r) {
+            const QModelIndex t = m_tasks->index(r, 0);
+            if (taskKey(t) == key) {
+                return t;
+            }
+        }
+        return {};
+    }
+
+    static QString taskKey(const QModelIndex &t)
+    {
+        QStringList ids;
+        for (const QVariant &v : t.data(TaskManager::AbstractTasksModel::WinIdList).toList()) {
+            ids << v.toString();
+        }
+        return ids.join(QLatin1Char(','));
+    }
+
     void refreshApplications()
     {
         const QString key = selectedKey(m_appView, 0);
         m_appModel->removeRows(0, m_appModel->rowCount());
+        if (Win7KWin::wayland()) {
+            // no window list for clients on Wayland: KDE's task model (the taskbar's), allowed by the desktop file
+            if (!m_tasks) {
+                m_tasks = new TaskManager::WindowTasksModel(this);
+                connect(m_tasks, &QAbstractItemModel::rowsInserted, this, &TaskManagerWindow::refreshApplications);
+                connect(m_tasks, &QAbstractItemModel::rowsRemoved, this, &TaskManagerWindow::refreshApplications);
+            }
+            for (int r = 0; r < m_tasks->rowCount(); ++r) {
+                const QModelIndex t = m_tasks->index(r, 0);
+                if (!t.data(TaskManager::AbstractTasksModel::IsWindow).toBool() || t.data(TaskManager::AbstractTasksModel::SkipTaskbar).toBool()
+                    || t.data(TaskManager::AbstractTasksModel::AppPid).toLongLong() == QCoreApplication::applicationPid()) {
+                    continue;
+                }
+                auto *name = new QStandardItem(t.data(Qt::DecorationRole).value<QIcon>(), t.data(Qt::DisplayRole).toString());
+                name->setData(taskKey(t), Qt::UserRole);
+                m_appModel->appendRow({name, new QStandardItem(tr7("Running"))});
+            }
+            reselect(m_appView, m_appModel, 0, key);
+            return;
+        }
         const WId self = winId();
         for (WId w : KX11Extras::stackingOrder()) {
             KWindowInfo info(w, NET::WMName | NET::WMWindowType | NET::WMState, NET::WM2TransientFor | NET::WM2WindowClass);
@@ -492,6 +549,16 @@ private:
 
     void endTask()
     {
+        if (Win7KWin::wayland()) {
+            const QModelIndex t = currentTask();
+            if (t.isValid()) {
+                m_tasks->requestClose(t);
+            }
+            QTimer::singleShot(600, this, [this] {
+                refreshApplications();
+            });
+            return;
+        }
         const WId w = currentWindow();
         if (!w) {
             return;
@@ -508,6 +575,16 @@ private:
 
     void switchTo()
     {
+        if (Win7KWin::wayland()) {
+            const QModelIndex t = currentTask();
+            if (t.isValid()) {
+                m_tasks->requestActivate(t);
+                if (m_minimizeOnUse) {
+                    showMinimized();
+                }
+            }
+            return;
+        }
         if (const WId w = currentWindow()) {
             KX11Extras::forceActiveWindow(w);
             if (m_minimizeOnUse) {
@@ -1153,7 +1230,7 @@ private:
     void buildMenus()
     {
         QMenu *file = menuBar()->addMenu(tr7("&File"));
-        file->addAction(tr7("New Task (Run...)"), this, &TaskManager::newTask);
+        file->addAction(tr7("New Task (Run...)"), this, &TaskManagerWindow::newTask);
         file->addSeparator();
         file->addAction(tr7("Exit Task Manager"), this, &QWidget::close);
 
@@ -1239,6 +1316,7 @@ private:
 
     QStandardItemModel *m_appModel;
     QTreeView *m_appView;
+    TaskManager::WindowTasksModel *m_tasks = nullptr; // Wayland: KDE's window list
     bool m_minimizeOnUse = true;
 
     QWidget *m_procPage;
@@ -1306,7 +1384,7 @@ int main(int argc, char **argv)
         }
         return app.exec();
     }
-    TaskManager w;
+    TaskManagerWindow w;
     const int tabArg = app.arguments().indexOf(QStringLiteral("--tab"));
     if (tabArg > 0) {
         w.findChild<QTabWidget *>()->setCurrentIndex(app.arguments().value(tabArg + 1).toInt());

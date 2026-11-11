@@ -7,9 +7,10 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets DBus LinguistTools)
 find_package(KF6WindowSystem REQUIRED)
+find_package(LibTaskManager REQUIRED)
 
 add_executable(seven-taskmgr main.cpp)
-target_link_libraries(seven-taskmgr PRIVATE Qt6::Widgets Qt6::DBus KF6::WindowSystem)
+target_link_libraries(seven-taskmgr PRIVATE Qt6::Widgets Qt6::DBus KF6::WindowSystem PW::LibTaskManager)
 
 install(TARGETS seven-taskmgr RUNTIME DESTINATION bin)
 

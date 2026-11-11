@@ -8,3 +8,5 @@ Exec=seven-taskmgr
 Icon=utilities-system-monitor
 Categories=System;Monitor;
 X-KDE-Shortcuts=Ctrl+Shift+Esc
+# KDE's window list on Wayland (Applications tab) is only given to programs that ask for it here
+X-KDE-Wayland-Interfaces=org_kde_plasma_window_management
