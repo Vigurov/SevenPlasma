@@ -84,10 +84,9 @@ inline Library libraryOf(const QUrl &url)
 inline void showLocations(QWidget *parent, const Library &lib)
 {
     QDialog d(parent);
-    d.setWindowTitle(i18nd("sevenplasma", "%1 Library Locations").arg(lib.name));
+    d.setWindowTitle(i18nd("sevenplasma", "%1 Library Locations", lib.name));
     auto *v = new QVBoxLayout(&d);
-    auto *head = new QLabel(i18nd("sevenplasma", "<span style=\"font-size:12pt; color:#1e3287;\">Change how this library gathers its contents: \"%1\"</span><br>When you include a folder in a library, the files will appear in the library, but will continue to be stored in their original locations.")
-                                .arg(lib.name));
+    auto *head = new QLabel(i18nd("sevenplasma", "<span style=\"font-size:12pt; color:#1e3287;\">Change how this library gathers its contents: \"%1\"</span><br>When you include a folder in a library, the files will appear in the library, but will continue to be stored in their original locations.", lib.name));
     head->setWordWrap(true);
     v->addWidget(head);
     v->addWidget(new QLabel(i18nd("sevenplasma", "Library locations")));
@@ -168,7 +167,7 @@ protected:
         p.fillRect(rect(), QColor(0xfa, 0xfb, 0xfc));
         p.setFont(titleFont());
         p.setPen(QColor(0x00, 0x6e, 0x12));
-        p.drawText(QRect(19, 7, width() - 300, 24), Qt::AlignLeft | Qt::AlignVCenter, i18nd("sevenplasma", "%1 Library").arg(m_lib.name));
+        p.drawText(QRect(19, 7, width() - 300, 24), Qt::AlignLeft | Qt::AlignVCenter, i18nd("sevenplasma", "%1 Library", m_lib.name));
         p.setFont(font());
         const QFontMetrics fm(font());
         if (m_sub.isEmpty()) {

@@ -1233,7 +1233,7 @@ index 5810c8d..cb69358 100644
  
              var xy = getXY();
 diff --git a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
-index b5d2c66..b361eb1 100644
+index b5d2c66..4c8cd6c 100644
 --- a/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
 +++ b/plasma/plasmoids/src/desktopcontainment/src/plugins/folder/foldermodel.cpp
 @@ -9,6 +9,10 @@
@@ -1756,7 +1756,7 @@ index b5d2c66..b361eb1 100644
 +                    const QString name = QFileInfo(u.toLocalFile()).fileName();
 +                    QString link = dir + QLatin1Char('/') + name + i18nd("sevenplasma", " - Shortcut");
 +                    for (int n = 2; QFileInfo::exists(link); ++n) {
-+                        link = dir + QLatin1Char('/') + name + i18nd("sevenplasma", " - Shortcut (%1)").arg(n);
++                        link = dir + QLatin1Char('/') + name + i18nd("sevenplasma", " - Shortcut (%1)", n);
 +                    }
 +                    QFile::link(u.toLocalFile(), link);
 +                }
@@ -1767,7 +1767,7 @@ index b5d2c66..b361eb1 100644
 +                send->addSeparator();
 +                for (const QString &d : drives) {
 +                    const QString target = media.absoluteFilePath(d);
-+                    send->addAction(QIcon::fromTheme(QStringLiteral("drive-removable-media-usb")), i18nd("sevenplasma", "Removable Disk (%1)").arg(d), this, [urls, target]() {
++                    send->addAction(QIcon::fromTheme(QStringLiteral("drive-removable-media-usb")), i18nd("sevenplasma", "Removable Disk (%1)", d), this, [urls, target]() {
 +                        KIO::copy(urls, QUrl::fromLocalFile(target));
 +                    });
 +                }
@@ -1799,7 +1799,7 @@ index b5d2c66..b361eb1 100644
 +                    const QFileInfo fi(u.toLocalFile());
 +                    QString link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + i18nd("sevenplasma", " - Shortcut");
 +                    for (int n = 2; QFileInfo::exists(link); ++n) {
-+                        link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + i18nd("sevenplasma", " - Shortcut (%1)").arg(n);
++                        link = fi.absolutePath() + QLatin1Char('/') + fi.fileName() + i18nd("sevenplasma", " - Shortcut (%1)", n);
 +                    }
 +                    QFile::link(fi.absoluteFilePath(), link);
 +                }

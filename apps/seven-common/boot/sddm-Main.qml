@@ -71,6 +71,28 @@ Item
         NeedsPasswordRole
     }
 
+    // Windows 7 says "Welcome" as soon as Enter is pressed. The greeter is closed a moment after the password
+    // is accepted, so "Welcome" has to be on screen before the login starts: that frame is what stays
+    // (-background none) until the session's splash shows the same picture
+    function win7Login(user, pass, sessionIndex)
+    {
+        win7Welcome.visible = true
+        win7LoginTimer.user = user
+        win7LoginTimer.pass = pass
+        win7LoginTimer.sessionIndex = sessionIndex
+        win7LoginTimer.restart()
+    }
+
+    Timer
+    {
+        id: win7LoginTimer
+        property string user
+        property string pass
+        property int sessionIndex
+        interval: 80          // a few frames, so "Welcome" is painted before the greeter goes away
+        onTriggered: sddm.login(user, pass, sessionIndex)
+    }
+
     Connections
     {
         target: sddm
@@ -84,6 +106,7 @@ Item
 
         function onLoginFailed()
         {
+            win7Welcome.visible = false
             password.text = ""
             pages.currentIndex = Main.LoginPage.LoginFailed
         }
@@ -296,7 +319,7 @@ Item
                         }
                         else
                         {
-                            sddm.login(username, password.text, session.index)
+                            win7Login(username, password.text, session.index)
                         }
                     }
                 }
@@ -545,7 +568,7 @@ Item
                             }
                             else
                             {
-                                sddm.login(username, password.text, session.index)
+                                win7Login(username, password.text, session.index)
                             }
                         }
                     }
@@ -724,7 +747,7 @@ Item
 
                                 if (username != null)
                                 {
-                                    sddm.login(username, password.text, session.index)
+                                    win7Login(username, password.text, session.index)
                                 }
 
                                 event.accepted = true
@@ -791,7 +814,7 @@ Item
 
                             if (username != null)
                             {
-                                sddm.login(username, password.text, session.index)
+                                win7Login(username, password.text, session.index)
                             }
                         }
 

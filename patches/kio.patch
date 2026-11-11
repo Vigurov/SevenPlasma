@@ -2334,7 +2334,7 @@ index 69459f7..be668db 100644
      /*!
       * Called when the user presses 'Ok'.
 diff --git a/src/widgets/paste.cpp b/src/widgets/paste.cpp
-index 4edfbb7..70b85f6 100644
+index 4edfbb7..1e3124d 100644
 --- a/src/widgets/paste.cpp
 +++ b/src/widgets/paste.cpp
 @@ -6,6 +6,10 @@
@@ -2368,7 +2368,7 @@ index 4edfbb7..70b85f6 100644
 +        local = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + dir.path();
 +    }
 +    for (int n = 1; n < 100000; ++n) {
-+        const QString name = i18nd("sevenplasma", "Screenshot (%1).png").arg(n);
++        const QString name = i18nd("sevenplasma", "Screenshot (%1).png", n);
 +        if (local.isEmpty() || !QFileInfo::exists(QDir(local).filePath(name))) {
 +            QUrl u = dir;
 +            u.setPath(QDir(dir.path().isEmpty() ? QStringLiteral("/") : dir.path()).filePath(name));

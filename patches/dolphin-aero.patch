@@ -4653,7 +4653,7 @@ index c5e5358..11dc6fb 100644
      } else if (url.isLocalFile()) {
 diff --git a/src/panels/places/win7navigationpane.cpp b/src/panels/places/win7navigationpane.cpp
 new file mode 100644
-index 0000000..48fb834
+index 0000000..eac7732
 --- /dev/null
 +++ b/src/panels/places/win7navigationpane.cpp
 @@ -0,0 +1,751 @@
@@ -5122,7 +5122,7 @@ index 0000000..48fb834
 +    if (!udi.isEmpty()) {
 +        for (const Solid::Device &od : Win7ComputerPage::emptyOpticalDrives(m_places)) {
 +            if (od.udi() == udi) {
-+                Q_EMIT errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".").arg(Win7ComputerPage::driveNames(m_places).value(udi)));
++                Q_EMIT errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".", Win7ComputerPage::driveNames(m_places).value(udi)));
 +                return;
 +            }
 +        }
@@ -5485,7 +5485,7 @@ index 0000000..64a5374
 +#endif // WIN7NAVIGATIONPANE_H
 diff --git a/src/win7computerpage.cpp b/src/win7computerpage.cpp
 new file mode 100644
-index 0000000..aaf4bc8
+index 0000000..38428ba
 --- /dev/null
 +++ b/src/win7computerpage.cpp
 @@ -0,0 +1,1014 @@
@@ -5554,16 +5554,16 @@ index 0000000..aaf4bc8
 +    const auto *od = driveDevice.as<Solid::OpticalDrive>();
 +    const auto m = od ? od->supportedMedia() : Solid::OpticalDrive::MediumTypes();
 +    if (m & (Solid::OpticalDrive::Bdre | Solid::OpticalDrive::Bdr)) {
-+        return i18nd("sevenplasma", "BD-RE Drive (%1)").arg(letter);
++        return i18nd("sevenplasma", "BD-RE Drive (%1)", letter);
 +    }
 +    if (m & Solid::OpticalDrive::Bd) {
-+        return i18nd("sevenplasma", "BD-ROM Drive (%1)").arg(letter);
++        return i18nd("sevenplasma", "BD-ROM Drive (%1)", letter);
 +    }
 +    if (m & (Solid::OpticalDrive::Dvdrw | Solid::OpticalDrive::Dvdplusrw | Solid::OpticalDrive::Dvdr | Solid::OpticalDrive::Dvdplusr)) {
-+        return i18nd("sevenplasma", "DVD RW Drive (%1)").arg(letter);
++        return i18nd("sevenplasma", "DVD RW Drive (%1)", letter);
 +    }
 +    if (m & Solid::OpticalDrive::Dvd) {
-+        return i18nd("sevenplasma", "DVD Drive (%1)").arg(letter);
++        return i18nd("sevenplasma", "DVD Drive (%1)", letter);
 +    }
 +    return i18nc("@item Windows 7 drive name, %1 is a drive letter like E:", "CD Drive (%1)", letter);
 +}
@@ -5832,7 +5832,7 @@ index 0000000..aaf4bc8
 +            return;
 +        }
 +        if (d.emptyOptical) {
-+            Q_EMIT m_page->errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".").arg(d.name));
++            Q_EMIT m_page->errorMessage(i18nd("sevenplasma", "Please insert a disc into drive \"%1\".", d.name));
 +            return;
 +        }
 +        if (d.isProtected) {
