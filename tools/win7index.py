@@ -90,6 +90,44 @@ class PE:
         return res
 
 
+def rle8_image(blob, hs, w, h, ncol):
+    """a BI_RLE8 DIB as a palette image; pixels the stream never reaches stay 0 (as Windows and older Pillow)"""
+    pal = blob[hs:hs + ncol * 4]
+    px = bytearray(w * abs(h))
+    i, x, y = hs + ncol * 4, 0, 0
+    while i + 1 < len(blob) and y < abs(h):
+        n, v = blob[i], blob[i + 1]
+        i += 2
+        if n:
+            for _ in range(n):
+                if x < w:
+                    px[y * w + x] = v
+                x += 1
+        elif v == 0:      # end of line
+            x, y = 0, y + 1
+        elif v == 1:      # end of bitmap
+            break
+        elif v == 2:      # delta
+            if i + 1 >= len(blob):
+                break
+            x, y = x + blob[i], y + blob[i + 1]
+            i += 2
+        else:             # absolute run of v pixels, padded to a word
+            for k in range(v):
+                if i + k < len(blob) and x < w:
+                    px[y * w + x] = blob[i + k]
+                x += 1
+            i += v + (v & 1)
+    im = Image.frombytes('P', (w, abs(h)), bytes(px))
+    if h > 0:
+        im = im.transpose(Image.FLIP_TOP_BOTTOM)
+    palette = bytearray()
+    for k in range(0, len(pal), 4):
+        palette += bytes((pal[k + 2], pal[k + 1], pal[k]))
+    im.putpalette(bytes(palette) + bytes(768 - len(palette)))
+    return im
+
+
 def dib_to_image(blob, icon=False):
     """a DIB (BITMAPINFOHEADER + pixels) as a PIL image; icons have a doubled height with an AND mask"""
     hs = struct.unpack_from('<I', blob)[0]
@@ -106,6 +144,14 @@ def dib_to_image(blob, icon=False):
     comp = struct.unpack_from('<I', blob, 16)[0]
     if comp == 3:   # BI_BITFIELDS masks follow the header
         pal += 12
+    # a few bitmaps in Windows end early (Windows draws them anyway): the missing rows are zeros, as older
+    # Pillow assumed (Pillow 13 refuses short data)
+    if comp in (0, 3):
+        need = hs + pal + ((w * bpp + 31) // 32) * 4 * abs(h)
+        if len(blob) < need:
+            blob = blob + bytes(need - len(blob))
+    elif comp == 1:   # RLE8: decoded here (Pillow 13 refuses the ones in Windows that end without a marker)
+        return rle8_image(blob, hs, w, h, ncol)
     fh = struct.pack('<2sIHHI', b'BM', 14 + len(blob), 0, 0, 14 + hs + pal)
     if icon:
         hdr = bytearray(blob[:hs])
