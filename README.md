@@ -146,8 +146,8 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
 
 - Plasma 6.6 (Kubuntu 26.04, X11) and Plasma 6.8 (Arch Linux, Wayland) only; other versions and distributions
   are not supported yet.
-- On Arch (Plasma 6.8, Wayland), not yet: the Explorer look of Dolphin and the Windows 7 file dialogs (the
-  patched Dolphin / KIO / Kvantum are made for Kubuntu's versions and are skipped), the "Starting Windows" boot
+- On Arch (Plasma 6.8, Wayland), not yet: the Explorer look of Dolphin (the patched Dolphin is made for
+  Kubuntu's version and is skipped; the Windows 7 file dialogs and widget style work), the "Starting Windows" boot
   screen (the theme is installed, but Plymouth needs its initramfs hook and the `splash` kernel option, which
   are left to you), and on Wayland the Snipping Tool, On-Screen Keyboard, display pages, screen savers and the
   colour settings of the graphics card panels. The work is tracked in `docs/porting-plasma-6.8.md`.

@@ -1,13 +1,13 @@
 [Windeco Exception 0]
 Enabled=true
-ExceptionPattern=^(Гаджети|Gadgets)$
+ExceptionPattern=^(Гаджети|Gadgets)( — .*)?$
 ExceptionType=1
 HideCaption=true
 HideIcon=true
 
 [Windeco Exception 1]
 Enabled=true
-ExceptionPattern=^(Зберегти як|Відкрити|Save As|Open)$
+ExceptionPattern=^(Зберегти як|Відкрити|Save As|Open)( — .*)?$
 ExceptionType=1
 HideCaption=false
 HideIcon=true

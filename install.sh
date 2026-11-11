@@ -247,20 +247,23 @@ fetch libaero-qt "$WORK/src/libaero-qt"
 cmake_install "$WORK/src/libaero-qt" "$WORK/src/libaero-qt/build"
 KIOPKG=libkf6kio-dev; KVPKG=qt6-style-kvantum
 [ $PM = pacman ] && { KIOPKG=kio; KVPKG=kvantum; }
+# the versions our patches are made for (Kubuntu 26.04; Arch: Dolphin not yet)
+KIOVER=6.24.0; DOLVER=25.12.3; KVVER=1.1.5
+[ $WAYLAND = 1 ] && { KIOVER=6.31.0; DOLVER=none; KVVER=1.1.9; }
 if [ $FORKS -eq 1 ]; then
-    if [ "$(v $KIOPKG)" = 6.24.0 ]; then
+    if [ "$(v $KIOPKG)" = "$KIOVER" ]; then
         fetch kio "$WORK/src/kio"
         cmake_install "$WORK/src/kio" "$WORK/src/kio/build" -DBUILD_TESTING=OFF
         run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
-    else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни (6.24.0): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for (6.24.0): file dialogs stay as they are")"; fi
-    if [ "$(v dolphin)" = 25.12.3 ]; then
+    else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни ($KIOVER): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for ($KIOVER): file dialogs stay as they are")"; fi
+    if [ "$(v dolphin)" = "$DOLVER" ]; then
         fetch dolphin-aero "$WORK/src/dolphin-aero"
         cmake_install "$WORK/src/dolphin-aero" "$WORK/src/dolphin-aero/build" -DBUILD_TESTING=OFF
-    else warn "$(L "Dolphin $(v dolphin) не та версія (25.12.3): Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not the expected version (25.12.3): Explorer stays plain Dolphin")"; fi
-    if [ "$(v $KVPKG)" = 1.1.5 ]; then
+    else warn "$(L "Dolphin $(v dolphin) не та версія, для якої зроблені зміни: Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not a version the changes are made for: Explorer stays plain Dolphin")"; fi
+    if [ "$(v $KVPKG)" = "$KVVER" ]; then
         fetch kvantum "$WORK/src/kvantum"
         cmake_install "$WORK/src/kvantum/Kvantum" "$WORK/src/kvantum/Kvantum/build" -DENABLE_QT5=OFF
-    else warn "$(L "Kvantum $(v $KVPKG) не та версія (1.1.5): меню без лінії-розділювача Windows 7" "Kvantum $(v $KVPKG) is not the expected version (1.1.5): menus lack the Windows 7 separator line")"; fi
+    else warn "$(L "Kvantum $(v $KVPKG) не та версія ($KVVER): меню без лінії-розділювача Windows 7" "Kvantum $(v $KVPKG) is not the expected version ($KVVER): menus lack the Windows 7 separator line")"; fi
 fi
 note "$(L "готово" "done")"
 
@@ -451,13 +454,13 @@ cp "$REPO/data/smodrc" "$HOME/.config/smodrc"
 mkdir -p "$HOME/.config/environment.d"
 echo GTK_USE_PORTAL=1 > "$HOME/.config/environment.d/60-sevenplasma.conf"
 # default programs
-for m in text/plain text/x-log; do run xdg-mime default seven-notepad.desktop $m; done
-for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run xdg-mime default seven-photoviewer.desktop $m; done
-for m in video/mp4 video/x-matroska video/x-msvideo video/webm; do run xdg-mime default seven-wmp.desktop $m; done
-for m in font/ttf font/otf application/x-font-ttf; do run xdg-mime default seven-fontview.desktop $m; done
+for m in text/plain text/x-log; do run xdg-mime default seven-notepad.desktop $m || true; done
+for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run xdg-mime default seven-photoviewer.desktop $m || true; done
+for m in video/mp4 video/x-matroska video/x-msvideo video/webm; do run xdg-mime default seven-wmp.desktop $m || true; done
+for m in font/ttf font/otf application/x-font-ttf; do run xdg-mime default seven-fontview.desktop $m || true; done
 # right now only inside the AeroThemePlasma session: in plain Plasma the taskbar, Start menu and wallpaper
 # settings would go to the other shell's layout
-PS=$(pgrep -u "$USER" -x plasmashell | head -1)
+PS=$(pgrep -u "$USER" -x plasmashell | head -1 || true)   # none when installed from a console
 if [ -n "$PS" ] && tr '\0' '\n' < "/proc/$PS/environ" 2>/dev/null | grep -qx 'PLASMA_DEFAULT_SHELL=io.gitgud.wackyideas.desktop'; then
     note "$(L "застосовую тему зараз" "applying the theme now")"
     run "$L/bin/seven-firstrun" --now

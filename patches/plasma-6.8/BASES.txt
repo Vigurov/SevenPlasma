@@ -6,3 +6,5 @@ atp-aeroshell-kwin-components https://gitgud.io/aeroshell/aeroshell-kwin-compone
 atp-uac-polkit-agent https://gitgud.io/aeroshell/uac-polkit-agent.git 5627680e94bf1d24769b1b0d25e21679e269d9b6
 atp-aeroshell-sddm-kcm https://gitgud.io/aeroshell/aeroshell-sddm-kcm.git 8c94283c2689b3f0837efda0be8107e42a265e0f
 libaero-qt https://gitgud.io/atmk/libaero-qt.git 0bd71cc7f34718dc7726a72fc402bf0ece12c0d0
+kio https://invent.kde.org/frameworks/kio.git 2dd4bdc916a6f46d297d8788f5b628181483315d
+kvantum https://github.com/tsujan/Kvantum.git 7ffda1bab2a08f566eaa8d371a2381357e5b1f8b
