@@ -1,3 +1,4 @@
+#include "win7kwin.h"
 #include "win7i18n.h"
 /*
  * seven-ccc: AMD Catalyst™ Control Center of a Windows 7 laptop with Radeon graphics (Catalyst 14.x look),
@@ -2757,11 +2758,7 @@ private:
     }
     void setTopmost(bool on)
     {
-        const bool vis = isVisible();
-        setWindowFlag(Qt::WindowStaysOnTopHint, on);
-        if (vis) {
-            show();
-        }
+        Win7KWin::setKeepAbove(this, on);
         store().setValue(QStringLiteral("AlwaysOnTop"), on);
     }
 
@@ -2893,7 +2890,7 @@ private:
         QMenu m(this);
         auto *top = m.addAction(tr7("Always on top"));
         top->setCheckable(true);
-        top->setChecked(windowFlags() & Qt::WindowStaysOnTopHint);
+        top->setChecked(Win7KWin::keepAbove(this));
         m.addSeparator();
         auto *factory = m.addAction(tr7("Restore Factory Defaults"));
         m.addSeparator();

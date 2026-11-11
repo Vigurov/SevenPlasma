@@ -1,3 +1,5 @@
+#include "win7kwin.h"
+#include <QDBusConnection>
 #include "win7i18n.h"
 /*
  * Windows 7 Desktop Gadgets: the gadget gallery window and the Weather gadget.
@@ -453,6 +455,12 @@ QString dayName(const QDate &d)
  * Frameless gadget window kept below other windows. The hover toolbar
  * (close, size, settings, drag grip) is painted to the right of the body.
  */
+/** the name of the KWin script of a gadget on Wayland (with the process id: KWin unloads old ones lazily) */
+QString scriptName(const QString &id, qint64 pid = QCoreApplication::applicationPid())
+{
+    return QStringLiteral("seven-gadget-%1-%2").arg(id).arg(pid);
+}
+
 class Gadget : public QWidget
 {
 public:
@@ -485,9 +493,28 @@ public:
         } else {
             move(saved);
         }
+        if (!Win7KWin::wayland()) {
+            show();
+            KX11Extras::setState(winId(), NET::KeepBelow | NET::SkipTaskbar | NET::SkipPager);
+            KX11Extras::setOnAllDesktops(winId(), true);
+            return;
+        }
+        // Wayland: KWin places the gadget, keeps it below and off the taskbar, and reports where it was dragged
+        // (the gadget id is the window title, which nothing shows: no taskbar button, not in the switcher)
+        setWindowTitle(id);
         show();
-        KX11Extras::setState(winId(), NET::KeepBelow | NET::SkipTaskbar | NET::SkipPager);
-        KX11Extras::setOnAllDesktops(winId(), true);
+        const QPoint p = saved.x() < 0 ? QPoint(avail.right() - width() - 20, avail.top() + 20 + store().value(QStringLiteral("General/Count"), 0).toInt() * 30)
+                                       : saved;
+        QTimer::singleShot(0, this, [this, p]() {
+            Win7KWin::keepScript(scriptName(id), id,
+                                 QStringLiteral("w.keepBelow = true; w.skipTaskbar = true; w.skipPager = true; w.skipSwitcher = true; "
+                                                "w.onAllDesktops = true; w.frameGeometry = {x: %1, y: %2, width: w.frameGeometry.width, "
+                                                "height: w.frameGeometry.height}; w.interactiveMoveResizeFinished.connect(function () { "
+                                                "callDBus(\"org.sevenplasma.gadgets\", \"/Gadgets\", \"org.sevenplasma.Gadgets\", \"savePos\", t, "
+                                                "w.frameGeometry.x, w.frameGeometry.y); });")
+                                     .arg(p.x())
+                                     .arg(p.y()));
+        });
     }
 
     /** Off-screen rendering: sized, never shown on the desktop */
@@ -664,6 +691,15 @@ protected:
     void mouseMoveEvent(QMouseEvent *e) override
     {
         if (m_dragging) {
+            if (Win7KWin::wayland()) {
+                // clients cannot move themselves on Wayland: KWin drags it (and the script saves the place)
+                if ((e->globalPosition().toPoint() - m_dragStart).manhattanLength() > 3 && windowHandle()) {
+                    m_dragging = false;
+                    m_down = false;
+                    windowHandle()->startSystemMove();
+                }
+                return;
+            }
             move(e->globalPosition().toPoint() - m_dragOffset);
             return;
         }
@@ -2623,11 +2659,36 @@ Gadget *makeGadget(const QString &id)
     return nullptr;
 }
 
+/** org.sevenplasma.gadgets /Gadgets: KWin's script reports where a gadget was dragged (Wayland) */
+class GadgetBus : public QObject
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.sevenplasma.Gadgets")
+public Q_SLOTS:
+    Q_SCRIPTABLE void savePos(const QString &id, double x, double y) // numbers from JavaScript arrive as doubles
+    {
+        if (store().value(QStringLiteral("General/Gadgets")).toStringList().contains(id)) {
+            store().setValue(id + QStringLiteral("/Pos"), QPoint(qRound(x), qRound(y)));
+            store().sync();
+        }
+    }
+};
+
 class Manager : public QObject
 {
 public:
     Manager()
     {
+        if (Win7KWin::wayland()) {
+            // KWin keeps the scripts of the last run (and unloads them only later): drop them, ours carry our pid
+            const qint64 last = store().value(QStringLiteral("General/ScriptPid"), 0).toLongLong();
+            for (const QString &id : store().value(QStringLiteral("General/Gadgets")).toStringList()) {
+                Win7KWin::unload(scriptName(id, last));
+            }
+            store().setValue(QStringLiteral("General/ScriptPid"), QCoreApplication::applicationPid());
+            QDBusConnection::sessionBus().registerService(QStringLiteral("org.sevenplasma.gadgets"));
+            QDBusConnection::sessionBus().registerObject(QStringLiteral("/Gadgets"), &m_bus, QDBusConnection::ExportScriptableSlots);
+        }
         const QStringList ids = store().value(QStringLiteral("General/Gadgets")).toStringList();
         for (const QString &id : ids) {
             create(id);
@@ -2646,7 +2707,9 @@ public:
         m_gallery->show();
         m_gallery->raise();
         m_gallery->activateWindow();
-        KX11Extras::forceActiveWindow(m_gallery->winId());
+        if (!Win7KWin::wayland()) {
+            KX11Extras::forceActiveWindow(m_gallery->winId());
+        }
     }
 
     /** pos: where it was dropped from the gallery, (-1, -1) for the default spot */
@@ -2684,6 +2747,7 @@ private:
             store().setValue(QStringLiteral("General/Gadgets"), ids);
             store().remove(gadget->id);
             store().sync();
+            Win7KWin::unload(scriptName(gadget->id));
             m_gadgets.removeAll(gadget);
             gadget->deleteLater();
         };
@@ -2693,6 +2757,7 @@ private:
 
     QList<Gadget *> m_gadgets;
     QPointer<Gallery> m_gallery;
+    GadgetBus m_bus;
 };
 }
 
@@ -2781,3 +2846,5 @@ int main(int argc, char **argv)
     }
     return app.exec();
 }
+
+#include "main.moc"

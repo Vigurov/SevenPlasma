@@ -1,3 +1,4 @@
+#include "win7kwin.h"
 #include "win7i18n.h"
 /*
  * "Windows Task Manager" in the style of Windows 7, showing the real state of this Linux machine:
@@ -1161,10 +1162,9 @@ private:
         onTop->setCheckable(true);
         onTop->setChecked(true);
         connect(onTop, &QAction::toggled, this, [this](bool on) {
-            setWindowFlag(Qt::WindowStaysOnTopHint, on);
-            show();
+            Win7KWin::setKeepAbove(this, on);
         });
-        setWindowFlag(Qt::WindowStaysOnTopHint, true);
+        Win7KWin::setKeepAbove(this, true);
         QAction *minimize = options->addAction(tr7("Minimize On Use"));
         minimize->setCheckable(true);
         minimize->setChecked(true);

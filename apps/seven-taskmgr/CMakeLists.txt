@@ -5,11 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Widgets DBus LinguistTools)
 find_package(KF6WindowSystem REQUIRED)
 
 add_executable(seven-taskmgr main.cpp)
-target_link_libraries(seven-taskmgr PRIVATE Qt6::Widgets KF6::WindowSystem)
+target_link_libraries(seven-taskmgr PRIVATE Qt6::Widgets Qt6::DBus KF6::WindowSystem)
 
 install(TARGETS seven-taskmgr RUNTIME DESTINATION bin)
 

@@ -1,3 +1,4 @@
+#include "win7kwin.h"
 #include "win7i18n.h"
 /*
  * Windows Media Player 12 ("Програвач Windows Media") of Windows 7 for KDE: library mode and Now Playing mode,
@@ -2176,7 +2177,7 @@ private:
         m.addSeparator();
         auto *onTop = m.addAction(tr7("Always show Now Playing on top"));
         onTop->setCheckable(true);
-        onTop->setChecked(windowFlags() & Qt::WindowStaysOnTopHint);
+        onTop->setChecked(Win7KWin::keepAbove(this));
         m.addSeparator();
         auto *more = m.addAction(tr7("More options..."));
         m.addSeparator();
@@ -2214,9 +2215,7 @@ private:
         } else if (a == subsOff) {
             m_engine->player()->setActiveSubtitleTrack(-1);
         } else if (a == onTop) {
-            const bool on = !(windowFlags() & Qt::WindowStaysOnTopHint);
-            setWindowFlag(Qt::WindowStaysOnTopHint, on);
-            show();
+            Win7KWin::setKeepAbove(this, !Win7KWin::keepAbove(this));
         } else if (a == more) {
             options();
         }
@@ -2266,9 +2265,8 @@ private:
     void applyOptions()
     {
         const bool top = Opt::value(QStringLiteral("onTop"), false) && m_stack->currentWidget() == m_np;
-        if (bool(windowFlags() & Qt::WindowStaysOnTopHint) != top) {
-            setWindowFlag(Qt::WindowStaysOnTopHint, top);
-            show();
+        if (Win7KWin::keepAbove(this) != top) {
+            Win7KWin::setKeepAbove(this, top);
         }
     }
 
