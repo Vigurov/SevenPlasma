@@ -68,7 +68,7 @@ if (leaving) {
     tick = 0;
     fun refresh() {
         tick++;
-        f = Math.Int(tick * 30 / 50);      # the animation runs at 30 frames a second, refresh is 50 Hz
+        f = Math.Int(tick * 15 / 50);      # Windows 7 plays it at 15 frames a second (refresh is 50 Hz): 4 s to gather, 3 s a glow
         while (f >= 105) f = f - 45;
         logo.SetImage(frames[f]);
         a = (tick - 15) / 25;              # the text fades in shortly after the lights appear

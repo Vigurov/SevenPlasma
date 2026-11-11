@@ -1,0 +1,54 @@
+#!/bin/sh
+# The logon screen uses the system keyboard layouts, the session uses Plasma's (kxkbrc). Windows 7 keeps them
+# apart, but then a password typed in a language added later cannot be entered at logon. So every change of
+# the layouts (Region and Language, Plasma's settings, the language bar) is copied to the system.
+# Runs as root (system units seven-keyboard-sync.path/.service, at boot and whenever the file changes):
+#   seven-keyboard-sync /home/USER/.config/kxkbrc
+# Writes /etc/default/keyboard (read by the logon screen's X setup and the console) and the X server's
+# 00-keyboard.conf itself: Ubuntu's localed may not write X11 settings (ReadOnlyPaths in its x11-keyboard.conf).
+RC=$1
+[ -f "$RC" ] || exit 0
+val() { sed -n "/^\[Layout\]/,/^\[/{s/^$1=//p}" "$RC" | head -1; }
+ok() { [ -z "$1" ] || printf '%s\n' "$1" | grep -qx '[A-Za-z0-9_,:()+-]*'; }   # layout names only, nothing else gets written
+[ "$(val Use)" = true ] || exit 0                     # Plasma does not manage the layouts: nothing to copy
+layouts=$(val LayoutList); variants=$(val VariantList)
+[ -n "$layouts" ] || exit 0
+n=$(echo "$layouts" | tr ',' '\n' | wc -l)
+variants=$(echo "$variants," | cut -d, -f1-"$n")     # one variant per layout (may be empty)
+[ "$(echo "$variants" | tr -d ,)" = "" ] && variants=""
+grp=$(val Options | tr ',' '\n' | grep '^grp:' | paste -sd, -)
+
+KB=/etc/default/keyboard
+cur() { sed -n "s/^$1=\"\{0,1\}\([^\"]*\)\"\{0,1\}$/\1/p" "$KB" 2>/dev/null | head -1; }
+model=$(cur XKBMODEL); cur_l=$(cur XKBLAYOUT); cur_v=$(cur XKBVARIANT); cur_o=$(cur XKBOPTIONS)
+# switched with Plasma's own shortcut: keep the logon screen's switching keys
+[ -n "$grp" ] || grp=$(echo "$cur_o" | tr ',' '\n' | grep '^grp:' | paste -sd, -)
+[ -n "$grp" ] || grp=grp:alt_shift_toggle
+# other system options (not layout switching) stay as they are
+opts=$( (echo "$cur_o" | tr ',' '\n' | grep -v '^grp:'; echo "$grp" | tr ',' '\n') | grep -v '^$' | paste -sd, -)
+model=${model:-pc105}
+for v in "$layouts" "$variants" "$opts" "$model"; do ok "$v" || exit 1; done
+[ "$cur_l" = "$layouts" ] && [ "$cur_v" = "$variants" ] && [ "$cur_o" = "$opts" ] && exit 0
+
+if [ -f "$KB" ]; then
+    sed -e "s/^XKBMODEL=.*/XKBMODEL=\"$model\"/" -e "s/^XKBLAYOUT=.*/XKBLAYOUT=\"$layouts\"/" \
+        -e "s/^XKBVARIANT=.*/XKBVARIANT=\"$variants\"/" -e "s/^XKBOPTIONS=.*/XKBOPTIONS=\"$opts\"/" "$KB" > "$KB.new"
+else
+    printf 'XKBMODEL="%s"\nXKBLAYOUT="%s"\nXKBVARIANT="%s"\nXKBOPTIONS="%s"\nBACKSPACE="guess"\n' "$model" "$layouts" "$variants" "$opts" > "$KB.new"
+fi
+chmod 644 "$KB.new" && mv "$KB.new" "$KB"
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/00-keyboard.conf.new <<CONF
+# Written by seven-keyboard-sync (the layouts of the user, see /etc/default/keyboard)
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "$layouts"
+        Option "XkbModel" "$model"
+        Option "XkbVariant" "$variants"
+        Option "XkbOptions" "$opts"
+EndSection
+CONF
+chmod 644 /etc/X11/xorg.conf.d/00-keyboard.conf.new && mv /etc/X11/xorg.conf.d/00-keyboard.conf.new /etc/X11/xorg.conf.d/00-keyboard.conf
+systemctl try-restart systemd-localed.service 2>/dev/null || true   # so "localectl status" shows the new values
+echo "keyboard layouts: $layouts ($opts)"

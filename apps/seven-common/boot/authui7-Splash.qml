@@ -66,7 +66,7 @@ Item {
         id: statusText
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -36
-        statusText: "Ласкаво просимо"
+        statusText: i18nd("sevenplasma", "Welcome")
         speen: true
     }
 

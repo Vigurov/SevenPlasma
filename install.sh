@@ -278,6 +278,14 @@ run sudo install -D -m 644 "$B/seven-shutdown-hold.conf" /etc/systemd/system/sdd
 run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf
 run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf
 run sudo install -D -m 644 "$B/seven-stop-timeout.conf" /etc/systemd/system.conf.d/seven-stop-timeout.conf
+# the logon screen gets the same keyboard layouts as the user, now and whenever they change
+run sudo install -D -m 755 "$B/seven-keyboard-sync" /usr/local/libexec/seven-keyboard-sync
+for u in seven-keyboard-sync.path seven-keyboard-sync.service; do
+    subst "$B/$u" "$WORK/$u"; run sudo install -m 644 "$WORK/$u" /etc/systemd/system/$u
+done
+run sudo systemctl daemon-reload
+run sudo systemctl enable seven-keyboard-sync.path seven-keyboard-sync.service
+run sudo systemctl start seven-keyboard-sync.service || true
 printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
 run sudo install -D -m 644 "$WORK/zz-sevenplasma.conf" /etc/sddm.conf.d/zz-sevenplasma.conf
 # the logon screen preselects the last session: make it AeroThemePlasma on X11 (SevenPlasma is X11 only;

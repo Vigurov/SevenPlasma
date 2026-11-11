@@ -1,0 +1,10 @@
+[Unit]
+Description=Keyboard layouts of the logon screen follow the user's layouts
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/seven-keyboard-sync @HOME@/.config/kxkbrc
+
+[Install]
+WantedBy=multi-user.target

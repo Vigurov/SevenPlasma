@@ -1,0 +1,9 @@
+[Unit]
+Description=Keyboard layouts of the logon screen follow the user's layouts (watch kxkbrc)
+
+[Path]
+PathChanged=@HOME@/.config/kxkbrc
+Unit=seven-keyboard-sync.service
+
+[Install]
+WantedBy=multi-user.target

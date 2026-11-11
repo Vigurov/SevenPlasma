@@ -16,9 +16,10 @@ systemctl --user disable --now seven-folder-refresh.service seven-soundfx.servic
 rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME/.config/xdg-desktop-portal/kde-portals.conf" "$L"/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service "$HOME/.config/environment.d/60-sevenplasma.conf"
 kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
 echo "$(T "Системні частини (потрібен пароль):" "System parts (the password is needed):")"
+sudo systemctl disable --now seven-keyboard-sync.path seven-keyboard-sync.service 2>/dev/null || true
 sudo rm -f /usr/local/libexec/seven-* /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf \
     /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf /etc/systemd/system.conf.d/seven-stop-timeout.conf \
-    /etc/sddm.conf.d/zz-sevenplasma.conf /usr/share/xdg-desktop-portal/portals/seven.portal /usr/share/locale/*/LC_MESSAGES/sevenplasma.mo /usr/share/locale/*/LC_MESSAGES/plasma_applet_io.gitgud.wackyideas.SevenStart.mo
+    /etc/sddm.conf.d/zz-sevenplasma.conf /etc/systemd/system/seven-keyboard-sync.path /etc/systemd/system/seven-keyboard-sync.service /usr/share/xdg-desktop-portal/portals/seven.portal /usr/share/locale/*/LC_MESSAGES/sevenplasma.mo /usr/share/locale/*/LC_MESSAGES/plasma_applet_io.gitgud.wackyideas.SevenStart.mo
 sudo systemctl unmask plymouth-poweroff.service plymouth-reboot.service plymouth-halt.service
 if [ -d /usr/share/plymouth/themes/sevenplasma ]; then
     sudo rm -rf /usr/share/plymouth/themes/sevenplasma

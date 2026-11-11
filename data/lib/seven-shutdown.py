@@ -4,7 +4,7 @@
 then KDE is asked to log out and shut down / reboot.
 If the session does not end (a program asked to save something), the screen fades away again so the
 question can be answered.   Usage: seven-shutdown.py shutdown|reboot"""
-import os, subprocess, sys
+import ctypes, os, signal, subprocess, sys
 
 os.environ.pop('SESSION_MANAGER', None)        # stay out of the session: KDE must not close this window
 
@@ -18,7 +18,7 @@ if os.environ.get('SEVEN_SHUTDOWN_DETACHED') != '1' and len(sys.argv) > 1 and sy
             env += ['-E', '%s=%s' % (k, os.environ[k])]
     try:
         subprocess.run(['systemd-run', '--user', '--quiet', '--collect', '--unit=seven-shutdown-screen-%d' % os.getpid(),
-                        '-p', 'KillMode=process', '-p', 'TimeoutStopSec=60'] + env + [sys.executable, os.path.abspath(__file__)] + sys.argv[1:],
+                        '-p', 'KillMode=process', '-p', 'TimeoutStopSec=6'] + env + [sys.executable, os.path.abspath(__file__)] + sys.argv[1:],
                        check=True, timeout=10)
         sys.exit(0)
     except Exception:
@@ -26,6 +26,60 @@ if os.environ.get('SEVEN_SHUTDOWN_DETACHED') != '1' and len(sys.argv) > 1 and sy
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QPixmap, QPainter, QGuiApplication, QColor
 from PyQt6.QtWidgets import QApplication, QWidget
+
+
+class XWindowAttributes(ctypes.Structure):
+    _fields_ = [('x', ctypes.c_int), ('y', ctypes.c_int), ('width', ctypes.c_int), ('height', ctypes.c_int),
+                ('border_width', ctypes.c_int), ('depth', ctypes.c_int), ('visual', ctypes.c_void_p),
+                ('root', ctypes.c_ulong), ('c_class', ctypes.c_int), ('bit_gravity', ctypes.c_int),
+                ('win_gravity', ctypes.c_int), ('backing_store', ctypes.c_int), ('backing_planes', ctypes.c_ulong),
+                ('backing_pixel', ctypes.c_ulong), ('save_under', ctypes.c_int), ('colormap', ctypes.c_ulong),
+                ('map_installed', ctypes.c_int), ('map_state', ctypes.c_int), ('all_event_masks', ctypes.c_long),
+                ('your_event_mask', ctypes.c_long), ('do_not_propagate_mask', ctypes.c_long),
+                ('override_redirect', ctypes.c_int), ('screen', ctypes.c_void_p)]
+
+
+class OtherWindows:
+    """are windows of other programs still visible on the X screen (our own excepted)?"""
+    def __init__(self):
+        self.x = None
+        try:
+            self.x = ctypes.CDLL('libX11.so.6')
+            self.x.XOpenDisplay.restype = ctypes.c_void_p
+            self.x.XDefaultRootWindow.restype = ctypes.c_ulong
+            self.x.XDefaultRootWindow.argtypes = [ctypes.c_void_p]
+            self.x.XQueryTree.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ulong), ctypes.POINTER(ctypes.c_ulong),
+                                          ctypes.POINTER(ctypes.POINTER(ctypes.c_ulong)), ctypes.POINTER(ctypes.c_uint)]
+            self.x.XGetWindowAttributes.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.POINTER(XWindowAttributes)]
+            self.x.XFree.argtypes = [ctypes.c_void_p]
+            self.dpy = self.x.XOpenDisplay(None)
+            if not self.dpy:
+                self.x = None
+        except OSError:
+            self.x = None
+
+    def any(self, own, screen_w, screen_h):
+        if not self.x:
+            return False
+        root, parent = ctypes.c_ulong(), ctypes.c_ulong()
+        kids, n = ctypes.POINTER(ctypes.c_ulong)(), ctypes.c_uint()
+        if not self.x.XQueryTree(self.dpy, self.x.XDefaultRootWindow(self.dpy), ctypes.byref(root), ctypes.byref(parent),
+                                 ctypes.byref(kids), ctypes.byref(n)):
+            return False
+        found = False
+        a = XWindowAttributes()
+        for i in range(n.value):
+            w = kids[i]
+            if w in own or not self.x.XGetWindowAttributes(self.dpy, w, ctypes.byref(a)):
+                continue
+            # viewable, bigger than a tiny helper window and at least partly on the screen
+            if a.map_state == 2 and a.width * a.height > 400 and a.x < screen_w and a.y < screen_h \
+                    and a.x + a.width > 0 and a.y + a.height > 0:
+                found = True
+                break
+        if kids:
+            self.x.XFree(kids)
+        return found
 
 ASSETS = os.path.expanduser('~/src/seven-common/boot/shutdown')
 ACTION = sys.argv[1] if len(sys.argv) > 1 else 'shutdown'
@@ -53,6 +107,15 @@ class Screen(QWidget):
         # it closes (Steam, Discord, a "save changes?" question) would pop up over the shutdown screen
         if not self._held:
             self.raise_()
+            if ending['on']:
+                self.raise_timer_fast()
+
+    def raise_timer_fast(self):
+        # while the programs close one after another, keep on top every frame, not only every 50 ms
+        if not getattr(self, '_fast', None):
+            self._fast = QTimer(self)
+            self._fast.timeout.connect(self.raise_)
+            self._fast.start(10)
 
     _held = False
 
@@ -104,6 +167,40 @@ def give_up():
 
 
 state = {'seen': False, 'polls': 0, 'gone': False}
+ending = {'on': False, 'polls': 0, 'clear': 0}
+others = OtherWindows()
+
+
+def on_term(*_):
+    # The session is ending and systemd stops this screen together with all the programs. Going away now
+    # would uncover the windows of the programs that are still closing (Chrome, Discord...), and with
+    # "-background none" X keeps that last broken picture until it stops. So stay until no other window is
+    # left on the screen (at most ~4 s, systemd gives 6), then quit: X keeps this picture to the end.
+    if ending['on']:
+        return
+    ending['on'] = True
+    QTimer.singleShot(0, wait_others)
+
+
+def wait_others():
+    ending['polls'] += 1
+    own = {int(w.winId()) for w, _ in screens}
+    g = QGuiApplication.primaryScreen().geometry() if QGuiApplication.primaryScreen() else None
+    busy = others.any(own, g.width() if g else 1 << 15, g.height() if g else 1 << 15)
+    ending['clear'] = 0 if busy else ending['clear'] + 1
+    if ending['clear'] >= 3 or ending['polls'] >= 80:      # clear for 150 ms, or 4 s at most
+        try:                                               # how long the programs took (to tune the limit)
+            with open(os.path.expanduser('~/.cache/seven-shutdown.log'), 'a') as f:
+                f.write('waited %.2f s for the other windows%s\n' % (ending['polls'] * 0.05, '' if ending['clear'] >= 3 else ' (gave up)'))
+        except OSError:
+            pass
+        app.quit()
+        return
+    QTimer.singleShot(50, wait_others)
+
+
+signal.signal(signal.SIGTERM, on_term)
+signal.signal(signal.SIGHUP, on_term)
 
 
 def watch():

@@ -12,7 +12,7 @@ index 03f6cf7..2849693 100644
  SU_CMD=sudo
  if [[ -z "$(command -v $SU_CMD)" ]]; then
 diff --git a/plasma/look-and-feel/authui7/contents/splash/Splash.qml b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
-index 0d84d07..6a9cc62 100644
+index 0d84d07..887ac44 100644
 --- a/plasma/look-and-feel/authui7/contents/splash/Splash.qml
 +++ b/plasma/look-and-feel/authui7/contents/splash/Splash.qml
 @@ -23,6 +23,7 @@ import QtQuick.Controls
@@ -38,7 +38,7 @@ index 0d84d07..6a9cc62 100644
          anchors.centerIn: parent
          anchors.verticalCenterOffset: -36
 -        statusText: i18nd("okular", "Welcome")
-+        statusText: (Qt.uiLanguage.indexOf("uk") === 0 ? "Ласкаво просимо" : "Welcome")
++        statusText: i18nd("sevenplasma", "Welcome")
          speen: true
      }
  

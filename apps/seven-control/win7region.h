@@ -1204,6 +1204,7 @@ private:
 struct SystemLocale {
     QString lang;
     QStringList layouts, variants;
+    QString options;
 };
 
 inline SystemLocale systemLocale()
@@ -1219,6 +1220,10 @@ inline SystemLocale systemLocale()
     m = QRegularExpression(QStringLiteral("X11 Variant:\\s*(\\S+)")).match(status);
     if (m.hasMatch()) {
         s.variants = m.captured(1).split(QLatin1Char(','));
+    }
+    m = QRegularExpression(QStringLiteral("X11 Options:\\s*(\\S+)")).match(status);
+    if (m.hasMatch()) {
+        s.options = m.captured(1);
     }
     return s;
 }
@@ -1314,6 +1319,13 @@ public:
                     for (const QString &o : k.options) {
                         if (o.startsWith(QLatin1String("grp:"))) {
                             grp << o;
+                        }
+                    }
+                    if (grp.isEmpty()) { // switched with Plasma's own shortcut: keep the logon screen's switching keys
+                        for (const QString &o : systemLocale().options.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+                            if (o.startsWith(QLatin1String("grp:"))) {
+                                grp << o;
+                            }
                         }
                     }
                     run(QStringLiteral("localectl"),

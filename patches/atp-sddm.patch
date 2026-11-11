@@ -1,7 +1,7 @@
 diff --git a/plasma/sddm/sddm-theme-mod/Main.qml b/plasma/sddm/sddm-theme-mod/Main.qml
 old mode 100755
 new mode 100644
-index 59fe192..12f2a43
+index 59fe192..9692c2d
 --- a/plasma/sddm/sddm-theme-mod/Main.qml
 +++ b/plasma/sddm/sddm-theme-mod/Main.qml
 @@ -23,6 +23,35 @@ Item
@@ -40,7 +40,33 @@ index 59fe192..12f2a43
      enum LoginPage
      {
          Startup,
-@@ -46,6 +75,13 @@ Item
+@@ -42,12 +71,42 @@ Item
+         NeedsPasswordRole
+     }
+ 
++    // Windows 7 says "Welcome" as soon as Enter is pressed. The greeter is closed a moment after the password
++    // is accepted, so "Welcome" has to be on screen before the login starts: that frame is what stays
++    // (-background none) until the session's splash shows the same picture
++    function win7Login(user, pass, sessionIndex)
++    {
++        win7Welcome.visible = true
++        win7LoginTimer.user = user
++        win7LoginTimer.pass = pass
++        win7LoginTimer.sessionIndex = sessionIndex
++        win7LoginTimer.restart()
++    }
++
++    Timer
++    {
++        id: win7LoginTimer
++        property string user
++        property string pass
++        property int sessionIndex
++        interval: 80          // a few frames, so "Welcome" is painted before the greeter goes away
++        onTriggered: sddm.login(user, pass, sessionIndex)
++    }
++
+     Connections
      {
          target: sddm
  
@@ -53,8 +79,11 @@ index 59fe192..12f2a43
 +
          function onLoginFailed()
          {
++            win7Welcome.visible = false
              password.text = ""
-@@ -248,7 +284,7 @@ Item
+             pages.currentIndex = Main.LoginPage.LoginFailed
+         }
+@@ -248,7 +307,7 @@ Item
                      {
                          let realname = model.realName
                          let pic = model.icon
@@ -63,7 +92,16 @@ index 59fe192..12f2a43
  
                          if (needspassword)
                          {
-@@ -291,7 +327,7 @@ Item
+@@ -260,7 +319,7 @@ Item
+                         }
+                         else
+                         {
+-                            sddm.login(username, password.text, session.index)
++                            win7Login(username, password.text, session.index)
+                         }
+                     }
+                 }
+@@ -291,7 +350,7 @@ Item
  
                  session.addItem(menuitem);
                  menuitem = session.createMenuItem();
@@ -72,7 +110,7 @@ index 59fe192..12f2a43
                  menuitem.checkable = false;
                  menuitem.icon.source = Qt.resolvedUrl("Assets/keyboard.png");
                  menuitem.triggered.connect(() => {
-@@ -497,7 +533,7 @@ Item
+@@ -497,7 +556,7 @@ Item
                          {
                              let realname = userModel.data(userModel.index(index, 0), Main.UserRoles.RealNameRole)
                              let pic = userModel.data(userModel.index(index, 0), Main.UserRoles.IconRole)
@@ -81,7 +119,16 @@ index 59fe192..12f2a43
  
                              if (needspassword)
                              {
-@@ -661,7 +697,7 @@ Item
+@@ -509,7 +568,7 @@ Item
+                             }
+                             else
+                             {
+-                                sddm.login(username, password.text, session.index)
++                                win7Login(username, password.text, session.index)
+                             }
+                         }
+                     }
+@@ -661,7 +720,7 @@ Item
                              }
                          }
  
@@ -90,7 +137,16 @@ index 59fe192..12f2a43
                          selectByMouse: true
                          echoMode : TextInput.Password
                          inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
-@@ -724,7 +760,7 @@ Item
+@@ -688,7 +747,7 @@ Item
+ 
+                                 if (username != null)
+                                 {
+-                                    sddm.login(username, password.text, session.index)
++                                    win7Login(username, password.text, session.index)
+                                 }
+ 
+                                 event.accepted = true
+@@ -724,7 +783,7 @@ Item
                          QQC2.Label {
                              id: notificationsLabel
                              font.pointSize: 9
@@ -99,7 +155,16 @@ index 59fe192..12f2a43
                              width: implicitWidth
                              renderType: Text.NativeRendering
                              color: "white"
-@@ -796,7 +832,7 @@ Item
+@@ -755,7 +814,7 @@ Item
+ 
+                             if (username != null)
+                             {
+-                                sddm.login(username, password.text, session.index)
++                                win7Login(username, password.text, session.index)
+                             }
+                         }
+ 
+@@ -796,7 +855,7 @@ Item
  
                  //anchors.bottomMargin: 332
  
@@ -108,7 +173,7 @@ index 59fe192..12f2a43
                  height: 28
  
                  background: Image
-@@ -813,7 +849,7 @@ Item
+@@ -813,7 +872,7 @@ Item
  
                  contentItem: Text
                  {
@@ -117,7 +182,7 @@ index 59fe192..12f2a43
                      color: "white"
  
                      //font.family: mainfont.name
-@@ -890,7 +926,7 @@ Item
+@@ -890,7 +949,7 @@ Item
                  anchors.verticalCenterOffset: 126
                  anchors.horizontalCenterOffset: 14
  
@@ -126,7 +191,7 @@ index 59fe192..12f2a43
                  renderType: Text.NativeRendering
                  Layout.alignment: Qt.AlignHCenter
                  font.pointSize: 9
-@@ -937,7 +973,7 @@ Item
+@@ -937,7 +996,7 @@ Item
  
                  contentItem: Text
                  {
@@ -135,7 +200,7 @@ index 59fe192..12f2a43
                      color: "white"
  
                      //font.family: mainfont.name
-@@ -995,7 +1031,7 @@ Item
+@@ -995,7 +1054,7 @@ Item
              KeyNavigation.tab: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
              KeyNavigation.down: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
  
@@ -144,7 +209,7 @@ index 59fe192..12f2a43
              onClicked: currentIndex = (currentIndex + 1) % keyboard.layouts.length
  
              visible: keyboard.layouts.length > 1 && pages.currentIndex != Main.LoginPage.Startup
-@@ -1205,7 +1241,7 @@ Item
+@@ -1205,7 +1264,7 @@ Item
  
              QQC2.ToolTip.visible: hovered
              QQC2.ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
@@ -153,7 +218,7 @@ index 59fe192..12f2a43
          }
  
          QQC2.Button
-@@ -1262,31 +1298,31 @@ Item
+@@ -1262,31 +1321,31 @@ Item
  
                  Component.onCompleted: {
                      var menuitem = powerMenu.createMenuItem();
@@ -190,7 +255,7 @@ index 59fe192..12f2a43
                      menuitem.triggered.connect(() => { sddm.powerOff() });
                      powerMenu.addAction(menuitem);
                  }
-@@ -1394,4 +1430,66 @@ Item
+@@ -1394,4 +1453,66 @@ Item
          }
      }
  
