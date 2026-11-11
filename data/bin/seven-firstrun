@@ -5,6 +5,8 @@
 #   seven-firstrun [--now]   (--now: run even if it already ran)
 DONE=$HOME/.config/sevenplasma-firstrun.done
 [ "$1" = --now ] || [ ! -e "$DONE" ] || exit 0
+# only in the AeroThemePlasma session (logging in to plain Plasma first must not use up the first run)
+[ "$PLASMA_DEFAULT_SHELL" = io.gitgud.wackyideas.desktop ] || exit 0
 LOG=$HOME/.cache/sevenplasma-firstrun.log
 exec >> "$LOG" 2>&1
 echo "== $(date)"

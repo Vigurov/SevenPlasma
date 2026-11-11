@@ -23,6 +23,16 @@ GAMES=1
 FORKS=1
 YES=0
 JOBS=$(nproc)
+# the Plasma settings SevenPlasma changes (kept by the first install, put back by uninstall.sh)
+USER_CONFIG=(.config/kdeglobals .config/kwinrc .config/kwinrulesrc .config/plasmarc .config/ksplashrc .config/kcminputrc
+    .config/kscreenlockerrc .config/ksmserverrc .config/kglobalshortcutsrc .config/khotkeysrc .config/dolphinrc
+    .config/plasma-org.kde.plasma.desktop-appletsrc .config/plasma-io.gitgud.wackyideas.desktop-appletsrc .config/plasmashellrc
+    .config/plasma_workspace.notifyrc .config/plasmanotifyrc .config/kactivitymanagerd-statsrc .config/kicker-extra-favoritesrc
+    .config/aerothemeplasmarc .config/plasma-welcomerc .config/smodrc .config/breezerc .config/mimeapps.list .config/kded6rc
+    .config/systemsettingsrc .config/kxkbrc .config/plasma-localerc .config/kiorc .config/kaccessrc .config/klaunchrc
+    .config/kcmfonts .config/powerdevilrc .config/baloofilerc .config/kdedefaults .config/gtk-3.0 .config/gtk-4.0
+    .config/gtkrc .config/gtkrc-2.0 .config/xsettingsd/xsettingsd.conf .config/Kvantum/kvantum.kvconfig .gtkrc-2.0
+    .config/xdg-desktop-portal/kde-portals.conf .config/environment.d/60-sevenplasma.conf .local/share/kactivitymanagerd)
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -43,7 +53,11 @@ step() { STEP=$((STEP + 1)); printf '\n[%d/%d] %s\n' "$STEP" "$TOTAL" "$1"; echo
 run() { "$@" >> "$LOG" 2>&1; }
 note() { printf '      %s\n' "$*"; }
 warn() { printf '      ! %s\n' "$*"; }
-die() { printf "\n$(L 'Помилка' 'Error'): %s\n$(L 'Подробиці' 'Details'): %s\n" "$*" "$LOG"; exit 1; }
+die() {
+    # what this run already put into the system is recorded even when it stops half-way (for uninstall.sh)
+    if [ -n "${STAMP:-}" ] && declare -F record_system_files >/dev/null; then record_system_files; fi
+    printf "\n$(L 'Помилка' 'Error'): %s\n$(L 'Подробиці' 'Details'): %s\n" "$*" "$LOG"; exit 1
+}
 trap 'die "$(L "команда завершилася невдало (рядок $LINENO)" "a command failed (line $LINENO)")"' ERR
 
 # ------------------------------------------------------------------ checks
@@ -66,14 +80,58 @@ sudo -n true 2>/dev/null || sudo -v || die "$(L "потрібні права а�
 # keep sudo alive while building
 ( while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done ) 2>/dev/null &
 
+# ------------------------------------------------------------------ what was there before (for uninstall.sh)
+# The first install keeps the Plasma settings, the list of packages, the boot screen, the logon session, the
+# keyboard and account settings; every install records the files it puts into the system. uninstall.sh puts
+# everything back from this.
+BK=$HOME/.local/share/sevenplasma-backup
+STAMP=$WORK/run.stamp
+: > "$STAMP"
+mkdir -p "$BK"
+touch "$BK/system-files.txt" "$BK/user-files.txt"
+if [ ! -f "$BK/saved" ]; then
+    dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u > "$BK/packages-before.txt"
+    # Plasma settings the theme changes (restored at the first login after uninstall.sh, before Plasma starts)
+    : > "$BK/absent.txt"
+    keep=()
+    for f in "${USER_CONFIG[@]}"; do
+        if [ -e "$HOME/$f" ]; then keep+=("$f"); else echo "$f" >> "$BK/absent.txt"; fi
+    done
+    tar -C "$HOME" -czf "$BK/config.tar.gz" --ignore-failed-read "${keep[@]}" 2>> "$LOG" || true
+    printf '%s\n' "${keep[@]}" > "$BK/kept.txt"
+    # files under /usr of no package (generated caches...) are never removed by uninstall.sh
+    sudo find /usr -xdev \( -type f -o -type l \) 2>/dev/null | sudo python3 "$REPO/tools/sevenplasma-files.py" unowned \
+        | gzip > "$BK/usr-unowned-before.txt.gz"
+    S=$BK/system; mkdir -p "$S"
+    # the boot screen: Ubuntu chooses it with the default.plymouth alternative (auto or manual, and the file)
+    update-alternatives --query default.plymouth 2>/dev/null | awk '/^Status:/{print $2} /^Value:/{print $2}' > "$S/plymouth" || true
+    for f in /var/lib/sddm/state.conf /etc/default/keyboard /etc/X11/xorg.conf.d/00-keyboard.conf "/var/lib/AccountsService/users/$USER"; do
+        if sudo test -f "$f"; then sudo cat "$f" > "$S/$(echo "$f" | tr / _)"; else echo "$f" >> "$S/absent"; fi
+    done
+    sudo test -e "/var/lib/AccountsService/icons/$USER" || echo "/var/lib/AccountsService/icons/$USER" >> "$S/absent"
+    touch "$BK/saved"
+fi
+record_system_files() {   # every file this run put under /usr (cmake installs also record their manifests)
+    sudo find /usr -xdev -cnewer "$STAMP" \( -type f -o -type l \) 2>/dev/null >> "$BK/system-files.txt" || true
+    sort -u -o "$BK/system-files.txt" "$BK/system-files.txt"
+}
+
+retry() {   # network steps: up to 3 tries (a dropped connection is not the end of the install)
+    local i
+    for i in 1 2 3; do
+        "$@" >> "$LOG" 2>&1 && return 0
+        echo "retry $i: $*" >> "$LOG"; sleep 5
+    done
+    return 1
+}
 # pinned upstream versions the patches are made for: name url commit
 pin() { awk -v n="$1" '$1 == n {print $2, $3}' "$REPO/patches/BASES.txt"; }
 fetch() {   # fetch NAME DIR -> checkout of the pinned commit with our patch applied
     local name=$1 dir=$2 url commit
     read -r url commit < <(pin "$name")
-    if [ ! -d "$dir/.git" ]; then run git clone --filter=blob:none "$url" "$dir"; fi
-    run git -C "$dir" fetch --quiet origin
-    run git -C "$dir" checkout --quiet --force "$commit"
+    if [ ! -d "$dir/.git" ]; then retry git clone --filter=blob:none "$url" "$dir"; fi
+    retry git -C "$dir" fetch --quiet origin
+    retry git -C "$dir" checkout --quiet --force "$commit"   # fetches the files it needs
     run git -C "$dir" clean -fdq -e build -e 'build*'
     if [ -s "$REPO/patches/$name.patch" ]; then run git -C "$dir" apply --whitespace=nowarn "$REPO/patches/$name.patch"; fi
 }
@@ -91,6 +149,7 @@ cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and in
     mkdir -p "$build/bin/x11"   # the KWin effects link to bin/x11/NAME.so, but nothing creates that folder
     run cmake --build "$build" -j"$JOBS"
     run sudo cmake --install "$build"
+    { cat "$build/install_manifest.txt"; echo; } >> "$BK/system-files.txt" 2>/dev/null || true   # it has no last newline
 }
 
 # ------------------------------------------------------------------ 1. packages
@@ -116,6 +175,10 @@ PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unz
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && PKGS+=(wine)
 run sudo apt-get -o DPkg::Lock::Timeout=900 update
 run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
+# the packages installed for SevenPlasma (uninstall.sh offers to remove them again)
+dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u \
+    | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
+sort -u -o "$BK/packages-added.txt" "$BK/packages-added.txt"
 note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 2. AeroThemePlasma
@@ -128,7 +191,7 @@ for r in libplasma uac-polkit-agent smod aeroshell-workspace aeroshell-kwin-comp
 done
 # the icon and sound packs are AeroThemePlasma's own (Windows resources): installed from its repositories
 for r in aerothemeplasma-icons aerothemeplasma-sounds; do
-    [ -d "$WORK/atp/repos/$r/.git" ] || run git clone --depth 1 "https://gitgud.io/aeroshell/atp/$r" "$WORK/atp/repos/$r"
+    [ -d "$WORK/atp/repos/$r/.git" ] || retry git clone --depth 1 "https://gitgud.io/aeroshell/atp/$r" "$WORK/atp/repos/$r"
 done
 fetch aerothemeplasma "$WORK/atp/main"
 run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-local-overrides.patch"
@@ -191,6 +254,7 @@ for d in "$REPO"/apps/seven-*/; do
         run cmake -S "$d" -B "$WORK/build/$n" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME/.local" -DCMAKE_CXX_FLAGS="-I$WORK/src"
         run cmake --build "$WORK/build/$n" -j"$JOBS"
         run cmake --install "$WORK/build/$n"
+        { cat "$WORK/build/$n/install_manifest.txt"; echo; } >> "$BK/user-files.txt" 2>/dev/null || true
     fi
 done
 L=$HOME/.local
@@ -334,6 +398,7 @@ if [ -f "${PICS[0]}" ] && ! sudo grep -qs '^Icon=/' "$AS"; then
     fi
 fi
 run sudo systemctl daemon-reload
+record_system_files
 note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 7. settings
@@ -356,7 +421,10 @@ for m in text/plain text/x-log; do run xdg-mime default seven-notepad.desktop $m
 for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run xdg-mime default seven-photoviewer.desktop $m; done
 for m in video/mp4 video/x-matroska video/x-msvideo video/webm; do run xdg-mime default seven-wmp.desktop $m; done
 for m in font/ttf font/otf application/x-font-ttf; do run xdg-mime default seven-fontview.desktop $m; done
-if qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1; then
+# right now only inside the AeroThemePlasma session: in plain Plasma the taskbar, Start menu and wallpaper
+# settings would go to the other shell's layout
+PS=$(pgrep -u "$USER" -x plasmashell | head -1)
+if [ -n "$PS" ] && tr '\0' '\n' < "/proc/$PS/environ" 2>/dev/null | grep -qx 'PLASMA_DEFAULT_SHELL=io.gitgud.wackyideas.desktop'; then
     note "$(L "застосовую тему зараз" "applying the theme now")"
     run "$L/bin/seven-firstrun" --now
 else

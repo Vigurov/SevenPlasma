@@ -49,7 +49,9 @@ the same result). Without an image SevenPlasma installs with free replacements a
 ## Installation
 
 Tested on a clean **Kubuntu 26.04** (Plasma 6.6, KDE Frameworks 6.24, Dolphin 25.12, Kvantum 1.1.5), **X11**
-session.
+session. You need your Windows 7 image (`.iso`, see above) and an internet connection.
+
+**1.** Open a terminal (**Konsole**, in the application menu) and type these commands, pressing Enter after each:
 
 ```bash
 git clone https://github.com/Vigurov/SevenPlasma.git
@@ -57,16 +59,71 @@ cd SevenPlasma
 ./install.sh --iso ~/Downloads/Windows7.iso
 ```
 
-The script asks for your administrator password, installs packages, builds AeroThemePlasma, the patched
-Dolphin / KIO / Kvantum and the programs, and extracts the resources from the image (10–40 minutes). Then
-restart the computer: the logon screen already has the "AeroThemePlasma (X11)" session selected, and the theme
-applies itself at the first login, with no wizards or questions.
+Instead of `~/Downloads/Windows7.iso` write where your image is. When the installer asks
+`Continue? [Y/n]`, press Enter, then type your password (the terminal shows nothing while you type it).
+
+![Starting the installer](docs/images/install-1-start.png)
+
+**2.** The installer installs packages, builds AeroThemePlasma, the patched Dolphin / KIO / Kvantum and the
+programs, and takes the Windows 7 resources from your image. This takes **10–40 minutes**. When it says
+`Done`, restart the computer.
+
+![The installer has finished](docs/images/install-2-done.png)
+
+**3.** The logon screen is now the Windows 7 one, with the "AeroThemePlasma (X11)" session already selected.
+Type your password and press Enter.
+
+![The logon screen](docs/images/install-3-logon.png)
+
+**4.** The first login sets everything up by itself (wallpaper, taskbar, Start menu, effects), with no wizards
+or questions.
+
+![The desktop after the first login](docs/images/install-4-desktop.png)
 
 Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions).
 If the Dolphin / KIO / Kvantum versions on your system differ from the tested ones, those parts are skipped
-with a warning. The installer speaks Ukrainian on a Ukrainian system and English otherwise.
+with a warning. The installer speaks Ukrainian on a Ukrainian system and English otherwise. If it stops
+(for example the internet connection dropped), just run `./install.sh` again.
 
-To remove: `./uninstall.sh`.
+## Removing
+
+`./uninstall.sh` puts the computer back the way it was before the install:
+
+- SevenPlasma's programs, resources and services are removed;
+- the files of AeroThemePlasma and of the patched Dolphin / KIO / Kvantum / libplasma are removed, and the
+  original packages of your distribution are reinstalled;
+- the boot screen, the logon screen and session, the keyboard and account settings are as before;
+- your Plasma settings from before the install (theme, panel, wallpaper, shortcuts...) come back at the next
+  login. Changes you made to them while SevenPlasma was installed are not kept;
+- if you agree, the packages installed only for building SevenPlasma are removed too. Updates of system
+  packages the installer brought in stay.
+
+**1.** Open a terminal in the SevenPlasma folder and start the uninstaller. Press Enter to confirm, then type
+your password:
+
+```bash
+cd SevenPlasma
+./uninstall.sh
+```
+
+![Starting the uninstaller](docs/images/uninstall-1-start.png)
+
+**2.** It asks whether to remove the packages installed for building SevenPlasma, then shows the list:
+press Enter both times (or answer `n` to keep them).
+
+![Removing the build packages](docs/images/uninstall-2-packages.png)
+
+**3.** When it says `Done`, restart the computer.
+
+![The uninstaller has finished](docs/images/uninstall-3-done.png)
+
+**4.** The logon screen and session are your usual ones again, and your Plasma settings come back when you
+log in.
+
+![Back to the usual logon screen](docs/images/uninstall-4-back.png)
+
+The state from before the install is kept in `~/.local/share/sevenplasma-backup` (made by the first
+`install.sh`; installs made with an older version have none, then only SevenPlasma's own files are removed).
 
 ## Repository layout
 
