@@ -7,4 +7,3 @@ Comment[uk]=Гучність пристрою та окремих програм
 Exec=seven-control --sndvol
 Icon=seven-sndvol
 NoDisplay=true
-StartupWMClass=seven-control

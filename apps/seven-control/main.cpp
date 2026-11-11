@@ -1835,7 +1835,8 @@ private:
 };
 }
 
-#include <xcb/xcb.h>
+#define WIN7_WINDOWCLASS_XCB
+#include "win7windowclass.h"
 
 int runKRunner(); // sevenrunner.cpp
 
@@ -2436,11 +2437,7 @@ int main(int argc, char **argv)
         app.setDesktopFileName(QStringLiteral("seven-control"));
         Win7Users::NetplwizDialog d;
         // a Windows 7 dialog frame: no icon, no minimise / maximise (smodrc exception ^seven-dialog)
-        if (auto *x11 = app.nativeInterface<QNativeInterface::QX11Application>()) {
-            static const char wmClass[] = "seven-dialog\0seven-control";
-            xcb_change_property(x11->connection(), XCB_PROP_MODE_REPLACE, d.winId(), XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, sizeof(wmClass), wmClass);
-        }
-        return d.exec() == QDialog::Accepted ? 0 : 1;
+        return Win7WindowClass::exec(&d, "seven-dialog", "seven-control") == QDialog::Accepted ? 0 : 1;
     }
     const int browseArg = app.arguments().indexOf(QStringLiteral("--browse-folder"));
     if (browseArg > 0) {                                   // Windows 7 "Browse For Folder"; prints the chosen folder
@@ -2558,12 +2555,8 @@ int main(int argc, char **argv)
                                                        : Win7Power::PlansView);
     }
     // Windows 7 hosts the Control Panel in Explorer, whose frame shows neither an icon nor a title. Give this
-    // window its own WM_CLASS instance so the decoration exception (smodrc, ^seven-cpanel) hides both, while the
-    // dialogs it starts keep their captions; the taskbar still maps it through _KDE_NET_WM_DESKTOP_FILE
-    if (auto *x11 = app.nativeInterface<QNativeInterface::QX11Application>()) {
-        static const char wmClass[] = "seven-cpanel\0seven-control";
-        xcb_change_property(x11->connection(), XCB_PROP_MODE_REPLACE, w.winId(), XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, sizeof(wmClass), wmClass);
-    }
-    w.show();
+    // window its own class so the decoration exception (smodrc, ^seven-cpanel) hides both, while the dialogs it
+    // starts keep their captions; the taskbar maps it through _KDE_NET_WM_DESKTOP_FILE (X11) or seven-cpanel.desktop
+    Win7WindowClass::show(&w, "seven-cpanel", "seven-control");
     return app.exec();
 }

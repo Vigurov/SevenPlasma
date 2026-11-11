@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=SevenPlasma
+Exec=seven-control
+Icon=seven-cpi-controlpanel
+OnlyShowIn=X-SevenPlasma-Hidden;
+# the window class of Windows 7 style dialogs on Wayland (smodrc: no icon, no minimise / maximise): taskbar entry (NoDisplay entries are skipped by the taskbar, OnlyShowIn hides it from menus)

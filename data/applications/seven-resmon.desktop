@@ -7,4 +7,3 @@ Comment[uk]=Відстеження використання ЦП, пам'яті,
 Exec=seven-taskmgr --resmon
 Icon=seven-resmon
 Categories=System;Monitor;
-StartupWMClass=seven-taskmgr

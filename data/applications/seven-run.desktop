@@ -8,4 +8,3 @@ Exec=seven-control --run
 Icon=seven-run
 NoDisplay=true
 X-KDE-Shortcuts=Meta+R
-StartupWMClass=seven-control

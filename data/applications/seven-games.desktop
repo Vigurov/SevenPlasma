@@ -7,4 +7,3 @@ Comment[uk]=Перегляд і запуск ігор, установлених 
 Exec=seven-control --games
 Icon=seven-games
 Categories=Game;
-StartupWMClass=seven-control

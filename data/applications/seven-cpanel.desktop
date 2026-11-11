@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Control Panel
+Name[uk]=Панель керування
+Exec=seven-control
+Icon=seven-cpi-controlpanel
+OnlyShowIn=X-SevenPlasma-Hidden;
+# the window class of the Control Panel window on Wayland (smodrc hides its caption and icon): taskbar entry (NoDisplay entries are skipped by the taskbar, OnlyShowIn hides it from menus)
