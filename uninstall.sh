@@ -108,6 +108,18 @@ if [ -d "$S" ]; then
 fi
 echo "$(T "Оновлюю initramfs (заставка завантаження)..." "Updating the initramfs (boot screen)...")"
 [ $PM = apt ] && { sudo update-initramfs -u >> "$LOG" 2>&1 || true; }
+# Arch with --boot-splash: the initramfs hooks, kernel options and Plymouth settings as before
+if [ -s "$BK/system/boot-files" ]; then
+    while IFS= read -r f; do
+        c=$BK/system/boot$(echo "$f" | tr / _)
+        [ -f "$c" ] && sudo install -m "$(sudo stat -c %a "$f" 2>/dev/null || echo 644)" "$c" "$f"
+    done < "$BK/system/boot-files"
+    grep -qxF /etc/plymouth/plymouthd.conf "$BK/system/absent" 2>/dev/null && sudo rm -f /etc/plymouth/plymouthd.conf
+    if grep -qxF /etc/default/grub "$BK/system/boot-files" && command -v grub-mkconfig >/dev/null; then
+        sudo grub-mkconfig -o /boot/grub/grub.cfg >> "$LOG" 2>&1 || true
+    fi
+    sudo mkinitcpio -P >> "$LOG" 2>&1 || true
+fi
 sudo systemctl daemon-reload
 sudo fc-cache -f >/dev/null 2>&1
 

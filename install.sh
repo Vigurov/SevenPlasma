@@ -8,6 +8,8 @@
 #              is part of SevenPlasma). Without it the theme still installs, with free replacements.
 # --no-games   do not install the Windows 7 games (they need Wine)
 # --no-forks   do not build the patched Dolphin / KIO / Kvantum (Explorer look, Windows 7 file dialogs)
+# --boot-splash  Arch: also turn on the "Starting Windows" boot screen (adds Plymouth to the initramfs and
+#              "quiet splash" to the kernel options of GRUB or systemd-boot; uninstall.sh puts them back)
 #
 # Tested on Kubuntu 26.04 (Plasma 6.6, X11 session) and Arch Linux (Plasma 6.8, Wayland session).
 set -Eeuo pipefail
@@ -21,6 +23,7 @@ LOG=$WORK/install.log
 ISO=""
 GAMES=1
 FORKS=1
+BOOTSPLASH=0
 YES=0
 JOBS=$(nproc)
 # the Plasma settings SevenPlasma changes (kept by the first install, put back by uninstall.sh)
@@ -39,8 +42,9 @@ while [ $# -gt 0 ]; do
         --iso) ISO=$(readlink -f "$2"); shift 2 ;;
         --no-games) GAMES=0; shift ;;
         --no-forks) FORKS=0; shift ;;
+        --boot-splash) BOOTSPLASH=1; shift ;;
         --yes|-y) YES=1; shift ;;
-        -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "$(L "Невідомий параметр: $1 (див. ./install.sh --help)" "Unknown option: $1 (see ./install.sh --help)")"; exit 1 ;;
     esac
 done
@@ -358,6 +362,42 @@ else
 fi
 note "$(L "готово" "done")"
 
+# Arch: Plymouth in the initramfs, "quiet splash" for the kernel, our theme. Every file is kept first (the
+# first time only), uninstall.sh puts them back.
+boot_splash_arch() {
+    local S=$BK/system f e changed=0
+    for f in /etc/mkinitcpio.conf /etc/default/grub /etc/plymouth/plymouthd.conf /boot/loader/entries/*.conf /efi/loader/entries/*.conf; do
+        [ -f "$f" ] || continue
+        e=$S/boot$(echo "$f" | tr / _)
+        [ -e "$e" ] || sudo cat "$f" > "$e"
+        grep -qxF "$f" "$S/boot-files" 2>/dev/null || echo "$f" >> "$S/boot-files"
+    done
+    sudo test -f /etc/plymouth/plymouthd.conf || { grep -qxF /etc/plymouth/plymouthd.conf "$S/absent" 2>/dev/null || echo /etc/plymouth/plymouthd.conf >> "$S/absent"; }
+    # the hook right after systemd / udev (it must come before the disk hooks)
+    if ! grep -qE '^HOOKS=.*\bplymouth\b' /etc/mkinitcpio.conf; then
+        run sudo sed -i -E '/^HOOKS=/ s/\b(systemd|udev)\b/\1 plymouth/' /etc/mkinitcpio.conf
+    fi
+    grep -qE '^HOOKS=.*\bplymouth\b' /etc/mkinitcpio.conf || { warn "$(L "не вдалося додати plymouth у /etc/mkinitcpio.conf" "could not add plymouth to /etc/mkinitcpio.conf")"; return 0; }
+    if [ -f /etc/default/grub ] && command -v grub-mkconfig >/dev/null; then
+        for o in quiet splash; do
+            grep -qE "^GRUB_CMDLINE_LINUX_DEFAULT=.*\b$o\b" /etc/default/grub || { run sudo sed -i -E "s/^(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*)\"/\1 $o\"/" /etc/default/grub; changed=1; }
+        done
+        [ $changed = 1 ] && run sudo grub-mkconfig -o /boot/grub/grub.cfg
+    elif ls /boot/loader/entries/*.conf /efi/loader/entries/*.conf >/dev/null 2>&1; then
+        for f in /boot/loader/entries/*.conf /efi/loader/entries/*.conf; do
+            [ -f "$f" ] || continue
+            for o in quiet splash; do
+                grep -qE "^options.*\b$o\b" "$f" || run sudo sed -i -E "s/^(options.*)$/\1 $o/" "$f"
+            done
+        done
+    else
+        warn "$(L "завантажувач не знайдено: додайте «quiet splash» до параметрів ядра самі" "no boot loader found: add \"quiet splash\" to the kernel options yourself")"
+    fi
+    run sudo plymouth-set-default-theme sevenplasma
+    note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
+    run sudo mkinitcpio -P
+}
+
 # ------------------------------------------------------------------ 6. boot, logon, shutdown
 step "$(L "Завантаження, вхід і завершення роботи" "Boot, logon and shutdown")"
 B=$REPO/apps/seven-common/boot
@@ -410,6 +450,13 @@ if [ $PM = apt ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plym
     run sudo plymouth-set-default-theme sevenplasma || run sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth 200
     note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
     run sudo update-initramfs -u
+fi
+if [ $PM = pacman ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
+    if [ $BOOTSPLASH = 1 ]; then
+        boot_splash_arch
+    else
+        note "$(L "заставку завантаження можна ввімкнути: ./install.sh --boot-splash (змінює налаштування завантаження)" "the boot screen can be turned on with ./install.sh --boot-splash (changes the boot settings)")"
+    fi
 fi
 printf '[portal]\nDBusName=org.freedesktop.impl.portal.desktop.win7\nInterfaces=org.freedesktop.impl.portal.AppChooser\nUseIn=KDE\n' \
     | run sudo install -D -m 644 /dev/stdin /usr/share/xdg-desktop-portal/portals/seven.portal
