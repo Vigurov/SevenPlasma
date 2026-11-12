@@ -4513,9 +4513,16 @@ index 3c89f98a9..ae6e35f98 100644
              // Successfully attached to existing instance of Dolphin
              return 0;
 diff --git a/src/org.kde.dolphin.desktop b/src/org.kde.dolphin.desktop
-index 7700446c2..2fc8daf22 100755
+index 7700446c2..3f9e541e6 100755
 --- a/src/org.kde.dolphin.desktop
 +++ b/src/org.kde.dolphin.desktop
+@@ -1,5 +1,5 @@
+ [Desktop Entry]
+-Name=Dolphin
++Name=Windows Explorer
+ Name[ar]=دولفين
+ Name[ast]=Dolphin
+ Name[az]=Dolphin
 @@ -18,7 +18,6 @@ Name[et]=Dolphin
  Name[eu]=Dolphin
  Name[fi]=Dolphin
@@ -4533,6 +4540,15 @@ index 7700446c2..2fc8daf22 100755
  Name[vi]=Dolphin
  Name[zh_CN]=Dolphin 文件管理器
  Name[zh_TW]=Dolphin
+@@ -67,7 +66,7 @@ Icon=org.kde.dolphin
+ Type=Application
+ X-DocPath=dolphin/index.html
+ Categories=Qt;KDE;System;FileTools;FileManager;
+-GenericName=File Manager
++GenericName=Windows Explorer
+ GenericName[ar]=مدير ملفّات
+ GenericName[ast]=Xestor de ficheros
+ GenericName[az]=Fayl meneceri
 @@ -86,7 +85,6 @@ GenericName[et]=Failihaldur
  GenericName[eu]=Fitxategi-kudeatzailea
  GenericName[fi]=Tiedostonhallinta
