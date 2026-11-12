@@ -806,7 +806,7 @@ inline QWidget *buildSeePage(const Nav &nav)
     p->text(tr7("Magnifier zooms in anywhere on the screen. You can move Magnifier around, lock it in one place, or resize it."));
     p->section(tr7("Make things on the screen easier to see"));
     p->link(tr7("Adjust the color and transparency of the window borders"), [] { Win7Display::openWindowColor(); });
-    p->link(tr7("Fine tune display effects"), [] { launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_colors")}); });
+    p->link(tr7("Fine tune display effects"), [] { launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_colors")}); });
     p->deadCheck(tr7("Make the focus rectangle thicker"));
     auto *caret = new QWidget;
     auto *ch = new QHBoxLayout(caret);
@@ -1492,7 +1492,7 @@ public:
         help->setIconSize(QSize(16, 16));
         connect(in, &QToolButton::clicked, this, [this] { zoom(+1); });
         connect(out, &QToolButton::clicked, this, [this] { zoom(-1); });
-        connect(opts, &QToolButton::clicked, this, [] { launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_access")}); });
+        connect(opts, &QToolButton::clicked, this, [] { launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_access")}); });
         connect(help, &QToolButton::clicked, this, [this] {
             QMessageBox::information(this, windowTitle(),
                                      tr7("Magnifier enlarges the part of the screen around the mouse pointer.\n\nZoom in: Windows + \"+\" or the \"+\" button.\nZoom out: Windows + \"−\" or the \"−\" button.\nWhen Magnifier closes, the zoom goes back to 100%."));

@@ -989,7 +989,7 @@ inline bool showProperties(QWidget *parent, const Tile &t)
 
     // VPN connections are edited by the KDE editor, they have too many plugin specific settings
     if (t.kind == Tile::Vpn) {
-        launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_networkmanagement")});
+        launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_networkmanagement")});
         return false;
     }
 
@@ -2652,7 +2652,7 @@ inline QWidget *mapNode(const QString &icon, const QString &text)
 
 inline void openNetworkSettings()
 {
-    launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_networkmanagement")});
+    launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_networkmanagement")});
 }
 
 /** Windows 7 "Connect to a network" / "Connect or disconnect": the list of networks pops up from the tray icon.
@@ -2898,7 +2898,7 @@ inline QWidget *buildCenterPage(const Nav &nav)
         launch(QStringLiteral("dolphin"), {QStringLiteral("smb:/")});
     }, sideColor));
     sv->addWidget(new Link(tr7("Internet Options"), [] {
-        launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_proxy")});
+        launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_proxy")});
     }, sideColor));
     sv->addWidget(new Link(tr7("Windows Firewall", "link"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--firewall")});

@@ -1,0 +1,42 @@
+#!/bin/sh
+# SevenPlasma: KDE's System Settings, wherever it is opened from (an applet's "Configure...", a key, the
+# search, another program), goes to the Windows 7 Control Panel page of the same thing. Installed as
+# ~/.local/bin/systemsettings and kcmshell6 (first on the PATH); our own code calls /usr/bin/kcmshell6
+# for the few KDE pages Windows 7 has no window for.
+m=
+for a in "$@"; do
+    case "$a" in
+        -*) ;;
+        *) m=${a%.desktop}; m=${m#kcm_}; break ;;
+    esac
+done
+cpl() { exec seven-control "$@"; }
+case "$m" in
+    access|plasmakeyboard|virtualkeyboard) cpl --ease ;;
+    autostart|smserver) exec /usr/bin/kcmshell6 kcm_autostart ;;
+    baloofile|recentFiles) cpl --indexing ;;
+    bluetooth|printer_manager|solid_actions|gamecontroller|tablet|touchscreen|kamera|bolt) cpl --devices ;;
+    clock) cpl --datetime ;;
+    colord|kgamma) cpl --colormgmt ;;
+    colors|lookandfeel|desktoptheme|style|icons|wallpaper|splashscreen|kwindecoration*|aerotheme|smoddecoration|breezedecoration|oxygendecoration|qtquicksettings) cpl --personalize ;;
+    componentchooser|filetypes|kwinrules*|kwin_scripts*|webshortcuts|kded) cpl --page 5 ;;
+    cursortheme|mouse|touchpad) cpl --mouse ;;
+    updates) cpl --windows-update ;;
+    disks|about-distro|energyinfo) exec seven-system ;;
+    firewall) cpl --firewall ;;
+    fonts|fontinst) cpl --fonts ;;
+    keyboard|keys) cpl --keyboard ;;
+    kscreen|nightlight|nighttime) cpl --resolution ;;
+    kwin_effects*|animations*|kwinoptions*|workspace) cpl --visualfx ;;
+    networkmanagement|netpref|cellular_network|mobile_*|push_notifications) cpl --net-center ;;
+    notifications|notificationhelper) cpl --tray-icons ;;
+    powerdevil*|mobile_power) cpl --power ;;
+    proxy) cpl --inetopts ;;
+    pulseaudio|soundtheme|audiocd) cpl --sound ;;
+    regionandlang|formats|translations) cpl --region ;;
+    screenlocker) cpl --screensaver-settings ;;
+    sddm|aeroshellsddm|plymouth|users) cpl --page 6 ;;
+    trash) cpl --trash-props ;;
+    plasmasearch|krunnersettings) cpl --indexing ;;
+    *) cpl ;;
+esac

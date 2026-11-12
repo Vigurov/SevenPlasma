@@ -380,7 +380,7 @@ inline QWidget *buildEditPage(int planIdx, const Nav &nav)
     cv->addSpacing(32);
 
     cv->addWidget(new Link(tr7("Change advanced power settings"), [] {
-        launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_powerdevilprofilesconfig")});
+        launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_powerdevilprofilesconfig")});
     }));
     cv->addSpacing(12);
     auto *restore = new Link(tr7("Restore default settings for this plan"), nullptr);

@@ -316,7 +316,7 @@ inline QWidget *advancedPage(QWidget *dialog)
          }},
         {tr7("Startup and Recovery"), tr7("System startup, system failure, and debugging information"), 136,
          [] {
-             launch(QStringLiteral("systemsettings"), {QStringLiteral("kcm_grub2")});
+             launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kcm_grub2")});
          }},
     };
     for (const Box &b : boxes) {

@@ -1,0 +1,3 @@
+#!/bin/sh
+# SevenPlasma: KDE's Info Center ("About this System") is the Windows 7 System window
+exec seven-system

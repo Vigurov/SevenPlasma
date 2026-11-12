@@ -160,7 +160,7 @@ std::function<void()> editActivePlan()
 std::function<void()> kcm(const QString &module)
 {
     return [module] {
-        launch(QStringLiteral("systemsettings"), {module});
+        launch(QStringLiteral("/usr/bin/kcmshell6"), {module});
     };
 }
 
@@ -197,7 +197,7 @@ std::function<void()> adminTools()
             {"Windows Memory Diagnostic", "Check your computer for memory problems", self + QStringLiteral(" --memtest"), "seven-at-memtest"},
             {"Disk Management", "Create, delete and format disk partitions", self + QStringLiteral(" --diskmgmt"), "seven-at-disks"},
             {"Computer Management", "Hardware and system information", self + QStringLiteral(" --compmgmt"), "seven-at-compmgmt"},
-            {"System Configuration", "Programs that start when you log on", QStringLiteral("systemsettings kcm_autostart"), "seven-at-msconfig"},
+            {"System Configuration", "Programs that start when you log on", QStringLiteral("/usr/bin/kcmshell6 kcm_autostart"), "seven-at-msconfig"},
             {"Event Viewer", "View system and program logs", self + QStringLiteral(" --eventvwr"), "seven-at-events"},
             {"Performance Monitor", "Monitor the performance of your computer", QStringLiteral("plasma-systemmonitor"), "seven-at-perfmon"},
         };

@@ -76,12 +76,12 @@ inline QString run(const QString &exe, const QStringList &args, int timeoutMs = 
 
 inline void systemSettings(const QString &kcm)
 {
-    launch(QStringLiteral("systemsettings"), {kcm});
+    launch(QStringLiteral("/usr/bin/kcmshell6"), {kcm});
 }
 
 inline void openWindowColor()
 {
-    launch(QStringLiteral("kcmshell6"), {QStringLiteral("kwin/effects/configs/kwin_aeroglassblur_config")});
+    launch(QStringLiteral("/usr/bin/kcmshell6"), {QStringLiteral("kwin/effects/configs/kwin_aeroglassblur_config")});
 }
 
 /** Win+P, "Connect to a projector" (win7displayswitch.h, in its own process like DisplaySwitch.exe) */
