@@ -15049,5 +15049,9 @@ WantedBy=timers.target
         <source>— Received</source>
         <translation>— Отримано</translation>
     </message>
+    <message>
+        <source>Could not connect to KWin's input. On-Screen Keyboard will not be able to type.</source>
+        <translation>Не вдалося під'єднатися до введення KWin. Екранна клавіатура не зможе друкувати.</translation>
+    </message>
 </context>
 </TS>

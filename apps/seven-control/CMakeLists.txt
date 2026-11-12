@@ -17,6 +17,8 @@ foreach(fw Auth Config Service Solid IconThemes FrameworkIntegration WindowSyste
     find_package(KF6${fw} REQUIRED) # needed by AeroQt's exported target
 endforeach()
 find_package(AeroQt REQUIRED)
+# On-Screen Keyboard on Wayland: KWin's fake input (optional: the X11 build types with XTest)
+find_package(KWayland QUIET)
 
 add_executable(seven-control main.cpp sevenrunner.cpp win7safelyremove.h)
 target_include_directories(seven-control PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../seven-common)
@@ -30,3 +32,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../seven-devmgr/i18n/uk.ts ${CMAKE_CU
 # the shared headers (win7chrome.h) bring their own translations as common_<lang>
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../seven-common/i18n/common_uk.ts ${CMAKE_CURRENT_BINARY_DIR}/common_uk.ts COPYONLY)
 qt_add_translations(seven-control TS_FILES ${CMAKE_CURRENT_BINARY_DIR}/common_uk.ts i18n/uk.ts ${CMAKE_CURRENT_BINARY_DIR}/devmgr_uk.ts RESOURCE_PREFIX /i18n LUPDATE_TARGET seven-control_lupdate_unused)
+if(TARGET Plasma::KWaylandClient)
+    target_link_libraries(seven-control PRIVATE Plasma::KWaylandClient)
+    target_compile_definitions(seven-control PRIVATE WIN7_FAKEINPUT)
+endif()

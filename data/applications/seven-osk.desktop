@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=On-Screen Keyboard
+Name[uk]=Екранна клавіатура
+Comment=Displays a keyboard that is controlled by a mouse or switch input device.
+Comment[uk]=Відображення клавіатури, якою можна керувати мишею або іншим вказівним пристроєм.
+Exec=seven-control --osk
+Icon=seven-osk
+Categories=Utility;Accessibility;
+# KWin lets only programs that ask for it here type into other windows on Wayland
+X-KDE-Wayland-Interfaces=org_kde_kwin_fake_input

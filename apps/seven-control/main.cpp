@@ -1836,6 +1836,10 @@ private:
 }
 
 #include "win7kwin.h"
+#include <QDBusMessage>
+#include <QDBusConnection>
+#include <KConfigGroup>
+#include <KConfig>
 #define WIN7_WINDOWCLASS_XCB
 #include "win7windowclass.h"
 
@@ -2309,7 +2313,32 @@ int main(int argc, char **argv)
     }
     if (app.arguments().contains(QStringLiteral("--osk"))) {
         app.setDesktopFileName(QStringLiteral("seven-osk"));
-        (new Win7Access::KeyboardWindow)->show();
+        if (Win7KWin::wayland()) {
+            // Wayland: a click must not take the focus from the window being typed into, and Windows 7 keeps
+            // the keyboard above the others; clients cannot ask for either, so a KWin rule for our app id does
+            KConfig rules(QStringLiteral("kwinrulesrc"));
+            KConfigGroup general = rules.group(QStringLiteral("General"));
+            QStringList ids = general.readEntry("rules", QString()).split(QLatin1Char(','), Qt::SkipEmptyParts);
+            const QString id = QStringLiteral("seven-osk");
+            if (!ids.contains(id)) {
+                KConfigGroup r = rules.group(id);
+                r.writeEntry("Description", QStringLiteral("On-Screen Keyboard (SevenPlasma)"));
+                r.writeEntry("wmclass", id);
+                r.writeEntry("wmclassmatch", 1);
+                r.writeEntry("acceptfocus", false);
+                r.writeEntry("acceptfocusrule", 2);
+                r.writeEntry("above", true);
+                r.writeEntry("aboverule", 2);
+                ids << id;
+                general.writeEntry("rules", ids.join(QLatin1Char(',')));
+                general.writeEntry("count", ids.size());
+                rules.sync();
+                QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
+                                                                                  QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
+            }
+        }
+        auto *osk = new Win7Access::KeyboardWindow;
+        osk->show();
         return app.exec();
     }
     if (app.arguments().contains(QStringLiteral("--magnifier"))) {

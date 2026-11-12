@@ -18,6 +18,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7kwin.h"
+#ifdef WIN7_FAKEINPUT
+#include <KWayland/Client/connection_thread.h>
+#include <KWayland/Client/fakeinput.h>
+#include <KWayland/Client/registry.h>
+#endif
 #include "win7i18n.h"
 
 #include "win7chrome.h"
@@ -39,7 +45,9 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMessageBox>
+#include <QLinearGradient>
 #include <QPainter>
+#include <QPolygonF>
 #include <QPainterPath>
 #include <QProcess>
 #include <QPushButton>
@@ -1629,6 +1637,13 @@ public:
     }
     bool ok() const
     {
+        if (Win7KWin::wayland()) {
+#ifdef WIN7_FAKEINPUT
+            return m_dpy && m_keycode; // the keycodes come from Xwayland's keymap (evdev, like KWin's)
+#else
+            return false;
+#endif
+        }
         return m_dpy && m_fake && m_keycode && m_flush;
     }
     void key(unsigned long keysym, bool press)
@@ -1637,13 +1652,52 @@ public:
             return;
         }
         const unsigned char code = m_keycode(m_dpy, keysym);
-        if (code) {
-            m_fake(m_dpy, code, press, 0);
-            m_flush(m_dpy);
+        if (!code) {
+            return;
         }
+#ifdef WIN7_FAKEINPUT
+        if (Win7KWin::wayland()) {
+            // Wayland: XTest would only reach X11 programs; KWin's fake input protocol types into any window
+            // (allowed for seven-osk.desktop); X keycodes are Linux keycodes + 8
+            if (FakeInput *f = fakeInput()) {
+                press ? f->input->requestKeyboardKeyPress(code - 8) : f->input->requestKeyboardKeyRelease(code - 8);
+                f->connection->flush();
+            }
+            return;
+        }
+#endif
+        m_fake(m_dpy, code, press, 0);
+        m_flush(m_dpy);
     }
 
 private:
+#ifdef WIN7_FAKEINPUT
+    struct FakeInput {
+        KWayland::Client::ConnectionThread *connection = nullptr;
+        KWayland::Client::FakeInput *input = nullptr;
+    };
+    static FakeInput *fakeInput()
+    {
+        static FakeInput *f = [] {
+            auto *fi = new FakeInput;
+            fi->connection = KWayland::Client::ConnectionThread::fromApplication(qApp);
+            if (!fi->connection) {
+                return fi;
+            }
+            auto *registry = new KWayland::Client::Registry(qApp);
+            registry->create(fi->connection);
+            registry->setup();
+            fi->connection->roundtrip(); // the globals are announced now
+            const auto iface = registry->interface(KWayland::Client::Registry::Interface::FakeInput);
+            if (iface.name) {
+                fi->input = registry->createFakeInput(iface.name, iface.version, qApp);
+                fi->input->authenticate(QStringLiteral("On-Screen Keyboard"), QStringLiteral("Typing with the on-screen keyboard"));
+            }
+            return fi;
+        }();
+        return f->input ? f : nullptr;
+    }
+#endif
     void *m_dpy = nullptr;
     unsigned char (*m_keycode)(void *, unsigned long) = nullptr;
     int (*m_flush)(void *) = nullptr;
@@ -1730,10 +1784,12 @@ public:
         setMouseTracking(true);
         const QString dir = QDir::homePath() + QStringLiteral("/.local/share/seven-control/osk/");
         for (const char *n : {"normal", "hover", "pressed"}) {
-            m_tex.insert(QString::fromLatin1(n), QPixmap(dir + QStringLiteral("key-%1.png").arg(QString::fromLatin1(n))));
+            QPixmap t(dir + QStringLiteral("key-%1.png").arg(QString::fromLatin1(n)));
+            m_tex.insert(QString::fromLatin1(n), t.isNull() ? drawnKey(QString::fromLatin1(n)) : t);
         }
         for (const char *n : {"flag", "menu", "enter", "up", "down", "left", "right"}) {
-            m_glyph.insert(QString::fromLatin1(n), QImage(dir + QStringLiteral("glyph-%1.png").arg(QString::fromLatin1(n))));
+            QImage g(dir + QStringLiteral("glyph-%1.png").arg(QString::fromLatin1(n)));
+            m_glyph.insert(QString::fromLatin1(n), g.isNull() ? drawnGlyph(QString::fromLatin1(n)) : g);
         }
         auto k = [](const char *l, unsigned long sym, double w = 1, const char *sh = "", bool mod = false) {
             return OskKey{QString::fromUtf8(l), QString::fromUtf8(sh), sym, w, mod, false};
@@ -1769,7 +1825,7 @@ public:
         m_labelTimer.start();
         if (!m_x.ok()) {
             QTimer::singleShot(0, this, [this] {
-                QMessageBox::warning(this, windowTitle(), tr7("Could not connect to X11 (XTest). On-Screen Keyboard will not be able to type."));
+                QMessageBox::warning(this, windowTitle(), Win7KWin::wayland() ? tr7("Could not connect to KWin's input. On-Screen Keyboard will not be able to type.") : tr7("Could not connect to X11 (XTest). On-Screen Keyboard will not be able to type."));
             });
         }
     }
@@ -1807,6 +1863,79 @@ protected:
         t.scale(s, s);
         return t;
     }
+    /** the key face of osk.exe drawn by us (38x35, 9-sliced like the pictures; used when they are not there):
+     *  black rim, grey top light, dark grey to near-black body; hover is dark blue, pressed white */
+    static QPixmap drawnKey(const QString &state)
+    {
+        QPixmap pm(38, 35);
+        pm.fill(Qt::transparent);
+        QPainter p(&pm);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(QPen(Qt::black, 1));
+        QLinearGradient g(0, 0, 0, 35);
+        if (state == QLatin1String("pressed")) {
+            g.setColorAt(0, Qt::white);
+            g.setColorAt(1, Qt::white);
+        } else if (state == QLatin1String("hover")) {
+            g.setColorAt(0, QColor(59, 59, 59));
+            g.setColorAt(0.15, QColor(53, 53, 53));
+            g.setColorAt(0.3, QColor(7, 10, 27));
+            g.setColorAt(1, QColor(2, 4, 19));
+        } else {
+            g.setColorAt(0, QColor(59, 59, 59));
+            g.setColorAt(0.5, QColor(42, 42, 42));
+            g.setColorAt(0.92, QColor(7, 7, 7));
+            g.setColorAt(1, QColor(30, 30, 30));
+        }
+        p.setBrush(g);
+        p.drawRoundedRect(QRectF(0.5, 0.5, 37, 34), 3, 3);
+        if (state != QLatin1String("pressed")) {
+            p.setPen(QPen(QColor(145, 145, 145), 1));
+            p.drawLine(QPointF(3, 1.5), QPointF(35, 1.5)); // the light on the top edge
+        }
+        return pm;
+    }
+
+    /** the key symbols (white on transparent, tinted when drawn) when their pictures are not there */
+    static QImage drawnGlyph(const QString &name)
+    {
+        const QSize size = name == QLatin1String("enter") ? QSize(40, 12) : name == QLatin1String("flag") || name == QLatin1String("menu") ? QSize(17, 17) : QSize(12, 11);
+        QImage img(size, QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter p(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(QPen(Qt::white, 1.4));
+        p.setBrush(Qt::white);
+        const double w = size.width(), h = size.height();
+        if (name == QLatin1String("up") || name == QLatin1String("down") || name == QLatin1String("left") || name == QLatin1String("right")) {
+            QPolygonF tri;
+            if (name == QLatin1String("up")) tri << QPointF(w / 2, 1) << QPointF(w - 1, h - 1) << QPointF(1, h - 1);
+            if (name == QLatin1String("down")) tri << QPointF(1, 1) << QPointF(w - 1, 1) << QPointF(w / 2, h - 1);
+            if (name == QLatin1String("left")) tri << QPointF(1, h / 2) << QPointF(w - 1, 1) << QPointF(w - 1, h - 1);
+            if (name == QLatin1String("right")) tri << QPointF(1, 1) << QPointF(w - 1, h / 2) << QPointF(1, h - 1);
+            p.drawPolygon(tri);
+        } else if (name == QLatin1String("enter")) {
+            p.setBrush(Qt::NoBrush);
+            p.drawLine(QPointF(w - 2, 1), QPointF(w - 2, h / 2));
+            p.drawLine(QPointF(w - 2, h / 2), QPointF(4, h / 2));
+            p.setBrush(Qt::white);
+            p.drawPolygon(QPolygonF() << QPointF(1, h / 2) << QPointF(6, h / 2 - 4) << QPointF(6, h / 2 + 4));
+        } else if (name == QLatin1String("menu")) {
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(QRectF(2, 1.5, w - 4, h - 3));
+            for (int i = 0; i < 3; ++i) {
+                p.drawLine(QPointF(5, 5 + i * 3.5), QPointF(w - 5, 5 + i * 3.5));
+            }
+        } else if (name == QLatin1String("flag")) { // four panes, like the Windows key
+            p.setPen(Qt::NoPen);
+            p.drawRect(QRectF(2, 2, 6, 6));
+            p.drawRect(QRectF(9, 2, 6, 6));
+            p.drawRect(QRectF(2, 9, 6, 6));
+            p.drawRect(QRectF(9, 9, 6, 6));
+        }
+        return img;
+    }
+
     void drawKey(QPainter &p, const QRectF &r, const QPixmap &tex)
     {
         // 9-slice of the genuine 38x35 key image: 6 px corners
