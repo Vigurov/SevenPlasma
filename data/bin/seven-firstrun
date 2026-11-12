@@ -53,9 +53,14 @@ kw dolphinrc ContentDisplay UseShortRelativeDates false
 kw plasma_workspace.notifyrc Event/deviceAdded Action Sound
 kw plasma_workspace.notifyrc Event/deviceRemoved Action Sound
 # Print = Snipping Tool (Meta+R = Run, Meta+E = Explorer come from the sevenkeys KWin script)
-kw kglobalshortcutsrc "services][seven-snip.desktop" _launch Print
-kw kglobalshortcutsrc "services][org.kde.spectacle.desktop" _launch none
-kw kglobalshortcutsrc "services][org.kde.dolphin.desktop" _launch none
+# Through kglobalaccel itself: it keeps its shortcuts in memory and writes kglobalshortcutsrc over what
+# kwriteconfig puts there while the session runs. Spectacle takes Print and Meta+R first otherwise.
+gk() { gdbus call --session --dest org.kde.kglobalaccel --object-path /kglobalaccel \
+       --method org.kde.KGlobalAccel.setForeignShortcutKeys "[\"$1\",\"$2\",\"\",\"\"]" "$3" >/dev/null 2>&1 || true; }
+for a in _launch RecordRegion; do gk org.kde.spectacle.desktop $a "@a(ai) []"; done
+gk org.kde.dolphin.desktop _launch "@a(ai) []"
+gk seven-snip.desktop _launch "[([16777225,0,0,0],)]"     # Print
+gk seven-run.desktop _launch "[([268435538,0,0,0],)]"     # Meta+R
 # Start menu: Run opens our dialog
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
 panels().forEach(function (p) { p.widgets().forEach(function (w) {

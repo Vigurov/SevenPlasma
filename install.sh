@@ -193,7 +193,7 @@ APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-vir
        baloo-widgets polkit-qt6 python-pyqt6 python-pillow 7zip fontconfig freetype2 kio kparts kxmlgui knotifications
        kglobalaccel kwindowsystem kiconthemes kcmutils kitemmodels ktextwidgets kuserfeedback kdoctools plasma-activities-stats
        plymouth xorg-xrandr spectacle)
-[ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine)
+[ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine gst-plugins-base gst-plugins-good gst-libav)   # the games' sounds go through GStreamer
 if [ $PM = apt ]; then
     run sudo apt-get -o DPkg::Lock::Timeout=900 update
     run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
@@ -518,9 +518,15 @@ printf '[Desktop Entry]\nType=Application\nName=SevenPlasma\nExec=%s/bin/seven-f
 # window decoration exceptions (smodrc): Gadgets, file dialogs, Explorer and Control Panel frames, dialogs
 cp "$REPO/data/smodrc" "$HOME/.config/smodrc"
 mkdir -p "$HOME/.config/environment.d"
+printf 'GTK_USE_PORTAL=1\n' > "$HOME/.config/environment.d/60-sevenplasma.conf"
 # our programs are in ~/.local/bin: Ubuntu's ~/.profile puts it on the PATH, Arch's does not (the session
-# then finds none of them: "Could not find program")
-printf 'GTK_USE_PORTAL=1\nPATH=$HOME/.local/bin:${PATH}\n' > "$HOME/.config/environment.d/60-sevenplasma.conf"
+# then finds none of them: "Could not find program"). Not in environment.d: startplasma takes the PATH of
+# the login shell and overwrites systemd's; Plasma runs plasma-workspace/env/*.sh before it does that.
+mkdir -p "$HOME/.config/plasma-workspace/env"
+cat > "$HOME/.config/plasma-workspace/env/sevenplasma-path.sh" <<'EOF2'
+# SevenPlasma: our programs are in ~/.local/bin
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
+EOF2
 # default programs
 for m in text/plain text/x-log; do run xdg-mime default seven-notepad.desktop $m || true; done
 for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run xdg-mime default seven-photoviewer.desktop $m || true; done

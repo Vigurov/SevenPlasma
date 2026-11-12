@@ -4,6 +4,7 @@ Name=Snipping Tool
 Name[uk]=Ножиці
 Comment=Captures a screenshot of the whole screen or a part of it.
 Comment[uk]=Захоплення знімка екрана або його частини
+X-KDE-Shortcuts=Print
 Exec=seven-snip
 Icon=seven-snippingtool
 Categories=Utility;
