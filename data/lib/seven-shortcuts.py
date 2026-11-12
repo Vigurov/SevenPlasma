@@ -36,6 +36,13 @@ SET = {
     ('org.kde.krunner.desktop', '_launch'): [16777362],              # only the Search key
     ('systemsettings.desktop', '_launch'): [16777457],               # Tools key -> Control Panel (wrapper)
     ('org_kde_powerdevil', 'powerProfile'): [16777470],              # the Battery key, not Win+B
+    # KDE has these first on a fresh system (Quick Tile Top / Bottom): freed above, then given back
+    ('kwin', 'Win7 Maximize'): [285212691],                          # Win+Up
+    ('kwin', 'Win7 Restore or Minimize'): [285212693],               # Win+Down
+    ('kwin', 'Win7 Maximize Vertically'): [318767123],               # Win+Shift+Up
+    ('kwin', 'Win7 Shake'): [285212688],                             # Win+Home
+    ('kwin', 'Window Quick Tile Left'): [285212690],                 # Win+Left
+    ('kwin', 'Window Quick Tile Right'): [285212692],                # Win+Right
 }
 OURS = ('seven-', 'seven_', 'win7-', 'win7_')
 # ours, bound here so they do not depend on what KDE had first
@@ -43,6 +50,11 @@ OWN = {
     'calc': ('calc', [16777419]),                                    # Calculator key
     'ease-key': ('ease-key', [268435541]),                           # Win+U: Ease of Access Center
     'display-switch': ('display-switch', [268435536, 16777425]),     # Win+P and the Display key
+    'computer-key': ('computer-key', [268435525]),                   # Win+E (Dolphin has it first)
+    'run': ('run', [268435538]),                                     # Win+R
+    'snip': ('snip', [16777225]),                                    # Print
+    'taskmgr': ('taskmgr', [117440512]),                             # Ctrl+Shift+Esc
+    'system': ('system', [285212680]),                               # Win+Pause
 }
 
 
@@ -87,9 +99,11 @@ def main():
         set_keys(comp, action, [])
     for name, keys in OWN.values():
         set_keys('%s%s.desktop' % (prefix, name), '_launch', keys)
-    # again: a key freed above (Alt+Space from KRunner) could not be given away before
+    # again: a key freed above (Alt+Space from KRunner, Win+E from Dolphin) could not be given away before
     for (comp, action), keys in SET.items():
         set_keys(comp, action, keys)
+    for name, keys in OWN.values():
+        set_keys('%s%s.desktop' % (prefix, name), '_launch', keys)
 
 
 if __name__ == '__main__':
