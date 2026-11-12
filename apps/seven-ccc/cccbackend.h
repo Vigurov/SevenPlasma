@@ -15,6 +15,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
+#include <QGuiApplication>
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -626,13 +627,146 @@ struct CrtcGamma {
 };
 }
 
+/* Wayland: no client may set gamma ramps there. The same ramps go into an ICC display profile as its "vcgt"
+ * (video card gamma table), which KWin loads into the output when the profile is set with kscreen-doctor;
+ * the default colours bring back the output's previous profile setting. */
+namespace Icc
+{
+inline void be32(QByteArray &b, quint32 v)
+{
+    b.append(char(v >> 24)).append(char(v >> 16)).append(char(v >> 8)).append(char(v));
+}
+inline void be16(QByteArray &b, quint16 v)
+{
+    b.append(char(v >> 8)).append(char(v));
+}
+inline void s15(QByteArray &b, double v)
+{
+    be32(b, quint32(qint32(qRound(v * 65536.0))));
+}
+inline QByteArray xyz(double x, double y, double z)
+{
+    QByteArray t("XYZ ");
+    be32(t, 0);
+    s15(t, x), s15(t, y), s15(t, z);
+    return t;
+}
+/** an ICC v2 sRGB-like display profile (gamma 2.2) carrying the gamma ramps of c */
+inline QByteArray profile(const Color &c)
+{
+    QList<QPair<QByteArray, QByteArray>> tags;
+    QByteArray desc("desc");
+    be32(desc, 0);
+    const QByteArray name("SevenPlasma display colour");
+    be32(desc, name.size() + 1);
+    desc.append(name).append('\0');
+    be32(desc, 0), be32(desc, 0), be16(desc, 0), desc.append(QByteArray(67, '\0'));
+    tags.append({"desc", desc});
+    QByteArray cprt("text");
+    be32(cprt, 0);
+    cprt.append("No copyright, made by SevenPlasma").append('\0');
+    tags.append({"cprt", cprt});
+    tags.append({"wtpt", xyz(0.9642, 1.0, 0.8249)});
+    tags.append({"rXYZ", xyz(0.4361, 0.2225, 0.0139)});
+    tags.append({"gXYZ", xyz(0.3851, 0.7169, 0.0971)});
+    tags.append({"bXYZ", xyz(0.1431, 0.0606, 0.7141)});
+    QByteArray curv("curv");
+    be32(curv, 0), be32(curv, 1), be16(curv, 0x0233); // gamma 2.2 (u8Fixed8)
+    tags.append({"rTRC", curv}), tags.append({"gTRC", curv}), tags.append({"bTRC", curv});
+    QByteArray vcgt("vcgt");
+    be32(vcgt, 0), be32(vcgt, 0) /* table */, be16(vcgt, 3), be16(vcgt, 256), be16(vcgt, 2);
+    for (int ch = 0; ch < 3; ++ch) {
+        for (int k = 0; k < 256; ++k) {
+            be16(vcgt, quint16(qBound(0.0, ramp(c, ch, k / 255.0), 1.0) * 65535 + 0.5));
+        }
+    }
+    tags.append({"vcgt", vcgt});
+    // header, tag table, data (4-byte aligned)
+    QByteArray table, data;
+    int offset = 128 + 4 + 12 * tags.size();
+    for (const auto &t : tags) {
+        QByteArray d = t.second;
+        while (d.size() % 4) {
+            d.append('\0');
+        }
+        table.append(t.first);
+        be32(table, offset), be32(table, t.second.size());
+        data.append(d);
+        offset += d.size();
+    }
+    QByteArray h;
+    be32(h, 128 + 4 + table.size() + data.size());
+    be32(h, 0), be32(h, 0x02100000);
+    h.append("mntrRGB XYZ ");
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    for (int v : {now.date().year(), now.date().month(), now.date().day(), now.time().hour(), now.time().minute(), now.time().second()}) {
+        be16(h, quint16(v));
+    }
+    h.append("acsp");
+    be32(h, 0), be32(h, 0), be32(h, 0), be32(h, 0), be32(h, 0), be32(h, 0), be32(h, 0) /* rendering intent */;
+    s15(h, 0.9642), s15(h, 1.0), s15(h, 0.8249);
+    be32(h, 0);
+    h.append(QByteArray(128 - h.size(), '\0'));
+    QByteArray all = h;
+    be32(all, tags.size());
+    all.append(table).append(data);
+    return all;
+}
+}
+
+inline bool applyColorWayland(const QString &name, const Color &c)
+{
+    QSettings &s = store();
+    const QString prevKey = QStringLiteral("WaylandPreviousIcc/") + name;
+    const QString dir = QDir::homePath() + QStringLiteral("/.local/share/seven-ccc");
+    QStringList args;
+    if (c.isDefault()) {
+        if (!s.contains(prevKey)) {
+            return true; // ours was never set
+        }
+        const QString prev = s.value(prevKey).toString();
+        s.remove(prevKey);
+        args = prev.isEmpty() ? QStringList{QStringLiteral("output.%1.colorProfileSource.sRGB").arg(name)}
+                              : QStringList{QStringLiteral("output.%1.iccprofile.%2").arg(name, prev), QStringLiteral("output.%1.colorProfileSource.ICC").arg(name)};
+        QFile::remove(dir + QStringLiteral("/%1-0.icc").arg(name));
+        QFile::remove(dir + QStringLiteral("/%1-1.icc").arg(name));
+    } else {
+        if (!s.contains(prevKey)) { // remember the profile the output had before ours
+            const QJsonObject doc = QJsonDocument::fromJson(run(QStringLiteral("kscreen-doctor"), {QStringLiteral("-j")}).toUtf8()).object();
+            QString prev;
+            for (const QJsonValue &v : doc.value(QStringLiteral("outputs")).toArray()) {
+                if (v.toObject().value(QStringLiteral("name")).toString() == name) {
+                    prev = v.toObject().value(QStringLiteral("iccProfilePath")).toString();
+                }
+            }
+            s.setValue(prevKey, prev.startsWith(dir) ? QString() : prev);
+        }
+        QDir().mkpath(dir);
+        // a new file name each time: KWin reloads a profile only when the path changes
+        static int serial = 0;
+        const QString file = dir + QStringLiteral("/%1-%2.icc").arg(name).arg(++serial % 2);
+        QFile f(file);
+        if (!f.open(QIODevice::WriteOnly)) {
+            return false;
+        }
+        f.write(Icc::profile(c));
+        f.close();
+        args = {QStringLiteral("output.%1.iccprofile.%2").arg(name, file), QStringLiteral("output.%1.colorProfileSource.ICC").arg(name)};
+    }
+    s.sync();
+    return QProcess::execute(QStringLiteral("kscreen-doctor"), args) == 0;
+}
+
 /* Set the gamma ramp of the CRTC that drives the X11 output called name (kscreen output names match the
- * XRandR ones on X11). Returns false when not on X11 or XRandR is missing. */
+ * XRandR ones on X11). On Wayland: an ICC profile with these ramps (applyColorWayland). */
 inline bool applyColor(const QString &name, const Color &c)
 {
+    if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")) || qEnvironmentVariable("XDG_SESSION_TYPE") == QLatin1String("wayland")) {
+        return applyColorWayland(name, c);
+    }
     static void *x11 = dlopen("libX11.so.6", RTLD_LAZY);
     static void *xr = dlopen("libXrandr.so.2", RTLD_LAZY);
-    if (!x11 || !xr || qEnvironmentVariable("XDG_SESSION_TYPE") == QLatin1String("wayland")) {
+    if (!x11 || !xr) {
         return false;
     }
     using OpenDisplay = void *(*)(const char *);
