@@ -66,6 +66,10 @@ gk seven-display-switch.desktop _launch "[([268435536,0,0,0],)]"   # ...Meta+P i
 # everything else KDE binds that Windows 7 has not (Win+Esc, Win+I, Win+W, Alt+Space search...) goes off
 python3 "$HOME/.local/lib/sevenplasma/seven-shortcuts.py" || true
 "$HOME/.local/bin/seven-gpu-panels" || true    # the vendor panels only for the GPUs that are there
+# the Windows Experience Index, like Windows 7 rates a new computer in its first idle minutes: a few minutes
+# after this first login, at low priority (System then shows the base score instead of "not available")
+systemd-run --user --quiet --collect --on-active=3min --unit=seven-winsat-first \
+    nice -n 19 ionice -c 3 "$HOME/.local/bin/seven-control" --winsat >/dev/null 2>&1 || true
 # no KDE crash dialog (DrKonqi): Plasma restarts its shell by itself, the dialog is KDE's own look
 systemctl --user mask --now drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 # no Discover "Updates" gear in the tray: Windows 7 tells about updates through the Action Center flag

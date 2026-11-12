@@ -32388,5 +32388,17 @@
 "from": "help-asset",
 "member": "assets/641dd3b4-2c0b-41f5-8718-ef30001686cd.jpg",
 "dest": "seven-control/helppane/website.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 407,
+"crop": [
+0,
+0,
+16,
+16
+],
+"dest": "icons/hicolor/16x16/actions/seven-explorer-search.png"
 }
 ]

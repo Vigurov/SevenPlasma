@@ -15,6 +15,7 @@
 
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QGraphicsDropShadowEffect>
 #include <QDir>
 #include <QHBoxLayout>
 #include <QLineEdit>
@@ -251,6 +252,14 @@ public:
         options->setMenu(menu);
         options->setPopupMode(QToolButton::InstantPopup);
         tl->addWidget(options);
+        // text on glass: black with a white glow, as Windows 7 draws it
+        for (QToolButton *b : {ask, options}) {
+            auto *glow = new QGraphicsDropShadowEffect(b);
+            glow->setColor(QColor(255, 255, 255, 230));
+            glow->setOffset(0, 0);
+            glow->setBlurRadius(10);
+            b->setGraphicsEffect(glow);
+        }
         tv->addLayout(tl);
         auto *sl0 = new QHBoxLayout;
         m_search = new QLineEdit(top);
