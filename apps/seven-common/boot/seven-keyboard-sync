@@ -19,6 +19,13 @@ variants=$(echo "$variants," | cut -d, -f1-"$n")     # one variant per layout (m
 grp=$(val Options | tr ',' '\n' | grep '^grp:' | paste -sd, -)
 
 KB=/etc/default/keyboard
+if [ ! -f "$KB" ]; then
+    # not Debian / Ubuntu (Arch...): localed keeps the X11 layouts (in /etc/vconsole.conf) and may write them
+    cur=$(LC_ALL=C localectl status)
+    [ "$(echo "$cur" | sed -n 's/^ *X11 Layout: *//p')" = "$layouts" ] && [ "$(echo "$cur" | sed -n 's/^ *X11 Variant: *//p')" = "$variants" ] && exit 0
+    for v in "$layouts" "$variants" "$grp"; do ok "$v" || exit 1; done
+    exec localectl set-x11-keymap "$layouts" "" "$variants" "${grp:-grp:alt_shift_toggle}"
+fi
 cur() { sed -n "s/^$1=\"\{0,1\}\([^\"]*\)\"\{0,1\}$/\1/p" "$KB" 2>/dev/null | head -1; }
 model=$(cur XKBMODEL); cur_l=$(cur XKBLAYOUT); cur_v=$(cur XKBVARIANT); cur_o=$(cur XKBOPTIONS)
 # switched with Plasma's own shortcut: keep the logon screen's switching keys

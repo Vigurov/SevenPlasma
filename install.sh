@@ -424,9 +424,9 @@ run sudo systemctl daemon-reload
 run sudo systemctl enable seven-keyboard-sync.path seven-keyboard-sync.service
 run sudo systemctl start seven-keyboard-sync.service || true
 if [ $WAYLAND = 0 ]; then
-    printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
+    printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\nCursorTheme=aero-drop\nCursorSize=32\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
 else   # the logon screen on Wayland, in KWin (as Plasma's own logon settings set it up)
-    printf '[General]\nDisplayServer=wayland\nGreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell\n\n[Theme]\nCurrent=sddm-theme-mod\n\n[Wayland]\nCompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1\n' > "$WORK/zz-sevenplasma.conf"
+    printf '[General]\nDisplayServer=wayland\nGreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell\n\n[Theme]\nCurrent=sddm-theme-mod\nCursorTheme=aero-drop\nCursorSize=32\n\n[Wayland]\nCompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1\n' > "$WORK/zz-sevenplasma.conf"
     run sudo systemctl enable sddm.service || true
 fi
 run sudo install -D -m 644 "$WORK/zz-sevenplasma.conf" /etc/sddm.conf.d/zz-sevenplasma.conf
