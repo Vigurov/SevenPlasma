@@ -60,9 +60,13 @@ def main():
     for k in range(18):
         shutil.copy(os.path.join(a7, '100/spin%d.png' % k), os.path.join(out, 'spin%02d.png' % k))
     shutil.copy(os.path.join(a7, 'watermark.png'), os.path.join(out, 'watermark.png'))
-    text('Запуск Windows', 25, (255, 255, 255, 255)).save(os.path.join(out, 'starting.png'))
-    text('© Корпорація Майкрософт', 15, (135, 135, 135, 255)).save(os.path.join(out, 'copyright.png'))
-    text('Завершення роботи...', 24, (255, 255, 255, 255), shadow=True, pad=2).save(os.path.join(out, 'shutdown_text.png'))
+    # the texts in the system language, as Windows 7 shows them (Ukrainian or English)
+    uk = (os.environ.get('LANGUAGE') or os.environ.get('LC_ALL') or os.environ.get('LANG') or '').startswith('uk')
+    t = ('Запуск Windows', '© Корпорація Майкрософт', 'Завершення роботи...') if uk else \
+        ('Starting Windows', '© Microsoft Corporation', 'Shutting down...')
+    text(t[0], 25, (255, 255, 255, 255)).save(os.path.join(out, 'starting.png'))
+    text(t[1], 15, (135, 135, 135, 255)).save(os.path.join(out, 'copyright.png'))
+    text(t[2], 24, (255, 255, 255, 255), shadow=True, pad=2).save(os.path.join(out, 'shutdown_text.png'))
     print('plymouth pictures: %d frames' % (act.size[1] // 200))
 
 

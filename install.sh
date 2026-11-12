@@ -403,11 +403,14 @@ step "$(L "Завантаження, вхід і завершення робот
 B=$REPO/apps/seven-common/boot
 run sudo install -D -m 755 "$B/seven-nopass-users" /usr/local/libexec/seven-nopass-users
 if [ $WAYLAND = 0 ]; then
-    # X11: the logon screen's X setup, the shutdown picture kept on X, "Starting Windows" held on screen
+    # X11: the logon screen's X setup, the shutdown picture kept on X
     run sudo install -D -m 755 "$B/seven-sddm-xsetup" /usr/local/libexec/seven-sddm-xsetup
     run sudo install -D -m 755 "$B/seven-shutdown-hold" /usr/local/libexec/seven-shutdown-hold
-    run sudo install -D -m 755 "$B/seven-splash-hold" /usr/local/libexec/seven-splash-hold
     run sudo install -D -m 644 "$B/seven-shutdown-hold.conf" /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf
+fi
+if [ $WAYLAND = 0 ] || [ $BOOTSPLASH = 1 ]; then
+    # "Starting Windows" held on screen for a few seconds, like Windows 7, however fast the boot is
+    run sudo install -D -m 755 "$B/seven-splash-hold" /usr/local/libexec/seven-splash-hold
     run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf
     run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit-wait.service.d/seven-min-time.conf
 fi
