@@ -328,6 +328,7 @@ if [ -n "$ISO" ]; then
     rm -f "$TREE/install.wim"
     W=$TREE/$IDX
     run python3 "$REPO/extract/seven-extract.py" --tree "$W" "$L/share"
+    run python3 "$REPO/extract/draw-missing.py" "$L/share"   # the pieces Windows 7 has no picture of
     N=$(python3 -c "import json;print(len(json.load(open('$REPO/extract/recipes.json'))))")
     note "$(L "іконки, картинки, шрифти, звуки, шпалери: $N файлів" "icons, pictures, fonts, sounds, wallpapers: $N files")"
     # the shortcut arrow of desktop icons (imageres.dll 163 / 1793) goes into ATP's desktop plasmoid
