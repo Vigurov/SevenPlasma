@@ -148,8 +148,8 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
   are not supported yet.
 - On Arch (Plasma 6.8, Wayland), not yet: the "Starting Windows" boot
   screen (the theme is installed, but Plymouth needs its initramfs hook and the `splash` kernel option, which
-  are left to you), the "Digital Vibrance" / hue settings of the NVIDIA panel, and the GPU-scaled resolutions
-  (Wayland). The Snipping Tool needs Spectacle there (installed with SevenPlasma).
+  are left to you), and on Wayland "Digital Vibrance" / hue and the lower resolutions
+  of a laptop panel work differently (an ICC profile of the screen; KWin's scale). The Snipping Tool needs Spectacle there (installed with SevenPlasma).
 - A few dozen small interface pictures have no extraction recipe yet (see `extract/TODO-assets.txt`).
 - Translations of the programs: English and Ukrainian (the language follows the system, like the display language of
   Windows 7). More languages are welcome: add `apps/<program>/i18n/<lang>.ts` (Qt Linguist) for the programs and

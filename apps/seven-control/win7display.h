@@ -1184,7 +1184,8 @@ inline QList<QSize> scaledSizes(QSize native)
 {
     QList<QSize> out;
     for (const QSize &s : {QSize(1768, 992), QSize(1680, 945), QSize(1600, 900), QSize(1440, 810), QSize(1366, 768), QSize(1360, 768),
-                           QSize(1280, 720), QSize(1024, 576)}) {
+                           QSize(1280, 720), QSize(1024, 576), // 16:9 panels
+                           QSize(1680, 1050), QSize(1440, 900), QSize(1280, 800), QSize(1152, 720)}) { // 16:10
         const double a = double(s.width()) / s.height(), n = double(native.width()) / native.height();
         if (s.width() < native.width() && qAbs(a - n) < 0.02) {
             out << s;
@@ -1203,6 +1204,7 @@ struct Output {
     QSize size;
     QList<Mode> modes;
     int type = 0;
+    QString nativeId; // the mode the "scale:" sizes are made from
 };
 
 inline QList<Output> outputs()
@@ -1248,7 +1250,19 @@ inline QList<Output> outputs()
         for (const Mode &m : o.modes) {
             onlyNative = onlyNative && m.size == native.size;
         }
-        if (onlyNative && !Win7KWin::wayland()) { // (the GPU scaling is done with xrandr: X11 only)
+        // lower sizes for a panel with only its native mode: the GPU stretches them (xrandr) on X11; on Wayland
+        // KWin's scale gives the same size of everything, drawn sharp at the native resolution
+        // (test hook for VMs, which list many modes: WIN7_TEST_SCALED_SIZES=1280x800 takes that mode as the panel's)
+        const QStringList testNative = qEnvironmentVariable("WIN7_TEST_SCALED_SIZES").split(QLatin1Char('x'));
+        if (testNative.size() == 2) {
+            for (const Mode &m : o.modes) {
+                if (m.size == QSize(testNative[0].toInt(), testNative[1].toInt())) {
+                    native = m;
+                }
+            }
+        }
+        if (onlyNative || testNative.size() == 2) {
+            o.nativeId = native.id;
             for (const QSize &sz : scaledSizes(native.size)) {
                 o.modes.append({QStringLiteral("scale:%1x%2").arg(sz.width()).arg(sz.height()), sz, native.refresh, sz});
             }
@@ -1256,10 +1270,14 @@ inline QList<Output> outputs()
             const QScreen *scr = QGuiApplication::primaryScreen();
             const QSize desk = scr ? scr->geometry().size() : QSize();
             if (desk.isValid() && desk != native.size) {
+                // (KWin rounds its scale: the logical size may be a few pixels off)
+                int best = 9;
                 for (const Mode &m : o.modes) {
-                    if (m.size == desk) {
+                    const int d = qAbs(m.size.width() - desk.width()) + qAbs(m.size.height() - desk.height());
+                    if (m.scaleFrom.isValid() && d < best) {
+                        best = d;
                         o.modeId = m.id;
-                        o.size = desk;
+                        o.size = m.size;
                     }
                 }
             }
@@ -1272,6 +1290,9 @@ inline QList<Output> outputs()
 /** the native mode id of an output (for kscreen when a scaled size is chosen) */
 inline QString nativeModeId(const Output &o)
 {
+    if (!o.nativeId.isEmpty()) {
+        return o.nativeId;
+    }
     for (const Mode &m : o.modes) {
         if (!m.scaleFrom.isValid()) {
             return m.id;
@@ -1356,6 +1377,31 @@ inline bool applyOutputs(QWidget *parent, const QList<Output> &list)
         if (o.primary) {
             args << p + QStringLiteral("primary");
         }
+        if (Win7KWin::wayland()) {
+            // a scaled size = KWin's scale; back at a real mode the scale goes back to 1 (only if we set it)
+            const QString marker = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/seven-resolution-scale");
+            if (o.modeId.startsWith(QLatin1String("scale:"))) {
+                const Mode nat = [&o] {
+                    for (const Mode &m : o.modes) {
+                        if (m.id == nativeModeId(o)) {
+                            return m;
+                        }
+                    }
+                    return Mode{};
+                }();
+                const QSize want = currentMode(o).size;
+                if (nat.size.isValid() && want.isValid()) {
+                    args << p + QStringLiteral("scale.") + QString::number(double(nat.size.width()) / want.width(), 'f', 4);
+                    QFile f(marker);
+                    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                        f.write(o.name.toUtf8());
+                    }
+                }
+            } else if (QFile::exists(marker)) {
+                args << p + QStringLiteral("scale.1");
+                QFile::remove(marker);
+            }
+        }
     }
     QProcess proc;
     proc.start(QStringLiteral("kscreen-doctor"), args);
@@ -1376,7 +1422,7 @@ inline bool applyOutputs(QWidget *parent, const QList<Output> &list)
         }
         f.close();
         const QString tool = QDir::homePath() + QStringLiteral("/.local/bin/seven-1366");
-        if (QFileInfo::exists(tool)) {
+        if (QFileInfo::exists(tool) && !Win7KWin::wayland()) {
             QProcess::execute(tool, want.isValid() ? QStringList{QStringLiteral("%1x%2").arg(want.width()).arg(want.height())} : QStringList{QStringLiteral("off")});
         }
     }

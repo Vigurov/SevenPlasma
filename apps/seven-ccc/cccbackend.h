@@ -30,6 +30,8 @@
 #include <QSysInfo>
 #include <QVector>
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cmath>
 #include <dlfcn.h>
 #include <unistd.h>
@@ -651,8 +653,35 @@ inline QByteArray xyz(double x, double y, double z)
     s15(t, x), s15(t, y), s15(t, z);
     return t;
 }
-/** an ICC v2 sRGB-like display profile (gamma 2.2) carrying the gamma ramps of c */
-inline QByteArray profile(const Color &c)
+using Matrix = std::array<double, 9>; // rows = output R, G, B
+inline Matrix identity()
+{
+    return {1, 0, 0, 0, 1, 0, 0, 0, 1};
+}
+inline bool isIdentity(const Matrix &m)
+{
+    for (int i = 0; i < 9; ++i) {
+        if (std::abs(m[i] - identity()[i]) > 1e-6) {
+            return false;
+        }
+    }
+    return true;
+}
+inline Matrix inverse(const Matrix &m)
+{
+    const double a = m[0], b = m[1], c = m[2], d = m[3], e = m[4], f = m[5], g = m[6], h = m[7], i = m[8];
+    const double det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+    if (std::abs(det) < 1e-12) {
+        return identity();
+    }
+    return {(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det, (f * g - d * i) / det, (a * i - c * g) / det,
+            (c * d - a * f) / det, (d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det};
+}
+
+/** an ICC v2 sRGB-like display profile (gamma 2.2) carrying the gamma ramps of c. A colour matrix m (what the
+ *  RandR "CTM" does on X11: vibrance, hue) goes into the primaries: the profile tells KWin the panel's primaries
+ *  are sRGB's times m^-1, so KWin's conversion of sRGB content ends up multiplied by m. */
+inline QByteArray profile(const Color &c, const Matrix &m = identity())
 {
     QList<QPair<QByteArray, QByteArray>> tags;
     QByteArray desc("desc");
@@ -667,9 +696,20 @@ inline QByteArray profile(const Color &c)
     cprt.append("No copyright, made by SevenPlasma").append('\0');
     tags.append({"cprt", cprt});
     tags.append({"wtpt", xyz(0.9642, 1.0, 0.8249)});
-    tags.append({"rXYZ", xyz(0.4361, 0.2225, 0.0139)});
-    tags.append({"gXYZ", xyz(0.3851, 0.7169, 0.0971)});
-    tags.append({"bXYZ", xyz(0.1431, 0.0606, 0.7141)});
+    const double srgb[3][3] = {{0.4361, 0.2225, 0.0139}, {0.3851, 0.7169, 0.0971}, {0.1431, 0.0606, 0.7141}}; // columns R, G, B (XYZ, D50)
+    const Matrix inv = inverse(m);
+    double col[3][3];
+    for (int j = 0; j < 3; ++j) {     // primary j of the profile = sum_k srgb[k] * inv[k][j]
+        for (int x = 0; x < 3; ++x) {
+            col[j][x] = 0;
+            for (int k = 0; k < 3; ++k) {
+                col[j][x] += srgb[k][x] * inv[k * 3 + j];
+            }
+        }
+    }
+    tags.append({"rXYZ", xyz(col[0][0], col[0][1], col[0][2])});
+    tags.append({"gXYZ", xyz(col[1][0], col[1][1], col[1][2])});
+    tags.append({"bXYZ", xyz(col[2][0], col[2][1], col[2][2])});
     QByteArray curv("curv");
     be32(curv, 0), be32(curv, 1), be16(curv, 0x0233); // gamma 2.2 (u8Fixed8)
     tags.append({"rTRC", curv}), tags.append({"gTRC", curv}), tags.append({"bTRC", curv});
@@ -714,13 +754,28 @@ inline QByteArray profile(const Color &c)
 }
 }
 
+/** the colours and the colour matrix last given for each output (one profile carries both) */
+inline QHash<QString, Color> &waylandColors()
+{
+    static QHash<QString, Color> h;
+    return h;
+}
+inline QHash<QString, Icc::Matrix> &waylandMatrices()
+{
+    static QHash<QString, Icc::Matrix> h;
+    return h;
+}
+
 inline bool applyColorWayland(const QString &name, const Color &c)
 {
+    waylandColors()[name] = c;
+    const Icc::Matrix m = waylandMatrices().value(name, Icc::identity());
+    const bool plain = c.isDefault() && Icc::isIdentity(m);
     QSettings &s = store();
     const QString prevKey = QStringLiteral("WaylandPreviousIcc/") + name;
     const QString dir = QDir::homePath() + QStringLiteral("/.local/share/seven-ccc");
     QStringList args;
-    if (c.isDefault()) {
+    if (plain) {
         if (!s.contains(prevKey)) {
             return true; // ours was never set
         }
@@ -749,12 +804,19 @@ inline bool applyColorWayland(const QString &name, const Color &c)
         if (!f.open(QIODevice::WriteOnly)) {
             return false;
         }
-        f.write(Icc::profile(c));
+        f.write(Icc::profile(c, m));
         f.close();
         args = {QStringLiteral("output.%1.iccprofile.%2").arg(name, file), QStringLiteral("output.%1.colorProfileSource.ICC").arg(name)};
     }
     s.sync();
     return QProcess::execute(QStringLiteral("kscreen-doctor"), args) == 0;
+}
+
+/** Wayland: a colour matrix (NVIDIA digital vibrance, hue) for an output, combined with its colours */
+inline bool applyMatrixWayland(const QString &name, const Icc::Matrix &m)
+{
+    waylandMatrices()[name] = m;
+    return applyColorWayland(name, waylandColors().contains(name) ? waylandColors().value(name) : loadColor(name));
 }
 
 /* Set the gamma ramp of the CRTC that drives the X11 output called name (kscreen output names match the

@@ -10,6 +10,7 @@
  *    "keep these settings?" and goes back after 20 s like the driver;
  *  - desktop colour: brightness / contrast / gamma as XRandR gamma ramps (shared with Catalyst Control Center's
  *    page, Ccc::applyColor), digital vibrance and hue as the output's colour matrix (RandR "CTM" property);
+ *    on Wayland both go into an ICC profile of the output (Ccc::applyColorWayland / applyMatrixWayland);
  *  - scaling mode and underscan: RandR "scaling mode" / "underscan" properties, output colour depth: "max bpc";
  *  - HDCP: the "Content Protection" property; digital audio: the profile of the GPU's HD Audio card (pactl);
  *  - video colour / image: options for mpv-based players (~/.config/mpv/mpv.conf), Linux has no driver-level
@@ -18,6 +19,7 @@
  */
 #include "cccbackend.h"
 
+#include <QGuiApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
@@ -137,6 +139,9 @@ inline std::array<double, 9> colorMatrix(int vibrance, int hue)
 /** writes the RandR "CTM" property: 9 sign-magnitude S31.32 numbers as 18 CARD32 (xrandr --set mangles fractions) */
 inline bool applyMatrix(const QString &output, const std::array<double, 9> &m)
 {
+    if (QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+        return Ccc::applyMatrixWayland(output, m); // no RandR there: in the output's ICC profile (KWin applies it)
+    }
     void *x11 = dlopen("libX11.so.6", RTLD_LAZY);
     void *xr = dlopen("libXrandr.so.2", RTLD_LAZY);
     if (!x11 || !xr) {
