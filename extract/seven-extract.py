@@ -54,6 +54,30 @@ def unpack_iso(iso, work):
     return os.path.join(work, idx)
 
 
+def inverting_icon(b, bg):
+    """an old (palette) icon on the colour bg, its "inverting" pixels (AND 1, XOR not black) drawn as the
+    inverse of bg, like Windows shows the inverting pointers in Ease of Access"""
+    hs, w, h2, _, bpp = struct.unpack_from('<IiiHH', b)
+    h = h2 // 2
+    ncol = 1 << bpp
+    pal = [tuple(b[hs + 4 * i:hs + 4 * i + 3][::-1]) for i in range(ncol)]
+    px = hs + 4 * ncol
+    rowx, rowa = ((w * bpp + 31) // 32) * 4, ((w + 31) // 32) * 4
+    xor, andm = b[px:px + rowx * h], b[px + rowx * h:px + rowx * h + rowa * h]
+    im = Image.new('RGB', (w, h), bg)
+    o = im.load()
+    for y in range(h):
+        for x in range(w):
+            bit = x * bpp
+            v = (xor[(h - 1 - y) * rowx + bit // 8] >> (8 - bpp - bit % 8)) & (ncol - 1)
+            c = pal[v]
+            if (andm[(h - 1 - y) * rowa + x // 8] >> (7 - x % 8)) & 1 == 0:
+                o[x, y] = c
+            elif c != (0, 0, 0):
+                o[x, y] = tuple(255 - q for q in bg)
+    return im
+
+
 class Sources:
     def __init__(self, root):
         self.root = root
@@ -124,6 +148,8 @@ class Sources:
                     w, h, cc, _, pl, bpp, size, iid = struct.unpack_from('<BBBBHHIH', blob, 6 + 14 * k)
                     if '%d@%d' % (w or 256, bpp) == want:
                         b = icons[iid]
+                        if r.get('invert_bg'):
+                            return inverting_icon(b, tuple(r['invert_bg']))
                         return icon_frame(b)
             elif kind == 'bitmap':
                 return dib_to_image(blob)

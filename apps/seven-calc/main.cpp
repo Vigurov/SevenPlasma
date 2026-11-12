@@ -29,7 +29,11 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QDir>
+#include <QFile>
 #include <QPainter>
+#include <QPolygonF>
+#include <QRadialGradient>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSettings>
@@ -3191,7 +3195,39 @@ private:
 void applyWin7Menus(QApplication &app)
 {
     // Windows 7 menus: grey gutter on the left, dot/tick on a light blue square, soft blue hover
-    const QString res = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/seven-calc/");
+    QString res = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/seven-calc/");
+    if (!QFile::exists(res + QStringLiteral("menu-dot.png"))) {
+        // not extracted from Windows 7 (they were cut from screenshots): drawn once, the same box with a
+        // round bullet or a tick, into the cache
+        res = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/menu/");
+        QDir().mkpath(res);
+        for (const bool dot : {true, false}) {
+            QImage im(26, 24, QImage::Format_ARGB32_Premultiplied);
+            im.fill(Qt::transparent);
+            QPainter p(&im);
+            p.setRenderHint(QPainter::Antialiasing);
+            QLinearGradient box(0, 2, 0, 22);
+            box.setColorAt(0, QColor(0xfc, 0xfd, 0xff));
+            box.setColorAt(1, QColor(0xed, 0xf0, 0xf3));
+            p.setPen(QColor(0xc5, 0xcf, 0xdb));
+            p.setBrush(box);
+            p.drawRoundedRect(QRectF(1.5, 1.5, 23, 21), 2, 2);
+            if (dot) {
+                QRadialGradient g(QPointF(11.5, 9.5), 6.5);
+                g.setColorAt(0, QColor(0xaa, 0xa6, 0xea));
+                g.setColorAt(0.6, QColor(0x7d, 0x78, 0xc2));
+                g.setColorAt(1, QColor(0x3e, 0x39, 0x91));
+                p.setPen(Qt::NoPen);
+                p.setBrush(g);
+                p.drawEllipse(QPointF(12.5, 11), 4.6, 4.6);
+            } else {
+                p.setPen(QPen(QColor(0x0f, 0x13, 0x3e), 2.1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                p.drawPolyline(QPolygonF() << QPointF(9, 12.5) << QPointF(11.5, 15) << QPointF(16.5, 8));
+            }
+            p.end();
+            im.save(res + (dot ? QStringLiteral("menu-dot.png") : QStringLiteral("menu-tick.png")));
+        }
+    }
     app.setStyleSheet(QStringLiteral(
                           "QMenu { background-color: #f0f0f0; background-image: url(%1menu-gutter.png); background-repeat: repeat-y;"
                           " background-position: left; border: 1px solid #979797; padding: 2px; }"

@@ -16,7 +16,6 @@ seven-aero/folders/edge-hot.png
 seven-aero/folders/edge-pressed.png
 seven-aero/folders/fill-hot.png
 seven-aero/folders/fill-pressed.png
-seven-aero/folders/grip.png
 seven-aero/folders/up-hot.png
 seven-aero/folders/up-normal.png
 seven-aero/folders/up-pressed.png
@@ -42,17 +41,6 @@ seven-aero/themecpl/tile-landscapes.png
 seven-aero/themecpl/tile-nature.png
 seven-aero/themecpl/tile-scenes.png
 seven-aero/themecpl/tile-windows7.png
-seven-calc/menu-dot.png
-seven-calc/menu-tick.png
-seven-control/cursor-previews/black-1.png
-seven-control/cursor-previews/black-2.png
-seven-control/cursor-previews/black-3.png
-seven-control/cursor-previews/invert-1.png
-seven-control/cursor-previews/invert-2.png
-seven-control/cursor-previews/invert-3.png
-seven-control/cursor-previews/white-1.png
-seven-control/cursor-previews/white-2.png
-seven-control/cursor-previews/white-3.png
 seven-control/games.json
 seven-control/osk/glyph-down.png
 seven-control/osk/glyph-enter.png

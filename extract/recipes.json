@@ -32114,5 +32114,119 @@
 "id": 202,
 "cell": "16:5",
 "dest": "seven-aero/menu/cut.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 408,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/white-1.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 406,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/black-1.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 407,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/invert-1.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 405,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/white-2.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 403,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/black-2.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 404,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/invert-2.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 402,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/white-3.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 409,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/black-3.png"
+},
+{
+"src": "Windows/System32/accessibilitycpl.dll",
+"from": "icon",
+"id": 401,
+"extra": "32@4",
+"invert_bg": [
+242,
+242,
+242
+],
+"dest": "seven-control/cursor-previews/invert-3.png"
+},
+{
+"src": "Windows/System32/ieframe.dll",
+"from": "bitmap",
+"id": 520,
+"dest": "seven-aero/folders/grip.png"
 }
 ]
