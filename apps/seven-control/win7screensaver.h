@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include "win7kwin.h"
 #include "win7i18n.h"
 
 #include "win7chrome.h"
@@ -545,14 +546,23 @@ public:
         for (QScreen *s : QGuiApplication::screens()) {
             Saver *w = createSaver(id);
             if (id == QLatin1String("bubbles")) {
-                w->backdrop = s->grabWindow(0); // the bubbles float over the desktop
+                w->backdrop = Win7KWin::screenShot(s); // the bubbles float over the desktop
             }
             w->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
             w->setGeometry(s->geometry());
             w->setCursor(Qt::BlankCursor);
             w->setMouseTracking(true);
             w->installEventFilter(this);
-            w->show();
+            if (Win7KWin::wayland()) {
+                // Wayland: a full-screen window on its screen that KWin keeps above everything (incl. the panel)
+                w->setWindowTitle(QStringLiteral("seven-screensaver-%1").arg(m_windows.size()));
+                w->setScreen(s);
+                w->showFullScreen();
+                Win7KWin::forWindow(w, QStringLiteral("w.keepAbove = true; w.skipTaskbar = true; w.skipSwitcher = true; w.fullScreen = true; "
+                                                      "workspace.activeWindow = w;"));
+            } else {
+                w->show();
+            }
             w->raise();
             w->activateWindow();
             w->grabKeyboard();
@@ -681,7 +691,7 @@ public:
     {
         setFixedSize(177, 146);
         if (QScreen *s = QGuiApplication::primaryScreen()) {
-            m_desktop = s->grabWindow(0).scaled(152, 112, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            m_desktop = Win7KWin::screenShot(s).scaled(152, 112, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         }
     }
     void show(const QString &id)

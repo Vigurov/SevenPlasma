@@ -12,6 +12,9 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QPixmap>
+#include <QProcess>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QWidget>
@@ -110,6 +113,34 @@ inline void forWindow(QWidget *w, const QString &body)
     QTimer::singleShot(300, w, [w, body]() {
         forOwnWindows(w->windowTitle(), body);
     });
+}
+
+/** the whole screen as a picture: grabWindow on X11; on Wayland KWin gives the screen only to programs that
+ *  ask for it in their desktop file, so Spectacle takes it (an empty picture if it is not installed) */
+inline QPixmap screenShot(QScreen *screen = nullptr)
+{
+    if (!screen) {
+        screen = QGuiApplication::primaryScreen();
+    }
+    if (!wayland()) {
+        return screen ? screen->grabWindow(0) : QPixmap();
+    }
+    const QString path = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation)
+        + QStringLiteral("/seven-shot-%1.png").arg(QCoreApplication::applicationPid());
+    QProcess p;
+    p.start(QStringLiteral("spectacle"), {QStringLiteral("--background"), QStringLiteral("--nonotify"), QStringLiteral("--fullscreen"),
+                                          QStringLiteral("--output"), path});
+    p.waitForFinished(15000);
+    QPixmap all(path);
+    QFile::remove(path);
+    if (all.isNull() || !screen) {
+        return all;
+    }
+    // the picture covers all screens: this screen's part (scaled to its logical size)
+    const QRect virt = screen->virtualGeometry(), g = screen->geometry();
+    const double sx = double(all.width()) / virt.width(), sy = double(all.height()) / virt.height();
+    return all.copy(QRect(int((g.x() - virt.x()) * sx), int((g.y() - virt.y()) * sy), int(g.width() * sx), int(g.height() * sy)))
+        .scaled(g.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
 /** places a top-level window: move() on X11; on Wayland clients cannot place their windows, so KWin puts
