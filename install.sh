@@ -98,6 +98,13 @@ sudo -n true 2>/dev/null || sudo -v || die "$(L "потрібні права а�
 # keyboard and account settings; every install records the files it puts into the system. uninstall.sh puts
 # everything back from this.
 BK=$HOME/.local/share/sevenplasma-backup
+# uninstall.sh was run and nobody has logged in since: its pending restore of the Plasma settings would undo
+# this install at the next login (and delete the backups). It is cancelled; the backups from before the first
+# install stay, so a later uninstall still puts the old settings back.
+if [ -f "$HOME/.config/plasma-workspace/env/sevenplasma-restore.sh" ]; then
+    rm -f "$HOME/.config/plasma-workspace/env/sevenplasma-restore.sh"
+    note "$(L "скасовано відновлення налаштувань після видалення (ще не було входу)" "the settings restore of the earlier uninstall is cancelled (no login since)")"
+fi
 STAMP=$WORK/run.stamp
 : > "$STAMP"
 mkdir -p "$BK"
