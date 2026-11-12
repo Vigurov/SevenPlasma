@@ -63,6 +63,8 @@ gk seven-snip.desktop _launch "[([16777225,0,0,0],)]"     # Print
 gk seven-run.desktop _launch "[([268435538,0,0,0],)]"     # Meta+R
 gk org.kde.kscreen.desktop ShowOSD "@a(ai) []"                # KDE's display switcher...
 gk seven-display-switch.desktop _launch "[([268435536,0,0,0],)]"   # ...Meta+P is ours (DisplaySwitch)
+# everything else KDE binds that Windows 7 has not (Win+Esc, Win+I, Win+W, Alt+Space search...) goes off
+python3 "$HOME/.local/lib/sevenplasma/seven-shortcuts.py" || true
 # Start menu: Run opens our dialog
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
 panels().forEach(function (p) { p.widgets().forEach(function (w) {

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Ease of Access Center
+Name[uk]=Центр спеціальних можливостей
+Exec=seven-control --ease
+Icon=seven-cpi-access
+NoDisplay=true
+X-KDE-Shortcuts=Meta+U
+X-Win7-HiddenFromStart=true

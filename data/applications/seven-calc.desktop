@@ -4,6 +4,7 @@ Name=Calculator
 Name[uk]=Калькулятор
 Comment=Performs basic arithmetic tasks with an on-screen calculator.
 Comment[uk]=Виконання простих обчислень
+X-KDE-Shortcuts=Calculator
 Exec=seven-calc
 Icon=seven-calc
 Categories=Utility;Calculator;

@@ -7,5 +7,5 @@ Comment[uk]=Windows 7 Win+P: лише комп'ютер / дублювати / �
 Exec=seven-control --display-switch
 Icon=video-display
 NoDisplay=true
-X-KDE-Shortcuts=Meta+P
+X-KDE-Shortcuts=Meta+P,Display
 X-Win7-HiddenFromStart=true
