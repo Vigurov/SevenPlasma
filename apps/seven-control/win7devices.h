@@ -12,6 +12,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7kwin.h"
 #include "win7i18n.h"
 
 #include "win7chrome.h"
@@ -163,7 +164,9 @@ inline QList<QPair<QString, QByteArray>> connectedOutputs()
     QList<QPair<QString, QByteArray>> outs;
     QString output;
     bool inEdid = false;
-    for (const QString &line : run(QStringLiteral("xrandr"), {QStringLiteral("--verbose")}).split(QLatin1Char('\n'))) {
+    // (on Wayland xrandr shows only Xwayland's outputs, without EDID: DRM there)
+    const QString xr = Win7KWin::wayland() ? QString() : run(QStringLiteral("xrandr"), {QStringLiteral("--verbose")});
+    for (const QString &line : xr.split(QLatin1Char('\n'))) {
         if (!line.startsWith(QLatin1Char('\t')) && !line.startsWith(QLatin1Char(' '))) {
             inEdid = false;
             output = line.contains(QLatin1String(" connected")) ? line.section(QLatin1Char(' '), 0, 0) : QString();

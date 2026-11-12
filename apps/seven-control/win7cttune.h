@@ -6,6 +6,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include "win7kwin.h"
 #include "win7i18n.h"
 
 #include "win7fontdata.h"
@@ -358,6 +362,40 @@ private:
 
     static QString nativeResolutionText()
     {
+        if (Win7KWin::wayland()) { // no X outputs there (only Xwayland's): KScreen's
+            QProcess ks;
+            ks.start(QStringLiteral("kscreen-doctor"), {QStringLiteral("-j")});
+            ks.waitForFinished(3000);
+            const QJsonObject doc = QJsonDocument::fromJson(ks.readAllStandardOutput()).object();
+            for (const QJsonValue &v : doc.value(QStringLiteral("outputs")).toArray()) {
+                const QJsonObject o = v.toObject();
+                if (!o.value(QStringLiteral("connected")).toBool() || !o.value(QStringLiteral("enabled")).toBool()) {
+                    continue;
+                }
+                const QString cur = o.value(QStringLiteral("currentModeId")).toVariant().toString();
+                const QJsonArray pref = o.value(QStringLiteral("preferredModes")).toArray();
+                const QString prefId = pref.isEmpty() ? QString() : pref.first().toVariant().toString();
+                QString current, preferred;
+                for (const QJsonValue &m : o.value(QStringLiteral("modes")).toArray()) {
+                    const QJsonObject mo = m.toObject();
+                    const QJsonObject sz = mo.value(QStringLiteral("size")).toObject();
+                    const QString text = QStringLiteral("%1x%2").arg(sz.value(QStringLiteral("width")).toInt()).arg(sz.value(QStringLiteral("height")).toInt());
+                    const QString id = mo.value(QStringLiteral("id")).toVariant().toString();
+                    if (id == cur) current = text;
+                    if (id == prefId) preferred = text;
+                }
+                const QString monitor = o.value(QStringLiteral("name")).toString();
+                if (current.isEmpty()) {
+                    break;
+                }
+                if (preferred.isEmpty() || preferred == current) {
+                    return tr7("Your monitor %1 is set to its native resolution (%2).").arg(monitor, current);
+                }
+                return tr7("Your monitor %1 is not set to its native resolution.\nCurrent: %2, native: %3. You can change it on the Screen Resolution page.")
+                    .arg(monitor, current, preferred);
+            }
+            return tr7("The resolution of the monitor could not be determined.");
+        }
         QProcess xr;
         xr.start(QStringLiteral("xrandr"), {QStringLiteral("--current")});
         xr.waitForFinished(3000);

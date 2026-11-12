@@ -1,3 +1,4 @@
+#define WIN7_WINDOWCLASS_XCB // (before any header includes win7windowclass.h)
 #include "win7i18n.h"
 /*
  * Control Panel in the style of Windows 7: "Category", "Large icons" and "Small icons" views.
@@ -1840,7 +1841,6 @@ private:
 #include <QDBusConnection>
 #include <KConfigGroup>
 #include <KConfig>
-#define WIN7_WINDOWCLASS_XCB
 #include "win7windowclass.h"
 
 int runKRunner(); // sevenrunner.cpp

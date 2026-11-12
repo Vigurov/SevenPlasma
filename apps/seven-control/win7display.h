@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include "win7kwin.h"
+#include "win7windowclass.h"
 #include "win7i18n.h"
 
 #include "win7chrome.h"
@@ -1246,7 +1248,7 @@ inline QList<Output> outputs()
         for (const Mode &m : o.modes) {
             onlyNative = onlyNative && m.size == native.size;
         }
-        if (onlyNative) {
+        if (onlyNative && !Win7KWin::wayland()) { // (the GPU scaling is done with xrandr: X11 only)
             for (const QSize &sz : scaledSizes(native.size)) {
                 o.modes.append({QStringLiteral("scale:%1x%2").arg(sz.width()).arg(sz.height()), sz, native.refresh, sz});
             }
@@ -1415,7 +1417,8 @@ inline bool confirmKeep(QWidget *parent)
         update();
     });
     timer.start(1000);
-    return dlg.exec() == QDialog::Accepted;
+    // a Windows 7 message: no icon, no minimise / maximise (smodrc exception seven-dialog; on Wayland the app id)
+    return Win7WindowClass::exec(&dlg, "seven-dialog", "seven-control") == QDialog::Accepted;
 }
 
 /** Big numbers on every screen for a moment ("Identify") */
