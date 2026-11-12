@@ -6,7 +6,7 @@
 
 SevenPlasma turns KDE Plasma into Windows 7. It changes the look and also brings the programs: a Control Panel
 with dozens of pages, Explorer, Paint, Windows Media Player, Calculator, Snipping Tool, gadgets, Task Manager,
-Computer Management, the boot, logon and shutdown screens, and the Windows 7 games.
+Computer Management, Help and Support, the boot, logon and shutdown screens, and the Windows 7 games.
 
 The project is built on the excellent [AeroThemePlasma](https://gitgud.io/wackyideas/aerothemeplasma) by
 **wackyideas** and the AeroShell contributors. The shell, taskbar, Start menu, window frames (SMOD), Aero
@@ -20,8 +20,11 @@ effects, logon screen and UAC are their work. SevenPlasma adds its own changes a
 | **Explorer** | Dolphin and KIO with changes: command bar, libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails |
 | **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update (apt), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
 | **Administrative tools** | Computer Management, Event Viewer, Disk Management, Windows Firewall with Advanced Security, Device Manager, Task Manager, Resource Monitor |
-| **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Character Map, Photo Viewer, Windows Media Player 12, gadgets, Run |
-| **Graphics cards** | NVIDIA Control Panel, AMD Catalyst Control Center, Intel HD Graphics, depending on your graphics card |
+| **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, gadgets, Run |
+| **Help and Support** | the Windows 7 Help window (Start menu → Help and Support) instead of KDE's online manual |
+| **Keyboard** | the shortcuts of Windows 7 (Win+E, Win+R, Win+P, Win+U, Win+L, Win+arrows, Ctrl+Shift+Esc, Print, Alt+Space…); KDE's own extra shortcuts are turned off |
+| **Several screens** | Win+P display switcher (Computer only, Duplicate, Extend, Projector only); a screen connected later gets the same background |
+| **Graphics cards** | NVIDIA Control Panel, AMD Catalyst Control Center, Intel HD Graphics: only the one for your graphics card is shown |
 | **Boot** | "Starting Windows", "Welcome", "Shutting down…" |
 | **Games** | Minesweeper, Solitaire, Spider Solitaire, Chess, Mahjong, Purble Place and more, from your Windows 7 image via Wine |
 
@@ -51,8 +54,8 @@ the same result). Without an image SevenPlasma installs with free replacements a
 Two systems are supported, tested on clean installs:
 
 - **Kubuntu 26.04** (Plasma 6.6, X11 session): everything described here;
-- **Arch Linux** (Plasma 6.8, Wayland session; Plasma 6.8 has no X11 session): early support, see
-  [Known limitations](#known-limitations).
+- **Arch Linux** (Plasma 6.8, Wayland session; Plasma 6.8 has no X11 session): everything described here,
+  with the few differences listed in [Known limitations](#known-limitations).
 
 You need your Windows 7 image (`.iso`, see above) and an internet connection. The steps are the same on both
 (the pictures are from Kubuntu).
@@ -76,17 +79,22 @@ programs, and takes the Windows 7 resources from your image. This takes **10–4
 
 ![The installer has finished](docs/images/install-2-done.png)
 
-**3.** The logon screen is now the Windows 7 one, with the "AeroThemePlasma (X11)" session already selected.
+**3.** The logon screen is now the Windows 7 one, with the AeroThemePlasma session already selected
+("AeroThemePlasma (X11)" on Kubuntu, "AeroThemePlasma" (Wayland) on Arch).
 Type your password and press Enter.
 
 ![The logon screen](docs/images/install-3-logon.png)
 
-**4.** The first login sets everything up by itself (wallpaper, taskbar, Start menu, effects), with no wizards
-or questions.
+**4.** The first login sets everything up by itself (wallpaper, taskbar, Start menu, effects, keyboard
+shortcuts), with no wizards or questions. A few minutes later the Windows Experience Index of your computer is
+rated in the background, as on a new Windows 7 (Control Panel → System shows it).
 
 ![The desktop after the first login](docs/images/install-4-desktop.png)
 
-Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions).
+Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions),
+`--boot-splash` (Arch only: also turns on the "Starting Windows" boot screen, which needs a Plymouth hook in the
+initramfs and the `splash` kernel option; the uninstaller puts both back. On Kubuntu the boot screen is always
+installed).
 If the Dolphin / KIO / Kvantum versions on your system differ from the tested ones, those parts are skipped
 with a warning. The installer speaks Ukrainian on a Ukrainian system and English otherwise. If it stops
 (for example the internet connection dropped), just run `./install.sh` again.
@@ -146,11 +154,16 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
 
 - Plasma 6.6 (Kubuntu 26.04, X11) and Plasma 6.8 (Arch Linux, Wayland) only; other versions and distributions
   are not supported yet.
-- On Arch (Plasma 6.8, Wayland), not yet: the "Starting Windows" boot
-  screen (the theme is installed, but Plymouth needs its initramfs hook and the `splash` kernel option, which
-  are left to you), and on Wayland "Digital Vibrance" / hue and the lower resolutions
-  of a laptop panel work differently (an ICC profile of the screen; KWin's scale). The Snipping Tool needs Spectacle there (installed with SevenPlasma).
-- A few dozen small interface pictures have no extraction recipe yet (see `extract/TODO-assets.txt`).
+- On Arch (Plasma 6.8, Wayland):
+  - the "Starting Windows" boot screen is only installed with `--boot-splash` (it changes the initramfs and the
+    kernel options);
+  - after the password the screen stays black for about a second before "Welcome";
+  - "Digital Vibrance" / hue of the graphics card panels are made with an ICC profile of the screen, and the lower
+    resolutions of a laptop panel with KWin's scale (Wayland gives programs no other way);
+  - the Snipping Tool takes its pictures through Spectacle (installed with SevenPlasma).
+- Every interface picture comes from your Windows 7 image or is drawn by SevenPlasma; the pictures of the
+  graphics card panels, Microsoft Office and WinRAR are not in Windows 7 (the panels use your Linux driver's
+  icons).
 - Translations of the programs: English and Ukrainian (the language follows the system, like the display language of
   Windows 7). More languages are welcome: add `apps/<program>/i18n/<lang>.ts` (Qt Linguist) for the programs and
   `apps/seven-common/i18n/sevenplasma/<lang>.po` (gettext) for the shell, Explorer and the file dialogs.
