@@ -342,6 +342,14 @@ if [ -n "$ISO" ]; then
     run sudo cp "$WORK"/plymouth/*.png "$REPO"/boot/plymouth/sevenplasma.* /usr/share/plymouth/themes/sevenplasma/
     run sudo cp "$L/share/sounds/Windows 7" -r /usr/share/sounds/ 2>/dev/null || true
     run fc-cache -f
+    # the vendor panels' own icons come with their Windows drivers (not in the image): the Linux driver's
+    for v in nvidia:nvidia-settings ccc:amd igfx:intel; do
+        for sz in 16 32 48; do
+            t=$L/share/icons/hicolor/${sz}x${sz}/apps/seven-${v%%:*}.png
+            src=$(find /usr/share/icons/hicolor/${sz}x${sz}/apps /usr/share/pixmaps -name "${v#*:}*.png" 2>/dev/null | head -1)
+            [ -e "$t" ] || [ -z "$src" ] || install -D -m 644 "$src" "$t"
+        done
+    done
     if [ $GAMES -eq 1 ]; then
         note "$(L "ігри Windows 7 (Wine)" "Windows 7 games (Wine)")"
         export WINEPREFIX="$L/share/sevenplasma/wine"

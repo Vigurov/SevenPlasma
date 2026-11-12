@@ -1979,7 +1979,7 @@ index 259b522..a603948 100644
      }
  
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml b/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
-index 5d24a46..996374b 100644
+index 5d24a46..52d2f52 100644
 --- a/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
 +++ b/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
 @@ -14,11 +14,13 @@ import org.kde.config // for KAuthorized
@@ -2071,7 +2071,7 @@ index 5d24a46..996374b 100644
      }
      PlasmaCore.Action {
          id: actionSeparator
-@@ -381,6 +396,69 @@ FocusScope {
+@@ -381,6 +396,73 @@ FocusScope {
          isSeparator: true
      }
  
@@ -2085,6 +2085,7 @@ index 5d24a46..996374b 100644
 +        id: win7Nvidia
 +        text: i18nd("sevenplasma", "NVIDIA Control Panel")
 +        icon.name: "seven-nvidia"
++        visible: win7GpuProbe.nvidia
 +        onTriggered: win7Exec.connectSource("seven-nvidia")
 +    }
 +    // vendor GPU panels: Catalyst Control Center (AMD) and Intel HD Graphics only when that GPU is present
@@ -2092,12 +2093,14 @@ index 5d24a46..996374b 100644
 +        id: win7GpuProbe
 +        property bool amd: false
 +        property bool intel: false
++        property bool nvidia: false
 +        engine: "executable"
 +        connectedSources: ["cat /sys/class/drm/card*/device/vendor"]
 +        onNewData: (sourceName, data) => {
 +            const out = data["stdout"] || "";
 +            amd = out.indexOf("0x1002") >= 0;
 +            intel = out.indexOf("0x8086") >= 0;
++            nvidia = out.indexOf("0x10de") >= 0;
 +            disconnectSource(sourceName);
 +        }
 +    }
@@ -2118,6 +2121,7 @@ index 5d24a46..996374b 100644
 +    PlasmaCore.Action {
 +        id: win7NvidiaSeparator
 +        isSeparator: true
++        visible: win7GpuProbe.nvidia || win7GpuProbe.amd || win7GpuProbe.intel
 +    }
 +    PlasmaCore.Action {
 +        id: win7Display
@@ -2141,7 +2145,7 @@ index 5d24a46..996374b 100644
      Component.onCompleted: {
          if (!isContainment) {
              label = labelComponent.createObject(folderViewLayerComponent);
-@@ -391,6 +469,12 @@ FocusScope {
+@@ -391,6 +473,12 @@ FocusScope {
              const modelAction = folderView.model.action(actionName);
              if (actionName === "newMenu") {
                  Plasmoid.contextualActions.push(actionSeparator);
@@ -2154,7 +2158,7 @@ index 5d24a46..996374b 100644
              }
              if (actionName === "refresh") {
                  Plasmoid.contextualActions.push(viewPropertiesAction);
-@@ -403,6 +487,12 @@ FocusScope {
+@@ -403,6 +491,12 @@ FocusScope {
          }
  
          Plasmoid.contextualActions.push(actionSeparatorThird);

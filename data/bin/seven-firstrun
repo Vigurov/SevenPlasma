@@ -47,6 +47,7 @@ kw ksmserverrc General loginMode emptySession
 kw kscreenlockerrc Daemon Autolock false
 kw dolphinrc General ShowStatusBar Disabled
 kw dolphinrc General MenuBar Disabled
+kw dolphinrc General ShowSelectionToggle false   # no "+" on hovered items (Dolphin 26.08 shows it in double-click mode too)
 kw dolphinrc ContentDisplay DirectorySizeMode None
 kw dolphinrc ContentDisplay UseShortRelativeDates false
 kw plasma_workspace.notifyrc Event/deviceAdded Action Sound
@@ -121,6 +122,14 @@ if os.path.exists(rc):
             out.append(line)
     open(rc, 'w', encoding='utf-8').writelines(out)
 apps = os.path.expanduser('~/.config/plasma-io.gitgud.wackyideas.desktop-appletsrc')
+# the desktop menu of Windows 7: none of Plasma's own items (edit mode, its Personalize / Display Configuration,
+# widgets, activities, run, lock, log out)
+for k in ('_add panel', '_display_settings', '_lock_screen', '_logout', '_open_terminal', '_run_command', '_sep1', '_sep2',
+          '_sep3', '_sep4', '_wallpaper', 'add widgets', 'configure', 'configure shortcuts', 'desktop edit mode', 'edit mode',
+          'manage activities', 'remove'):
+    for c in ('0', '1'):
+        subprocess.run(['kwriteconfig6', '--file', apps, '--group', 'ActionPlugins', '--group', c, '--group', 'RightButton;NoModifier',
+                        '--key', k, 'false'])
 fav = 'seven-wmp.desktop,seven-calc.desktop,seven-snip.desktop,seven-paint.desktop,seven_Solitaire.desktop'
 cur = None
 for line in open(apps, encoding='utf-8') if os.path.exists(apps) else []:
