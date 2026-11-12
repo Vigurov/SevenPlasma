@@ -32277,5 +32277,104 @@
 "from": "bitmap",
 "id": 203,
 "dest": "seven-control/displayswitch/projector.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 404,
+"dest": "seven-control/helppane/nav-normal.png",
+"key": true
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 405,
+"dest": "seven-control/helppane/nav-hot.png",
+"key": true
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 406,
+"dest": "seven-control/helppane/nav-disabled.png",
+"key": true
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 2,
+"dest": "seven-control/helppane/toolbar.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 135,
+"dest": "seven-control/helppane/toolbar-hot.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 161,
+"dest": "seven-control/helppane/toolbar-disabled.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 133,
+"dest": "seven-control/helppane/ask.png",
+"key": true
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 134,
+"dest": "seven-control/helppane/options.png",
+"key": true
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 177,
+"dest": "seven-control/helppane/online.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 178,
+"dest": "seven-control/helppane/offline.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "bitmap",
+"id": 407,
+"dest": "seven-control/helppane/search.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "icon",
+"id": 107,
+"extra": "16@32",
+"dest": "icons/hicolor/16x16/apps/seven-helppane.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "icon",
+"id": 107,
+"extra": "24@32",
+"dest": "icons/hicolor/24x24/apps/seven-helppane.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "icon",
+"id": 107,
+"extra": "32@32",
+"dest": "icons/hicolor/32x32/apps/seven-helppane.png"
+},
+{
+"src": "Windows/HelpPane.exe",
+"from": "icon",
+"id": 107,
+"extra": "48@32",
+"dest": "icons/hicolor/48x48/apps/seven-helppane.png"
 }
 ]

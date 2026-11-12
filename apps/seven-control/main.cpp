@@ -12,6 +12,14 @@
 #include "win7network.h"
 #include "win7display.h"
 #include "win7displayswitch.h"
+#include "win7helpsupport.h"
+
+static QString argAfterHelp(const QStringList &args)
+{
+    const int i = args.indexOf(QStringLiteral("--help-support"));
+    const QString v = args.value(i + 1);
+    return v.startsWith(QLatin1String("-")) ? QString() : v;
+}
 #include "win7background.h"
 #include "win7openwith.h"
 #include "win7portal.h"
@@ -2102,6 +2110,12 @@ int main(int argc, char **argv)
     // stand-alone Windows 7 dialogs: plain titles, without " — Панель керування"
     if (app.arguments().contains(QStringLiteral("--display-switch"))) { // Win+P
         return Win7DisplaySwitch::run();
+    }
+    if (app.arguments().contains(QStringLiteral("--help-support"))) { // Start > Help and Support, F1, khelpcenter
+        auto *w = new Win7Help::Window(argAfterHelp(app.arguments()));
+        QObject::connect(w, &QObject::destroyed, &app, &QCoreApplication::quit);
+        w->show();
+        return app.exec();
     }
     if (app.arguments().contains(QStringLiteral("--autoplay-ask"))) { // test helper: the AutoPlay window for a USB drive
         Win7Autoplay::Media m;

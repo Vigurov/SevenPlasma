@@ -15165,5 +15165,105 @@ WantedBy=timers.target
         <source>dddd, MMMM dd, yyyy</source>
         <translation>d MMMM yyyy 'р.'</translation>
     </message>
+    <message>
+        <source>Windows Help and Support</source>
+        <translation>Довідка та підтримка Windows</translation>
+    </message>
+    <message>
+        <source>Search Help</source>
+        <translation>Шукати в довідці</translation>
+    </message>
+    <message>
+        <source>Help and Support home</source>
+        <translation>Головна сторінка довідки та підтримки</translation>
+    </message>
+    <message>
+        <source>Browse Help</source>
+        <translation>Перегляд довідки</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Запитати</translation>
+    </message>
+    <message>
+        <source>Print...</source>
+        <translation>Друк...</translation>
+    </message>
+    <message>
+        <source>Text Size</source>
+        <translation>Розмір тексту</translation>
+    </message>
+    <message>
+        <source>Largest</source>
+        <translation>Найбільший</translation>
+    </message>
+    <message>
+        <source>Larger</source>
+        <translation>Більший</translation>
+    </message>
+    <message>
+        <source>Smaller</source>
+        <translation>Менший</translation>
+    </message>
+    <message>
+        <source>Smallest</source>
+        <translation>Найменший</translation>
+    </message>
+    <message>
+        <source>Offline Help</source>
+        <translation>Довідка в автономному режимі</translation>
+    </message>
+    <message>
+        <source>This Help is on your computer: no Internet connection is needed.</source>
+        <translation>Ця довідка зберігається на комп'ютері: підключення до Інтернету не потрібне.</translation>
+    </message>
+    <message>
+        <source>Find an answer quickly</source>
+        <translation>Швидкий пошук відповіді</translation>
+    </message>
+    <message>
+        <source>Enter a few words in the search box above.</source>
+        <translation>Введіть кілька слів у поле пошуку вгорі.</translation>
+    </message>
+    <message>
+        <source>How to get started with your computer</source>
+        <translation>Як почати роботу з комп'ютером</translation>
+    </message>
+    <message>
+        <source>Learn about Windows Basics</source>
+        <translation>Основи роботи з Windows</translation>
+    </message>
+    <message>
+        <source>Browse Help topics</source>
+        <translation>Перегляд розділів довідки</translation>
+    </message>
+    <message>
+        <source>More about this computer</source>
+        <translation>Докладніше про цей комп'ютер</translation>
+    </message>
+    <message>
+        <source>About this Windows 7 look</source>
+        <translation>Про цей вигляд Windows 7</translation>
+    </message>
+    <message>
+        <source>Contents</source>
+        <translation>Зміст</translation>
+    </message>
+    <message>
+        <source>More support options</source>
+        <translation>Інші варіанти підтримки</translation>
+    </message>
+    <message>
+        <source>Ask a question or report a problem with this Windows 7 look on its project page:</source>
+        <translation>Поставте запитання або повідомте про проблему з цим виглядом Windows 7 на сторінці проекту:</translation>
+    </message>
+    <message>
+        <source>Best 30 results for %1</source>
+        <translation>Найкращі 30 результатів для «%1»</translation>
+    </message>
+    <message>
+        <source>No results were found. Try other words.</source>
+        <translation>Нічого не знайдено. Спробуйте інші слова.</translation>
+    </message>
 </context>
 </TS>

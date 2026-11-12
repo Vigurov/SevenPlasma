@@ -1,0 +1,3 @@
+#!/bin/sh
+# SevenPlasma: KDE's Help Center (the Help menus of programs) is Windows Help and Support
+exec seven-control --help-support

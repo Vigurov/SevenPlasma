@@ -42,7 +42,7 @@ if [ -f "$BK/user-files.txt" ]; then   # what our programs' cmake installs put i
     while IFS= read -r f; do case "$f" in "$L"/*) rm -f "$f" ;; esac; done < "$BK/user-files.txt"
 fi
 systemctl --user unmask drkonqi-coredump-launcher.socket >/dev/null 2>&1 && systemctl --user start drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
-rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/bin/systemsettings "$L"/bin/kcmshell6 "$L"/bin/kinfocenter "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop "$HOME"/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh "$HOME"/.config/plasma-workspace/env/sevenplasma-path.sh "$HOME"/.config/autostart/org.kde.discover.notifier.desktop
+rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/bin/systemsettings "$L"/bin/kcmshell6 "$L"/bin/kinfocenter "$L"/bin/khelpcenter "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop "$HOME"/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh "$HOME"/.config/plasma-workspace/env/sevenplasma-path.sh "$HOME"/.config/autostart/org.kde.discover.notifier.desktop
 rm -rf "$L"/share/seven-* "$L"/lib/sevenplasma "$L"/share/sevenplasma "$L"/share/kwin/scripts/sevenkeys
 rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
 find "$L/share/icons/hicolor" -name 'seven-*' -delete 2>/dev/null
