@@ -503,7 +503,9 @@ printf '[Desktop Entry]\nType=Application\nName=SevenPlasma\nExec=%s/bin/seven-f
 # window decoration exceptions (smodrc): Gadgets, file dialogs, Explorer and Control Panel frames, dialogs
 cp "$REPO/data/smodrc" "$HOME/.config/smodrc"
 mkdir -p "$HOME/.config/environment.d"
-echo GTK_USE_PORTAL=1 > "$HOME/.config/environment.d/60-sevenplasma.conf"
+# our programs are in ~/.local/bin: Ubuntu's ~/.profile puts it on the PATH, Arch's does not (the session
+# then finds none of them: "Could not find program")
+printf 'GTK_USE_PORTAL=1\nPATH=$HOME/.local/bin:${PATH}\n' > "$HOME/.config/environment.d/60-sevenplasma.conf"
 # default programs
 for m in text/plain text/x-log; do run xdg-mime default seven-notepad.desktop $m || true; done
 for m in image/jpeg image/png image/bmp image/gif image/tiff image/webp; do run xdg-mime default seven-photoviewer.desktop $m || true; done
