@@ -61,6 +61,8 @@ for a in _launch RecordRegion; do gk org.kde.spectacle.desktop $a "@a(ai) []"; d
 gk org.kde.dolphin.desktop _launch "@a(ai) []"
 gk seven-snip.desktop _launch "[([16777225,0,0,0],)]"     # Print
 gk seven-run.desktop _launch "[([268435538,0,0,0],)]"     # Meta+R
+gk org.kde.kscreen.desktop ShowOSD "@a(ai) []"                # KDE's display switcher...
+gk seven-display-switch.desktop _launch "[([268435536,0,0,0],)]"   # ...Meta+P is ours (DisplaySwitch)
 # Start menu: Run opens our dialog
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
 panels().forEach(function (p) { p.widgets().forEach(function (w) {

@@ -84,11 +84,10 @@ inline void openWindowColor()
     launch(QStringLiteral("kcmshell6"), {QStringLiteral("kwin/effects/configs/kwin_aeroglassblur_config")});
 }
 
-/** Win+P display switcher of KDE (the "Connect to a projector" of Windows 7) */
+/** Win+P, "Connect to a projector" (win7displayswitch.h, in its own process like DisplaySwitch.exe) */
 inline void showDisplaySwitcher()
 {
-    QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/org_kde_kscreen_desktop"),
-                                                       QStringLiteral("org.kde.kglobalaccel.Component.invokeShortcut"), QStringLiteral("ShowOSD")});
+    QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--display-switch")});
 }
 
 inline QLabel *pageTitle(const QString &text)
@@ -1205,6 +1204,7 @@ struct Output {
     QList<Mode> modes;
     int type = 0;
     QString nativeId; // the mode the "scale:" sizes are made from
+    QStringList preferredModes;
 };
 
 inline QList<Output> outputs()
@@ -1225,6 +1225,9 @@ inline QList<Output> outputs()
         out.pos = QPoint(o.value(QStringLiteral("pos")).toObject().value(QStringLiteral("x")).toInt(), o.value(QStringLiteral("pos")).toObject().value(QStringLiteral("y")).toInt());
         out.size = QSize(o.value(QStringLiteral("size")).toObject().value(QStringLiteral("width")).toInt(), o.value(QStringLiteral("size")).toObject().value(QStringLiteral("height")).toInt());
         out.type = o.value(QStringLiteral("type")).toInt();
+        for (const QJsonValue &pm : o.value(QStringLiteral("preferredModes")).toArray()) {
+            out.preferredModes << pm.toVariant().toString();
+        }
         for (const QJsonValue &mv : o.value(QStringLiteral("modes")).toArray()) {
             const QJsonObject m = mv.toObject();
             out.modes.append({m.value(QStringLiteral("id")).toVariant().toString(),

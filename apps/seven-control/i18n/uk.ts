@@ -15149,5 +15149,17 @@ WantedBy=timers.target
         <source>The object of Spider Solitaire is to remove all of the cards from the ten stacks at the top of the window in the fewest number of moves.</source>
         <translation>Мета гри «Павук» — прибрати всі карти з десяти стопок угорі вікна за найменшу кількість ходів.</translation>
     </message>
+    <message>
+        <source>Computer only</source>
+        <translation>Лише комп'ютер</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation>Дублювати</translation>
+    </message>
+    <message>
+        <source>Projector only</source>
+        <translation>Лише проектор</translation>
+    </message>
 </context>
 </TS>

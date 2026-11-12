@@ -22,7 +22,7 @@ find_package(KWayland QUIET)
 
 add_executable(seven-control main.cpp sevenrunner.cpp win7safelyremove.h)
 target_include_directories(seven-control PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../seven-common)
-target_link_libraries(seven-control PRIVATE Qt6::Widgets Qt6::Network Qt6::DBus Qt6::Svg Qt6::PrintSupport Fontconfig::Fontconfig Freetype::Freetype PK::packagekitqt6 KF6::Baloo KF6::FileMetaData ${CMAKE_DL_LIBS} KF6::AuthCore KF6::ConfigCore KF6::Service KF6::Solid KF6::KIOFileWidgets KF6::KIOWidgets KF6::Service KF6::IconWidgets KF6::IdleTime KF6::StatusNotifierItem AeroQt::AeroQt xcb)
+target_link_libraries(seven-control PRIVATE Qt6::Widgets Qt6::Network Qt6::DBus Qt6::Svg Qt6::PrintSupport Fontconfig::Fontconfig Freetype::Freetype PK::packagekitqt6 KF6::Baloo KF6::FileMetaData ${CMAKE_DL_LIBS} KF6::AuthCore KF6::ConfigCore KF6::Service KF6::Solid KF6::KIOFileWidgets KF6::KIOWidgets KF6::Service KF6::IconWidgets KF6::WindowSystem KF6::IdleTime KF6::StatusNotifierItem AeroQt::AeroQt xcb)
 
 install(TARGETS seven-control RUNTIME DESTINATION bin)
 

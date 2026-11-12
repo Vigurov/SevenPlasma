@@ -11,6 +11,7 @@
 #include "win7power.h"
 #include "win7network.h"
 #include "win7display.h"
+#include "win7displayswitch.h"
 #include "win7background.h"
 #include "win7openwith.h"
 #include "win7portal.h"
@@ -2079,6 +2080,9 @@ int main(int argc, char **argv)
     }
 
     // stand-alone Windows 7 dialogs: plain titles, without " — Панель керування"
+    if (app.arguments().contains(QStringLiteral("--display-switch"))) { // Win+P
+        return Win7DisplaySwitch::run();
+    }
     if (app.arguments().contains(QStringLiteral("--autoplay-ask"))) { // test helper: the AutoPlay window for a USB drive
         Win7Autoplay::Media m;
         m.device = QStringLiteral("/dev/sdx1");

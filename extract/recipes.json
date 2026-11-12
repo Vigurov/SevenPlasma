@@ -32253,5 +32253,29 @@
 127
 ],
 "dest": "seven-aero/themecpl/monitor.png"
+},
+{
+"src": "Windows/System32/DisplaySwitch.exe",
+"from": "bitmap",
+"id": 200,
+"dest": "seven-control/displayswitch/computer.png"
+},
+{
+"src": "Windows/System32/DisplaySwitch.exe",
+"from": "bitmap",
+"id": 201,
+"dest": "seven-control/displayswitch/duplicate.png"
+},
+{
+"src": "Windows/System32/DisplaySwitch.exe",
+"from": "bitmap",
+"id": 202,
+"dest": "seven-control/displayswitch/extend.png"
+},
+{
+"src": "Windows/System32/DisplaySwitch.exe",
+"from": "bitmap",
+"id": 203,
+"dest": "seven-control/displayswitch/projector.png"
 }
 ]
