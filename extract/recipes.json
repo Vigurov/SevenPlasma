@@ -32228,5 +32228,30 @@
 "from": "bitmap",
 "id": 520,
 "dest": "seven-aero/folders/grip.png"
+},
+{
+"src": "Windows/System32/srchadmin.dll",
+"from": "avi-strip",
+"id": 1301,
+"dest": "seven-aero/idx-anim.png"
+},
+{
+"src": "Windows/System32/themeui.dll",
+"from": "bitmap",
+"id": 600,
+"key": true,
+"crop": [
+5,
+2,
+182,
+148
+],
+"clear": [
+11,
+15,
+163,
+127
+],
+"dest": "seven-aero/themecpl/monitor.png"
 }
 ]

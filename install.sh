@@ -298,6 +298,11 @@ install -m 755 "$REPO"/data/bin/* "$L/bin/"
 subst() { sed "s#@HOME@#$HOME#g" "$1" > "$2"; }
 for f in "$REPO"/data/applications/*.desktop; do subst "$f" "$L/share/applications/$(basename "$f")"; done
 for f in "$REPO"/data/autostart/*.desktop; do subst "$f" "$HOME/.config/autostart/$(basename "$f")"; done
+# the "Welcome" screen fades into the wallpaper: its link is renewed at logout too (and once now)
+mkdir -p "$HOME/.config/plasma-workspace/shutdown"
+printf '#!/bin/sh\nexec "%s/bin/seven-splash-wallpaper"\n' "$L" > "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
+chmod +x "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
+"$L/bin/seven-splash-wallpaper" || true
 for f in "$REPO"/data/systemd/*.service; do subst "$f" "$HOME/.config/systemd/user/$(basename "$f")"; done
 cp -r "$REPO"/apps/plasmoids/* "$L/share/plasma/plasmoids/"
 cp -r "$REPO/apps/kwin/sevenkeys" "$L/share/kwin/scripts/"
@@ -357,6 +362,7 @@ if [ -n "$ISO" ]; then
         WINEDLLOVERRIDES="mscoree,mshtml=" run wineboot -i || true   # no Mono/Gecko install prompts
         mkdir -p "$WINEPREFIX/drive_c/Program Files/Microsoft Games"
         cp -r "$W/Program Files/Microsoft Games/." "$WINEPREFIX/drive_c/Program Files/Microsoft Games/"
+        run python3 "$REPO/tools/games-json.py" "$W/Program Files/Microsoft Games" "$L/share/seven-control/games.json"
     fi
     rm -rf "$TREE"
 else

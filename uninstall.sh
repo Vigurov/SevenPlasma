@@ -41,7 +41,7 @@ systemctl --user disable --now seven-folder-refresh.service seven-soundfx.servic
 if [ -f "$BK/user-files.txt" ]; then   # what our programs' cmake installs put into ~/.local
     while IFS= read -r f; do case "$f" in "$L"/*) rm -f "$f" ;; esac; done < "$BK/user-files.txt"
 fi
-rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop
+rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop "$HOME"/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh
 rm -rf "$L"/share/seven-* "$L"/lib/sevenplasma "$L"/share/sevenplasma "$L"/share/kwin/scripts/sevenkeys
 rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
 find "$L/share/icons/hicolor" -name 'seven-*' -delete 2>/dev/null

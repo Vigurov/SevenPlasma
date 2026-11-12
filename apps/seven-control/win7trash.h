@@ -21,6 +21,8 @@
 #include <QIntValidator>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLinearGradient>
+#include <QPainter>
 #include <QPalette>
 #include <QPushButton>
 #include <QRadioButton>
@@ -212,7 +214,36 @@ public:
         auto *page = new QWidget;
         page->setFixedSize(456, 304);
         auto *pic = new QLabel(page);
-        pic->setPixmap(QPixmap(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-control/recyclebin-banner.png"))));
+        QPixmap banner(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-control/recyclebin-banner.png")));
+        if (banner.isNull()) {
+            // the picture of the user's photo is in no file of Windows 7: a blue-green band with the
+            // Recycle Bin and its reflection in its place
+            banner = QPixmap(135, 307);
+            QPainter bp(&banner);
+            QLinearGradient g(0, 0, 0, 307);
+            g.setColorAt(0, QColor(150, 166, 186));
+            g.setColorAt(0.08, QColor(96, 142, 186));
+            g.setColorAt(0.45, QColor(62, 148, 186));
+            g.setColorAt(0.72, QColor(96, 198, 216));
+            g.setColorAt(0.85, QColor(80, 200, 212));
+            g.setColorAt(1, QColor(16, 164, 190));
+            bp.fillRect(banner.rect(), g);
+            bp.setRenderHint(QPainter::Antialiasing);
+            QLinearGradient shine(0, 0, 135, 307);
+            shine.setColorAt(0.35, QColor(255, 255, 255, 0));
+            shine.setColorAt(0.5, QColor(255, 255, 255, 46));
+            shine.setColorAt(0.65, QColor(255, 255, 255, 0));
+            bp.fillRect(banner.rect(), shine);
+            const QPixmap bin = windowIcon().pixmap(96, 96);
+            bp.drawPixmap(20, 14, bin);
+            bp.save();
+            bp.setOpacity(0.22);
+            bp.translate(0, 14 + 96 * 2 + 2);
+            bp.scale(1, -1);
+            bp.drawPixmap(20, 0, bin);
+            bp.restore();
+        }
+        pic->setPixmap(banner);
         pic->setGeometry(0, 0, 135, 307);
         pic->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 

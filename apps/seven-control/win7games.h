@@ -45,7 +45,8 @@ struct Game {
 /** desktop entries of the Game category that are tools or launchers, not games */
 inline bool isTool(const QString &id, const QString &name)
 {
-    static const QStringList ids{QStringLiteral("steam"), QStringLiteral("rtb-toolbar"), QStringLiteral("content-manager")};
+    static const QStringList ids{QStringLiteral("steam"), QStringLiteral("rtb-toolbar"), QStringLiteral("content-manager"),
+                                 QStringLiteral("seven-games")}; // the Games folder itself
     static const QStringList names{QStringLiteral("Blender"), QStringLiteral("Wallpaper Engine"), QStringLiteral("Race Track Builder"),
                                    QStringLiteral("Content Manager"), QStringLiteral("Steam")};
     return ids.contains(id) || names.contains(name) || id.startsWith(QLatin1String("seven_"));
@@ -62,9 +63,12 @@ inline QList<Game> games()
             if (QStandardPaths::locate(QStandardPaths::ApplicationsLocation, id + QStringLiteral(".desktop")).isEmpty()) {
                 continue; // not installed
             }
-            list.append({id, o.value(QStringLiteral("name")).toString(), o.value(QStringLiteral("description")).toString(),
-                         o.value(QStringLiteral("publisher")).toString(), o.value(QStringLiteral("developer")).toString(),
-                         o.value(QStringLiteral("genre")).toString(), o.value(QStringLiteral("icon")).toString(),
+            // the texts are the games' own English ones (games-json.py), translated like Windows 7's language packs
+            const auto text = [&o](const char *key) {
+                return QCoreApplication::translate("Win7", o.value(QLatin1String(key)).toString().toUtf8().constData());
+            };
+            list.append({id, text("name"), text("description"), o.value(QStringLiteral("publisher")).toString(),
+                         o.value(QStringLiteral("developer")).toString(), text("genre"), o.value(QStringLiteral("icon")).toString(),
                          o.value(QStringLiteral("min")).toDouble(), o.value(QStringLiteral("rec")).toDouble()});
         }
     }

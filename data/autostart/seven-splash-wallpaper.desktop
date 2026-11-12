@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Windows 7 logon picture
+Exec=seven-splash-wallpaper
+NoDisplay=true
+X-KDE-autostart-phase=2

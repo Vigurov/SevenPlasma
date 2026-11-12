@@ -181,7 +181,39 @@ std::function<void()> program(const QString &exe, const QStringList &args = {})
 std::function<void()> adminTools()
 {
     return [] {
-        launch(QStringLiteral("dolphin"), {QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/seven-control/Адміністрування")});
+        // the folder is (re)made each time: its name and the shortcuts' names in the UI language
+        const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/seven-control/")
+            + tr7("Administrative Tools");
+        QDir().mkpath(dir);
+        const QString self = QCoreApplication::applicationFilePath();
+        struct Tool {
+            const char *name, *comment;
+            QString exec;
+            const char *icon;
+        };
+        const Tool tools[] = {
+            {"Windows Firewall with Advanced Security", "Configure firewall rules", self + QStringLiteral(" --wf"), "seven-at-firewall"},
+            {"Windows Memory Diagnostic", "Check your computer for memory problems", self + QStringLiteral(" --memtest"), "seven-at-memtest"},
+            {"Disk Management", "Create, delete and format disk partitions", self + QStringLiteral(" --diskmgmt"), "seven-at-disks"},
+            {"Computer Management", "Hardware and system information", self + QStringLiteral(" --compmgmt"), "seven-at-compmgmt"},
+            {"System Configuration", "Programs that start when you log on", QStringLiteral("systemsettings kcm_autostart"), "seven-at-msconfig"},
+            {"Event Viewer", "View system and program logs", self + QStringLiteral(" --eventvwr"), "seven-at-events"},
+            {"Performance Monitor", "Monitor the performance of your computer", QStringLiteral("plasma-systemmonitor"), "seven-at-perfmon"},
+        };
+        for (const Tool &t : tools) {
+            QFile f(dir + QLatin1Char('/') + tr7(t.name).replace(QLatin1Char('/'), QLatin1Char('-')) + QStringLiteral(".desktop"));
+            if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                f.write(QStringLiteral("[Desktop Entry]\nType=Application\nName=%1\nComment=%2\nExec=%3\nIcon=%4\n")
+                            .arg(tr7(t.name), tr7(t.comment), t.exec, QString::fromLatin1(t.icon))
+                            .toUtf8());
+                f.setPermissions(f.permissions() | QFileDevice::ExeOwner);
+            }
+        }
+        QFile d(dir + QStringLiteral("/.directory"));
+        if (d.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            d.write("[Desktop Entry]\nIcon=seven-at-folder\n");
+        }
+        launch(QStringLiteral("dolphin"), {dir});
     };
 }
 

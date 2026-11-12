@@ -101,6 +101,11 @@ class Sources:
             sys.path.insert(0, os.path.join(HERE, '..', 'tools'))
             from win7near import keyed
             return keyed(im)
+        if r.get('clear'):
+            # a part made transparent (e.g. the screen of a monitor that a program draws into)
+            im = self.picture({k: v for k, v in r.items() if k != 'clear'}).convert('RGBA')
+            im.paste((0, 0, 0, 0), tuple(r['clear']))
+            return im
         if r.get('layers'):
             # pictures drawn over each other (each with its own crop / place), e.g. a button and its glyph
             base = self.picture(r['layers'][0]).convert('RGBA')
@@ -137,6 +142,35 @@ class Sources:
             ico = Image.open(io.BytesIO(blob[:400000]))
             ico.size = tuple(int(v) for v in r['extra'].split('x'))
             return ico.copy()
+        if kind == 'avi-strip':
+            # an uncompressed animation (AVI resource, 24-bit frames): the frames side by side, the colour of
+            # the first pixel made transparent
+            for t, i, blob in res:
+                if i == rid and str(t) == 'AVI':
+                    f = blob.find(b'strf')
+                    _, w, h, _, bpp = struct.unpack_from('<IiiHH', blob, f + 8)
+                    stride = (w * bpp // 8 + 3) & ~3
+                    frames, pos = [], 0
+                    while True:
+                        pos = blob.find(b'00db', pos)
+                        if pos < 0:
+                            break
+                        size = struct.unpack_from('<I', blob, pos + 4)[0]
+                        if size == stride * h:
+                            frames.append(Image.frombuffer('RGB', (w, h), blob[pos + 8:pos + 8 + size], 'raw', 'BGR', stride, -1))
+                        pos += 8 + size
+                    strip = Image.new('RGBA', (w * len(frames), h))
+                    for k, fr in enumerate(frames):
+                        fr = fr.convert('RGBA')
+                        key = fr.getpixel((0, 0))
+                        px = fr.load()
+                        for y in range(h):
+                            for x in range(w):
+                                if px[x, y] == key:
+                                    px[x, y] = (0, 0, 0, 0)
+                        strip.paste(fr, (k * w, 0))
+                    return strip
+            raise KeyError('%s AVI %s' % (r['src'], rid))
         typ = {'icon': RT_GROUP_ICON, 'bitmap': RT_BITMAP, 'cursor': 1}.get(kind)
         for t, i, blob in res:
             if i != rid or (typ is not None and t != typ) or (typ is None and str(t) != r.get('extra', str(t)) and kind != 'zip'):

@@ -15053,5 +15053,101 @@ WantedBy=timers.target
         <source>Could not connect to KWin's input. On-Screen Keyboard will not be able to type.</source>
         <translation>Не вдалося під'єднатися до введення KWin. Екранна клавіатура не зможе друкувати.</translation>
     </message>
+    <message>
+        <source>System Configuration</source>
+        <translation>Конфігурація системи</translation>
+    </message>
+    <message>
+        <source>Performance Monitor</source>
+        <translation>Системний монітор</translation>
+    </message>
+    <message>
+        <source>Configure firewall rules</source>
+        <translation>Налаштування правил брандмауера</translation>
+    </message>
+    <message>
+        <source>Create, delete and format disk partitions</source>
+        <translation>Створення, видалення та форматування розділів диска</translation>
+    </message>
+    <message>
+        <source>Hardware and system information</source>
+        <translation>Відомості про обладнання та систему</translation>
+    </message>
+    <message>
+        <source>Programs that start when you log on</source>
+        <translation>Програми, що запускаються під час входу в систему</translation>
+    </message>
+    <message>
+        <source>View system and program logs</source>
+        <translation>Перегляд системних журналів і журналів програм</translation>
+    </message>
+    <message>
+        <source>Monitor the performance of your computer</source>
+        <translation>Відстеження продуктивності комп'ютера</translation>
+    </message>
+    <message>
+        <source>Chess Titans</source>
+        <translation>Chess Titans</translation>
+    </message>
+    <message>
+        <source>FreeCell</source>
+        <translation>Вільна комірка</translation>
+    </message>
+    <message>
+        <source>Hearts</source>
+        <translation>Черви</translation>
+    </message>
+    <message>
+        <source>Mahjong Titans</source>
+        <translation>Mahjong Titans</translation>
+    </message>
+    <message>
+        <source>Purble Place</source>
+        <translation>Purble Place</translation>
+    </message>
+    <message>
+        <source>Solitaire</source>
+        <translation>Косинка</translation>
+    </message>
+    <message>
+        <source>Spider Solitaire</source>
+        <translation>Павук</translation>
+    </message>
+    <message>
+        <source>Family Entertainment</source>
+        <translation>Сімейні розваги</translation>
+    </message>
+    <message>
+        <source>The classic game of Chess.</source>
+        <translation>Класична гра в шахи.</translation>
+    </message>
+    <message>
+        <source>The object of FreeCell is to move all the cards to the home cells, using the free cells as placeholders.  To win, make four stacks of cards on the home cells, one for each suit, stacked in order of rank, from lowest (ace) to highest (king).</source>
+        <translation>Мета гри «Вільна комірка» — перемістити всі карти в домашні комірки, використовуючи вільні комірки як тимчасові місця. Щоб виграти, складіть на домашніх комірках чотири стопки карт, по одній для кожної масті, у порядку старшинства від найменшої (туз) до найбільшої (король).</translation>
+    </message>
+    <message>
+        <source>The object of Hearts is to have the lowest score at the end of the game.</source>
+        <translation>Мета гри «Черви» — мати найменше очок наприкінці гри.</translation>
+    </message>
+    <message>
+        <source>The classic tile-matching game.</source>
+        <translation>Класична гра з добирання пар плиток.</translation>
+    </message>
+    <message>
+        <source>The object of Minesweeper is to locate all the mines as quickly as possible without uncovering any of them. If you uncover a mine, you lose the game.</source>
+        <translation>Мета гри «Сапер» — якомога швидше знайти всі міни, не відкривши жодної з них. Якщо відкрити міну, гру програно.</translation>
+    </message>
+    <message>
+        <source>Build a comfy cake or guess a Purble!</source>
+        <translation>Спечіть затишний торт або вгадайте Пурбла!</translation>
+    </message>
+    <message>
+        <source>The object of Solitaire is to use all the cards in the deck to build up the four suit stacks in ascending order, beginning with the aces.</source>
+        <translation>Мета гри «Косинка» — використати всі карти колоди, щоб скласти чотири стопки за мастями в порядку зростання, починаючи з тузів.</translation>
+    </message>
+    <message>
+        <source>The object of Spider Solitaire is to remove all of the cards from the ten stacks at the top of the window in the fewest number of moves.</source>
+        <translation>Мета гри «Павук» — прибрати всі карти з десяти стопок угорі вікна за найменшу кількість ходів.</translation>
+    </message>
 </context>
 </TS>

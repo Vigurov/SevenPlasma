@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Points ~/.local/share/seven-aero/splash-wallpaper at the current desktop wallpaper: the "Welcome" screen
+fades into it at the next logon, like Windows 7 going straight to the desktop (black if the link is missing).
+Run at logon (autostart) and at logout (plasma-workspace/shutdown), so a wallpaper changed during the
+session is used next time."""
+import configparser, os, re
+from urllib.parse import unquote
+
+home = os.path.expanduser('~')
+# the shell's own file (AeroThemePlasma's shell is io.gitgud.wackyideas.desktop), then Plasma's
+shells = [os.environ.get('PLASMA_DEFAULT_SHELL', ''), 'io.gitgud.wackyideas.desktop', 'org.kde.plasma.desktop']
+rcs = [os.path.join(home, '.config', 'plasma-%s-appletsrc' % s) for s in shells if s]
+link = os.path.join(os.environ.get('XDG_DATA_HOME', os.path.join(home, '.local', 'share')), 'seven-aero', 'splash-wallpaper')
+
+
+def wallpaper():
+    for rc in rcs:
+        if os.path.exists(rc):
+            img = image_of(rc)
+            if img:
+                return img
+    return None
+
+
+def image_of(rc):
+    cp = configparser.RawConfigParser(strict=False, interpolation=None)
+    cp.optionxform = str
+    try:
+        cp.read(rc, encoding='utf-8')
+    except (configparser.Error, OSError):
+        return None
+    # the desktop containments' image wallpaper (the first screen first)
+    sections = [s for s in cp.sections() if re.fullmatch(r'Containments\]\[\d+\]\[Wallpaper\]\[org\.kde\.image\]\[General', s)]
+    sections.sort(key=lambda s: int(re.search(r'\d+', s).group()))
+    for s in sections:
+        img = cp.get(s, 'Image', fallback='')
+        if img:
+            return unquote(img[7:] if img.startswith('file://') else img)
+    return None
+
+
+def picture(path):
+    """a wallpaper package (folder with contents/images) gives its biggest picture"""
+    if os.path.isdir(path):
+        best, size = None, 0
+        for d in ('contents/images', 'contents/images_dark'):
+            for f in sorted(os.listdir(os.path.join(path, d))) if os.path.isdir(os.path.join(path, d)) else []:
+                m = re.match(r'(\d+)x(\d+)', f)
+                n = int(m.group(1)) * int(m.group(2)) if m else 1
+                if n > size:
+                    best, size = os.path.join(path, d, f), n
+            if best:
+                break
+        return best
+    return path if os.path.isfile(path) else None
+
+
+def main():
+    p = wallpaper()
+    p = picture(p) if p else None
+    if not p:
+        return
+    os.makedirs(os.path.dirname(link), exist_ok=True)
+    if os.path.islink(link) and os.readlink(link) == p:
+        return
+    tmp = link + '.new'
+    if os.path.lexists(tmp):
+        os.remove(tmp)
+    os.symlink(p, tmp)
+    os.replace(tmp, link)
+
+
+if __name__ == '__main__':
+    main()
