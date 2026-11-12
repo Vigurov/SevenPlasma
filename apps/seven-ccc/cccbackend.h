@@ -1015,8 +1015,7 @@ inline QString desktopValue(const QString &file, const QString &key)
 {
     QSettings d(file, QSettings::IniFormat);
     d.beginGroup(QStringLiteral("Desktop Entry"));
-    QString uk = d.value(key + QStringLiteral("[uk]")).toString();
-    return uk.isEmpty() ? d.value(key).toString() : uk;
+    return Win7I18n::localizedValue(d, key);
 }
 
 inline QString desktopPath(const QString &id)

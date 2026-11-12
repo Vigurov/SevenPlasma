@@ -90,6 +90,7 @@ inline const QHash<QString, QString> &descriptions()
         for (const QFileInfo &fi : QDir(d).entryInfoList({QStringLiteral("*.desktop")}, QDir::Files)) {
             const QString text = readFile(fi.filePath());
             QString name, exec;
+            QHash<QString, QString> names; // Name and Name[xx]
             bool main = false;
             for (const QString &line : text.split(QLatin1Char('\n'))) {
                 if (line.startsWith(QLatin1Char('['))) {
@@ -99,13 +100,20 @@ inline const QHash<QString, QString> &descriptions()
                 if (!main) {
                     continue;
                 }
-                if (line.startsWith(QLatin1String("Name[uk]="))) {
-                    name = line.mid(9).trimmed();
-                } else if (line.startsWith(QLatin1String("Name=")) && name.isEmpty()) {
-                    name = line.mid(5).trimmed();
+                if (line.startsWith(QLatin1String("Name")) && line.contains(QLatin1Char('='))) {
+                    names.insert(line.section(QLatin1Char('='), 0, 0).trimmed(), line.section(QLatin1Char('='), 1).trimmed());
                 } else if (line.startsWith(QLatin1String("Exec="))) {
                     exec = line.mid(5).trimmed();
                 }
+            }
+            // the name in the UI language (Name[uk] only when the UI is Ukrainian)
+            for (const QString &x : Win7I18n::keySuffixes()) {
+                if (name.isEmpty()) {
+                    name = names.value(QStringLiteral("Name[%1]").arg(x));
+                }
+            }
+            if (name.isEmpty()) {
+                name = names.value(QStringLiteral("Name"));
             }
             QString bin = exec.section(QLatin1Char(' '), 0, 0);
             if (bin == QLatin1String("env")) {

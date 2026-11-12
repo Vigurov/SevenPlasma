@@ -1,16 +1,38 @@
 #!/usr/bin/env python3
-"""Text of the Windows 7 tooltip of a desktop item (Ukrainian), one line per field."""
+"""Text of the Windows 7 tooltip of a desktop item, one line per field, in the UI language (Ukrainian or
+English, like the display language of Windows 7)."""
 import os, sys, time, subprocess, configparser
 
+def _ui_lang():
+    for v in (os.environ.get("LANGUAGE", "").split(":")[0], os.environ.get("LC_MESSAGES", ""), os.environ.get("LC_ALL", ""), os.environ.get("LANG", "")):
+        if v:
+            return "uk" if v.startswith("uk") else "en"
+    return "en"
+UK = _ui_lang() == "uk"
+T = {  # English (Windows 7 en-US) -> Ukrainian
+    "Date created: ": "Дата створення: ", "Empty folder": "Порожня папка", "Size: ": "Розмір: ", "more than ": "понад ",
+    "Folders: ": "Папки: ", "Files: ": "Файли: ", "Location: ": "Розташування: ", "Item type: ": "Тип елемента: ",
+    "File": "Файл", "Dimensions: ": "Розміри: ", "Date modified: ": "Дата зміни: ",
+    "Contains files and folders that you have deleted.": "Містить файли та папки, які ви видалили.",
+    "Shows the disk drives and hardware connected to this computer.": "Відображає диски та обладнання, підключені до цього комп'ютера.",
+}
+def tr(s):
+    return T.get(s, s) if UK else s
+
 def size_text(n):
-    for unit, div in (("ГБ", 1 << 30), ("МБ", 1 << 20), ("КБ", 1 << 10)):
+    units = (("ГБ", 1 << 30), ("МБ", 1 << 20), ("КБ", 1 << 10)) if UK else (("GB", 1 << 30), ("MB", 1 << 20), ("KB", 1 << 10))
+    for unit, div in units:
         if n >= div:
             v = n / div
-            return (f"{v:.2f}" if v < 10 else f"{v:.1f}" if v < 100 else f"{v:.0f}").replace(".", ",") + " " + unit
-    return f"{n} байт"
+            t = f"{v:.2f}" if v < 10 else f"{v:.1f}" if v < 100 else f"{v:.0f}"
+            return (t.replace(".", ",") if UK else t) + " " + unit
+    return f"{n} байт" if UK else f"{n} bytes"
 
 def date_text(t):
-    return time.strftime("%d.%m.%Y %H:%M", time.localtime(t))
+    lt = time.localtime(t)
+    if UK:
+        return time.strftime("%d.%m.%Y %H:%M", lt)
+    return f"{lt.tm_mon}/{lt.tm_mday}/{lt.tm_year} {lt.tm_hour % 12 or 12}:{lt.tm_min:02d} {'AM' if lt.tm_hour < 12 else 'PM'}"
 
 def listing(names, limit=60):
     s = ", ".join(names)
@@ -41,7 +63,7 @@ if os.path.isdir(path):
         born = int(subprocess.run(["stat", "-c", "%W", path], capture_output=True, text=True, timeout=1).stdout.strip() or 0)
     except Exception:
         born = 0
-    lines.append("Дата створення: " + date_text(born or st.st_mtime))
+    lines.append(tr("Date created: ") + date_text(born or st.st_mtime))
     dirs, files, total, count = [], [], 0, 0
     try:
         for e in sorted(os.scandir(path), key=lambda e: e.name.lower()):
@@ -63,23 +85,23 @@ if os.path.isdir(path):
             complete = False
             break
     if not dirs and not files:
-        lines.append("Порожня папка")
+        lines.append(tr("Empty folder"))
     else:
-        lines.append("Розмір: " + (size_text(total) if complete else "понад " + size_text(total)))
+        lines.append(tr("Size: ") + (size_text(total) if complete else tr("more than ") + size_text(total)))
         if dirs:
-            lines.append("Папки: " + listing(dirs))
+            lines.append(tr("Folders: ") + listing(dirs))
         if files:
-            lines.append("Файли: " + listing(files))
+            lines.append(tr("Files: ") + listing(files))
 elif path.endswith(".desktop") and ("URL=trash:/" in open(path, encoding="utf-8", errors="replace").read()):
-    lines.append("Містить файли та папки, які ви видалили.")
+    lines.append(tr("Contains files and folders that you have deleted."))
 elif path.endswith("/seven-computer.desktop"):
-    lines.append("Відображає диски та обладнання, підключені до цього комп'ютера.")
+    lines.append(tr("Shows the disk drives and hardware connected to this computer."))
 elif path.endswith(".desktop"):
     cp = configparser.ConfigParser(interpolation=None, strict=False)
     try:
         cp.read(path, encoding="utf-8")
         de = cp["Desktop Entry"]
-        comment = de.get("Comment[uk]") or de.get("Comment") or ""
+        comment = (de.get("Comment[uk]") if UK else None) or de.get("Comment") or ""
         execl = (de.get("Exec") or "").split(" ")[0]
     except Exception:
         comment, execl = "", ""
@@ -88,17 +110,17 @@ elif path.endswith(".desktop"):
     if execl:
         where = os.path.dirname(execl) if os.path.isabs(execl) else os.path.dirname(subprocess.run(["sh", "-c", f"command -v {execl}"], capture_output=True, text=True).stdout.strip())
         if where:
-            lines.append("Розташування: " + os.path.basename(where.rstrip("/")) + " (" + where + ")")
+            lines.append(tr("Location: ") + os.path.basename(where.rstrip("/")) + " (" + where + ")")
 else:
     t = sys.argv[2] if len(sys.argv) > 2 else ""
-    lines.append("Тип елемента: " + (t or "Файл"))
+    lines.append(tr("Item type: ") + (t or tr("File")))
     if t and ("зображення" in t.lower() or "image" in t.lower()):
         try:
             out = subprocess.run(["identify", "-format", "%w x %h", path + "[0]"], capture_output=True, text=True, timeout=2).stdout.strip()
             if out:
-                lines.append("Розміри: " + out)
+                lines.append(tr("Dimensions: ") + out)
         except Exception:
             pass
-    lines.append("Розмір: " + size_text(st.st_size))
-    lines.append("Дата зміни: " + date_text(st.st_mtime))
+    lines.append(tr("Size: ") + size_text(st.st_size))
+    lines.append(tr("Date modified: ") + date_text(st.st_mtime))
 print("\n".join(lines))

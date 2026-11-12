@@ -65,6 +65,7 @@ gk org.kde.kscreen.desktop ShowOSD "@a(ai) []"                # KDE's display sw
 gk seven-display-switch.desktop _launch "[([268435536,0,0,0],)]"   # ...Meta+P is ours (DisplaySwitch)
 # everything else KDE binds that Windows 7 has not (Win+Esc, Win+I, Win+W, Alt+Space search...) goes off
 python3 "$HOME/.local/lib/sevenplasma/seven-shortcuts.py" || true
+"$HOME/.local/bin/seven-gpu-panels" || true    # the vendor panels only for the GPUs that are there
 # no KDE crash dialog (DrKonqi): Plasma restarts its shell by itself, the dialog is KDE's own look
 systemctl --user mask --now drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 # no Discover "Updates" gear in the tray: Windows 7 tells about updates through the Action Center flag

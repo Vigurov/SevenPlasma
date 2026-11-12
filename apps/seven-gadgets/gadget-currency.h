@@ -398,7 +398,7 @@ private:
 
     static QString formatAmount(double v)
     {
-        const QLocale l(QLocale::Ukrainian);
+        const QLocale l; // the formats of the system (Region and Language)
         const double a = std::abs(v);
         const int decimals = a == 0 ? 0 : (a >= 1 ? 2 : qMin(6, 2 - int(std::floor(std::log10(a)))));
         return l.toString(v, 'f', decimals);

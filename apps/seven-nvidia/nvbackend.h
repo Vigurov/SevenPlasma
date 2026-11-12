@@ -195,7 +195,7 @@ inline QList<Program> installedPrograms()
             }
             Program p;
             p.id = QDir(dirs.at(i)).relativeFilePath(path).replace(QLatin1Char('/'), QLatin1Char('-'));
-            p.name = d.value(QStringLiteral("Name[uk]"), d.value(QStringLiteral("Name"))).toString();
+            p.name = Win7I18n::localizedValue(d, QStringLiteral("Name"));
             p.exe = exeOf(d.value(QStringLiteral("Exec")).toString());
             p.icon = d.value(QStringLiteral("Icon")).toString();
             p.desktopPath = path;

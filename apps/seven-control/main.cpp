@@ -326,6 +326,26 @@ bool hasGpuVendor(const QString &vendor)
     return false;
 }
 
+/** the vendor panels to show, like the desktop menu: NVIDIA with an NVIDIA GPU on NVIDIA's driver, Catalyst
+ *  with an AMD GPU, Intel's with an Intel GPU (~/.config/seven-gpu-panels "nvidia amd intel" adds them for tests) */
+struct GpuPanels {
+    bool nvidia, amd, intel;
+};
+GpuPanels gpuPanels()
+{
+    QFile o(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/seven-gpu-panels"));
+    const QString force = o.open(QIODevice::ReadOnly) ? QString::fromLatin1(o.readAll()) : QString();
+    return {(hasGpuVendor(QStringLiteral("0x10de")) && QFileInfo::exists(QStringLiteral("/sys/module/nvidia"))) || force.contains(QLatin1String("nvidia")),
+            hasGpuVendor(QStringLiteral("0x1002")) || force.contains(QLatin1String("amd")),
+            hasGpuVendor(QStringLiteral("0x8086")) || force.contains(QLatin1String("intel"))};
+}
+
+bool hiddenVendorPanel(const QString &icon, const GpuPanels &g)
+{
+    return (icon == QLatin1String("seven-nvidia") && !g.nvidia) || (icon == QLatin1String("seven-ccc") && !g.amd)
+        || (icon == QLatin1String("seven-igfx") && !g.intel);
+}
+
 QList<Item> allItems()
 {
     QList<Item> items{
@@ -377,9 +397,9 @@ QList<Item> allItems()
                     items.end());
     }
     {
-        const bool amd = hasGpuVendor(QStringLiteral("0x1002")), intel = hasGpuVendor(QStringLiteral("0x8086"));
-        items.erase(std::remove_if(items.begin(), items.end(), [amd, intel](const Item &i) {
-                        return (i.icon == QLatin1String("seven-ccc") && !amd) || (i.icon == QLatin1String("seven-igfx") && !intel);
+        const GpuPanels g = gpuPanels();
+        items.erase(std::remove_if(items.begin(), items.end(), [&g](const Item &i) {
+                        return hiddenVendorPanel(i.icon, g);
                     }),
                     items.end());
     }
@@ -663,10 +683,10 @@ const QList<CategoryPage> &categoryPages()
     };
     static const bool pruned = [] {
         // vendor panels only for the GPUs that are really there
-        const bool amd = hasGpuVendor(QStringLiteral("0x1002")), intel = hasGpuVendor(QStringLiteral("0x8086"));
+        const GpuPanels g = gpuPanels();
         for (CategoryPage &c : pages) {
-            c.sections.erase(std::remove_if(c.sections.begin(), c.sections.end(), [amd, intel](const PageSection &s) {
-                                 return (s.icon == QLatin1String("seven-ccc") && !amd) || (s.icon == QLatin1String("seven-igfx") && !intel);
+            c.sections.erase(std::remove_if(c.sections.begin(), c.sections.end(), [&g](const PageSection &s) {
+                                 return hiddenVendorPanel(s.icon, g);
                              }),
                              c.sections.end());
         }

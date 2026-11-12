@@ -31,6 +31,39 @@ inline QStringList languages()
     return out;
 }
 
+/** the [xx] suffixes of localized keys to try before the plain one (Name[uk_UA], Name[uk] for Ukrainian; none for
+ *  English, whose text is the plain key) */
+inline QStringList keySuffixes()
+{
+    QStringList out;
+    for (QString l : languages()) {
+        l.replace(QLatin1Char('-'), QLatin1Char('_'));
+        if (l.startsWith(QLatin1String("en")) || l == QLatin1String("C")) {
+            break;
+        }
+        const QString full = l.section(QLatin1Char('.'), 0, 0);
+        for (const QString &x : {full, full.section(QLatin1Char('_'), 0, 0)}) {
+            if (!out.contains(x)) {
+                out << x;
+            }
+        }
+    }
+    return out;
+}
+
+/** key in the UI language from anything with value(QString) (QSettings, QJsonObject...) */
+template<class Map>
+inline QString localizedValue(const Map &m, const QString &key)
+{
+    for (const QString &x : keySuffixes()) {
+        const QString v = m.value(key + QLatin1Char('[') + x + QLatin1Char(']')).toString();
+        if (!v.isEmpty()) {
+            return v;
+        }
+    }
+    return m.value(key).toString();
+}
+
 /** :/i18n/<lang>.qm and the files of parts built into this program (:/i18n/<part>_<lang>.qm) */
 inline void install(QCoreApplication *app)
 {

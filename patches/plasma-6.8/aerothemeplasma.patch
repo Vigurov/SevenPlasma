@@ -2410,7 +2410,7 @@ index 5b00899..79ba361 100644
 +					Text {
 +						anchors.top: clockTime.bottom
 +						anchors.horizontalCenter: clockTime.horizontalCenter
-+						text: Qt.locale("uk_UA").toString(plasmaClock.dateTime, "dddd")
++						text: Qt.locale().toString(plasmaClock.dateTime, "dddd")
 +						color: "#575757"
 +						font.pixelSize: 12
 +					}
@@ -2454,7 +2454,7 @@ index 5b00899..79ba361 100644
 +						Text {
 +							anchors.top: extraTime.bottom
 +							anchors.horizontalCenter: parent.horizontalCenter
-+							text: Qt.locale("uk_UA").toString(root.win7ZoneDate(index), "dddd") + (plasmaClock.dateTime.getSeconds() < 0 ? "" : "")
++							text: Qt.locale().toString(root.win7ZoneDate(index), "dddd") + (plasmaClock.dateTime.getSeconds() < 0 ? "" : "")
 +							color: "#575757"
 +							font.pixelSize: 12
 +						}
@@ -2720,7 +2720,7 @@ index 81ae045..575cc39 100644
 +                    delegate: PlasmaComponents3.Label {
 +                        required property int index
 +                        readonly property date when: index === 0 ? currentClock.dateTime : root.win7ZoneDate(index - 1)
-+                        text: (d => d.charAt(0).toUpperCase() + d.slice(1))(Qt.locale("uk_UA").toString(when, "ddd")) + " " + root.win7Format(when, root.win7ShortTime, true) + (currentClock.dateTime.getSeconds() < 0 ? "" : "")
++                        text: (d => d.charAt(0).toUpperCase() + d.slice(1))(Qt.locale().toString(when, "ddd")) + " " + root.win7Format(when, root.win7ShortTime, true) + (currentClock.dateTime.getSeconds() < 0 ? "" : "")
 +                        color: "#000000"
 +                        font.pixelSize: 12
 +                        Layout.row: index
@@ -2926,16 +2926,16 @@ index d2f8e47..e8de41d 100644
 +        const local = -now.getTimezoneOffset() * 60;
 +        return new Date(now.getTime() + (win7OffsetSecs(c.timeZoneOffset) - local) * 1000);
 +    }
-+    readonly property string win7LongDate: Plasmoid.configuration.win7LongDate || i18nd("sevenplasma", "MMMM d, yyyy")
-+    readonly property string win7LongTime: Plasmoid.configuration.win7LongTime || "H:mm:ss"
-+    readonly property string win7ShortTime: Plasmoid.configuration.win7ShortTime || "H:mm"
++    readonly property string win7LongDate: Plasmoid.configuration.win7LongDate || i18nd("sevenplasma", "dddd, MMMM dd, yyyy")
++    readonly property string win7LongTime: Plasmoid.configuration.win7LongTime || Qt.locale().timeFormat(Locale.LongFormat).replace(/\s*t+\b/g, "").trim()
++    readonly property string win7ShortTime: Plasmoid.configuration.win7ShortTime || Qt.locale().timeFormat(Locale.ShortFormat).replace(/\s*t+\b/g, "").trim()
 +    function win7Format(date, pattern, isTime) {
 +        const p = pattern.replace(/tt/g, "AP");
-+        let s = isTime ? Qt.locale("uk_UA").toString(date, p) : Qt.locale("uk_UA").toString(date, p);
++        let s = isTime ? Qt.locale().toString(date, p) : Qt.locale().toString(date, p);
 +        if (isTime && pattern.indexOf("tt") >= 0) {
 +            const am = Plasmoid.configuration.win7AmSymbol, pm = Plasmoid.configuration.win7PmSymbol;
-+            if (am) s = s.replace(Qt.locale("uk_UA").amText, am);
-+            if (pm) s = s.replace(Qt.locale("uk_UA").pmText, pm);
++            if (am) s = s.replace(Qt.locale().amText, am);
++            if (pm) s = s.replace(Qt.locale().pmText, pm);
 +        }
 +        return s;
 +    }

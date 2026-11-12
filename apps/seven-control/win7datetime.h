@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
+#include <QRegularExpression>
 #include "win7i18n.h"
 
 #include "win7trayicons.h"
@@ -30,14 +31,33 @@ namespace Win7Time
 {
 inline const QString kClockWidget = QStringLiteral("io.gitgud.wackyideas.digitalclocklite");
 
-inline QLocale uk()
+inline QLocale formats() // the formats of Region and Language
 {
     return QLocale{};
 }
 
+/** times as the formats show them (Windows 7: "6:24:49 PM" in English, "18:24:49" in Ukrainian), without
+ *  Qt's time zone part */
+inline QString timePattern(QLocale::FormatType type)
+{
+    QString p = formats().timeFormat(type);
+    p.remove(QRegularExpression(QStringLiteral("\\s*t+\\b")));
+    return p.trimmed();
+}
+
+inline QString longTime(const QTime &t)
+{
+    return formats().toString(t, timePattern(QLocale::LongFormat));
+}
+
+inline QString shortTime(const QTime &t)
+{
+    return formats().toString(t, timePattern(QLocale::ShortFormat));
+}
+
 inline QString longDate(const QDate &d)
 {
-    return uk().toString(d, tr7("MMMM d, yyyy"));
+    return formats().toString(d, tr7("dddd, MMMM dd, yyyy"));
 }
 
 inline void fixedDialog(QDialog *d, const QString &title, const QString &icon)
@@ -270,7 +290,7 @@ inline QString dstText(const QTimeZone &tz)
     const int hours = qAbs(after - before) / 3600;
     const bool winter = after < before;
     return tr7("The change to %1 time happens on %2 at %3. The clock is set to go %6 %4 %5 at that time.")
-        .arg(winter ? tr7("standard") : tr7("daylight saving"), longDate(local.date()), local.time().toString(QStringLiteral("H:mm")))
+        .arg(winter ? tr7("standard") : tr7("daylight saving"), longDate(local.date()), shortTime(local.time()))
         .arg(hours)
         .arg(hours == 1 ? tr7("hour") : tr7("hours"), winter ? tr7("back") : tr7("forward"));
 }
@@ -364,7 +384,7 @@ protected:
         p.fillRect(rect(), Qt::white);
         p.setPen(QColor(0xb4, 0xb4, 0xb4));
         p.drawRect(rect().adjusted(0, 0, -1, -1));
-        QString title = uk().standaloneMonthName(m_month.month()) + QLatin1Char(' ') + QString::number(m_month.year());
+        QString title = formats().standaloneMonthName(m_month.month()) + QLatin1Char(' ') + QString::number(m_month.year());
         title[0] = title.at(0).toUpper();
         p.setPen(Qt::black);
         p.drawText(QRect(0, 4, width(), 18), Qt::AlignCenter, title);
@@ -505,7 +525,7 @@ public:
         m_clock = new AnalogClock(128);
         right->addWidget(m_clock, 0, Qt::AlignHCenter);
         m_time = new QTimeEdit(QTime::currentTime());
-        m_time->setDisplayFormat(QStringLiteral("HH:mm:ss"));
+        m_time->setDisplayFormat(timePattern(QLocale::LongFormat));
         m_time->setFixedWidth(80);
         right->addWidget(m_time, 0, Qt::AlignHCenter);
         right->addStretch(1);
@@ -630,7 +650,7 @@ private:
     void updateNow()
     {
         const QDateTime t = QDateTime::currentDateTime().toTimeZone(QTimeZone(m_zone->currentData().toByteArray()));
-        m_now->setText(longDate(t.date()) + QStringLiteral(", ") + t.time().toString(QStringLiteral("H:mm")));
+        m_now->setText(longDate(t.date()) + QStringLiteral(", ") + shortTime(t.time()));
     }
 
     QComboBox *m_zone;
@@ -714,7 +734,7 @@ public:
             QTimer::singleShot(3000, this, [this] {
                 const bool ok = run(QStringLiteral("timedatectl"), {QStringLiteral("show"), QStringLiteral("-p"), QStringLiteral("NTPSynchronized"), QStringLiteral("--value")}) == QLatin1String("yes");
                 const QDateTime t = QDateTime::currentDateTime();
-                m_status->setText(ok ? tr7("The clock was successfully synchronized with %1 on %2 at %3.").arg(m_server->currentText(), longDate(t.date()), t.time().toString(QStringLiteral("H:mm")))
+                m_status->setText(ok ? tr7("The clock was successfully synchronized with %1 on %2 at %3.").arg(m_server->currentText(), longDate(t.date()), shortTime(t.time()))
                                      : tr7("An error occurred while Windows was synchronizing with %1.").arg(m_server->currentText()));
             });
         });
@@ -848,7 +868,7 @@ private:
     {
         const QDateTime now = QDateTime::currentDateTime();
         m_date->setText(longDate(now.date()));
-        m_time->setText(now.time().toString(QStringLiteral("H:mm:ss")));
+        m_time->setText(longTime(now.time()));
         const QByteArray zone = QTimeZone::systemTimeZoneId();
         if (zone != m_shownZone) {
             m_shownZone = zone;

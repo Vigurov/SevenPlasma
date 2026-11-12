@@ -1,0 +1,25 @@
+#!/bin/sh
+# The NVIDIA / Catalyst / Intel panels in the menus only for the GPUs that are there, as their drivers put them
+# on Windows: NVIDIA with an NVIDIA GPU on NVIDIA's driver, Catalyst with AMD, Intel's with Intel. Run at
+# logon (a GPU may have been changed); ~/.config/seven-gpu-panels "nvidia amd intel" shows them for tests.
+vendors=$(cat /sys/class/drm/card*/device/vendor 2>/dev/null)
+force=$(cat "$HOME/.config/seven-gpu-panels" "$HOME/.config/win7-gpu-panels" 2>/dev/null)
+has() { echo "$vendors" | grep -q "$1"; }
+show() {   # show NAME 0|1: the menu entry of ~/.local/share/applications (seven- or win7- names)
+    for p in seven win7; do
+        d="$HOME/.local/share/applications/$p-$1.desktop"
+        [ -f "$d" ] || continue
+        sed -i '/^NoDisplay=true$/d' "$d"
+        [ "$2" = 1 ] || sed -i '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$d"
+    done
+}
+n=0; a=0; i=0
+has 0x10de && [ -d /sys/module/nvidia ] && n=1
+has 0x1002 && a=1
+has 0x8086 && i=1
+case "$force" in *nvidia*) n=1 ;; esac
+case "$force" in *amd*) a=1 ;; esac
+case "$force" in *intel*) i=1 ;; esac
+show nvidia $n
+show ccc $a
+show igfx $i

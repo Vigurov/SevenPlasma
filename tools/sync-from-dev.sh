@@ -11,7 +11,7 @@ for d in bluetooth-plasmoid calc ccc common control devmgr folderthumb gadgets i
         --exclude='__pycache__' --exclude='install*.sh' --exclude='fix-*.sh' --exclude='tools/dll/' --exclude='iso/' \
         --exclude='win7-weather/' --exclude='snap-aero-cursors/' --exclude='steam-disk-c.sh' --exclude='res.qrc' \
         --exclude='longer-starting.sh' --exclude='apply-*.sh' --exclude='undo-boot.sh' --exclude='hide-grub-menu.sh' \
-        --exclude='ASSETS.txt' --exclude='apply.log' --exclude='strings.json' --exclude='files.txt' --exclude='win7winrar.h' --exclude='win7zip.h' --exclude='res/' "$DEV/win7-$d/" "$R/apps/seven-$d/"
+        --exclude='/sddm/' --exclude='ASSETS.txt' --exclude='apply.log' --exclude='strings.json' --exclude='files.txt' --exclude='win7winrar.h' --exclude='win7zip.h' --exclude='res/' "$DEV/win7-$d/" "$R/apps/seven-$d/"
 done
 cd "$R/apps"
 # file names

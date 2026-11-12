@@ -221,8 +221,7 @@ inline QJsonObject plasmoidMeta(const QString &id)
 
 inline QString localized(const QJsonObject &o, const QString &key)
 {
-    const QString uk = o.value(key + QStringLiteral("[uk]")).toString();
-    return uk.isEmpty() ? o.value(key).toString() : uk;
+    return Win7I18n::localizedValue(o, key);
 }
 
 inline QString volumeDetail()

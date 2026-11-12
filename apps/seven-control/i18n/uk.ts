@@ -15161,5 +15161,9 @@ WantedBy=timers.target
         <source>Projector only</source>
         <translation>Лише проектор</translation>
     </message>
+    <message>
+        <source>dddd, MMMM dd, yyyy</source>
+        <translation>d MMMM yyyy 'р.'</translation>
+    </message>
 </context>
 </TS>

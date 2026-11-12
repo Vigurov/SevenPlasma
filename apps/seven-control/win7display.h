@@ -561,9 +561,9 @@ inline QList<Theme> themes()
                 continue;
             }
             const QJsonObject plugin = QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("KPlugin")).toObject();
-            QString name = plugin.value(QStringLiteral("Name[uk]")).toString();
+            QString name = Win7I18n::localizedValue(plugin, QStringLiteral("Name"));
             if (name.isEmpty()) {
-                name = plugin.value(QStringLiteral("Name")).toString(id);
+                name = id;
             }
             if (id == QLatin1String("authui7")) {
                 name = QStringLiteral("Windows 7");

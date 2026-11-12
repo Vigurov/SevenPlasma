@@ -86,7 +86,7 @@ inline QList<Game> games()
             QSettings d(dir + QLatin1Char('/') + file, QSettings::IniFormat);
             d.beginGroup(QStringLiteral("Desktop Entry"));
             const QStringList cats = d.value(QStringLiteral("Categories")).toString().split(QLatin1Char(';'), Qt::SkipEmptyParts);
-            const QString name = d.value(QStringLiteral("Name[uk]"), d.value(QStringLiteral("Name"))).toString();
+            const QString name = Win7I18n::localizedValue(d, QStringLiteral("Name"));
             if (!cats.contains(QLatin1String("Game")) || d.value(QStringLiteral("NoDisplay")).toString() == QLatin1String("true") || isTool(id, name)) {
                 continue;
             }

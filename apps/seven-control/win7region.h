@@ -67,9 +67,20 @@ inline QHash<QString, QString> readMo(const QString &path)
 
 inline QString moPath(const QString &domain)
 {
-    for (const QString &base : {QStringLiteral("/usr/share/locale-langpack/uk/LC_MESSAGES/"), QStringLiteral("/usr/share/locale/uk/LC_MESSAGES/")}) {
-        if (QFile::exists(base + domain + QStringLiteral(".mo"))) {
-            return base + domain + QStringLiteral(".mo");
+    // the names of languages, countries and keyboards in the UI language (the iso-codes and xkeyboard-config
+    // files are English; their translations are .mo files); English: none
+    for (const QString &ui : Win7I18n::languages()) {
+        const QString lang = ui.section(QLatin1Char('_'), 0, 0).section(QLatin1Char('-'), 0, 0).section(QLatin1Char('.'), 0, 0);
+        if (lang == QLatin1String("en") || lang == QLatin1String("C")) {
+            return {};
+        }
+        for (const QString &name : {ui.section(QLatin1Char('.'), 0, 0), lang}) {
+            for (const QString &dir : {QStringLiteral("/usr/share/locale-langpack/"), QStringLiteral("/usr/share/locale/")}) {
+                const QString mo = dir + name + QStringLiteral("/LC_MESSAGES/") + domain + QStringLiteral(".mo");
+                if (QFile::exists(mo)) {
+                    return mo;
+                }
+            }
         }
     }
     return {};

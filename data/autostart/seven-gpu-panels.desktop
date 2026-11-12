@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Windows 7 graphics panels
+Exec=seven-gpu-panels
+NoDisplay=true
+X-KDE-autostart-phase=1

@@ -144,7 +144,9 @@ inline QPair<QString, QString> prettyProgram(const QString &path)
             const QString f = dir + QLatin1Char('/') + cand;
             if (QFile::exists(f)) {
                 QSettings d(f, QSettings::IniFormat);
-                const QString n = d.value(QStringLiteral("Desktop Entry/Name[uk]"), d.value(QStringLiteral("Desktop Entry/Name"))).toString();
+                d.beginGroup(QStringLiteral("Desktop Entry"));
+                const QString n = Win7I18n::localizedValue(d, QStringLiteral("Name"));
+                d.endGroup();
                 if (!n.isEmpty()) {
                     return {n, d.value(QStringLiteral("Desktop Entry/Icon")).toString()};
                 }

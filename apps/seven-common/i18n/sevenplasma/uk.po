@@ -562,7 +562,7 @@ msgstr "Заблоковано"
 msgid "Log off"
 msgstr "Вийти з системи"
 
-msgid "MMMM d, yyyy"
+msgid "dddd, MMMM dd, yyyy"
 msgstr "d MMMM yyyy 'р.'"
 
 msgid "Macedonian (North Macedonia)"
