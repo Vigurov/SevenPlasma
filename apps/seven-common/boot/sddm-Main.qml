@@ -1,4 +1,5 @@
 import QtQuick
+import org.kde.plasma.workspace.components as PW
 import SddmComponents
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
@@ -1054,10 +1055,37 @@ Item
             KeyNavigation.tab: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
             KeyNavigation.down: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
 
-            text: (function(n) { n = n.toUpperCase(); var m = { "US": "EN", "GB": "EN" }; return m[n] !== undefined ? m[n] : n; })(keyboard.layouts[currentIndex].shortName)   // EN, UA, RU (user)
-            onClicked: currentIndex = (currentIndex + 1) % keyboard.layouts.length
+            // SDDM knows the layouts only on X11; on Wayland the logon screen's KWin does (as on the lock screen)
+            readonly property bool fromKWin: keyboard.layouts.length < 2
+            readonly property var kls: kbLoader.item
+            readonly property string kwinName: kls && kls.layoutNames ? (kls.layoutNames.shortName || "") : ""
+            text: (function(n) { n = n.toUpperCase(); var m = { "US": "EN", "GB": "EN" }; return m[n] !== undefined ? m[n] : n; })(fromKWin ? kwinName : keyboard.layouts[currentIndex].shortName)   // EN, UA, RU (user)
+            onClicked: {
+                if (fromKWin) {
+                    if (kls) kls.keyboardLayout.switchToNextLayout();
+                } else {
+                    currentIndex = (currentIndex + 1) % keyboard.layouts.length;
+                }
+            }
 
-            visible: keyboard.layouts.length > 1 && pages.currentIndex != Main.LoginPage.Startup
+            visible: (fromKWin ? kwinName !== "" : keyboard.layouts.length > 1) && pages.currentIndex != Main.LoginPage.Startup
+
+            Loader {
+                id: kbLoader
+                active: switchLayoutButton.fromKWin
+                anchors.fill: parent
+                sourceComponent: Component {
+                    PW.KeyboardLayoutSwitcher {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.NoButton
+                    }
+                }
+            }
+            Timer { // KWin may answer late: ask again until the layout is known
+                interval: 700; repeat: true
+                running: switchLayoutButton.fromKWin && switchLayoutButton.kwinName === ""
+                onTriggered: { kbLoader.active = false; kbLoader.active = true }
+            }
         }
     QQC2.CheckBox
     {

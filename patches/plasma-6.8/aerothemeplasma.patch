@@ -6008,10 +6008,16 @@ index c09f807..8b9f027 100644
 diff --git a/plasma/sddm/sddm-theme-mod/Main.qml b/plasma/sddm/sddm-theme-mod/Main.qml
 old mode 100755
 new mode 100644
-index 59fe192..520c7ed
+index 59fe192..0cc9732
 --- a/plasma/sddm/sddm-theme-mod/Main.qml
 +++ b/plasma/sddm/sddm-theme-mod/Main.qml
-@@ -23,6 +23,35 @@ Item
+@@ -1,4 +1,5 @@
+ import QtQuick
++import org.kde.plasma.workspace.components as PW
+ import SddmComponents
+ import QtQuick.Layouts
+ import Qt5Compat.GraphicalEffects
+@@ -23,6 +24,35 @@ Item
      property bool m_biggerUserFrame: config.boolValue("biggerUserFrame")
      property bool m_biggerMultiUserFrame: config.boolValue("biggerMultiUserFrame")
  
@@ -6047,7 +6053,7 @@ index 59fe192..520c7ed
      enum LoginPage
      {
          Startup,
-@@ -42,12 +71,42 @@ Item
+@@ -42,12 +72,42 @@ Item
          NeedsPasswordRole
      }
  
@@ -6090,7 +6096,7 @@ index 59fe192..520c7ed
              password.text = ""
              pages.currentIndex = Main.LoginPage.LoginFailed
          }
-@@ -248,7 +307,7 @@ Item
+@@ -248,7 +308,7 @@ Item
                      {
                          let realname = model.realName
                          let pic = model.icon
@@ -6099,7 +6105,7 @@ index 59fe192..520c7ed
  
                          if (needspassword)
                          {
-@@ -260,7 +319,7 @@ Item
+@@ -260,7 +320,7 @@ Item
                          }
                          else
                          {
@@ -6108,7 +6114,7 @@ index 59fe192..520c7ed
                          }
                      }
                  }
-@@ -291,7 +350,7 @@ Item
+@@ -291,7 +351,7 @@ Item
  
                  session.addItem(menuitem);
                  menuitem = session.createMenuItem();
@@ -6117,7 +6123,7 @@ index 59fe192..520c7ed
                  menuitem.checkable = false;
                  menuitem.icon.source = Qt.resolvedUrl("Assets/keyboard.png");
                  menuitem.triggered.connect(() => {
-@@ -497,7 +556,7 @@ Item
+@@ -497,7 +557,7 @@ Item
                          {
                              let realname = userModel.data(userModel.index(index, 0), Main.UserRoles.RealNameRole)
                              let pic = userModel.data(userModel.index(index, 0), Main.UserRoles.IconRole)
@@ -6126,7 +6132,7 @@ index 59fe192..520c7ed
  
                              if (needspassword)
                              {
-@@ -509,7 +568,7 @@ Item
+@@ -509,7 +569,7 @@ Item
                              }
                              else
                              {
@@ -6135,7 +6141,7 @@ index 59fe192..520c7ed
                              }
                          }
                      }
-@@ -661,7 +720,7 @@ Item
+@@ -661,7 +721,7 @@ Item
                              }
                          }
  
@@ -6144,7 +6150,7 @@ index 59fe192..520c7ed
                          selectByMouse: true
                          echoMode : TextInput.Password
                          inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
-@@ -688,7 +747,7 @@ Item
+@@ -688,7 +748,7 @@ Item
  
                                  if (username != null)
                                  {
@@ -6153,7 +6159,7 @@ index 59fe192..520c7ed
                                  }
  
                                  event.accepted = true
-@@ -724,7 +783,7 @@ Item
+@@ -724,7 +784,7 @@ Item
                          QQC2.Label {
                              id: notificationsLabel
                              font.pointSize: 9
@@ -6162,7 +6168,7 @@ index 59fe192..520c7ed
                              width: implicitWidth
                              renderType: Text.NativeRendering
                              color: "white"
-@@ -755,7 +814,7 @@ Item
+@@ -755,7 +815,7 @@ Item
  
                              if (username != null)
                              {
@@ -6171,7 +6177,7 @@ index 59fe192..520c7ed
                              }
                          }
  
-@@ -796,7 +855,7 @@ Item
+@@ -796,7 +856,7 @@ Item
  
                  //anchors.bottomMargin: 332
  
@@ -6180,7 +6186,7 @@ index 59fe192..520c7ed
                  height: 28
  
                  background: Image
-@@ -813,7 +872,7 @@ Item
+@@ -813,7 +873,7 @@ Item
  
                  contentItem: Text
                  {
@@ -6189,7 +6195,7 @@ index 59fe192..520c7ed
                      color: "white"
  
                      //font.family: mainfont.name
-@@ -890,7 +949,7 @@ Item
+@@ -890,7 +950,7 @@ Item
                  anchors.verticalCenterOffset: 126
                  anchors.horizontalCenterOffset: 14
  
@@ -6198,7 +6204,7 @@ index 59fe192..520c7ed
                  renderType: Text.NativeRendering
                  Layout.alignment: Qt.AlignHCenter
                  font.pointSize: 9
-@@ -937,7 +996,7 @@ Item
+@@ -937,7 +997,7 @@ Item
  
                  contentItem: Text
                  {
@@ -6207,16 +6213,48 @@ index 59fe192..520c7ed
                      color: "white"
  
                      //font.family: mainfont.name
-@@ -995,7 +1054,7 @@ Item
+@@ -995,10 +1055,37 @@ Item
              KeyNavigation.tab: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
              KeyNavigation.down: pages.currentIndex === Main.LoginPage.SelectUser ? listView : password
  
 -            text: keyboard.layouts[currentIndex].shortName
-+            text: (function(n) { n = n.toUpperCase(); var m = { "US": "EN", "GB": "EN" }; return m[n] !== undefined ? m[n] : n; })(keyboard.layouts[currentIndex].shortName)   // EN, UA, RU (user)
-             onClicked: currentIndex = (currentIndex + 1) % keyboard.layouts.length
+-            onClicked: currentIndex = (currentIndex + 1) % keyboard.layouts.length
++            // SDDM knows the layouts only on X11; on Wayland the logon screen's KWin does (as on the lock screen)
++            readonly property bool fromKWin: keyboard.layouts.length < 2
++            readonly property var kls: kbLoader.item
++            readonly property string kwinName: kls && kls.layoutNames ? (kls.layoutNames.shortName || "") : ""
++            text: (function(n) { n = n.toUpperCase(); var m = { "US": "EN", "GB": "EN" }; return m[n] !== undefined ? m[n] : n; })(fromKWin ? kwinName : keyboard.layouts[currentIndex].shortName)   // EN, UA, RU (user)
++            onClicked: {
++                if (fromKWin) {
++                    if (kls) kls.keyboardLayout.switchToNextLayout();
++                } else {
++                    currentIndex = (currentIndex + 1) % keyboard.layouts.length;
++                }
++            }
  
-             visible: keyboard.layouts.length > 1 && pages.currentIndex != Main.LoginPage.Startup
-@@ -1205,7 +1264,7 @@ Item
+-            visible: keyboard.layouts.length > 1 && pages.currentIndex != Main.LoginPage.Startup
++            visible: (fromKWin ? kwinName !== "" : keyboard.layouts.length > 1) && pages.currentIndex != Main.LoginPage.Startup
++
++            Loader {
++                id: kbLoader
++                active: switchLayoutButton.fromKWin
++                anchors.fill: parent
++                sourceComponent: Component {
++                    PW.KeyboardLayoutSwitcher {
++                        anchors.fill: parent
++                        acceptedButtons: Qt.NoButton
++                    }
++                }
++            }
++            Timer { // KWin may answer late: ask again until the layout is known
++                interval: 700; repeat: true
++                running: switchLayoutButton.fromKWin && switchLayoutButton.kwinName === ""
++                onTriggered: { kbLoader.active = false; kbLoader.active = true }
++            }
+         }
+     QQC2.CheckBox
+     {
+@@ -1205,7 +1292,7 @@ Item
  
              QQC2.ToolTip.visible: hovered
              QQC2.ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
@@ -6225,7 +6263,7 @@ index 59fe192..520c7ed
          }
  
          QQC2.Button
-@@ -1262,31 +1321,31 @@ Item
+@@ -1262,31 +1349,31 @@ Item
  
                  Component.onCompleted: {
                      var menuitem = powerMenu.createMenuItem();
@@ -6262,7 +6300,7 @@ index 59fe192..520c7ed
                      menuitem.triggered.connect(() => { sddm.powerOff() });
                      powerMenu.addAction(menuitem);
                  }
-@@ -1394,4 +1453,66 @@ Item
+@@ -1394,4 +1481,66 @@ Item
          }
      }
  
