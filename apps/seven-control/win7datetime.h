@@ -19,6 +19,7 @@
 #include <QGroupBox>
 #include <QMessageBox>
 #include <QPainter>
+#include <QStandardPaths>
 #include <QSvgRenderer>
 #include <QTabWidget>
 #include <QTimeEdit>
@@ -293,7 +294,8 @@ public:
 protected:
     void paintEvent(QPaintEvent *) override
     {
-        static QSvgRenderer svg(QDir::homePath() + QStringLiteral("/.local/share/plasma/plasmoids/io.gitgud.wackyideas.digitalclocklite/contents/ui/svgs/clock.svg"));
+        // the clock of the taskbar (AeroThemePlasma installs it to /usr, a development copy may be in ~/.local)
+        static QSvgRenderer svg(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("plasma/plasmoids/io.gitgud.wackyideas.digitalclocklite/contents/ui/svgs/clock.svg")));
         QPainter p(this);
         p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
         const QRectF r(0, 0, width(), height());
