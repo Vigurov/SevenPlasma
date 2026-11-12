@@ -24,17 +24,8 @@ seven-aero/header-list.png
 seven-aero/hide-folders-down.png
 seven-aero/hide-folders-up.png
 seven-aero/idx-anim.png
-seven-aero/menu/copy.png
-seven-aero/menu/cut.png
-seven-aero/menu/delete.png
-seven-aero/menu/layout.png
-seven-aero/menu/paste.png
 seven-aero/menubar/hot.png
 seven-aero/menubar/pressed.png
-seven-aero/scrollbar/h-disabled-left.png
-seven-aero/scrollbar/h-disabled-right.png
-seven-aero/scrollbar/v-disabled-bottom.png
-seven-aero/scrollbar/v-disabled-top.png
 seven-aero/splash-wallpaper
 seven-aero/themecpl/mixer-down.png
 seven-aero/themecpl/mixer-up.png
@@ -51,10 +42,6 @@ seven-aero/themecpl/tile-landscapes.png
 seven-aero/themecpl/tile-nature.png
 seven-aero/themecpl/tile-scenes.png
 seven-aero/themecpl/tile-windows7.png
-seven-aero/tree/collapsed-hot.png
-seven-aero/tree/collapsed.png
-seven-aero/tree/expanded-hot.png
-seven-aero/tree/expanded.png
 seven-calc/menu-dot.png
 seven-calc/menu-tick.png
 seven-control/cursor-previews/black-1.png
@@ -86,6 +73,3 @@ seven-control/Адміністрування/Керування комп'юте�
 seven-control/Адміністрування/Конфігурація системи
 seven-control/Адміністрування/Перегляд подій
 seven-control/Адміністрування/Системний монітор
-seven-paint/appbtn.png
-seven-paint/grip.png
-seven-paint/zoomthumb.png

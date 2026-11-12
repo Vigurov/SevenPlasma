@@ -31859,5 +31859,260 @@
 "dest": "wallpapers/Windows7/Windows/img0.jpg",
 "src": "Windows/Web/Wallpaper/Windows/img0.jpg",
 "from": "file"
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 634,
+"extra": "IMAGE",
+"crop": [
+0,
+0,
+15,
+15
+],
+"canvas": [
+16,
+16
+],
+"place": [
+1,
+1
+],
+"dest": "seven-aero/tree/collapsed.png"
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 634,
+"extra": "IMAGE",
+"crop": [
+0,
+15,
+15,
+30
+],
+"canvas": [
+16,
+16
+],
+"place": [
+1,
+1
+],
+"dest": "seven-aero/tree/collapsed-hot.png"
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 637,
+"extra": "IMAGE",
+"crop": [
+0,
+0,
+15,
+15
+],
+"canvas": [
+16,
+16
+],
+"place": [
+3,
+1
+],
+"dest": "seven-aero/tree/expanded.png"
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 637,
+"extra": "IMAGE",
+"crop": [
+0,
+15,
+15,
+30
+],
+"canvas": [
+16,
+16
+],
+"place": [
+3,
+1
+],
+"dest": "seven-aero/tree/expanded-hot.png"
+},
+{
+"from": "layers",
+"dest": "seven-aero/scrollbar/v-disabled-top.png",
+"layers": [
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 717,
+"extra": "IMAGE",
+"crop": [
+0,
+51,
+17,
+68
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 744,
+"extra": "IMAGE",
+"crop": [
+0,
+15,
+7,
+20
+],
+"place": [
+6,
+6
+]
+}
+]
+},
+{
+"from": "layers",
+"dest": "seven-aero/scrollbar/v-disabled-bottom.png",
+"layers": [
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 717,
+"extra": "IMAGE",
+"crop": [
+0,
+119,
+17,
+136
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 736,
+"extra": "IMAGE",
+"crop": [
+0,
+12,
+7,
+16
+],
+"place": [
+6,
+7
+]
+}
+]
+},
+{
+"from": "layers",
+"dest": "seven-aero/scrollbar/h-disabled-left.png",
+"layers": [
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 717,
+"extra": "IMAGE",
+"crop": [
+0,
+187,
+17,
+204
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 740,
+"extra": "IMAGE",
+"crop": [
+0,
+21,
+4,
+28
+],
+"place": [
+6,
+5
+]
+}
+]
+},
+{
+"from": "layers",
+"dest": "seven-aero/scrollbar/h-disabled-right.png",
+"layers": [
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 717,
+"extra": "IMAGE",
+"crop": [
+0,
+255,
+17,
+272
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image",
+"id": 748,
+"extra": "IMAGE",
+"crop": [
+0,
+21,
+4,
+28
+],
+"place": [
+7,
+5
+]
+}
+]
+},
+{
+"src": "Windows/System32/shell32.dll",
+"from": "icon",
+"id": 243,
+"extra": "16@32",
+"dest": "seven-aero/menu/copy.png"
+},
+{
+"src": "Windows/System32/shell32.dll",
+"from": "icon",
+"id": 16763,
+"extra": "16@32",
+"dest": "seven-aero/menu/paste.png"
+},
+{
+"src": "Windows/System32/shell32.dll",
+"from": "icon",
+"id": 240,
+"extra": "16@32",
+"dest": "seven-aero/menu/delete.png"
+},
+{
+"src": "Windows/System32/shell32.dll",
+"from": "icon",
+"id": 16742,
+"extra": "16@32",
+"dest": "seven-aero/menu/layout.png"
+},
+{
+"src": "Windows/System32/mmc.exe",
+"from": "bitmap-cell",
+"id": 202,
+"cell": "16:5",
+"dest": "seven-aero/menu/cut.png"
 }
 ]

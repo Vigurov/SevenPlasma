@@ -77,6 +77,13 @@ class Sources:
             sys.path.insert(0, os.path.join(HERE, '..', 'tools'))
             from win7near import keyed
             return keyed(im)
+        if r.get('layers'):
+            # pictures drawn over each other (each with its own crop / place), e.g. a button and its glyph
+            base = self.picture(r['layers'][0]).convert('RGBA')
+            for l in r['layers'][1:]:
+                part = self.picture({k: v for k, v in l.items() if k != 'place'}).convert('RGBA')
+                base.alpha_composite(part, tuple(l.get('place', [0, 0])))
+            return base
         if r.get('key'):
             from win7near import keyed
             return keyed(self.picture(dict(r, key=False)))
