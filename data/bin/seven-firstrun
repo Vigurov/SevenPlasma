@@ -61,6 +61,26 @@ panels().forEach(function (p) { p.widgets().forEach(function (w) {
     if (w.type == "io.gitgud.wackyideas.SevenStart") { w.currentConfigGroup = ["General"]; w.writeConfig("defaultRunnerApp", "seven-control --run"); }
 }); });'
 
+# notification area as in a new Windows 7 account: Action Center (flag), Network and Volume always shown,
+# Power too on a laptop (a battery is there); everything else behind the arrow
+SHOWN="io.gitgud.wackyideas.notifications,io.gitgud.wackyideas.networkmanagement,io.gitgud.wackyideas.volume"
+HIDE=""
+if ls /sys/class/power_supply/ 2>/dev/null | grep -q '^BAT'; then SHOWN="$SHOWN,io.gitgud.wackyideas.battery"; else HIDE="io.gitgud.wackyideas.battery"; fi
+qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
+const shown = '$SHOWN'.split(','), keep = '$HIDE'.split(',').filter(function (x) { return x; });
+panels().forEach(function (p) { p.widgets().forEach(function (w) {
+    if (w.type != 'io.gitgud.wackyideas.systemtray') return;
+    w.currentConfigGroup = ['General'];
+    const extra = String(w.readConfig('extraItems', '')).split(',').filter(function (x) { return x; });
+    shown.concat(keep).forEach(function (x) { if (extra.indexOf(x) < 0) extra.push(x); });
+    w.writeConfig('extraItems', extra);
+    w.writeConfig('shownItems', shown);
+    w.writeConfig('hiddenItems', extra.filter(function (x) { return shown.indexOf(x) < 0; }));
+    // left to right as in Windows 7: Action Center, Power, Network, Volume
+    w.writeConfig('itemOrdering', JSON.stringify({'io.gitgud.wackyideas.notifications': 1, 'io.gitgud.wackyideas.battery': 2,
+                                                  'io.gitgud.wackyideas.networkmanagement': 3, 'io.gitgud.wackyideas.volume': 4}));
+}); });"
+
 # Recycle Bin on the desktop (the only desktop icon of a new Windows 7 account)
 DESK=$(xdg-user-dir DESKTOP 2>/dev/null); DESK=${DESK:-$HOME/Desktop}
 mkdir -p "$DESK"
