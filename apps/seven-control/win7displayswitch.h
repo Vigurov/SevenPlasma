@@ -13,6 +13,7 @@
 #include <KConfigGroup>
 #include <KSharedConfig>
 #include <KWindowEffects>
+#include <KX11Extras>
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QLocalServer>
@@ -125,6 +126,7 @@ inline void apply(Choice c)
         return; // one screen: nothing to switch, like Windows 7
     }
     QStringList args;
+    QString primary;
     int x = 0;
     for (int i = 0; i < outs.size(); ++i) {
         const Win7Display::Output &o = outs.at(i);
@@ -142,11 +144,13 @@ inline void apply(Choice c)
         // Duplicate: every screen at the same place shows the same picture; Extend: side by side
         args << p + QStringLiteral("position.%1,0").arg(c == Extend ? x : 0);
         if ((c == ProjectorOnly && i == 1) || (c != ProjectorOnly && i == 0)) {
-            args << p + QStringLiteral("primary");
+            primary = p + QStringLiteral("primary");
         }
         x += modeSize(o, mode).width();
     }
-    QProcess::startDetached(QStringLiteral("kscreen-doctor"), args);
+    // the main screen in a second call: KScreen makes a screen it has just turned on the main one (X11)
+    QProcess::startDetached(QStringLiteral("sh"), QStringList{QStringLiteral("-c"), QStringLiteral("kscreen-doctor \"$@\"; sleep 1; kscreen-doctor %1").arg(primary),
+                                                              QStringLiteral("sh")} + args);
 }
 
 class Panel : public QWidget
@@ -217,6 +221,9 @@ protected:
             Win7KWin::forWindow(this, QStringLiteral("w.skipTaskbar = true; w.skipSwitcher = true; w.skipPager = true; w.keepAbove = true;"));
         }
         activateWindow();
+        if (!Win7KWin::wayland()) {
+            KX11Extras::forceActiveWindow(winId()); // opened by a key: take the focus from the window in front
+        }
         setFocus();
     }
     void paintEvent(QPaintEvent *) override
@@ -374,6 +381,8 @@ inline int run()
     }
     QLocalServer::removeServer(Panel::socketPath());
     auto *panel = new Panel;
+    // the process ends with the panel (Control Panel keeps running without windows otherwise)
+    QObject::connect(panel, &QObject::destroyed, qApp, &QCoreApplication::quit);
     panel->show();
     return qApp->exec();
 }

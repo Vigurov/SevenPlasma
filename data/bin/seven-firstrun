@@ -65,6 +65,8 @@ gk org.kde.kscreen.desktop ShowOSD "@a(ai) []"                # KDE's display sw
 gk seven-display-switch.desktop _launch "[([268435536,0,0,0],)]"   # ...Meta+P is ours (DisplaySwitch)
 # everything else KDE binds that Windows 7 has not (Win+Esc, Win+I, Win+W, Alt+Space search...) goes off
 python3 "$HOME/.local/lib/sevenplasma/seven-shortcuts.py" || true
+# no KDE crash dialog (DrKonqi): Plasma restarts its shell by itself, the dialog is KDE's own look
+systemctl --user mask --now drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 # Start menu: Run opens our dialog
 qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
 panels().forEach(function (p) { p.widgets().forEach(function (w) {

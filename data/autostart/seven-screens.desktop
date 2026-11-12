@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Windows 7 screens
+Exec=python3 @HOME@/.local/lib/sevenplasma/seven-screens.py
+NoDisplay=true
+X-KDE-autostart-phase=2
