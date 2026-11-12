@@ -188,7 +188,7 @@ APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-vir
        kvantum sddm sddm-kcm plasma-nm plasma-pa plasma-workspace plasma-desktop libplasma packagekit-qt6 libksysguard
        baloo-widgets polkit-qt6 python-pyqt6 python-pillow 7zip fontconfig freetype2 kio kparts kxmlgui knotifications
        kglobalaccel kwindowsystem kiconthemes kcmutils kitemmodels ktextwidgets kuserfeedback kdoctools plasma-activities-stats
-       plymouth xorg-xrandr)
+       plymouth xorg-xrandr spectacle)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine)
 if [ $PM = apt ]; then
     run sudo apt-get -o DPkg::Lock::Timeout=900 update

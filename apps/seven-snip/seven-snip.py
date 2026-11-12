@@ -5,11 +5,13 @@ Small main window (Створити ▾ / Скасувати / Параметр�
 window, full screen) taken over a whitened screen with a red ink outline, then the mark-up window with the pen,
 highlighter and eraser, save / copy. Genuine toolbar pictures and icon from Windows 7 SnippingTool.exe
 (~/.local/share/seven-snip, icon seven-snippingtool)."""
-import ctypes, ctypes.util, os, sys, time
+import ctypes, ctypes.util, json, os, subprocess, sys, tempfile, time
 from PyQt6.QtCore import Qt, QPoint, QProcess, QPointF, QRect, QRectF, QSettings, QSize, QTimer
 from PyQt6.QtGui import (QAction, QActionGroup, QColor, QCursor, QGuiApplication, QIcon, QImage, QKeySequence,
                          QPainter, QPainterPath, QPen, QPixmap, QPolygonF)
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
+from PyQt6.QtDBus import QDBusConnection
+from PyQt6.QtCore import QObject, pyqtSlot, pyqtClassInfo
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QColorDialog, QDialog, QDialogButtonBox, QFileDialog,
                              QGroupBox, QHBoxLayout, QLabel, QMainWindow, QMenu, QScrollArea, QToolBar,
                              QToolButton, QVBoxLayout, QWidget)
@@ -18,11 +20,67 @@ ASSETS = os.path.expanduser('~/.local/share/seven-snip')
 SETTINGS = QSettings('win7', 'snip')
 SOCKET = os.path.join(os.environ.get('XDG_RUNTIME_DIR') or '/tmp', 'seven-snip.sock')
 
-MODES = [('free', 'Довільна форма'), ('rect', 'Прямокутник'), ('window', 'Вікно'), ('full', 'Весь екран')]
-HINTS = {'free': 'Проведіть курсором навколо області, яку потрібно захопити.',
-         'rect': 'Перетягніть курсор навколо області, яку потрібно захопити.',
-         'window': 'Клацніть вікно, яке потрібно захопити.',
-         'full': 'Натисніть кнопку «Створити», щоб захопити весь екран.'}
+# ---------------- English unless the system speaks Ukrainian (the texts are written in Ukrainian) ----------------
+_LANG = (os.environ.get('LANGUAGE') or os.environ.get('LC_ALL') or os.environ.get('LC_MESSAGES') or os.environ.get('LANG') or '')
+UK = _LANG.startswith('uk')
+EN = {
+    'Весь екран': 'Full-screen Snip',
+    'Виділення': 'Selection',
+    'Вихід': 'Exit',
+    'Вікно': 'Window Snip',
+    'Гумка': 'Eraser',
+    '&Довідка': '&Help',
+    'Довільна форма': 'Free-form Snip',
+    'Завжди копіювати фрагменти до буфера обміну': 'Always copy snips to the Clipboard',
+    'Зберегти фрагмент': 'Save Snip',
+    'Зберегти як...': 'Save As...',
+    'Зберегти як': 'Save As',
+    'Знімок.png': 'Capture.png',
+    'Клацніть вікно, яке потрібно захопити.': 'Click the window that you want to capture.',
+    'Колір пера': 'Pen color',
+    'Копіювати': 'Copy',
+    'Маркер': 'Highlighter',
+    'Надіслати фрагмент': 'Send Snip',
+    'Настроїти...': 'Customize...',
+    'Натисніть кнопку «Створити», щоб захопити весь екран.': 'Click the New button to capture the full screen.',
+    'Ножиці': 'Snipping Tool',
+    'ОК': 'OK',
+    '&Параметри': '&Options',
+    'Параметри...': 'Options...',
+    'Параметри ножиць': 'Snipping Tool Options',
+    'Перетягніть курсор навколо області, яку потрібно захопити.': 'Drag the cursor around the area you want to capture.',
+    'Перо': 'Pen',
+    'Показувати контур виділення після захоплення фрагментів': 'Show selection ink after snips are captured',
+    '&Правка': '&Edit',
+    'Проведіть курсором навколо області, яку потрібно захопити.': 'Draw the cursor around the area you want to capture.',
+    'Програма': 'Application',
+    'Про програму «Ножиці»': 'About Snipping Tool',
+    'Прямокутник': 'Rectangular Snip',
+    '&Сервіс': '&Tools',
+    'Синє перо': 'Blue Pen',
+    '&Скасувати': '&Cancel',
+    'Скасувати': 'Cancel',
+    '&Створити': '&New',
+    'Створити фрагмент': 'New Snip',
+    '&Файл': '&File',
+    'Червоне перо': 'Red Pen',
+    'Чорне перо': 'Black Pen',
+    '*.bmp|Файл BMP (*.bmp)': '*.bmp|BMP file (*.bmp)',
+    '*.gif|Файл GIF (*.gif)': '*.gif|GIF file (*.gif)',
+    '*.jpg *.jpeg|Файл JPEG (*.jpg)': '*.jpg *.jpeg|JPEG file (*.jpg)',
+    '*.png|Файл PNG (*.png)': '*.png|Portable Network Graphic file (PNG) (*.png)',
+}
+
+
+def T(text):
+    return text if UK else EN.get(text, text)
+
+
+MODES = [('free', T('Довільна форма')), ('rect', T('Прямокутник')), ('window', T('Вікно')), ('full', T('Весь екран'))]
+HINTS = {'free': T('Проведіть курсором навколо області, яку потрібно захопити.'),
+         'rect': T('Перетягніть курсор навколо області, яку потрібно захопити.'),
+         'window': T('Клацніть вікно, яке потрібно захопити.'),
+         'full': T('Натисніть кнопку «Створити», щоб захопити весь екран.')}
 INK = QColor(255, 0, 0)
 
 
@@ -41,6 +99,79 @@ def strip2(n, size=24):
         ic.addPixmap(off.copy(i * size, 0, size, size), QIcon.Mode.Disabled)
         icons.append(ic)
     return icons
+
+
+# ---------------- Wayland: the screen comes from Spectacle, the window list and placement from KWin ----------------
+def wayland():
+    return QGuiApplication.platformName().startswith('wayland')
+
+
+def kwin_script(js):
+    """runs a small KWin script (a Wayland client cannot place or raise its windows, nor list the others)"""
+    name = 'seven-snip-%d-%d' % (os.getpid(), int(time.time() * 1000) % 100000)
+    path = os.path.join(os.environ.get('XDG_RUNTIME_DIR', tempfile.gettempdir()), name + '.js')
+    with open(path, 'w') as f:
+        f.write(js)
+    try:
+        r = subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.loadScript', path, name],
+                           capture_output=True, text=True, timeout=5)
+        subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting/Script' + r.stdout.strip(), 'org.kde.kwin.Script.run'],
+                       capture_output=True, timeout=5)
+        subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.unloadScript', name],
+                       capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
+def wayland_shot():
+    """the whole screen through Spectacle (KWin lets only programs with a desktop file ask it for the screen)"""
+    fd, path = tempfile.mkstemp(suffix='.png')
+    os.close(fd)
+    try:
+        subprocess.run(['spectacle', '--background', '--nonotify', '--fullscreen', '--output', path],
+                       capture_output=True, timeout=15)
+        pm = QPixmap(path)
+    except (OSError, subprocess.TimeoutExpired):
+        pm = QPixmap()
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    return pm
+
+
+@pyqtClassInfo('D-Bus Interface', 'org.sevenplasma.Snip')
+class SnipBus(QObject):
+    """org.sevenplasma.snip /Snip: KWin's script reports the windows on screen (Wayland)"""
+    def __init__(self):
+        super().__init__()
+        self.listener = None
+
+    @pyqtSlot(str)
+    def windows(self, data):
+        try:
+            rects = [QRect(*r) for r in json.loads(data)]
+        except (ValueError, TypeError):
+            rects = []
+        if self.listener:
+            self.listener(rects)
+
+
+BUS = None
+
+
+def request_windows(listener):
+    """Wayland: the windows on screen, topmost first, arrive in listener (from KWin)"""
+    BUS.listener = listener
+    kwin_script('const out = []; const st = workspace.stackingOrder;\n'
+                'for (let i = st.length - 1; i >= 0; --i) { const w = st[i];\n'
+                '  if (w.pid === %d || w.minimized || w.desktopWindow || w.dock || !(w.normalWindow || w.dialog)) continue;\n'
+                '  const g = w.frameGeometry; out.push([Math.round(g.x), Math.round(g.y), Math.round(g.width), Math.round(g.height)]); }\n'
+                'callDBus("org.sevenplasma.snip", "/Snip", "org.sevenplasma.Snip", "windows", JSON.stringify(out));\n' % os.getpid())
 
 
 # ---------------- the windows on screen, topmost first (X11, _NET_CLIENT_LIST_STACKING) ----------------
@@ -86,6 +217,8 @@ def client_windows():
 
 
 def set_transient(win, parent):
+    if wayland():
+        return
     """WM_TRANSIENT_FOR of an already shown window (Qt only sets it when mapping)"""
     try:
         x11 = ctypes.cdll.LoadLibrary(ctypes.util.find_library('X11'))
@@ -101,6 +234,8 @@ def set_transient(win, parent):
 
 
 def startup_done(sid=None):
+    if wayland():
+        return False
     """end the KDE launch feedback (the busy cursor) at once, so it is not caught in the screenshot"""
     if sid is None:
         sid = os.environ.pop('DESKTOP_STARTUP_ID', '')
@@ -135,6 +270,8 @@ def startup_done(sid=None):
 
 def skip_taskbar(win):
     """no taskbar button for the whitened screen (_NET_WM_STATE_SKIP_TASKBAR / SKIP_PAGER)"""
+    if wayland():
+        return
     class Ev(ctypes.Structure):
         _fields_ = [('type', ctypes.c_int), ('serial', ctypes.c_ulong), ('send_event', ctypes.c_int),
                     ('display', ctypes.c_void_p), ('window', ctypes.c_ulong), ('message_type', ctypes.c_ulong),
@@ -243,7 +380,13 @@ class Overlay(QWidget):
         self.mode = mode
         self.path, self.start, self.end, self.hover = [], None, None, None
         if mode == 'window' and not self.windows:
-            self.windows = client_windows()
+            if wayland():
+                def got(rects):
+                    self.windows = rects
+                    self.update()
+                request_windows(got)
+            else:
+                self.windows = client_windows()
         self.update()
 
     def finish(self, pm, r=None, inked=False):
@@ -343,7 +486,7 @@ class Editor(QMainWindow):
     def __init__(self, app, pm):
         super().__init__()
         self.app = app
-        self.setWindowTitle('Ножиці')
+        self.setWindowTitle(T('Ножиці'))
         self.setWindowIcon(QIcon.fromTheme('seven-snippingtool'))
         self.canvas = Canvas(pm)
         area = QScrollArea(); area.setWidget(self.canvas); area.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -352,53 +495,53 @@ class Editor(QMainWindow):
         ic = strip('bmp_134.png', 7)
 
         mb = self.menuBar()
-        f = mb.addMenu('&Файл')
-        a_new = f.addAction(ic[0], 'Створити фрагмент', self.new_snip); a_new.setShortcut(QKeySequence('Ctrl+N'))
-        a_save = f.addAction(ic[1], 'Зберегти як...', self.save); a_save.setShortcut(QKeySequence('Ctrl+S'))
+        f = mb.addMenu(T('&Файл'))
+        a_new = f.addAction(ic[0], T('Створити фрагмент'), self.new_snip); a_new.setShortcut(QKeySequence('Ctrl+N'))
+        a_save = f.addAction(ic[1], T('Зберегти як...'), self.save); a_save.setShortcut(QKeySequence('Ctrl+S'))
         f.addSeparator()
-        f.addAction('Вихід', self.close)
-        e = mb.addMenu('&Правка')
-        a_copy = e.addAction(ic[2], 'Копіювати', self.copy); a_copy.setShortcut(QKeySequence('Ctrl+C'))
-        t = mb.addMenu('&Сервіс')
-        h = mb.addMenu('&Довідка')
-        h.addAction('Про програму «Ножиці»', lambda: None).setEnabled(False)
+        f.addAction(T('Вихід'), self.close)
+        e = mb.addMenu(T('&Правка'))
+        a_copy = e.addAction(ic[2], T('Копіювати'), self.copy); a_copy.setShortcut(QKeySequence('Ctrl+C'))
+        t = mb.addMenu(T('&Сервіс'))
+        h = mb.addMenu(T('&Довідка'))
+        h.addAction(T('Про програму «Ножиці»'), lambda: None).setEnabled(False)
 
         tb = QToolBar(); tb.setMovable(False); tb.setIconSize(QSize(24, 24))
         tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.addToolBar(tb)
-        nb = QToolButton(); nb.setIcon(ic[0]); nb.setText('Створити фрагмент'); nb.setToolTip('Створити фрагмент')
+        nb = QToolButton(); nb.setIcon(ic[0]); nb.setText(T('Створити фрагмент')); nb.setToolTip(T('Створити фрагмент'))
         nb.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         nb.setMenu(mode_menu(self, lambda m: self.new_snip(m)))
         nb.clicked.connect(lambda: self.new_snip())
         tb.addWidget(nb)
-        tb.addAction(a_save); a_save.setToolTip('Зберегти фрагмент')
+        tb.addAction(a_save); a_save.setToolTip(T('Зберегти фрагмент'))
         tb.addAction(a_copy)
-        send = tb.addAction(ic[3], 'Надіслати фрагмент'); send.setEnabled(False)
+        send = tb.addAction(ic[3], T('Надіслати фрагмент')); send.setEnabled(False)
         tb.addSeparator()
         group = QActionGroup(self)
-        pen_btn = QToolButton(); pen_btn.setIcon(ic[4]); pen_btn.setToolTip('Перо'); pen_btn.setCheckable(True)
+        pen_btn = QToolButton(); pen_btn.setIcon(ic[4]); pen_btn.setToolTip(T('Перо')); pen_btn.setCheckable(True)
         pen_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         pm_ = QMenu(self)
-        for name, col in (('Червоне перо', QColor(255, 0, 0)), ('Синє перо', QColor(0, 0, 255)), ('Чорне перо', QColor(0, 0, 0))):
+        for name, col in ((T('Червоне перо'), QColor(255, 0, 0)), (T('Синє перо'), QColor(0, 0, 255)), (T('Чорне перо'), QColor(0, 0, 0))):
             pm_.addAction(name, lambda c=col: self.set_tool(('pen', c, 2), pen_btn))
         pm_.addSeparator()
-        pm_.addAction('Настроїти...', lambda: self.custom_pen(pen_btn))
+        pm_.addAction(T('Настроїти...'), lambda: self.custom_pen(pen_btn))
         pen_btn.setMenu(pm_)
         pen_btn.clicked.connect(lambda: self.set_tool(('pen', self.pen_color, 2), pen_btn))
-        mk_btn = QToolButton(); mk_btn.setIcon(ic[5]); mk_btn.setToolTip('Маркер'); mk_btn.setCheckable(True)
+        mk_btn = QToolButton(); mk_btn.setIcon(ic[5]); mk_btn.setToolTip(T('Маркер')); mk_btn.setCheckable(True)
         mk_btn.clicked.connect(lambda: self.set_tool(('marker', QColor(255, 255, 0), 14), mk_btn))
-        er_btn = QToolButton(); er_btn.setIcon(ic[6]); er_btn.setToolTip('Гумка'); er_btn.setCheckable(True)
+        er_btn = QToolButton(); er_btn.setIcon(ic[6]); er_btn.setToolTip(T('Гумка')); er_btn.setCheckable(True)
         er_btn.clicked.connect(lambda: self.set_tool(('eraser', None, 0), er_btn))
         for b in (pen_btn, mk_btn, er_btn):
             tb.addWidget(b)
         self.tool_buttons = (pen_btn, mk_btn, er_btn)
         self.pen_color = QColor(255, 0, 0)
         pen_btn.setChecked(True)
-        t.addAction(ic[4], 'Перо', lambda: self.set_tool(('pen', self.pen_color, 2), pen_btn))
-        t.addAction(ic[5], 'Маркер', lambda: self.set_tool(('marker', QColor(255, 255, 0), 14), mk_btn))
-        t.addAction(ic[6], 'Гумка', lambda: self.set_tool(('eraser', None, 0), er_btn))
+        t.addAction(ic[4], T('Перо'), lambda: self.set_tool(('pen', self.pen_color, 2), pen_btn))
+        t.addAction(ic[5], T('Маркер'), lambda: self.set_tool(('marker', QColor(255, 255, 0), 14), mk_btn))
+        t.addAction(ic[6], T('Гумка'), lambda: self.set_tool(('eraser', None, 0), er_btn))
         t.addSeparator()
-        t.addAction('Параметри...', lambda: Options(self).exec())
+        t.addAction(T('Параметри...'), lambda: Options(self).exec())
 
         scr = QGuiApplication.primaryScreen().availableGeometry()
         w = min(max(pm.width() + 40, 480), scr.width() - 80)
@@ -413,7 +556,7 @@ class Editor(QMainWindow):
             b.setChecked(b is btn)
 
     def custom_pen(self, btn):
-        c = QColorDialog.getColor(self.pen_color, self, 'Колір пера')
+        c = QColorDialog.getColor(self.pen_color, self, T('Колір пера'))
         if c.isValid():
             self.set_tool(('pen', c, 2), btn)
 
@@ -422,12 +565,12 @@ class Editor(QMainWindow):
 
     def save(self):
         # the KDE «Зберегти як» dialog (the Windows 7 one, like in every other program), not Qt's own
-        default = os.path.join(os.path.expanduser('~/Pictures'), 'Знімок.png')
-        filters = '\n'.join(['*.png|Файл PNG (*.png)', '*.gif|Файл GIF (*.gif)', '*.jpg *.jpeg|Файл JPEG (*.jpg)',
-                             '*.bmp|Файл BMP (*.bmp)'])
+        default = os.path.join(os.path.expanduser('~/Pictures'), T('Знімок.png'))
+        filters = '\n'.join([T('*.png|Файл PNG (*.png)'), T('*.gif|Файл GIF (*.gif)'), T('*.jpg *.jpeg|Файл JPEG (*.jpg)'),
+                             T('*.bmp|Файл BMP (*.bmp)')])
         self.dlg = QProcess(self)
         self.dlg.finished.connect(self.saved)
-        self.dlg.start('kdialog', ['--title', 'Зберегти як', '--attach', str(int(self.winId())),
+        self.dlg.start('kdialog', ['--title', T('Зберегти як'), '--attach', str(int(self.winId())),
                                    '--getsavefilename', default, filters])
 
     def saved(self, code, _status):
@@ -464,18 +607,18 @@ def mode_menu(parent, pick):
 class Options(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
-        self.setWindowTitle('Параметри ножиць')
+        self.setWindowTitle(T('Параметри ножиць'))
         lay = QVBoxLayout(self)
-        g = QGroupBox('Програма'); gl = QVBoxLayout(g)
-        self.copy = QCheckBox('Завжди копіювати фрагменти до буфера обміну'); self.copy.setChecked(SETTINGS.value('copy', True, bool))
+        g = QGroupBox(T('Програма')); gl = QVBoxLayout(g)
+        self.copy = QCheckBox(T('Завжди копіювати фрагменти до буфера обміну')); self.copy.setChecked(SETTINGS.value('copy', True, bool))
         gl.addWidget(self.copy)
-        g2 = QGroupBox('Виділення'); g2l = QVBoxLayout(g2)
-        self.ink = QCheckBox('Показувати контур виділення після захоплення фрагментів'); self.ink.setChecked(SETTINGS.value('ink', False, bool))
+        g2 = QGroupBox(T('Виділення')); g2l = QVBoxLayout(g2)
+        self.ink = QCheckBox(T('Показувати контур виділення після захоплення фрагментів')); self.ink.setChecked(SETTINGS.value('ink', False, bool))
         g2l.addWidget(self.ink)
         lay.addWidget(g); lay.addWidget(g2)
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        bb.button(QDialogButtonBox.StandardButton.Ok).setText('ОК')
-        bb.button(QDialogButtonBox.StandardButton.Cancel).setText('Скасувати')
+        bb.button(QDialogButtonBox.StandardButton.Ok).setText(T('ОК'))
+        bb.button(QDialogButtonBox.StandardButton.Cancel).setText(T('Скасувати'))
         bb.accepted.connect(self.accept); bb.rejected.connect(self.reject)
         lay.addWidget(bb)
 
@@ -490,21 +633,21 @@ class Main(QMainWindow):
     def __init__(self, app):
         super().__init__(None, Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint)
         self.app = app
-        self.setWindowTitle('Ножиці')
+        self.setWindowTitle(T('Ножиці'))
         self.setWindowIcon(QIcon.fromTheme('seven-snippingtool'))
         tb = QToolBar(); tb.setMovable(False); tb.setIconSize(QSize(24, 24))
         tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.addToolBar(tb)
         ic = strip2(3)
-        self.new_btn = QToolButton(); self.new_btn.setIcon(ic[0]); self.new_btn.setText('&Створити')
+        self.new_btn = QToolButton(); self.new_btn.setIcon(ic[0]); self.new_btn.setText(T('&Створити'))
         self.new_btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.new_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.new_btn.setMenu(mode_menu(self, self.pick))
         self.new_btn.clicked.connect(lambda: app.overlay.set_mode(app.mode) if app.overlay else app.take(app.mode))
         self.new_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         tb.addWidget(self.new_btn)
-        self.cancel = tb.addAction(ic[1], '&Скасувати', app.cancel); self.cancel.setEnabled(False)
-        tb.addAction(ic[2], '&Параметри', lambda: Options(self).exec())
+        self.cancel = tb.addAction(ic[1], T('&Скасувати'), app.cancel); self.cancel.setEnabled(False)
+        tb.addAction(ic[2], T('&Параметри'), lambda: Options(self).exec())
         body = QWidget(); bl = QHBoxLayout(body); bl.setContentsMargins(10, 6, 8, 10)
         self.hint = QLabel(HINTS[app.mode]); self.hint.setWordWrap(True)
         bl.addWidget(self.hint, 1)
@@ -550,6 +693,11 @@ class App:
         QLocalServer.removeServer(SOCKET)
         self.server.listen(SOCKET)
         self.server.newConnection.connect(self.poked)
+        if wayland():   # where KWin's script reports the windows on screen (window snips)
+            global BUS
+            BUS = SnipBus()
+            QDBusConnection.sessionBus().registerService('org.sevenplasma.snip')
+            QDBusConnection.sessionBus().registerObject('/Snip', BUS, QDBusConnection.RegisterOption.ExportAllSlots)
         if show:
             self.activate(None)
 
@@ -591,14 +739,19 @@ class App:
         for e in list(self.editors):
             e.hide()
         def grab():
-            shot = QGuiApplication.primaryScreen().grabWindow(0)
+            shot = wayland_shot() if wayland() else QGuiApplication.primaryScreen().grabWindow(0)
             if mode == 'full':
                 self.got(shot, after); return
             ov = Overlay(shot, mode, lambda pm: self.got(pm, after), self.main.hide, self.show_main)
             ov.set_mode(mode)
             ov.setGeometry(QGuiApplication.primaryScreen().geometry())
+            if wayland():
+                ov.setWindowTitle('seven-snip-overlay')
             ov.showFullScreen(); ov.raise_(); ov.activateWindow()
             skip_taskbar(int(ov.winId()))
+            if wayland():   # above the panel, no taskbar button (KWin does it for Wayland clients)
+                kwin_script('workspace.windowList().forEach(function (w) { if (w.pid === %d && w.caption.startsWith("seven-snip-overlay")) '
+                            '{ w.skipTaskbar = true; w.skipSwitcher = true; w.keepAbove = true; w.fullScreen = true; workspace.activeWindow = w; } });' % os.getpid())
             self.overlay = ov
             self.show_main()
         QTimer.singleShot(wait, grab)                     # let our windows disappear first
@@ -648,7 +801,7 @@ class App:
 
 if __name__ == '__main__':
     qapp = QApplication(sys.argv)
-    qapp.setApplicationName('Ножиці')
+    qapp.setApplicationName(T('Ножиці'))
     qapp.setDesktopFileName('seven-snip')
     qapp.setQuitOnLastWindowClosed(False)
     # Windows 7 toolbars: light grey with a hint of blue at the bottom (not the theme's beige)
