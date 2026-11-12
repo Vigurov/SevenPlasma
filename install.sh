@@ -327,7 +327,7 @@ if [ -n "$ISO" ]; then
     IDX=$(7z l "$TREE/install.wim" | awk -F' = ' '/^Images = /{n=$2} END{print n}')
     run 7z x -y -ssc- -o"$TREE" "$TREE/install.wim" \
         "$IDX/Windows/System32/*" "-x!$IDX/Windows/System32/DriverStore" "-x!$IDX/Windows/System32/catroot*" \
-        "$IDX/Windows/*.exe" "$IDX/Windows/Resources/*" "$IDX/Windows/Fonts/*" "$IDX/Windows/Media/*" "$IDX/Windows/Web/*" \
+        "$IDX/Windows/*.exe" "$IDX/Windows/Help/Windows/*" "$IDX/Windows/Resources/*" "$IDX/Windows/Fonts/*" "$IDX/Windows/Media/*" "$IDX/Windows/Web/*" \
         "$IDX/Windows/assembly/GAC_MSIL/*" "$IDX/Program Files/*" "$IDX/ProgramData/Microsoft/User Account Pictures/*" \
         "$IDX/Users/Public/Pictures/Sample Pictures/*"
     rm -f "$TREE/install.wim"

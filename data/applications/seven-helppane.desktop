@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Windows Help and Support
+Name[uk]=Довідка та підтримка Windows
+Exec=seven-control --help-support
+Icon=seven-helppane
+NoDisplay=true
+X-Win7-HiddenFromStart=true

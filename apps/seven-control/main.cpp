@@ -2112,6 +2112,7 @@ int main(int argc, char **argv)
         return Win7DisplaySwitch::run();
     }
     if (app.arguments().contains(QStringLiteral("--help-support"))) { // Start > Help and Support, F1, khelpcenter
+        app.setDesktopFileName(QStringLiteral("seven-helppane")); // its own taskbar button and icon, not Control Panel's
         auto *w = new Win7Help::Window(argAfterHelp(app.arguments()));
         QObject::connect(w, &QObject::destroyed, &app, &QCoreApplication::quit);
         w->show();

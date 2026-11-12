@@ -142,6 +142,25 @@ class Sources:
             ico = Image.open(io.BytesIO(blob[:400000]))
             ico.size = tuple(int(v) for v in r['extra'].split('x'))
             return ico.copy()
+        if kind == 'help-asset':
+            # a picture of Windows Help's content: the .h1s file is a DLL holding a Help 2 (ITOL) container,
+            # which 7-Zip opens; any language folder (Windows/Help/Windows/<lang>/)
+            import glob as _glob
+            base = os.path.join(self.root, os.path.dirname(os.path.dirname(r['src'])))
+            hits = sorted(_glob.glob(os.path.join(base, '*', os.path.basename(r['src'])))) if os.path.isdir(base) else []
+            if not hits:
+                raise KeyError(r['src'])
+            blob = open(hits[0], 'rb').read()
+            work = tempfile.mkdtemp(prefix='sevenplasma-h1s-')
+            try:
+                itol = os.path.join(work, 'c.itol')
+                open(itol, 'wb').write(blob[blob.find(b'ITOL'):])
+                subprocess.run(['7z', 'x', '-y', '-o' + work, itol, r['member']], capture_output=True)
+                im = Image.open(os.path.join(work, r['member']))
+                im.load()
+                return im
+            finally:
+                shutil.rmtree(work, ignore_errors=True)
         if kind == 'avi-strip':
             # an uncompressed animation (AVI resource, 24-bit frames): the frames side by side, the colour of
             # the first pixel made transparent

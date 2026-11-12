@@ -15265,5 +15265,25 @@ WantedBy=timers.target
         <source>No results were found. Try other words.</source>
         <translation>Нічого не знайдено. Спробуйте інші слова.</translation>
     </message>
+    <message>
+        <source>&amp;Ask</source>
+        <translation>&amp;Запитати</translation>
+    </message>
+    <message>
+        <source>&amp;Options</source>
+        <translation>&amp;Параметри</translation>
+    </message>
+    <message>
+        <source>&amp;More support options</source>
+        <translation>&amp;Інші варіанти підтримки</translation>
+    </message>
+    <message>
+        <source>Offli&amp;ne Help</source>
+        <translation>Довідка в автономному &amp;режимі</translation>
+    </message>
+    <message>
+        <source>Read &lt;a href="page:about"&gt;about this Windows 7 look&lt;/a&gt;: what it is made of, where its pictures come from and how to remove it.</source>
+        <translation>Прочитайте &lt;a href="page:about"&gt;про цей вигляд Windows 7&lt;/a&gt;: з чого він складається, звідки його зображення та як його видалити.</translation>
+    </message>
 </context>
 </TS>

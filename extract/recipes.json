@@ -32376,5 +32376,17 @@
 "id": 107,
 "extra": "48@32",
 "dest": "icons/hicolor/48x48/apps/seven-helppane.png"
+},
+{
+"src": "Windows/Help/Windows/en-US/articon.h1s",
+"from": "help-asset",
+"member": "assets/1f98b76f-e382-48c6-ba5a-07650676e0f6.png",
+"dest": "seven-control/helppane/find.png"
+},
+{
+"src": "Windows/Help/Windows/en-US/articon.h1s",
+"from": "help-asset",
+"member": "assets/641dd3b4-2c0b-41f5-8718-ef30001686cd.jpg",
+"dest": "seven-control/helppane/website.png"
 }
 ]

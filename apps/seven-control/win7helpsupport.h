@@ -11,9 +11,11 @@
 #include "win7i18n.h"
 
 #include <AeroQt/insetwindow.h>
+#include <AeroQt/navbuttons.h>
 
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QDir>
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QMenu>
@@ -186,61 +188,54 @@ public:
         setWindowIcon(QIcon::fromTheme(QStringLiteral("seven-helppane"), QIcon::fromTheme(QStringLiteral("help-browser"))));
         setAttribute(Qt::WA_DeleteOnClose);
 
-        // the glass: Back / Forward, Search Help, and the buttons
+        // the glass, as HelpPane: Back / Forward on the left and Home, Print, Browse Help, Ask, Options on the
+        // right; "Search Help" on its own row below, in the middle
         auto *top = new QWidget(this);
-        // flat buttons on the glass, a light box under the mouse (HelpPane's toolbar)
-        top->setStyleSheet(QStringLiteral("QToolButton { border: 1px solid transparent; border-radius: 3px; background: transparent; color: black; padding: 2px; }"
+        top->setStyleSheet(QStringLiteral("QToolButton { border: 1px solid transparent; border-radius: 3px; background: transparent; color: black; padding: 1px 3px; }"
                                           "QToolButton:hover { border: 1px solid rgba(255, 255, 255, 170); background: rgba(255, 255, 255, 90); }"
                                           "QToolButton:pressed { border: 1px solid rgba(0, 0, 0, 90); background: rgba(255, 255, 255, 60); }"
                                           "QToolButton::menu-indicator { image: none; }"));
-
-        auto *tl = new QHBoxLayout(top);
-        tl->setContentsMargins(6, 5, 8, 5);
-        tl->setSpacing(6);
-        m_back = navButton(top, true);
-        m_forward = navButton(top, false);
-        auto *navs = new QHBoxLayout;
-        navs->setSpacing(0);
-        navs->addWidget(m_back);
-        navs->addWidget(m_forward);
-        tl->addLayout(navs);
-        m_search = new QLineEdit(top);
-        m_search->setFixedHeight(26);
-        new Win7SearchBox(m_search, tr7("Search Help"));
-        tl->addWidget(m_search, 1);
+        auto *tv = new QVBoxLayout(top);
+        tv->setContentsMargins(6, 4, 6, 6);
+        tv->setSpacing(4);
+        auto *tl = new QHBoxLayout;
+        tl->setSpacing(4);
+        m_navs = new Aero::NavButtons(top);
+        m_navs->back()->setEnabled(false);
+        m_navs->forward()->setEnabled(false);
+        m_navs->back()->setToolTip(tr7("Back"));
+        m_navs->forward()->setToolTip(tr7("Forward"));
+        tl->addWidget(m_navs);
+        tl->addStretch(1);
+        // bitmap 2 of HelpPane.exe: Home, Print, Browse Help, Ask (24 x 24 each)
         const QPixmap strip = pic(QStringLiteral("toolbar"));
         auto cell = [&strip](int i) {
             return strip.isNull() ? QIcon() : QIcon(strip.copy(i * 24, 0, 24, 24));
         };
-        tl->addWidget(toolButton(top, cell(0), tr7("Help and Support home"), [this] {
-            showPage(QStringLiteral("home"));
-        }));
-        tl->addWidget(toolButton(top, cell(1), tr7("Print"), [this] {
+        auto print = [this] {
             QPrinter printer;
             QPrintDialog dlg(&printer, this);
             if (dlg.exec() == QDialog::Accepted) {
                 m_view->print(&printer);
             }
+        };
+        tl->addWidget(toolButton(top, cell(0), tr7("Help and Support home"), [this] {
+            showPage(QStringLiteral("home"));
         }));
-        tl->addWidget(toolButton(top, QIcon::fromTheme(QStringLiteral("seven-helppane")), tr7("Browse Help"), [this] {
+        tl->addWidget(toolButton(top, cell(1), tr7("Print"), print));
+        tl->addWidget(toolButton(top, cell(2), tr7("Browse Help"), [this] {
             showPage(QStringLiteral("browse"));
         }));
-        tl->addSpacing(10);
-        auto *ask = toolButton(top, QIcon(pic(QStringLiteral("ask"))), tr7("Ask"), [this] {
+        auto *ask = toolButton(top, cell(3), tr7("&Ask"), [this] {
             showPage(QStringLiteral("ask"));
         });
         ask->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         tl->addWidget(ask);
-        auto *options = toolButton(top, QIcon(pic(QStringLiteral("options"))), tr7("Options"), nullptr);
-        options->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        auto *options = toolButton(top, QIcon(), tr7("&Options") + QStringLiteral("  \u25BE"), nullptr);
+        options->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        options->setFixedHeight(30);
         auto *menu = new QMenu(options);
-        menu->addAction(tr7("Print..."), this, [this] {
-            QPrinter printer;
-            QPrintDialog dlg(&printer, this);
-            if (dlg.exec() == QDialog::Accepted) {
-                m_view->print(&printer);
-            }
-        });
+        menu->addAction(tr7("Print..."), this, print);
         menu->addAction(tr7("Browse Help"), this, [this] {
             showPage(QStringLiteral("browse"));
         });
@@ -256,6 +251,15 @@ public:
         options->setMenu(menu);
         options->setPopupMode(QToolButton::InstantPopup);
         tl->addWidget(options);
+        tv->addLayout(tl);
+        auto *sl0 = new QHBoxLayout;
+        m_search = new QLineEdit(top);
+        m_search->setFixedSize(330, 24);
+        new Win7SearchBox(m_search, tr7("Search Help"));
+        sl0->addStretch(1);
+        sl0->addWidget(m_search);
+        sl0->addStretch(1);
+        tv->addLayout(sl0);
 
         // the pages
         auto *content = new QWidget(this);
@@ -265,6 +269,7 @@ public:
         m_view = new QTextBrowser(content);
         m_view->setOpenLinks(false);
         m_view->setFrameShape(QFrame::NoFrame);
+        m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         m_view->setStyleSheet(QStringLiteral("QTextBrowser { background: white; }"));
         m_view->document()->setDefaultStyleSheet(QStringLiteral("a { color: #0066cc; text-decoration: none; } h3 { color: #1e395b; font-weight: normal; font-size: 11pt; }"));
         {
@@ -273,24 +278,48 @@ public:
             pal.setColor(QPalette::LinkVisited, QColor(0x00, 0x66, 0xcc));
             m_view->setPalette(pal);
         }
+        {
+            // the light line between the parts of the start page (a picture: Qt's rules and cells keep their padding)
+            const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+            QDir().mkpath(dir);
+            m_line = dir + QStringLiteral("/help-line.png");
+            QImage line(1, 1, QImage::Format_RGB32);
+            line.fill(QColor(0xd5, 0xdb, 0xe3));
+            line.save(m_line);
+        }
         cl->addWidget(m_view, 1);
-        // the status bar: "Offline Help"
+        // the bottom: "More support options" on the left, "Offline Help" on the right
         auto *status = new QWidget(content);
         status->setObjectName(QStringLiteral("win7helpstatus"));
-        status->setStyleSheet(QStringLiteral("#win7helpstatus { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #f6f8fb, stop:1 #e3e9f1); border-top: 1px solid #c5d0de; }"));
-        auto *sl = new QHBoxLayout(status);
-        sl->setContentsMargins(6, 2, 6, 2);
-        sl->addStretch(1);
+        status->setStyleSheet(QStringLiteral("#win7helpstatus { background: #f0f0f0; border-top: 1px solid #d5dfe5; }"
+                                             "QToolButton { border: 1px solid transparent; background: transparent; padding: 1px 2px; }"
+                                             "QToolButton:hover { color: #3399ff; }"));
+        auto *sv = new QVBoxLayout(status);
+        sv->setContentsMargins(4, 3, 6, 3);
+        sv->setSpacing(2);
+        auto *more = new QToolButton(status);
+        more->setIcon(QIcon(pic(QStringLiteral("ask"))));
+        more->setText(tr7("&More support options"));
+        more->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        connect(more, &QToolButton::clicked, this, [this] {
+            showPage(QStringLiteral("ask"));
+        });
+        auto *ml = new QHBoxLayout;
+        ml->addWidget(more);
+        ml->addStretch(1);
+        sv->addLayout(ml);
+        auto *ol = new QHBoxLayout;
+        ol->addStretch(1);
         auto *offline = new QToolButton(status);
-        offline->setAutoRaise(true);
-        const QPixmap globe = pic(QStringLiteral("offline"));
-        if (!globe.isNull()) {
-            offline->setIcon(QIcon(globe.copy(16, 0, 16, 16)));
+        const QPixmap states = pic(QStringLiteral("offline"));
+        if (!states.isNull()) {
+            offline->setIcon(QIcon(states.copy(32, 0, 16, 16))); // the computer: Help on this computer
         }
-        offline->setText(tr7("Offline Help"));
+        offline->setText(tr7("Offli&ne Help") + QStringLiteral("  \u25BE"));
         offline->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         offline->setToolTip(tr7("This Help is on your computer: no Internet connection is needed."));
-        sl->addWidget(offline);
+        ol->addWidget(offline);
+        sv->addLayout(ol);
         cl->addWidget(status);
 
         auto *v = new QVBoxLayout(this);
@@ -301,12 +330,12 @@ public:
         connect(m_view, &QTextBrowser::anchorClicked, this, [this](const QUrl &u) {
             open(u);
         });
-        connect(m_back, &QToolButton::clicked, this, [this] {
+        connect(m_navs->back(), &QAbstractButton::clicked, this, [this] {
             if (m_pos > 0) {
                 showPage(m_history.at(--m_pos), false);
             }
         });
-        connect(m_forward, &QToolButton::clicked, this, [this] {
+        connect(m_navs->forward(), &QAbstractButton::clicked, this, [this] {
             if (m_pos + 1 < m_history.size()) {
                 showPage(m_history.at(++m_pos), false);
             }
@@ -316,33 +345,12 @@ public:
                 showPage(QStringLiteral("search:") + m_search->text().trimmed());
             }
         });
-        resize(760, 600);
+        resize(512, 790); // HelpPane's first size
         m_view->setFocus(); // the search box keeps its "Search Help" hint
         showPage(startPage.isEmpty() ? QStringLiteral("home") : startPage);
     }
 
 private:
-    QToolButton *navButton(QWidget *parent, bool back)
-    {
-        auto *b = new QToolButton(parent);
-        b->setFixedSize(18, 23);
-        b->setAutoRaise(true);
-        b->setToolTip(back ? tr7("Back") : tr7("Forward"));
-        b->setStyleSheet(QStringLiteral("QToolButton { border: none; background: transparent; }"));
-        // the strips hold both arrows (Back 0..17, Forward 18..35): normal, hot, disabled
-        auto half = [back](const QString &name) {
-            const QPixmap p = pic(name);
-            return p.isNull() ? QPixmap() : p.copy(back ? 0 : 18, 0, 18, 23);
-        };
-        QIcon icon;
-        icon.addPixmap(half(QStringLiteral("nav-normal")), QIcon::Normal);
-        icon.addPixmap(half(QStringLiteral("nav-hot")), QIcon::Active);
-        icon.addPixmap(half(QStringLiteral("nav-disabled")), QIcon::Disabled);
-        b->setIcon(icon);
-        b->setIconSize(QSize(18, 23));
-        b->setEnabled(false);
-        return b;
-    }
     QToolButton *toolButton(QWidget *parent, const QIcon &icon, const QString &tip, const std::function<void()> &f)
     {
         auto *b = new QToolButton(parent);
@@ -381,14 +389,24 @@ private:
     QString html(const QString &id) const
     {
         if (id == QLatin1String("home")) {
-            return QStringLiteral("<div style=\"margin: 0;\"><table width=\"100%\" cellpadding=\"18\" style=\"background-color: #dceaf8;\"><tr><td>"
-                                  "<p style=\"font-size: 16pt; color: #1e395b;\">%1</p><p>%2</p></td></tr></table>"
-                                  "<div style=\"margin: 16px 22px;\"><p style=\"font-size: 12pt; color: #1e395b;\">%3</p>"
-                                  "<p><a href=\"page:start\">%4</a></p><p><a href=\"page:basics\">%5</a></p><p><a href=\"page:browse\">%6</a></p>"
-                                  "<p style=\"font-size: 12pt; color: #1e395b; margin-top: 18px;\">%7</p><p><a href=\"page:about\">%8</a></p></div></div>")
+            // HelpPane's start page: the magnifier and "Find an answer quickly", the three links with square
+            // bullets, a line, then the globe ("More on the Windows website" there; this computer here)
+            const QString dir = QUrl::fromLocalFile(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-control/helppane"),
+                                                                           QStandardPaths::LocateDirectory)).toString();
+            return QStringLiteral("<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin-top: 14px;\"><tr>"
+                                  "<td width=\"60\" valign=\"top\" align=\"right\"><img src=\"%9/find.png\" width=\"44\" height=\"44\"></td>"
+                                  "<td valign=\"top\" style=\"padding-left: 10px;\"><p style=\"font-size: 12pt; color: #0066cc; margin: 4px 0 8px 0;\">%1</p><p>%2</p></td></tr></table>"
+                                  "<p style=\"font-size: 12pt; color: #333; margin: 52px 0 12px 20px;\">%3</p>"
+                                  "<ul style=\"list-style-type: square; margin-left: 18px;\"><li style=\"margin-bottom: 6px;\"><a href=\"page:start\">%4</a></li><li style=\"margin-bottom: 6px;\"><a href=\"page:basics\">%5</a></li><li><a href=\"page:browse\">%6</a></li></ul>"
+                                  "<p align=\"center\" style=\"margin: 24px 0 16px 0;\"><img src=\"%10\" width=\"400\" height=\"1\"></p>"
+                                  "<p style=\"font-size: 12pt; color: #333; margin: 6px 0 10px 20px;\">%7</p>"
+                                  "<table cellspacing=\"0\" cellpadding=\"0\"><tr><td width=\"60\" valign=\"top\" align=\"right\"><img src=\"%9/website.png\" width=\"48\" height=\"48\"></td>"
+                                  "<td valign=\"top\" style=\"padding-left: 10px;\">%8</td></tr></table>")
                 .arg(tr7("Find an answer quickly"), tr7("Enter a few words in the search box above."), tr7("Not sure where to start?"),
                      tr7("How to get started with your computer"), tr7("Learn about Windows Basics"), tr7("Browse Help topics"),
-                     tr7("More about this computer"), tr7("About this Windows 7 look"));
+                     tr7("More about this computer"),
+                     tr7("Read <a href=\"page:about\">about this Windows 7 look</a>: what it is made of, where its pictures come from and how to remove it."),
+                     dir, QUrl::fromLocalFile(m_line).toString());
         }
         if (id == QLatin1String("browse")) {
             QString list;
@@ -441,15 +459,16 @@ private:
         }
         m_current = id;
         m_view->setHtml(html(id));
-        m_back->setEnabled(m_pos > 0);
-        m_forward->setEnabled(m_pos + 1 < m_history.size());
+        m_navs->back()->setEnabled(m_pos > 0);
+        m_navs->forward()->setEnabled(m_pos + 1 < m_history.size());
     }
 
     QTextBrowser *m_view = nullptr;
     QLineEdit *m_search = nullptr;
-    QToolButton *m_back = nullptr, *m_forward = nullptr;
+    Aero::NavButtons *m_navs = nullptr;
     QStringList m_history;
     int m_pos = -1;
     QString m_current;
+    QString m_line;
 };
 }
