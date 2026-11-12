@@ -1979,7 +1979,7 @@ index 259b522..a603948 100644
      }
  
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml b/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
-index 5d24a46..52d2f52 100644
+index 5d24a46..928f4ef 100644
 --- a/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
 +++ b/plasma/plasmoids/io.gitgud.wackyideas.desktopcontainment/contents/ui/FolderViewLayer.qml
 @@ -14,11 +14,13 @@ import org.kde.config // for KAuthorized
@@ -2071,7 +2071,7 @@ index 5d24a46..52d2f52 100644
      }
      PlasmaCore.Action {
          id: actionSeparator
-@@ -381,6 +396,73 @@ FocusScope {
+@@ -381,6 +396,75 @@ FocusScope {
          isSeparator: true
      }
  
@@ -2095,12 +2095,14 @@ index 5d24a46..52d2f52 100644
 +        property bool intel: false
 +        property bool nvidia: false
 +        engine: "executable"
-+        connectedSources: ["cat /sys/class/drm/card*/device/vendor"]
++        // (NVIDIA: only with NVIDIA's own driver, which brings its panel, as on Windows 7; ~/.config/seven-gpu-panels
++        //  forces them for testing: "nvidia amd intel")
++        connectedSources: ["cat /sys/class/drm/card*/device/vendor; test -d /sys/module/nvidia && echo nvidia-driver; cat ~/.config/seven-gpu-panels ~/.config/win7-gpu-panels 2>/dev/null"]
 +        onNewData: (sourceName, data) => {
 +            const out = data["stdout"] || "";
-+            amd = out.indexOf("0x1002") >= 0;
-+            intel = out.indexOf("0x8086") >= 0;
-+            nvidia = out.indexOf("0x10de") >= 0;
++            amd = out.indexOf("0x1002") >= 0 || out.indexOf("amd") >= 0;
++            intel = out.indexOf("0x8086") >= 0 || out.indexOf("intel") >= 0;
++            nvidia = (out.indexOf("0x10de") >= 0 && out.indexOf("nvidia-driver") >= 0) || /(^|\s)nvidia(\s|$)/.test(out);
 +            disconnectSource(sourceName);
 +        }
 +    }
@@ -2145,7 +2147,7 @@ index 5d24a46..52d2f52 100644
      Component.onCompleted: {
          if (!isContainment) {
              label = labelComponent.createObject(folderViewLayerComponent);
-@@ -391,6 +473,12 @@ FocusScope {
+@@ -391,6 +475,12 @@ FocusScope {
              const modelAction = folderView.model.action(actionName);
              if (actionName === "newMenu") {
                  Plasmoid.contextualActions.push(actionSeparator);
@@ -2158,7 +2160,7 @@ index 5d24a46..52d2f52 100644
              }
              if (actionName === "refresh") {
                  Plasmoid.contextualActions.push(viewPropertiesAction);
-@@ -403,6 +491,12 @@ FocusScope {
+@@ -403,6 +493,12 @@ FocusScope {
          }
  
          Plasmoid.contextualActions.push(actionSeparatorThird);
