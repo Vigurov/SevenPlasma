@@ -363,6 +363,9 @@ if [ -n "$ISO" ]; then
             [ -e "$t" ] || [ -z "$src" ] || install -D -m 644 "$src" "$t"
         done
     done
+    t=$L/share/icons/hicolor/24x24/apps/seven-cpa-nvidia.png   # its Control Panel item (All Control Panel Items)
+    src=$(find /usr/share/icons/hicolor/{24x24,32x32,48x48}/apps /usr/share/pixmaps -name "nvidia-settings*.png" 2>/dev/null | head -1)
+    [ -e "$t" ] || [ -z "$src" ] || python3 -c 'import sys; from PIL import Image; Image.open(sys.argv[1]).convert("RGBA").resize((24, 24), Image.LANCZOS).save(sys.argv[2])' "$src" "$t"
     if [ $GAMES -eq 1 ]; then
         note "$(L "ігри Windows 7 (Wine)" "Windows 7 games (Wine)")"
         export WINEPREFIX="$L/share/sevenplasma/wine"

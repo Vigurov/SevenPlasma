@@ -113,6 +113,12 @@ class Sources:
                 part = self.picture({k: v for k, v in l.items() if k != 'place'}).convert('RGBA')
                 base.alpha_composite(part, tuple(l.get('place', [0, 0])))
             return base
+        if isinstance(r.get('key'), list):
+            # only this colour: the picture itself has the other usual keys (teal, silver) in it
+            im = self.picture(dict(r, key=False)).convert('RGBA')
+            k = tuple(r['key'])
+            im.putdata([(0, 0, 0, 0) if p[:3] == k else p for p in getattr(im, 'get_flattened_data', im.getdata)()])
+            return im
         if r.get('key'):
             from win7near import keyed
             return keyed(self.picture(dict(r, key=False)))

@@ -32329,7 +32329,11 @@
 "from": "bitmap",
 "id": 134,
 "dest": "seven-control/helppane/options.png",
-"key": true
+"key": [
+255,
+0,
+255
+]
 },
 {
 "src": "Windows/HelpPane.exe",
@@ -32400,5 +32404,100 @@
 16
 ],
 "dest": "icons/hicolor/16x16/actions/seven-explorer-search.png"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-wf-shieldcritical.png",
+"src": "Windows/System32/wmploc.DLL",
+"from": "icon",
+"id": 866,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/20x20/apps/seven-photoviewer.png",
+"src": "Program Files/Windows Photo Viewer/PhotoViewer.dll",
+"from": "icon",
+"id": "0",
+"extra": "24@32"
+},
+{
+"dest": "icons/hicolor/22x22/apps/seven-photoviewer.png",
+"src": "Program Files/Windows Photo Viewer/PhotoViewer.dll",
+"from": "icon",
+"id": "0",
+"extra": "24@32"
+},
+{
+"dest": "icons/hicolor/64x64/apps/seven-wf-shieldcritical.png",
+"src": "Windows/System32/wmploc.DLL",
+"from": "icon",
+"id": 866,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/96x96/apps/seven-wf-shieldcritical.png",
+"src": "Windows/System32/wmploc.DLL",
+"from": "icon",
+"id": 866,
+"extra": "48@32"
+},
+{
+"src": "Windows/System32/els.dll",
+"from": "bitmap-cell",
+"id": 100,
+"dest": "icons/hicolor/16x16/apps/seven-ev-lognode.png",
+"cell": "16:0"
+},
+{
+"src": "Windows/System32/comctl32.dll",
+"from": "bitmap-cell",
+"id": 120,
+"dest": "icons/hicolor/16x16/apps/seven-mmc-props.png",
+"cell": "16:10"
+},
+{
+"src": "Windows/System32/devmgr.dll",
+"from": "bitmap-cell",
+"id": 358,
+"dest": "icons/hicolor/16x16/apps/seven-devmgr-uninstall.png",
+"cell": "16:2"
+},
+{
+"src": "Windows/System32/batmeter.dll",
+"from": "bitmap-cell",
+"id": 301,
+"dest": "icons/hicolor/32x32/status/seven-flyout-battery-red.png",
+"cell": "32:20"
+},
+{
+"src": "Windows/System32/themecpl.dll",
+"from": "image",
+"id": 86,
+"dest": "icons/hicolor/16x16/apps/seven-sounds-theme.png",
+"extra": "PNG"
+},
+{
+"src": "Windows/System32/batmeter.dll",
+"from": "bitmap-cell",
+"id": 302,
+"cell": "40:20",
+"dest": "icons/hicolor/40x40/status/seven-flyout-battery-red.png"
+},
+{
+"from": "layers",
+"dest": "icons/hicolor/48x48/apps/seven-net-activity.png",
+"layers": [
+{
+"src": "Windows/System32/netshell.dll",
+"from": "icon",
+"id": 1916,
+"extra": "48@32"
+},
+{
+"src": "Windows/System32/netshell.dll",
+"from": "icon",
+"id": 1903,
+"extra": "48@32"
+}
+]
 }
 ]
