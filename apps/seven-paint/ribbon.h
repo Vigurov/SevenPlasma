@@ -5,6 +5,8 @@
  * #738399 at the bottom, #e0ebf7 separators, buttons with the yellow/orange hot and checked states.
  * Pictures: mspaint.exe resources in ~/.local/share/seven-paint/<id>.png.
  */
+#include <QLinearGradient>
+#include <QPolygonF>
 #include <QDir>
 #include <QEventLoop>
 #include <QKeyEvent>
@@ -32,9 +34,83 @@ inline QPixmap px(int id)
     }
     return *it;
 }
+/** our drawings of the few ribbon parts that have no picture in Windows 7's files (UIRibbon tints its own at
+ *  run time): the application button, the zoom slider thumb and the size grip */
+inline QPixmap drawn(const QString &name)
+{
+    if (name == QLatin1String("appbtn")) { // 56 x 22: glossy blue, a document glyph and a small arrow
+        QImage im(56, 22, QImage::Format_ARGB32_Premultiplied);
+        QPainter p(&im);
+        QLinearGradient top(0, 1, 0, 10), bottom(0, 10, 0, 21);
+        top.setColorAt(0, QColor(125, 170, 214));
+        top.setColorAt(0.12, QColor(73, 139, 198));
+        top.setColorAt(1, QColor(47, 104, 179));
+        bottom.setColorAt(0, QColor(26, 65, 136));
+        bottom.setColorAt(0.5, QColor(36, 89, 156));
+        bottom.setColorAt(1, QColor(64, 155, 207));
+        p.fillRect(0, 0, 56, 22, QColor(65, 106, 189));
+        p.fillRect(QRect(0, 1, 56, 9), top);
+        p.fillRect(QRect(0, 10, 56, 11), bottom);
+        p.fillRect(QRect(0, 21, 56, 1), QColor(82, 120, 195));
+        p.setRenderHint(QPainter::Antialiasing);
+        // the page: white, a grey strip on the left, blue lines (Paint's own glyph)
+        const QRectF page(14.5, 4.5, 15, 13);
+        p.setPen(QColor(150, 165, 185));
+        p.setBrush(QColor(250, 251, 252));
+        p.drawRect(page);
+        p.fillRect(QRectF(15, 5, 4, 12), QColor(200, 206, 214));
+        p.setPen(QPen(QColor(55, 100, 205), 1));
+        for (int y = 7; y <= 15; y += 2) {
+            p.drawLine(QPointF(21, y + 0.5), QPointF(28, y + 0.5));
+        }
+        // the arrow
+        p.setPen(Qt::NoPen);
+        p.setBrush(Qt::white);
+        p.drawPolygon(QPolygonF() << QPointF(35.5, 9) << QPointF(42.5, 9) << QPointF(39, 12.5));
+        return QPixmap::fromImage(im);
+    }
+    if (name == QLatin1String("zoomthumb")) { // 9 x 17: grey, rounded top, pointed bottom
+        QImage im(9, 17, QImage::Format_ARGB32_Premultiplied);
+        im.fill(Qt::transparent);
+        QPainter p(&im);
+        p.setRenderHint(QPainter::Antialiasing);
+        QPainterPath path;
+        path.moveTo(1, 0.5);
+        path.lineTo(8, 0.5);
+        path.lineTo(8.5, 12);
+        path.lineTo(4.5, 16);
+        path.lineTo(0.5, 12);
+        path.closeSubpath();
+        QLinearGradient g(0, 0, 0, 16);
+        g.setColorAt(0, QColor(242, 242, 242));
+        g.setColorAt(0.45, QColor(235, 235, 235));
+        g.setColorAt(0.5, QColor(219, 219, 219));
+        g.setColorAt(1, QColor(212, 212, 212));
+        p.setBrush(g);
+        p.setPen(QColor(112, 112, 112));
+        p.drawPath(path);
+        return QPixmap::fromImage(im);
+    }
+    if (name == QLatin1String("grip")) { // 13 x 14: the three-step dots of a Windows 7 size grip
+        QImage im(13, 14, QImage::Format_ARGB32_Premultiplied);
+        im.fill(Qt::transparent);
+        QPainter p(&im);
+        const int dots[][2] = {{10, 5}, {7, 8}, {10, 8}, {4, 11}, {7, 11}, {10, 11}};
+        for (const auto &d : dots) {
+            p.fillRect(d[0], d[1], 1, 1, Qt::white);
+            p.fillRect(d[0] + 1, d[1], 1, 1, QColor(207, 207, 207));
+            p.fillRect(d[0], d[1] + 1, 1, 1, QColor(231, 231, 231));
+            p.fillRect(d[0] + 1, d[1] + 1, 1, 1, QColor(175, 175, 175));
+        }
+        return QPixmap::fromImage(im);
+    }
+    return {};
+}
+
 inline QPixmap named(const QString &name)
 {
-    return QPixmap(QDir::homePath() + QStringLiteral("/.local/share/seven-paint/") + name + QStringLiteral(".png"));
+    QPixmap pm(QDir::homePath() + QStringLiteral("/.local/share/seven-paint/") + name + QStringLiteral(".png"));
+    return pm.isNull() ? drawn(name) : pm;
 }
 
 const QColor TEXT(0x1e, 0x39, 0x5b);
