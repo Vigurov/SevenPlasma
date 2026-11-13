@@ -5,11 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui OpenGL OpenGLWidgets LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Gui OpenGL OpenGLWidgets DBus LinguistTools)
 
 add_executable(seven-nvidia main.cpp)
 target_include_directories(seven-nvidia PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../seven-ccc)
-target_link_libraries(seven-nvidia PRIVATE Qt6::Widgets Qt6::Gui Qt6::OpenGL Qt6::OpenGLWidgets)
+target_link_libraries(seven-nvidia PRIVATE Qt6::Widgets Qt6::Gui Qt6::OpenGL Qt6::OpenGLWidgets Qt6::DBus)
 
 install(TARGETS seven-nvidia RUNTIME DESTINATION bin)
 

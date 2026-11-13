@@ -381,6 +381,41 @@ inline QList<HistoryRow> history()
         z.waitForFinished(5000);
         texts << QString::fromUtf8(z.readAllStandardOutput());
     }
+    if (!QFile::exists(QStringLiteral("/var/log/apt/history.log"))) {
+        texts.clear();
+        if (QFile::exists(QStringLiteral("/var/log/pacman.log"))) {
+            // Arch: [2026-11-11T10:00:00+0000] [ALPM] upgraded foo (1.0-1 -> 1.1-1)
+            QFile log(QStringLiteral("/var/log/pacman.log"));
+            if (log.open(QIODevice::ReadOnly)) {
+                static const QRegularExpression re(QStringLiteral(R"(^\[([^\]]+)\] \[ALPM\] upgraded (\S+) \(.+ -> (.+)\)$)"));
+                for (const QString &l : QString::fromUtf8(log.readAll()).split(QLatin1Char('\n'))) {
+                    const auto m = re.match(l);
+                    if (m.hasMatch()) {
+                        rows.append({tr7("Update for %1 (%2)").arg(m.captured(2), m.captured(3)), tr7("Succeeded"), QDateTime::fromString(m.captured(1), Qt::ISODate)});
+                    }
+                }
+            }
+        } else if (QFile::exists(QStringLiteral("/usr/lib/sysimage/libdnf5/transaction_history.sqlite"))) {
+            // Fedora: dnf's history (the upgrades)
+            const QString py = QStringLiteral(
+                "import sqlite3\n"
+                "c = sqlite3.connect('file:/usr/lib/sysimage/libdnf5/transaction_history.sqlite?mode=ro&immutable=1', uri=True)\n"
+                "q = ('select trans.dt_begin, pkg_name.name, rpm.version || \"-\" || rpm.release from trans_item '\n"
+                "     'join trans on trans.id = trans_item.trans_id join trans_item_action on trans_item_action.id = trans_item.action_id '\n"
+                "     'join rpm on rpm.item_id = trans_item.item_id join pkg_name on pkg_name.id = rpm.name_id where trans_item_action.name = \"Upgrade\"')\n"
+                "for t, n, v in c.execute(q):\n"
+                "    print(t, n, v, sep='\\t')\n");
+            QProcess p;
+            p.start(QStringLiteral("python3"), {QStringLiteral("-c"), py});
+            p.waitForFinished(60000);
+            for (const QString &l : QString::fromUtf8(p.readAllStandardOutput()).split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
+                const QStringList f = l.split(QLatin1Char('\t'));
+                if (f.size() == 3) {
+                    rows.append({tr7("Update for %1 (%2)").arg(f.at(1), f.at(2)), tr7("Succeeded"), QDateTime::fromSecsSinceEpoch(f.at(0).toLongLong())});
+                }
+            }
+        }
+    }
     for (const QString &text : std::as_const(texts)) {
         QDateTime when;
         for (const QString &line : text.split(QLatin1Char('\n'))) {
@@ -422,8 +457,79 @@ inline QString aptValue(const QString &text, const QString &key)
     return m.hasMatch() ? m.captured(1) : QString();
 }
 
+/** Fedora: automatic updates are dnf5's "automatic" plugin (its timer and /etc/dnf/automatic.conf) */
+inline bool dnfAutomatic()
+{
+    return !QFile::exists(QStringLiteral("/var/lib/dpkg/status")) && QFile::exists(QStringLiteral("/usr/lib/sysimage/libdnf5"));
+}
+
+inline AutoSettings readAutoDnf()
+{
+    AutoSettings s;
+    QFile conf(QStringLiteral("/etc/dnf/automatic.conf"));
+    QString text;
+    if (conf.open(QIODevice::ReadOnly)) {
+        text = QString::fromUtf8(conf.readAll());
+    }
+    auto value = [&text](const QString &key) {
+        const QRegularExpression re(QStringLiteral("^\\s*%1\\s*=\\s*(\\S+)").arg(key), QRegularExpression::MultilineOption);
+        const QString v = re.match(text).captured(1).toLower();
+        return v == QLatin1String("yes") || v == QLatin1String("true") || v == QLatin1String("1");
+    };
+    QProcess st;
+    st.start(QStringLiteral("systemctl"), {QStringLiteral("is-enabled"), QStringLiteral("dnf5-automatic.timer")});
+    st.waitForFinished(5000);
+    const bool timer = QString::fromUtf8(st.readAllStandardOutput()).trimmed() == QLatin1String("enabled");
+    s.mode = !timer ? 3 : value(QStringLiteral("apply_updates")) ? 0 : value(QStringLiteral("download_updates")) ? 1 : 2;
+    QFile t(QStringLiteral("/etc/systemd/system/dnf5-automatic.timer.d/win7.conf"));
+    if (t.open(QIODevice::ReadOnly)) {
+        const QRegularExpression re(QStringLiteral("OnCalendar=(?:(Sun|Mon|Tue|Wed|Thu|Fri|Sat) )?\\*-\\*-\\* (\\d\\d):(\\d\\d)"));
+        const auto m = re.match(QString::fromUtf8(t.readAll()));
+        if (m.hasMatch()) {
+            static const QStringList days{QStringLiteral("Sun"), QStringLiteral("Mon"), QStringLiteral("Tue"), QStringLiteral("Wed"), QStringLiteral("Thu"), QStringLiteral("Fri"), QStringLiteral("Sat")};
+            s.day = m.captured(1).isEmpty() ? 0 : int(days.indexOf(m.captured(1))) + 1;
+            s.time = QTime(m.captured(2).toInt(), m.captured(3).toInt());
+        }
+    }
+    // "Recommended updates" off = security updates only
+    const QRegularExpression type(QStringLiteral("^\\s*upgrade_type\\s*=\\s*(\\S+)"), QRegularExpression::MultilineOption);
+    s.recommended = type.match(text).captured(1) != QLatin1String("security");
+    return s;
+}
+
+inline bool writeAutoDnf(const AutoSettings &s)
+{
+    static const QStringList days{QStringLiteral("Sun"), QStringLiteral("Mon"), QStringLiteral("Tue"), QStringLiteral("Wed"), QStringLiteral("Thu"), QStringLiteral("Fri"), QStringLiteral("Sat")};
+    const QString when = (s.day > 0 ? days.at(s.day - 1) + QLatin1Char(' ') : QString()) + QStringLiteral("*-*-* ") + s.time.toString(QStringLiteral("HH:mm"));
+    const QString script = QStringLiteral(
+                               "set -e\n"
+                               "rpm -q dnf5-plugin-automatic >/dev/null 2>&1 || dnf install -y dnf5-plugin-automatic\n"
+                               "cat > /etc/dnf/automatic.conf <<'EOF'\n"
+                               "# Windows Update settings of seven-control\n"
+                               "[commands]\nupgrade_type = %1\ndownload_updates = %2\napply_updates = %3\n"
+                               "[emitters]\nemit_via = stdio\n"
+                               "EOF\n"
+                               "mkdir -p /etc/systemd/system/dnf5-automatic.timer.d\n"
+                               "cat > /etc/systemd/system/dnf5-automatic.timer.d/win7.conf <<'EOF'\n"
+                               "# Windows Update settings of seven-control\n"
+                               "[Timer]\nOnCalendar=\nOnCalendar=%4\nRandomizedDelaySec=0\n"
+                               "EOF\n"
+                               "systemctl daemon-reload\n"
+                               "%5\n")
+                               .arg(s.recommended ? QStringLiteral("default") : QStringLiteral("security"),
+                                    (s.mode == 0 || s.mode == 1) ? QStringLiteral("yes") : QStringLiteral("no"), s.mode == 0 ? QStringLiteral("yes") : QStringLiteral("no"), when,
+                                    s.mode == 3 ? QStringLiteral("systemctl disable --now dnf5-automatic.timer") : QStringLiteral("systemctl enable --now dnf5-automatic.timer"));
+    QProcess p;
+    p.start(QStringLiteral("pkexec"), {QStringLiteral("sh"), QStringLiteral("-c"), script});
+    p.waitForFinished(300000);
+    return p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0;
+}
+
 inline AutoSettings readAuto()
 {
+    if (dnfAutomatic()) {
+        return readAutoDnf();
+    }
     AutoSettings s;
     QString text;
     for (const QString &f : {QStringLiteral("/etc/apt/apt.conf.d/10periodic"), QStringLiteral("/etc/apt/apt.conf.d/20auto-upgrades")}) {
@@ -454,6 +560,9 @@ inline AutoSettings readAuto()
 /** One pkexec call writes all three places */
 inline bool writeAuto(const AutoSettings &s)
 {
+    if (dnfAutomatic()) {
+        return writeAutoDnf(s);
+    }
     const QString lists = s.mode == 3 ? QStringLiteral("0") : QStringLiteral("1");
     const QString download = (s.mode == 0 || s.mode == 1) ? QStringLiteral("1") : QStringLiteral("0");
     const QString upgrade = s.mode == 0 ? QStringLiteral("1") : QStringLiteral("0");

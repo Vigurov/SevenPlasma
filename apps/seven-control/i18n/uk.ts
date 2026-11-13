@@ -14982,6 +14982,10 @@ WantedBy=timers.target
         <translation>Профіль програми ufw «%1».</translation>
     </message>
     <message>
+        <source>firewalld service: </source>
+        <translation>Служба firewalld: </translation>
+    </message>
+    <message>
         <source>ufw profile: </source>
         <translation>Профіль ufw: </translation>
     </message>

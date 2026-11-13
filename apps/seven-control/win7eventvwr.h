@@ -48,6 +48,7 @@
 #include <QPainter>
 #include <QPlainTextEdit>
 #include <QPointer>
+#include <QRegularExpression>
 #include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
@@ -334,6 +335,110 @@ inline QStringList journalArgs(const LogDef &def, int max = kMaxEvents)
     return a;
 }
 
+/** the Setup log without dpkg: pacman's log (Arch) or dnf's history (Fedora), newest first */
+inline QList<Event> packageLog(const LogDef &def, const QString &host, int max)
+{
+    struct Row {
+        qint64 usec;
+        QString act, pkg, from, to;
+    };
+    QList<Row> rows;
+    QString source;
+    QFile pac(QStringLiteral("/var/log/pacman.log"));
+    if (pac.open(QIODevice::ReadOnly)) {
+        source = QStringLiteral("pacman");
+        // [2026-11-11T10:00:00+0000] [ALPM] upgraded foo (1.0-1 -> 1.1-1)
+        static const QRegularExpression re(QStringLiteral(R"(^\[([^\]]+)\] \[ALPM\] (installed|upgraded|removed|downgraded) (\S+) \((.+)\)$)"));
+        for (const QString &l : QString::fromUtf8(pac.readAll()).split(QLatin1Char('\n'))) {
+            const auto m = re.match(l);
+            if (!m.hasMatch()) {
+                continue;
+            }
+            const QString act = m.captured(2), v = m.captured(4);
+            Row r{QDateTime::fromString(m.captured(1), Qt::ISODate).toMSecsSinceEpoch() * 1000, QString(), m.captured(3), QString(), QString()};
+            r.act = act == QLatin1String("installed") ? QStringLiteral("install") : act == QLatin1String("removed") ? QStringLiteral("remove") : QStringLiteral("upgrade");
+            if (r.act == QLatin1String("upgrade")) {
+                r.from = v.section(QStringLiteral(" -> "), 0, 0);
+                r.to = v.section(QStringLiteral(" -> "), 1, 1);
+            } else {
+                r.from = r.to = v;
+            }
+            rows.append(r);
+        }
+    } else if (QFile::exists(QStringLiteral("/usr/lib/sysimage/libdnf5/transaction_history.sqlite"))) {
+        source = QStringLiteral("dnf");
+        const QString py = QStringLiteral(
+            "import sqlite3\n"
+            "c = sqlite3.connect('file:/usr/lib/sysimage/libdnf5/transaction_history.sqlite?mode=ro&immutable=1', uri=True)\n"
+            "q = ('select trans.dt_begin, trans_item_action.name, pkg_name.name, rpm.version || \"-\" || rpm.release from trans_item '\n"
+            "     'join trans on trans.id = trans_item.trans_id join trans_item_action on trans_item_action.id = trans_item.action_id '\n"
+            "     'join rpm on rpm.item_id = trans_item.item_id join pkg_name on pkg_name.id = rpm.name_id order by trans.id, trans_item.id')\n"
+            "for t, a, n, v in c.execute(q):\n"
+            "    print(t, a.replace(' ', '_'), n, v, sep='\\t')\n");
+        QProcess p;
+        p.start(QStringLiteral("python3"), {QStringLiteral("-c"), py});
+        p.waitForFinished(60000);
+        // an Upgrade comes with a "Replaced" item of the old version (after it, in the same transaction)
+        const QStringList lines = QString::fromUtf8(p.readAllStandardOutput()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+        QHash<QString, QString> replaced; // "time\tpackage" -> old version
+        for (const QString &l : lines) {
+            const QStringList f = l.split(QLatin1Char('\t'));
+            if (f.size() >= 4 && f.at(1) == QLatin1String("Replaced")) {
+                replaced.insert(f.at(0) + QLatin1Char('\t') + f.at(2), f.at(3));
+            }
+        }
+        for (const QString &l : lines) {
+            const QStringList f = l.split(QLatin1Char('\t'));
+            if (f.size() < 4) {
+                continue;
+            }
+            const QString a = f.at(1);
+            if (a == QLatin1String("Replaced")) {
+                continue;
+            }
+            Row r{f.at(0).toLongLong() * 1000000, QString(), f.at(2), QString(), f.at(3)};
+            if (a == QLatin1String("Install") || a == QLatin1String("Reinstall")) {
+                r.act = QStringLiteral("install");
+            } else if (a == QLatin1String("Upgrade") || a == QLatin1String("Downgrade")) {
+                r.act = QStringLiteral("upgrade");
+                r.from = replaced.value(f.at(0) + QLatin1Char('\t') + r.pkg);
+            } else if (a == QLatin1String("Remove")) {
+                r.act = QStringLiteral("remove");
+                r.from = r.to;
+            } else {
+                continue;
+            }
+            rows.append(r);
+        }
+    }
+    QList<Event> out;
+    int seq = 0;
+    for (const Row &r : std::as_const(rows)) {
+        Event e;
+        e.usec = r.usec;
+        if (r.act == QLatin1String("install")) {
+            e.message = tr7("The package \"%1\" version %2 was installed successfully.").arg(r.pkg, r.to);
+            e.code = 2;
+        } else if (r.act == QLatin1String("upgrade")) {
+            e.message = tr7("The package \"%1\" was updated successfully from version %2 to version %3.").arg(r.pkg, r.from, r.to);
+            e.code = 3;
+        } else {
+            e.message = tr7("The package \"%1\" version %2 was removed successfully.").arg(r.pkg, r.from);
+            e.code = 4;
+        }
+        e.source = source;
+        e.level = Information;
+        e.user = QStringLiteral("root");
+        e.computer = host;
+        e.log = def.title;
+        e.channel = def.channel;
+        e.record = ++seq;
+        out.append(e);
+    }
+    std::reverse(out.begin(), out.end());
+    return out.mid(0, max);
+}
+
 /** reads a log: journalctl or dpkg.log; runs in a thread */
 inline QList<Event> readLog(const LogDef &def, int max = kMaxEvents)
 {
@@ -342,6 +447,9 @@ inline QList<Event> readLog(const LogDef &def, int max = kMaxEvents)
     if (def.dpkg) {
         // dpkg.log, dpkg.log.1 and the gzipped older ones, newest first
         QStringList files = QDir(QStringLiteral("/var/log")).entryList({QStringLiteral("dpkg.log*")}, QDir::Files, QDir::Name);
+        if (files.isEmpty()) {
+            return packageLog(def, host, max);   // Arch, Fedora
+        }
         std::sort(files.begin(), files.end(), [](const QString &a, const QString &b) {
             auto n = [](const QString &f) {
                 const QString s = f.section(QLatin1Char('.'), 2, 2);

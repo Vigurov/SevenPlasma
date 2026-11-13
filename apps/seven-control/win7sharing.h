@@ -96,7 +96,7 @@ inline Settings systemState(const Settings &remembered)
 {
     Settings s = remembered;
     s.discovery = unitActive(QStringLiteral("avahi-daemon"));
-    s.files = unitActive(QStringLiteral("smbd"));
+    s.files = unitActive(QStringLiteral("smbd")) || unitActive(QStringLiteral("smb"));
     const QString shares = readFile(QStringLiteral("/etc/samba/seven-shares.conf"));
     s.publicFolder = shares.contains(QLatin1String("[Public]"));
     s.strong = !readFile(QStringLiteral("/etc/samba/seven-global.conf")).contains(QLatin1String("NT1"));
@@ -138,10 +138,17 @@ inline bool apply(QWidget *parent, const Settings &want)
     }
     static const char *script = R"(set -e
 D="$1"; F="$2"; P="$3"; S="$4"; W="$5"; U="$6"; H="$7"; I="$8"
-if [ "$I" = 1 ]; then DEBIAN_FRONTEND=noninteractive apt-get install -y samba; fi
+if [ "$I" = 1 ]; then
+  if command -v apt-get >/dev/null; then DEBIAN_FRONTEND=noninteractive apt-get install -y samba
+  elif command -v pacman >/dev/null; then pacman -S --noconfirm --needed samba
+  else dnf install -y samba; fi
+fi
+# the Samba service: smbd on Ubuntu, smb on Arch and Fedora
+SMB=smbd; systemctl cat smbd.service >/dev/null 2>&1 || SMB=smb
 if [ "$D" = 1 ]; then systemctl enable --now avahi-daemon.socket avahi-daemon.service
 else systemctl disable --now avahi-daemon.socket avahi-daemon.service; fi
 C=/etc/samba/smb.conf
+[ -f "$C" ] || [ ! -x /usr/sbin/smbd ] || printf '[global]\n   workgroup = WORKGROUP\n   server string = Samba\n' > "$C"   # Arch has none
 if [ -f "$C" ]; then
   [ -f "$C.bak-win7" ] || cp "$C" "$C.bak-win7"
   grep -q '^include = /etc/samba/seven-global.conf' "$C" || sed -i '0,/^\[global\]/s//[global]\ninclude = \/etc\/samba\/seven-global.conf/' "$C"
@@ -153,8 +160,13 @@ if [ "$P" = 1 ]; then
   G=yes; [ "$W" = 1 ] && G=no
   printf '[Public]\n   comment = Public\n   path = %s\n   read only = no\n   guest ok = %s\n   force user = %s\n' "$H" "$G" "$U" > /etc/samba/seven-shares.conf
 else : > /etc/samba/seven-shares.conf; fi
-if [ "$F" = 1 ] || [ "$P" = 1 ]; then systemctl enable smbd; systemctl restart smbd
-elif [ -x /usr/sbin/smbd ]; then systemctl disable --now smbd; fi
+if [ "$F" = 1 ] || [ "$P" = 1 ]; then
+  systemctl enable "$SMB"; systemctl restart "$SMB"
+  # Fedora: the firewall lets Samba in, SELinux lets it share the home folder
+  if command -v firewall-cmd >/dev/null && firewall-cmd --state >/dev/null 2>&1; then
+    firewall-cmd --permanent --add-service=samba >/dev/null && firewall-cmd --reload >/dev/null; fi
+  if command -v setsebool >/dev/null && command -v selinuxenabled >/dev/null && selinuxenabled; then setsebool -P samba_enable_home_dirs on; fi
+elif [ -x /usr/sbin/smbd ]; then systemctl disable --now "$SMB"; fi
 )";
     const QString publicDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QStringLiteral("/Public");
     QDir().mkpath(publicDir);

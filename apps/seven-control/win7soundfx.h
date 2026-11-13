@@ -41,8 +41,18 @@
 
 namespace Win7SoundFx
 {
-inline const QString bs2bPlugin = QStringLiteral("/usr/lib/x86_64-linux-gnu/ladspa/bs2b.so");
-inline const QString sc4Plugin = QStringLiteral("/usr/lib/ladspa/sc4_1882.so");
+/** a LADSPA plugin in the folder of the distribution (Ubuntu, Arch, Fedora) */
+inline QString ladspa(const QString &file)
+{
+    for (const QString &dir : {QStringLiteral("/usr/lib/x86_64-linux-gnu/ladspa/"), QStringLiteral("/usr/lib/ladspa/"), QStringLiteral("/usr/lib64/ladspa/")}) {
+        if (QFileInfo::exists(dir + file)) {
+            return dir + file;
+        }
+    }
+    return QStringLiteral("/usr/lib/ladspa/") + file;
+}
+inline const QString bs2bPlugin = ladspa(QStringLiteral("bs2b.so"));
+inline const QString sc4Plugin = ladspa(QStringLiteral("sc4_1882.so"));
 
 struct Fx {
     bool disabled = false; // "Disable all enhancements"

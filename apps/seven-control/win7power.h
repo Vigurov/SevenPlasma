@@ -9,6 +9,7 @@
  */
 #pragma once
 #include "win7i18n.h"
+#include "win7powerprofiles.h"
 
 #include "win7chrome.h"
 
@@ -74,20 +75,10 @@ inline QString runQuiet(const QString &exe, const QStringList &args)
     return QString::fromUtf8(p.readAllStandardOutput());
 }
 
-/** Profiles power-profiles-daemon offers (all three if it isn't running) */
+/** Profiles power-profiles-daemon / tuned-ppd offers (all three if none runs) */
 inline QStringList availablePlans()
 {
-    QStringList ids;
-    const QStringList lines = runQuiet(QStringLiteral("powerprofilesctl"), {QStringLiteral("list")}).split(QLatin1Char('\n'));
-    for (QString line : lines) {
-        line = line.trimmed();
-        if (line.startsWith(QLatin1Char('*'))) {
-            line = line.mid(1).trimmed();
-        }
-        if (line.endsWith(QLatin1Char(':')) && !line.contains(QLatin1Char(' '))) {
-            ids << line.chopped(1);
-        }
-    }
+    QStringList ids = Win7PowerProfiles::available();
     if (ids.isEmpty()) {
         for (const Plan &p : plans()) {
             ids << p.id;
@@ -98,7 +89,7 @@ inline QStringList availablePlans()
 
 inline QString activePlan()
 {
-    const QString id = runQuiet(QStringLiteral("powerprofilesctl"), {QStringLiteral("get")}).trimmed();
+    const QString id = Win7PowerProfiles::active();
     return id.isEmpty() ? store().value(QStringLiteral("General/ActivePlan"), QStringLiteral("balanced")).toString() : id;
 }
 
@@ -158,7 +149,7 @@ inline void applyPlan(const Plan &p)
     cfg.sync();
     store().setValue(QStringLiteral("General/ActivePlan"), p.id);
     store().sync();
-    QProcess::startDetached(QStringLiteral("powerprofilesctl"), {QStringLiteral("set"), p.id});
+    Win7PowerProfiles::setActive(p.id);
     reloadPowerDevil();
 }
 

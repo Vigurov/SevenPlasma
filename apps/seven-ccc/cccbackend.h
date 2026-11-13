@@ -35,6 +35,7 @@
 #include <cmath>
 #include <dlfcn.h>
 #include <unistd.h>
+#include "win7powerprofiles.h"
 
 namespace Ccc
 {
@@ -918,31 +919,21 @@ inline void setLoginApply(bool on)
     }
 }
 
-/* ---------------------------------------------------------------- PowerPlay: power-profiles-daemon */
+/* ---------------------------------------------------------------- PowerPlay: power-profiles-daemon / tuned-ppd */
 
 inline QString powerProfile()
 {
-    return run(QStringLiteral("powerprofilesctl"), {QStringLiteral("get")}).trimmed();
+    return Win7PowerProfiles::active();
 }
 
 inline QStringList powerProfiles()
 {
-    QStringList out;
-    for (const QString &l : run(QStringLiteral("powerprofilesctl"), {QStringLiteral("list")}).split(QLatin1Char('\n'))) {
-        const auto m = QRegularExpression(QStringLiteral("^\\*?\\s*([a-z-]+):$")).match(l.trimmed());
-        if (m.hasMatch()) {
-            out << m.captured(1);
-        }
-    }
-    return out;
+    return Win7PowerProfiles::available();
 }
 
 inline bool setPowerProfile(const QString &p)
 {
-    QProcess q;
-    q.start(QStringLiteral("powerprofilesctl"), {QStringLiteral("set"), p});
-    q.waitForFinished(8000);
-    return q.exitCode() == 0;
+    return Win7PowerProfiles::setActive(p);
 }
 
 inline bool onBattery()

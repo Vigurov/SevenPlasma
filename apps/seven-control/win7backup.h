@@ -756,7 +756,8 @@ inline bool ensureTimeshift(QWidget *parent)
     wait.setFixedSize(360, 90);
     wait.show();
     QString out;
-    const bool ok = runAsRoot(parent, QStringLiteral("DEBIAN_FRONTEND=noninteractive apt-get install -y timeshift"), &out);
+    const bool ok = runAsRoot(parent, QStringLiteral("if command -v apt-get >/dev/null; then DEBIAN_FRONTEND=noninteractive apt-get install -y timeshift; "
+                                                      "elif command -v pacman >/dev/null; then pacman -S --noconfirm --needed timeshift; else dnf install -y timeshift; fi"), &out);
     wait.close();
     return ok && haveTimeshift();
 }

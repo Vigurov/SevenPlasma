@@ -18,7 +18,7 @@ effects, logon screen and UAC are their work. SevenPlasma adds its own changes a
 |---|---|
 | **Shell** | AeroThemePlasma with changes: Start menu, taskbar, tray, tooltips, desktop, logon and lock screens (including accounts without a password, as in Windows 7) |
 | **Explorer** | Dolphin and KIO with changes: command bar, libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails |
-| **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update (apt), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
+| **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update, Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
 | **Administrative tools** | Computer Management, Event Viewer, Disk Management, Windows Firewall with Advanced Security, Device Manager, Task Manager, Resource Monitor |
 | **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, gadgets, Run |
 | **Help and Support** | the Windows 7 Help window (Start menu → Help and Support) instead of KDE's online manual |
@@ -51,11 +51,12 @@ the same result). Without an image SevenPlasma installs with free replacements a
 
 ## Installation
 
-Two systems are supported, tested on clean installs:
+Three systems are supported, tested on clean installs:
 
 - **Kubuntu 26.04** (Plasma 6.6, X11 session): everything described here;
 - **Arch Linux** (Plasma 6.8, Wayland session; Plasma 6.8 has no X11 session): everything described here,
-  with the few differences listed in [Known limitations](#known-limitations).
+  with the few differences listed in [Known limitations](#known-limitations);
+- **Fedora 45 KDE Plasma Desktop** (Plasma 6.8, Wayland session): the same as on Arch.
 
 You need your Windows 7 image (`.iso`, see above) and an internet connection. The steps are the same on both
 (the pictures are from Kubuntu).
@@ -80,7 +81,8 @@ programs, and takes the Windows 7 resources from your image. This takes **10–4
 ![The installer has finished](docs/images/install-2-done.png)
 
 **3.** The logon screen is now the Windows 7 one, with the AeroThemePlasma session already selected
-("AeroThemePlasma (X11)" on Kubuntu, "AeroThemePlasma" (Wayland) on Arch).
+("AeroThemePlasma (X11)" on Kubuntu, "AeroThemePlasma" (Wayland) on Arch and Fedora). On Fedora the logon
+screen is SDDM's (Fedora's own Plasma Login Manager comes back when SevenPlasma is removed).
 Type your password and press Enter.
 
 ![The logon screen](docs/images/install-3-logon.png)
@@ -93,8 +95,8 @@ rated in the background, as on a new Windows 7 (Control Panel → System shows i
 
 Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions),
 `--boot-splash` (Arch only: also turns on the "Starting Windows" boot screen, which needs a Plymouth hook in the
-initramfs and the `splash` kernel option; the uninstaller puts both back. On Kubuntu the boot screen is always
-installed).
+initramfs and the `splash` kernel option; the uninstaller puts both back. On Kubuntu and Fedora the boot screen is
+always installed).
 If the Dolphin / KIO / Kvantum versions on your system differ from the tested ones, those parts are skipped
 with a warning. The installer speaks Ukrainian on a Ukrainian system and English otherwise. If it stops
 (for example the internet connection dropped), just run `./install.sh` again.
@@ -152,15 +154,17 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
 
 ## Known limitations
 
-- Plasma 6.6 (Kubuntu 26.04, X11) and Plasma 6.8 (Arch Linux, Wayland) only; other versions and distributions
+- Plasma 6.6 (Kubuntu 26.04, X11) and Plasma 6.8 (Arch Linux, Fedora 45, Wayland) only; other versions and distributions
   are not supported yet.
-- On Arch (Plasma 6.8, Wayland):
-  - the "Starting Windows" boot screen is only installed with `--boot-splash` (it changes the initramfs and the
+- On Arch and Fedora (Plasma 6.8, Wayland):
+  - on Arch the "Starting Windows" boot screen is only installed with `--boot-splash` (it changes the initramfs and the
     kernel options);
   - after the password the screen stays black for about a second before "Welcome";
   - "Digital Vibrance" / hue of the graphics card panels are made with an ICC profile of the screen, and the lower
     resolutions of a laptop panel with KWin's scale (Wayland gives programs no other way);
-  - the Snipping Tool takes its pictures through Spectacle (installed with SevenPlasma).
+  - the Snipping Tool takes its pictures through Spectacle (installed with SevenPlasma);
+  - on Fedora the firewall is firewalld: Windows Firewall (on / off, allowed programs, restore defaults) works with it,
+    the rules of "Windows Firewall with Advanced Security" can be seen but changed only with ufw (Kubuntu, Arch).
 - Every interface picture comes from your Windows 7 image or is drawn by SevenPlasma; the pictures of the
   graphics card panels, Microsoft Office and WinRAR are not in Windows 7 (the panels use your Linux driver's
   icons).

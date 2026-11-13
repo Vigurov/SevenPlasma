@@ -29,6 +29,7 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include <QTabWidget>
 #include <QTreeWidget>
 
@@ -108,9 +109,59 @@ inline QStringList browserCaches()
             home + QStringLiteral("/snap/firefox/common/.cache"), home + QStringLiteral("/snap/chromium/common/.cache")};
 }
 
+/** pacman (Arch) or dnf (Fedora) instead of apt */
+inline bool isPacman()
+{
+    return QFileInfo(QStringLiteral("/var/lib/pacman/local")).isDir();
+}
+inline bool isDnf()
+{
+    return !QFile::exists(QStringLiteral("/var/lib/dpkg/status")) && !isPacman() && !QStandardPaths::findExecutable(QStringLiteral("dnf")).isEmpty();
+}
+
+/** the size of the packages nothing needs any more (pacman's orphans, dnf's unneeded) */
+inline qint64 orphansSize()
+{
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("LC_ALL"), QStringLiteral("C"));
+    QProcess p;
+    p.setProcessEnvironment(env);
+    qint64 total = 0;
+    if (isDnf()) {
+        p.start(QStringLiteral("dnf"), {QStringLiteral("repoquery"), QStringLiteral("--cacheonly"), QStringLiteral("--installed"), QStringLiteral("--unneeded"),
+                                        QStringLiteral("--qf"), QStringLiteral("%{installsize}\n")});
+        p.waitForFinished(60000);
+        for (const QString &l : QString::fromUtf8(p.readAllStandardOutput()).split(QLatin1Char('\n'))) {
+            total += l.trimmed().toLongLong();
+        }
+        return total;
+    }
+    p.start(QStringLiteral("pacman"), {QStringLiteral("-Qdtq")});
+    p.waitForFinished(15000);
+    const QStringList pkgs = QString::fromUtf8(p.readAllStandardOutput()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    if (pkgs.isEmpty()) {
+        return 0;
+    }
+    QProcess q;
+    q.setProcessEnvironment(env);
+    q.start(QStringLiteral("pacman"), QStringList{QStringLiteral("-Qi")} + pkgs);
+    q.waitForFinished(15000);
+    static const QRegularExpression size(QStringLiteral(R"(^Installed Size\s*:\s*([0-9.]+)\s*([KMG]?i?B))"), QRegularExpression::MultilineOption);
+    auto m = size.globalMatch(QString::fromUtf8(q.readAllStandardOutput()));
+    while (m.hasNext()) {
+        const auto x = m.next();
+        const QString u = x.captured(2);
+        total += qint64(x.captured(1).toDouble() * (u.startsWith(QLatin1Char('G')) ? 1 << 30 : u.startsWith(QLatin1Char('M')) ? 1 << 20 : u.startsWith(QLatin1Char('K')) ? 1 << 10 : 1));
+    }
+    return total;
+}
+
 /** the size of what `apt-get autoremove` would remove */
 inline qint64 autoremoveSize()
 {
+    if (isPacman() || isDnf()) {
+        return orphansSize();
+    }
     QProcess p;
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("LC_ALL"), QStringLiteral("C"));
@@ -263,6 +314,13 @@ inline bool scan(QList<Category> &cats, bool system, const std::function<bool(co
     upd.view = QStringLiteral("/var/cache/apt/archives");
     upd.size = collect(QStringLiteral("/var/cache/apt/archives"), nullptr, [](const QFileInfo &fi) { return fi.suffix() == QLatin1String("deb"); }, tick(upd.title));
     upd.size += collect(QStringLiteral("/var/lib/snapd/cache"), nullptr, {}, tick(upd.title));
+    if (isPacman()) {
+        upd.view = QStringLiteral("/var/cache/pacman/pkg");
+        upd.size += collect(upd.view, nullptr, [](const QFileInfo &fi) { return fi.fileName().contains(QLatin1String(".pkg.tar")); }, tick(upd.title));
+    } else if (isDnf()) {
+        upd.view = QStringLiteral("/var/cache/libdnf5");
+        upd.size += collect(upd.view, nullptr, [](const QFileInfo &fi) { return fi.suffix() == QLatin1String("rpm"); }, tick(upd.title));
+    }
     if (!alive || !progress(tr7("Previous versions of programs"))) {
         return false;
     }
@@ -288,10 +346,11 @@ inline QString systemScript(const QList<Category> &cats)
             steps << QStringLiteral("journalctl --rotate; journalctl --vacuum-time=1s")
                   << QStringLiteral("find /var/log -type f \\( -name '*.gz' -o -name '*.xz' -o -name '*.old' -o -regex '.*\\.[0-9]+' \\) -delete");
         } else if (c.key == QLatin1String("updates")) {
-            steps << QStringLiteral("apt-get clean") << QStringLiteral("rm -f /var/lib/snapd/cache/*");
+            steps << QStringLiteral("rm -f /var/lib/snapd/cache/*");
+            steps << (isPacman() ? QStringLiteral("rm -f /var/cache/pacman/pkg/*.pkg.tar*") : isDnf() ? QStringLiteral("dnf clean packages") : QStringLiteral("apt-get clean"));
         } else if (c.key == QLatin1String("old")) {
             steps << QStringLiteral("snap list --all | awk '/disabled/{print $1, $3}' | while read n r; do snap remove \"$n\" --revision=\"$r\"; done")
-                  << QStringLiteral("apt-get -y autoremove");
+                  << (isPacman() ? QStringLiteral("pacman -Qdtq | pacman -Rns --noconfirm -") : isDnf() ? QStringLiteral("dnf autoremove -y") : QStringLiteral("apt-get -y autoremove"));
         }
     }
     return steps.size() > 1 ? steps.join(QStringLiteral("; ")) : QString();

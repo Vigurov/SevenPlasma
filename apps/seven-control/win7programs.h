@@ -3,12 +3,13 @@
  * "Windows Features", "Default Programs", "Set Default Programs", "Set Associations",
  * "Open With" and "Set Program Access and Computer Defaults".
  *
- *   programs          -> apt packages installed after the system (with a menu entry, or chosen by hand),
+ *   programs          -> packages installed after the system (with a menu entry, or chosen by hand): apt, pacman
+ *                        (system = pacman.log's first day) or dnf (system = dnf history's first day),
  *                        snaps (snapd socket), Steam games, Wine programs (registry), AppImages in ~/Applications
  *   updates           -> /var/log/apt/history.log* upgrades and snap refreshes
  *   Windows features  -> optional Kubuntu packages (games, Telnet, SSH server, ...) and Baloo file indexing
  *   default programs  -> mimeapps.list "Default Applications" (KApplicationTrader reads it)
- * Removing and installing packages goes through pkexec + apt-get.
+ * Removing and installing packages goes through pkexec + apt-get / pacman / dnf.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -52,6 +53,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRegularExpression>
+#include <QStringTokenizer>
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QStyledItemDelegate>
@@ -282,20 +284,12 @@ inline QString publisherOf(QString maintainer)
     return maintainer;
 }
 
-/** visible menu entries a package installs */
-inline QList<QString> packageApps(const QString &listFile)
+/** the visible menu entries among a package's files */
+inline QList<QString> visibleApps(const QStringList &files)
 {
     QList<QString> apps;
-    QFile f(listFile);
-    if (!f.open(QIODevice::ReadOnly)) {
-        return apps;
-    }
-    for (const QByteArray &line : f.readAll().split('\n')) {
-        if (!line.startsWith("/usr/share/applications/") || !line.endsWith(".desktop")) {
-            continue;
-        }
-        const QString path = QString::fromUtf8(line);
-        if (!QFile::exists(path)) {
+    for (const QString &path : files) {
+        if (!path.startsWith(QLatin1String("/usr/share/applications/")) || !path.endsWith(QLatin1String(".desktop")) || !QFile::exists(path)) {
             continue;
         }
         KDesktopFile df(path);
@@ -305,6 +299,16 @@ inline QList<QString> packageApps(const QString &listFile)
         apps.append(path);
     }
     return apps;
+}
+
+/** visible menu entries a package installs (its dpkg file list) */
+inline QList<QString> packageApps(const QString &listFile)
+{
+    QFile f(listFile);
+    if (!f.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+    return visibleApps(QString::fromUtf8(f.readAll()).split(QLatin1Char('\n')));
 }
 
 /* ---------------- installed programs ---------------- */
@@ -322,6 +326,53 @@ struct Program {
     qint64 size = -1;
     QStringList files; // AppImage: the image and its menu entries
 };
+
+/** the program's name and icon: of the menu entry that names the package best */
+inline void nameFromApps(Program &p, const QList<QString> &apps)
+{
+    p.icon = QStringLiteral("seven-app-generic");
+    if (apps.isEmpty()) {
+        return;
+    }
+    QString main = apps.first();
+    for (const QString &a : apps) {
+        if (QFileInfo(a).completeBaseName().contains(p.id.section(QLatin1Char('-'), 0, 0), Qt::CaseInsensitive)) {
+            main = a;
+            break;
+        }
+    }
+    // the user's own copy of the menu entry wins (~/.local/share/applications)
+    const KService::Ptr svc = KService::serviceByStorageId(QFileInfo(main).fileName());
+    if (svc) {
+        p.name = svc->name();
+        p.icon = svc->icon();
+    } else {
+        KDesktopFile df(main);
+        p.name = df.readName();
+        p.icon = df.readIcon();
+    }
+}
+
+/** a package without a menu entry that is a part of something else, not a tool of its own */
+inline bool partPackage(const QString &pkg)
+{
+    static const QStringList prefixes{QStringLiteral("lib"), QStringLiteral("linux"), QStringLiteral("kernel"), QStringLiteral("grub"),
+                                      QStringLiteral("python3-"), QStringLiteral("python-"), QStringLiteral("perl-"), QStringLiteral("qt6-"),
+                                      QStringLiteral("kf6-"), QStringLiteral("glibc-"), QStringLiteral("language-pack")};
+    static const QStringList suffixes{QStringLiteral("-dev"), QStringLiteral("-devel"), QStringLiteral("-dbg"), QStringLiteral("-debuginfo"),
+                                      QStringLiteral("-fonts"), QStringLiteral("-firmware"), QStringLiteral("-headers"), QStringLiteral("-libs")};
+    for (const QString &x : prefixes) {
+        if (pkg.startsWith(x)) {
+            return true;
+        }
+    }
+    for (const QString &x : suffixes) {
+        if (pkg.endsWith(x)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 inline QList<Program> debPrograms(const QHash<QString, Fields> &status)
 {
@@ -352,31 +403,199 @@ inline QList<Program> debPrograms(const QHash<QString, Fields> &status)
         p.kind = Program::Deb;
         p.id = pkg;
         p.name = pkg;
-        p.icon = QStringLiteral("seven-app-generic");
-        if (!apps.isEmpty()) {
-            QString main = apps.first();
-            for (const QString &a : apps) {
-                if (QFileInfo(a).completeBaseName().contains(pkg.section(QLatin1Char('-'), 0, 0), Qt::CaseInsensitive)) {
-                    main = a;
-                    break;
-                }
-            }
-            // the user's own copy of the menu entry wins (~/.local/share/applications)
-            const KService::Ptr svc = KService::serviceByStorageId(QFileInfo(main).fileName());
-            if (svc) {
-                p.name = svc->name();
-                p.icon = svc->icon();
-            } else {
-                KDesktopFile df(main);
-                p.name = df.readName();
-                p.icon = df.readIcon();
-            }
-        }
+        nameFromApps(p, apps);
         p.publisher = publisherOf(f.value(QStringLiteral("Maintainer")));
         p.version = f.value(QStringLiteral("Version")).section(QLatin1Char(':'), -1);
         p.help = f.value(QStringLiteral("Homepage"));
         p.size = f.value(QStringLiteral("Installed-Size")).toLongLong() * 1024;
         p.installed = QFileInfo(list).lastModified().date();
+        out.append(p);
+    }
+    return out;
+}
+
+/* ---------------- pacman (Arch) and rpm / dnf (Fedora) ---------------- */
+
+enum class PackageSystem { Dpkg, Pacman, Rpm };
+
+inline PackageSystem packageSystem()
+{
+    static const PackageSystem ps = QFile::exists(QStringLiteral("/var/lib/dpkg/status")) ? PackageSystem::Dpkg
+        : QFileInfo(QStringLiteral("/var/lib/pacman/local")).isDir()                     ? PackageSystem::Pacman
+                                                                                          : PackageSystem::Rpm;
+    return ps;
+}
+
+/** Arch: the packages of the first day in pacman's log (the system as installed, like Ubuntu's initial-status) */
+inline QSet<QString> pacmanFirstDay()
+{
+    QSet<QString> out;
+    QFile f(QStringLiteral("/var/log/pacman.log"));
+    if (!f.open(QIODevice::ReadOnly)) {
+        return out;
+    }
+    static const QRegularExpression line(QStringLiteral(R"(^\[([^\]]+)\] \[ALPM\] installed (\S+) )"));
+    QDateTime first;
+    while (!f.atEnd()) {
+        const auto m = line.match(QString::fromUtf8(f.readLine()));
+        if (!m.hasMatch()) {
+            continue;
+        }
+        const QDateTime t = QDateTime::fromString(m.captured(1), Qt::ISODate);
+        if (!first.isValid()) {
+            first = t;
+        }
+        if (t.isValid() && first.secsTo(t) > 86400) {
+            break;
+        }
+        out.insert(m.captured(2));
+    }
+    return out;
+}
+
+/** sections of a pacman local database file (desc, files): %NAME% -> lines */
+inline QHash<QString, QStringList> pacmanSections(const QString &path)
+{
+    QHash<QString, QStringList> out;
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) {
+        return out;
+    }
+    QString cur;
+    for (const QString &l : QString::fromUtf8(f.readAll()).split(QLatin1Char('\n'))) {
+        if (l.startsWith(QLatin1Char('%')) && l.endsWith(QLatin1Char('%'))) {
+            cur = l;
+        } else if (!l.isEmpty() && !cur.isEmpty()) {
+            out[cur].append(l);
+        }
+    }
+    return out;
+}
+
+inline QList<Program> pacmanPrograms()
+{
+    QList<Program> out;
+    const QSet<QString> system = pacmanFirstDay();
+    QDirIterator it(QStringLiteral("/var/lib/pacman/local"), QDir::Dirs | QDir::NoDotAndDotDot);
+    while (it.hasNext()) {
+        const QString dir = it.next();
+        const QHash<QString, QStringList> desc = pacmanSections(dir + QStringLiteral("/desc"));
+        const QString pkg = desc.value(QStringLiteral("%NAME%")).value(0);
+        if (pkg.isEmpty() || system.contains(pkg)) {
+            continue;
+        }
+        QStringList files;
+        for (const QString &f : pacmanSections(dir + QStringLiteral("/files")).value(QStringLiteral("%FILES%"))) {
+            if (f.startsWith(QLatin1String("usr/share/applications/"))) {
+                files.append(QLatin1Char('/') + f);
+            }
+        }
+        const QList<QString> apps = visibleApps(files);
+        const bool byHand = desc.value(QStringLiteral("%REASON%")).value(0, QStringLiteral("0")) == QLatin1String("0");
+        if (apps.isEmpty() && (system.isEmpty() || !byHand || partPackage(pkg))) {
+            continue;
+        }
+        Program p;
+        p.kind = Program::Deb;
+        p.id = pkg;
+        p.name = pkg;
+        nameFromApps(p, apps);
+        const QString packager = desc.value(QStringLiteral("%PACKAGER%")).value(0);
+        p.publisher = packager.contains(QLatin1String("archlinux.org")) ? QStringLiteral("Arch Linux") : packager.section(QLatin1Char('<'), 0, 0).trimmed();
+        p.version = desc.value(QStringLiteral("%VERSION%")).value(0).section(QLatin1Char(':'), -1).section(QLatin1Char('-'), 0, 0);
+        p.help = desc.value(QStringLiteral("%URL%")).value(0);
+        p.size = desc.value(QStringLiteral("%SIZE%")).value(0).toLongLong();
+        p.installed = QDateTime::fromSecsSinceEpoch(desc.value(QStringLiteral("%INSTALLDATE%")).value(0).toLongLong()).date();
+        out.append(p);
+    }
+    return out;
+}
+
+/** Fedora: the packages the system came with (dnf's history of the first day: the image build) */
+inline QSet<QString> rpmFirstDay()
+{
+    const QString py = QStringLiteral(
+        "import sqlite3\n"
+        "c = sqlite3.connect('file:/usr/lib/sysimage/libdnf5/transaction_history.sqlite?mode=ro&immutable=1', uri=True)\n"
+        "t0 = c.execute('select min(dt_begin) from trans').fetchone()[0]\n"
+        "for (n,) in c.execute('select distinct pkg_name.name from trans join trans_item on trans_item.trans_id = trans.id '\n"
+        "        'join rpm on rpm.item_id = trans_item.item_id join pkg_name on pkg_name.id = rpm.name_id where trans.dt_begin < ?', (t0 + 86400,)):\n"
+        "    print(n)\n");
+    const QStringList names = run(QStringLiteral("python3"), {QStringLiteral("-c"), py}).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    return QSet<QString>(names.cbegin(), names.cend());
+}
+
+/** Fedora: why dnf installed each package (User, Dependency, Weak Dependency, Group, External User) */
+inline QHash<QString, QString> rpmReasons()
+{
+    QHash<QString, QString> out;
+    QFile f(QStringLiteral("/usr/lib/sysimage/libdnf5/packages.toml"));
+    if (f.open(QIODevice::ReadOnly)) {
+        static const QRegularExpression re(QStringLiteral(R"re(^"(.+)\.[^.]+" = \{reason = "([^"]+)"\})re"), QRegularExpression::MultilineOption);
+        auto m = re.globalMatch(QString::fromUtf8(f.readAll()));
+        while (m.hasNext()) {
+            const auto x = m.next();
+            out.insert(x.captured(1), x.captured(2));
+        }
+    }
+    return out;
+}
+
+/** Fedora: the packages of the groups installed with dnf (a desktop, "KDE Applications"...): part of the system */
+inline QSet<QString> rpmGroupPackages()
+{
+    QSet<QString> out;
+    QFile f(QStringLiteral("/usr/lib/sysimage/libdnf5/groups.toml"));
+    if (f.open(QIODevice::ReadOnly)) {
+        static const QRegularExpression item(QStringLiteral(R"re(^\s+"([^"]+)",?\s*$)re"), QRegularExpression::MultilineOption);
+        auto m = item.globalMatch(QString::fromUtf8(f.readAll()));
+        while (m.hasNext()) {
+            out.insert(m.next().captured(1));
+        }
+    }
+    return out;
+}
+
+inline QList<Program> rpmPrograms()
+{
+    QList<Program> out;
+    const QSet<QString> system = rpmFirstDay() + rpmGroupPackages();
+    const QHash<QString, QString> reasons = rpmReasons();
+    // the packages of the menu entries: every installed file with its package, only the menu entries kept
+    QHash<QString, QStringList> entries;
+    const QString files = run(QStringLiteral("rpm"), {QStringLiteral("-qa"), QStringLiteral("--qf"), QStringLiteral("[%{FILENAMES}\t%{=NAME}\n]")}, 60000);
+    for (const QStringView line : QStringTokenizer(files, QLatin1Char('\n'))) {
+        if (line.startsWith(u"/usr/share/applications/") && line.contains(u".desktop\t")) {
+            const qsizetype tab = line.lastIndexOf(QLatin1Char('\t'));
+            entries[line.mid(tab + 1).toString()].append(line.left(tab).toString());
+        }
+    }
+    const QString all = run(QStringLiteral("rpm"), {QStringLiteral("-qa"), QStringLiteral("--qf"),
+                                                    QStringLiteral("%{NAME}\t%{VERSION}\t%{VENDOR}\t%{URL}\t%{INSTALLTIME}\t%{SIZE}\n")}, 30000);
+    for (const QString &line : all.split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
+        const QStringList f = line.split(QLatin1Char('\t'));
+        if (f.size() < 6 || system.contains(f.at(0)) || f.at(0).startsWith(QLatin1String("gpg-pubkey"))) {
+            continue;
+        }
+        const QString &pkg = f.at(0);
+        const QString reason = reasons.value(pkg);
+        if (reason == QLatin1String("Group")) {
+            continue;
+        }
+        const QList<QString> apps = visibleApps(entries.value(pkg));
+        if (apps.isEmpty() && (system.isEmpty() || reason != QLatin1String("User") || partPackage(pkg))) {
+            continue;
+        }
+        Program p;
+        p.kind = Program::Deb;
+        p.id = pkg;
+        p.name = pkg;
+        nameFromApps(p, apps);
+        p.publisher = f.at(2) == QLatin1String("(none)") ? QString() : f.at(2);
+        p.version = f.at(1);
+        p.help = f.at(3) == QLatin1String("(none)") ? QString() : f.at(3);
+        p.installed = QDateTime::fromSecsSinceEpoch(f.at(4).toLongLong()).date();
+        p.size = f.at(5).toLongLong();
         out.append(p);
     }
     return out;
@@ -617,8 +836,18 @@ inline QList<Program> appImages()
 
 inline QList<Program> installedPrograms()
 {
-    const QHash<QString, Fields> status = dpkgStatus();
-    QList<Program> all = debPrograms(status);
+    QList<Program> all;
+    switch (packageSystem()) {
+    case PackageSystem::Dpkg:
+        all = debPrograms(dpkgStatus());
+        break;
+    case PackageSystem::Pacman:
+        all = pacmanPrograms();
+        break;
+    case PackageSystem::Rpm:
+        all = rpmPrograms();
+        break;
+    }
     all += snapPrograms();
     all += steamPrograms();
     all += winePrograms();
@@ -765,7 +994,7 @@ inline void runTask(QWidget *parent, const QString &title, const QString &icon, 
 
 inline bool safePackageName(const QString &p)
 {
-    static const QRegularExpression re(QStringLiteral("^[a-z0-9][a-z0-9+.-]*(:[a-z0-9]+)?$"));
+    static const QRegularExpression re(QStringLiteral("^[A-Za-z0-9][A-Za-z0-9+._-]*(:[a-z0-9]+)?$"));
     return re.match(p).hasMatch();
 }
 
@@ -773,6 +1002,23 @@ inline bool safePackageName(const QString &p)
 inline QStringList removalOf(const QStringList &pkgs)
 {
     QStringList out;
+    if (packageSystem() == PackageSystem::Pacman) {   // the packages and what only they needed
+        return run(QStringLiteral("pacman"), QStringList{QStringLiteral("-Rsp"), QStringLiteral("--print-format"), QStringLiteral("%n")} + pkgs)
+            .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    }
+    if (packageSystem() == PackageSystem::Rpm) {   // dnf's table: the package lines under "Removing..."
+        bool in = false;
+        for (const QString &line : run(QStringLiteral("dnf"), QStringList{QStringLiteral("remove"), QStringLiteral("--assumeno")} + pkgs, 60000).split(QLatin1Char('\n'))) {
+            if (line.startsWith(QLatin1String("Removing"))) {
+                in = true;
+            } else if (!line.startsWith(QLatin1Char(' '))) {
+                in = false;
+            } else if (in && line.simplified().count(QLatin1Char(' ')) >= 3) {
+                out.append(line.simplified().section(QLatin1Char(' '), 0, 0));
+            }
+        }
+        return out;
+    }
     const QString sim = run(QStringLiteral("apt-get"), QStringList{QStringLiteral("-s"), QStringLiteral("remove")} + pkgs);
     for (const QString &line : sim.split(QLatin1Char('\n'))) {
         if (line.startsWith(QLatin1String("Remv "))) {
@@ -785,6 +1031,17 @@ inline QStringList removalOf(const QStringList &pkgs)
 /** shell script for pkexec: install, then remove */
 inline QString aptScript(const QStringList &install, const QStringList &remove)
 {
+    if (packageSystem() != PackageSystem::Dpkg) {
+        const bool arch = packageSystem() == PackageSystem::Pacman;
+        QStringList steps{QStringLiteral("export LC_ALL=C")};
+        if (!install.isEmpty()) {
+            steps.append((arch ? QStringLiteral("pacman -S --noconfirm --needed ") : QStringLiteral("dnf install -y ")) + install.join(QLatin1Char(' ')));
+        }
+        if (!remove.isEmpty()) {
+            steps.append((arch ? QStringLiteral("pacman -Rs --noconfirm ") : QStringLiteral("dnf remove -y ")) + remove.join(QLatin1Char(' ')));
+        }
+        return steps.join(QStringLiteral(" && "));
+    }
     QStringList steps{QStringLiteral("export LC_ALL=C DEBIAN_FRONTEND=noninteractive")};
     if (!install.isEmpty()) {
         steps.append(QStringLiteral("apt-get install -y ") + install.join(QLatin1Char(' ')));
@@ -1405,7 +1662,28 @@ struct Feature {
     bool baloo = false; // "Windows Search" is Baloo file indexing
 };
 
-inline QList<Feature> features()
+/** the name of a Kubuntu package on Arch / Fedora ("" = none there) */
+inline QString nativePackage(const QString &deb)
+{
+    if (packageSystem() == PackageSystem::Dpkg) {
+        return deb;
+    }
+    const bool arch = packageSystem() == PackageSystem::Pacman;
+    static const QHash<QString, QPair<QString, QString>> names{
+        {QStringLiteral("tftp-hpa"), {QStringLiteral("tftp-hpa"), QStringLiteral("tftp")}},
+        {QStringLiteral("inetutils-telnetd"), {QStringLiteral("inetutils"), QStringLiteral("telnet-server")}},
+        {QStringLiteral("telnet"), {QStringLiteral("inetutils"), QStringLiteral("telnet")}},
+        {QStringLiteral("openssh-server"), {QStringLiteral("openssh"), QStringLiteral("openssh-server")}},
+        {QStringLiteral("printer-driver-cups-pdf"), {QStringLiteral("cups-pdf"), QStringLiteral("cups-pdf")}},
+        {QStringLiteral("nfs-common"), {QStringLiteral("nfs-utils"), QStringLiteral("nfs-utils")}},
+        {QStringLiteral("mono-runtime"), {QStringLiteral("mono"), QStringLiteral("mono-core")}},
+        {QStringLiteral("default-jre"), {QStringLiteral("jre-openjdk"), QStringLiteral("java-latest-openjdk")}},
+    };
+    const auto it = names.constFind(deb);
+    return it == names.cend() ? deb : arch ? it->first : it->second;
+}
+
+inline QList<Feature> baseFeatures()
 {
     return {
         {tr7("Games"), tr7("Games that come with the system."), {},
@@ -1436,6 +1714,21 @@ inline QList<Feature> features()
         {tr7("Tablet PC Components"), tr7("On-screen keyboard for typing without a physical keyboard."), {},
          {{tr7("On-Screen Keyboard"), tr7("Onboard - a keyboard on the screen."), {QStringLiteral("onboard")}, {}}}},
     };
+}
+
+inline QList<Feature> features()
+{
+    QList<Feature> list = baseFeatures();
+    std::function<void(QList<Feature> &)> native = [&native](QList<Feature> &l) {
+        for (Feature &f : l) {
+            for (QString &p : f.packages) {
+                p = nativePackage(p);
+            }
+            native(f.children);
+        }
+    };
+    native(list);
+    return list;
 }
 
 inline bool balooEnabled()
@@ -1582,6 +1875,25 @@ private:
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
         env.insert(QStringLiteral("LC_ALL"), QStringLiteral("C"));
         proc->setProcessEnvironment(env);
+        if (packageSystem() != PackageSystem::Dpkg) {
+            // "I name" for an installed package, "A name" for one the repositories have
+            connect(proc, &QProcess::finished, this, [this, proc, all] {
+                for (const QString &line : QString::fromUtf8(proc->readAllStandardOutput()).split(QLatin1Char('\n'))) {
+                    if (line.startsWith(QLatin1String("I "))) {
+                        m_installed.insert(line.mid(2).trimmed());
+                    } else if (line.startsWith(QLatin1String("A "))) {
+                        m_available.insert(line.mid(2).trimmed());
+                    }
+                }
+                proc->deleteLater();
+                build(all);
+            });
+            const QString sh = packageSystem() == PackageSystem::Pacman
+                ? QStringLiteral("pacman -Qq \"$@\" 2>/dev/null | sed 's/^/I /'; pacman -Si \"$@\" 2>/dev/null | awk '/^Name/{print \"A\", $3}'")
+                : QStringLiteral("rpm -q --qf 'I %{NAME}\\n' \"$@\" | grep '^I '; dnf repoquery --qf 'A %{name}\\n' \"$@\" 2>/dev/null");
+            proc->start(QStringLiteral("sh"), QStringList{QStringLiteral("-c"), sh, QStringLiteral("sh")} + pkgs);
+            return;
+        }
         connect(proc, &QProcess::finished, this, [this, proc, all] {
             QString pkg;
             for (const QString &line : QString::fromUtf8(proc->readAllStandardOutput()).split(QLatin1Char('\n'))) {

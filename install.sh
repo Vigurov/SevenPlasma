@@ -11,7 +11,7 @@
 # --boot-splash  Arch: also turn on the "Starting Windows" boot screen (adds Plymouth to the initramfs and
 #              "quiet splash" to the kernel options of GRUB or systemd-boot; uninstall.sh puts them back)
 #
-# Tested on Kubuntu 26.04 (Plasma 6.6, X11 session) and Arch Linux (Plasma 6.8, Wayland session).
+# Tested on Kubuntu 26.04 (Plasma 6.6, X11 session), Arch Linux and Fedora 45 KDE (Plasma 6.8, Wayland session).
 set -Eeuo pipefail
 
 REPO=$(cd "$(dirname "$0")" && pwd)
@@ -67,13 +67,27 @@ trap 'die "$(L "команда завершилася невдало (рядок
 # ------------------------------------------------------------------ checks
 [ "$(id -u)" -ne 0 ] || die "$(L "запускайте від звичайного користувача, не від root (пароль спитають, коли треба)" "run as your normal user, not as root (the password is asked when needed)")"
 if command -v apt-get >/dev/null; then PM=apt; elif command -v pacman >/dev/null; then PM=pacman
-else die "$(L "потрібна Kubuntu / Ubuntu або Arch Linux" "Kubuntu / Ubuntu or Arch Linux is needed")"; fi
+elif command -v dnf >/dev/null && command -v rpm >/dev/null; then PM=dnf
+else die "$(L "потрібна Kubuntu / Ubuntu, Arch Linux або Fedora" "Kubuntu / Ubuntu, Arch Linux or Fedora is needed")"; fi
 command -v plasmashell >/dev/null || die "$(L "KDE Plasma не встановлено" "KDE Plasma is not installed")"
 # installed packages and their versions (without epoch and release)
-installed() { if [ $PM = apt ]; then dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u; else pacman -Qq | sort -u; fi; }
-v() { if [ $PM = apt ]; then dpkg-query -W -f='${Version}' "$1" 2>/dev/null; else pacman -Q "$1" 2>/dev/null | awk '{print $2}'; fi | sed 's/^[0-9]*://; s/-.*//'; }
+installed() {
+    case $PM in
+        apt) dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}' | sort -u ;;
+        pacman) pacman -Qq | sort -u ;;
+        dnf) rpm -qa --qf '%{NAME}\n' | sort -u ;;
+    esac
+}
+v() {
+    case $PM in
+        apt) dpkg-query -W -f='${Version}' "$1" 2>/dev/null ;;
+        pacman) pacman -Q "$1" 2>/dev/null | awk '{print $2}' ;;
+        dnf) rpm -q --qf '%{VERSION}' "$1" 2>/dev/null | grep -v 'not installed' ;;
+    esac | sed 's/^[0-9]*://; s/-.*//'
+}
 PLASMA=$(v plasma-workspace)
-# Plasma 6.6 (Kubuntu 26.04): X11 session, patches/; Plasma 6.8 (Arch): Wayland session (6.8 has no X11), patches/plasma-6.8/
+# Plasma 6.6 (Kubuntu 26.04): X11 session, patches/; Plasma 6.8 (Arch, Fedora): Wayland session (6.8 has no X11),
+# patches/plasma-6.8/
 case "$PLASMA" in
     6.6.*) WAYLAND=0; PD=$REPO/patches ;;
     6.8.*) WAYLAND=1; PD=$REPO/patches/plasma-6.8 ;;
@@ -125,7 +139,12 @@ if [ ! -f "$BK/saved" ]; then
     S=$BK/system; mkdir -p "$S"
     # the boot screen: Ubuntu chooses it with the default.plymouth alternative (auto or manual, and the file)
     update-alternatives --query default.plymouth 2>/dev/null | awk '/^Status:/{print $2} /^Value:/{print $2}' > "$S/plymouth" || true
-    for f in /var/lib/sddm/state.conf /etc/default/keyboard /etc/X11/xorg.conf.d/00-keyboard.conf "/var/lib/AccountsService/users/$USER"; do
+    # Fedora: the boot screen theme by name; the logon manager (Plasma Login Manager there, SDDM is ours)
+    [ $PM = dnf ] && { plymouth-set-default-theme 2>/dev/null > "$S/plymouth-theme" || true; }
+    readlink /etc/systemd/system/display-manager.service > "$S/display-manager" 2>/dev/null || true
+    # (Fedora: plymouth-set-default-theme also leaves a "plymouthd.confe" behind, its sed -ie)
+    for f in /var/lib/sddm/state.conf /etc/default/keyboard /etc/X11/xorg.conf.d/00-keyboard.conf "/var/lib/AccountsService/users/$USER" \
+             /etc/plymouth/plymouthd.conf /etc/plymouth/plymouthd.confe; do
         if sudo test -f "$f"; then sudo cat "$f" > "$S/$(echo "$f" | tr / _)"; else echo "$f" >> "$S/absent"; fi
     done
     sudo test -e "/var/lib/AccountsService/icons/$USER" || echo "/var/lib/AccountsService/icons/$USER" >> "$S/absent"
@@ -201,12 +220,33 @@ APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-vir
        kglobalaccel kwindowsystem kiconthemes kcmutils kitemmodels ktextwidgets kuserfeedback kdoctools plasma-activities-stats
        plymouth xorg-xrandr spectacle)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine gst-plugins-base gst-plugins-good gst-libav)   # the games' sounds go through GStreamer
-if [ $PM = apt ]; then
-    run sudo apt-get -o DPkg::Lock::Timeout=900 update
-    run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}"
-else
-    run sudo pacman -Syu --noconfirm --needed "${APKGS[@]}"
-fi
+# Fedora: the same, by the names of its -devel packages
+FPKGS=(git cmake extra-cmake-modules ninja-build gcc-c++ make curl unzip gettext 7zip python3-pillow python3-pyqt6
+       qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtsvg-devel qt6-qtmultimedia-devel qt6-qttools-devel
+       qt6-qt5compat-devel qt6-qtdeclarative-devel qt6-qtwayland-devel qt6-qtvirtualkeyboard
+       plasma-wayland-protocols-devel wayland-protocols-devel wayland-devel vulkan-headers libdrm-devel libepoxy-devel
+       plasma5support-devel libplasma-devel plasma-workspace-devel kwin-devel kdecoration-devel plasma-activities-devel
+       plasma-activities-stats-devel libksysguard-devel baloo-widgets-devel polkit-qt6-1-devel PackageKit-Qt6-devel
+       kf6-kio-devel kf6-kparts-devel kf6-kxmlgui-devel kf6-knotifications-devel kf6-kglobalaccel-devel
+       kf6-kwindowsystem-devel kf6-kiconthemes-devel kf6-kcmutils-devel kf6-kitemmodels-devel kf6-ktextwidgets-devel
+       kf6-kuserfeedback-devel kf6-kdoctools-devel kf6-baloo-devel kf6-kconfig-devel kf6-kfilemetadata-devel
+       kf6-kidletime-devel kf6-kservice-devel kf6-solid-devel kf6-kstatusnotifieritem-devel kf6-kauth-devel
+       kf6-kcolorscheme-devel kf6-ki18n-devel kf6-kirigami-devel kf6-ksvg-devel kf6-kcrash-devel kf6-knewstuff-devel
+       kf6-knotifyconfig-devel kf6-attica-devel kf6-krunner-devel kf6-kdbusaddons-devel kf6-sonnet-devel
+       kf6-kcoreaddons-devel kf6-kwidgetsaddons-devel kf6-kguiaddons-devel kf6-qqc2-desktop-style kf6-kpackage-devel
+       kf6-kbookmarks-devel kf6-kcodecs-devel kf6-kcompletion-devel kf6-kitemviews-devel kf6-kjobwidgets-devel
+       kf6-kconfigwidgets-devel kf6-karchive-devel kf6-kirigami-addons fontconfig-devel freetype-devel libxslt-devel
+       libxml2-devel libxcb-devel libXtst xrandr layer-shell-qt-devel kwayland-devel kf6-kded-devel kf6-kwallet-devel
+       kf6-frameworkintegration-devel libacl-devel libmount-devel kvantum sddm plasma-nm plasma-pa spectacle plymouth
+       plymouth-plugin-script)
+[ $GAMES -eq 1 ] && [ -n "$ISO" ] && FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav)
+case $PM in
+    apt)
+        run sudo apt-get -o DPkg::Lock::Timeout=900 update
+        run sudo apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends "${PKGS[@]}" ;;
+    pacman) run sudo pacman -Syu --noconfirm --needed "${APKGS[@]}" ;;
+    dnf) run sudo dnf install -y --setopt=install_weak_deps=False "${FPKGS[@]}" ;;
+esac
 # the packages installed for SevenPlasma (uninstall.sh offers to remove them again)
 installed | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
 sort -u -o "$BK/packages-added.txt" "$BK/packages-added.txt"
@@ -230,8 +270,11 @@ if [ $WAYLAND = 0 ]; then   # (in patches/plasma-6.8 they are part of aerothemep
     run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-sddm.patch"
 fi
 R=$WORK/atp/repos
+# where Plasma keeps its helper programs (the session starts /usr/<libexec>/plasma-dbus-run-session-if-needed):
+# /usr/lib on Arch and Ubuntu, /usr/libexec on Fedora
+LX=lib; [ $PM = dnf ] && LX=libexec
 cmake_install "$R/libplasma" "$R/libplasma/build"
-cmake_install "$R/uac-polkit-agent" "$R/uac-polkit-agent/build" -DCMAKE_INSTALL_LIBEXECDIR=lib
+cmake_install "$R/uac-polkit-agent" "$R/uac-polkit-agent/build" -DCMAKE_INSTALL_LIBEXECDIR=$LX -DKDE_INSTALL_LIBEXECDIR=$LX
 cmake_install "$R/smod" "$R/smod/build"
 [ $WAYLAND = 1 ] || cmake_install "$R/smod" "$R/smod/build-x11" -DBUILD_DECORATION=OFF -DBUILD_EFFECTX11=ON
 cmake_install "$R/aeroshell-workspace" "$R/aeroshell-workspace/build"
@@ -241,8 +284,8 @@ cmake_install "$R/aeroshell-kwin-components" "$R/aeroshell-kwin-components/build
 cmake_install "$R/aeroshell-sddm-kcm" "$R/aeroshell-sddm-kcm/build"
 cmake_install "$R/aerothemeplasma-icons" "$R/aerothemeplasma-icons/build"
 cmake_install "$R/aerothemeplasma-sounds" "$R/aerothemeplasma-sounds/build"
-cmake_install "$WORK/atp/main" "$WORK/atp/main/build" -DCMAKE_INSTALL_LIBEXECDIR=lib
-[ $WAYLAND = 1 ] || cmake_install "$WORK/atp/main" "$WORK/atp/main/build_x11" -DCMAKE_INSTALL_LIBEXECDIR=lib -DINSTALL_X11_COMPONENTS=ON
+cmake_install "$WORK/atp/main" "$WORK/atp/main/build" -DCMAKE_INSTALL_LIBEXECDIR=$LX -DKDE_INSTALL_LIBEXECDIR=$LX
+[ $WAYLAND = 1 ] || cmake_install "$WORK/atp/main" "$WORK/atp/main/build_x11" -DCMAKE_INSTALL_LIBEXECDIR=$LX -DKDE_INSTALL_LIBEXECDIR=$LX -DINSTALL_X11_COMPONENTS=ON
 # the small user tile of an account without a password (lock screen) uses the logon screen's frames
 SH=/usr/share/plasma/shells/io.gitgud.wackyideas.desktop/contents/images/pfp
 A=/usr/share/sddm/themes/sddm-theme-mod/Assets
@@ -258,21 +301,24 @@ fetch libaero-qt "$WORK/src/libaero-qt"
 cmake_install "$WORK/src/libaero-qt" "$WORK/src/libaero-qt/build"
 KIOPKG=libkf6kio-dev; KVPKG=qt6-style-kvantum
 [ $PM = pacman ] && { KIOPKG=kio; KVPKG=kvantum; }
+[ $PM = dnf ] && { KIOPKG=kf6-kio-core; KVPKG=kvantum; }
 # the versions our patches are made for; Explorer: dolphin-aero (Kubuntu), Dolphin with dolphin-aero's and our
 # changes in one patch (Plasma 6.8)
 KIOVER=6.24.0; DOLVER=25.12.3; KVVER=1.1.5; DOLSRC=dolphin-aero
 [ $WAYLAND = 1 ] && { KIOVER=6.31.0; DOLVER=26.08.3; KVVER=1.1.9; DOLSRC=dolphin; }
+# KIO is a part of the system's Frameworks: built only at exactly their version. Dolphin of the same release series
+# and Kvantum (they only need Qt and Frameworks) are built at the version of the patch over whatever is installed.
 if [ $FORKS -eq 1 ]; then
     if [ "$(v $KIOPKG)" = "$KIOVER" ]; then
         fetch kio "$WORK/src/kio"
         cmake_install "$WORK/src/kio" "$WORK/src/kio/build" -DBUILD_TESTING=OFF
         run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
     else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни ($KIOVER): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for ($KIOVER): file dialogs stay as they are")"; fi
-    if [ "$(v dolphin)" = "$DOLVER" ]; then
+    if [ "${DOLVER%.*}" = "$(v dolphin | cut -d. -f1,2)" ]; then
         fetch $DOLSRC "$WORK/src/$DOLSRC"
         cmake_install "$WORK/src/$DOLSRC" "$WORK/src/$DOLSRC/build" -DBUILD_TESTING=OFF
     else warn "$(L "Dolphin $(v dolphin) не та версія, для якої зроблені зміни: Провідник буде звичайним Dolphin" "Dolphin $(v dolphin) is not a version the changes are made for: Explorer stays plain Dolphin")"; fi
-    if [ "$(v $KVPKG)" = "$KVVER" ]; then
+    if [ "${KVVER%.*}" = "$(v $KVPKG | cut -d. -f1,2)" ]; then
         fetch kvantum "$WORK/src/kvantum"
         cmake_install "$WORK/src/kvantum/Kvantum" "$WORK/src/kvantum/Kvantum/build" -DENABLE_QT5=OFF
     else warn "$(L "Kvantum $(v $KVPKG) не та версія ($KVVER): меню без лінії-розділювача Windows 7" "Kvantum $(v $KVPKG) is not the expected version ($KVVER): menus lack the Windows 7 separator line")"; fi
@@ -302,6 +348,8 @@ install -m 755 "$REPO/apps/seven-snip/seven-snip.py" "$L/lib/sevenplasma/seven-s
 printf '#!/bin/sh\nexec python3 "%s" "$@"\n' "$L/lib/sevenplasma/seven-snip.py" > "$L/bin/seven-snip"; chmod +x "$L/bin/seven-snip"
 cp -r "$REPO/data/lib/." "$L/lib/sevenplasma/"
 install -m 755 "$REPO"/data/bin/* "$L/bin/"
+# our scripts and programs call qdbus6 (Ubuntu, Arch); Fedora names it qdbus-qt6
+if ! command -v qdbus6 >/dev/null && command -v qdbus-qt6 >/dev/null; then ln -sfn "$(command -v qdbus-qt6)" "$L/bin/qdbus6"; fi
 subst() { sed "s#@HOME@#$HOME#g" "$1" > "$2"; }
 for f in "$REPO"/data/applications/*.desktop; do subst "$f" "$L/share/applications/$(basename "$f")"; done
 for f in "$REPO"/data/autostart/*.desktop; do subst "$f" "$HOME/.config/autostart/$(basename "$f")"; done
@@ -433,7 +481,7 @@ if [ $WAYLAND = 0 ]; then
     run sudo install -D -m 755 "$B/seven-shutdown-hold" /usr/local/libexec/seven-shutdown-hold
     run sudo install -D -m 644 "$B/seven-shutdown-hold.conf" /etc/systemd/system/sddm.service.d/seven-shutdown-hold.conf
 fi
-if [ $WAYLAND = 0 ] || [ $BOOTSPLASH = 1 ]; then
+if [ $WAYLAND = 0 ] || [ $BOOTSPLASH = 1 ] || [ $PM = dnf ]; then
     # "Starting Windows" held on screen for a few seconds, like Windows 7, however fast the boot is
     run sudo install -D -m 755 "$B/seven-splash-hold" /usr/local/libexec/seven-splash-hold
     run sudo install -D -m 644 "$B/seven-min-time.conf" /etc/systemd/system/plymouth-quit.service.d/seven-min-time.conf
@@ -452,7 +500,8 @@ if [ $WAYLAND = 0 ]; then
     printf '[General]\nDisplayServer=x11\n\n[Theme]\nCurrent=sddm-theme-mod\nCursorTheme=aero-drop\nCursorSize=32\n\n[X11]\nDisplayCommand=/usr/local/libexec/seven-sddm-xsetup\nServerArguments=-nolisten tcp -background none\n' > "$WORK/zz-sevenplasma.conf"
 else   # the logon screen on Wayland, in KWin (as Plasma's own logon settings set it up)
     printf '[General]\nDisplayServer=wayland\nGreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell\n\n[Theme]\nCurrent=sddm-theme-mod\nCursorTheme=aero-drop\nCursorSize=32\n\n[Wayland]\nCompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1\n' > "$WORK/zz-sevenplasma.conf"
-    run sudo systemctl enable sddm.service || true
+    # (Fedora logs on with Plasma Login Manager: SDDM takes its place, uninstall.sh gives it back)
+    run sudo systemctl enable --force sddm.service || true
 fi
 run sudo install -D -m 644 "$WORK/zz-sevenplasma.conf" /etc/sddm.conf.d/zz-sevenplasma.conf
 # the logon screen preselects the last session: make it AeroThemePlasma (on Plasma 6.6 the X11 one: our
@@ -478,6 +527,11 @@ if [ $PM = apt ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plym
     run sudo plymouth-set-default-theme sevenplasma || run sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth 200
     note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
     run sudo update-initramfs -u
+fi
+# Fedora: Plymouth is in the initramfs and "rhgb quiet" on the kernel line already: only the theme changes
+if [ $PM = dnf ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
+    note "$(L "оновлюю initramfs (заставка «Запуск Windows»)..." "updating the initramfs (the \"Starting Windows\" screen)...")"
+    run sudo plymouth-set-default-theme -R sevenplasma
 fi
 if [ $PM = pacman ] && [ -f /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth ]; then
     if [ $BOOTSPLASH = 1 ]; then

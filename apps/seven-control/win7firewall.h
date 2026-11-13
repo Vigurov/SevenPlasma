@@ -1,5 +1,6 @@
 /*
- * "Windows Firewall" pages of the Windows 7 style Control Panel, backed by ufw.
+ * "Windows Firewall" pages of the Windows 7 style Control Panel, backed by ufw (Kubuntu, Arch) or firewalld
+ * (Fedora: its default zone; the "allowed programs" are its services and ports).
  * ufw has a single set of rules for every network, so there is one network section
  * instead of Windows 7's "Home or work" / "Public" pair. Changes go through pkexec.
  *
@@ -33,6 +34,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QStandardPaths>
 
 namespace Win7Firewall
 {
@@ -64,14 +66,69 @@ inline QString readValue(const QString &file, const QString &key)
     return {};
 }
 
+/** firewalld instead of ufw (Fedora) */
+inline bool useFirewalld()
+{
+    static const bool fw = QStandardPaths::findExecutable(QStringLiteral("ufw"), {QStringLiteral("/usr/sbin"), QStringLiteral("/usr/bin")}).isEmpty()
+        && !QStandardPaths::findExecutable(QStringLiteral("firewall-cmd")).isEmpty();
+    return fw;
+}
+
+inline QString firewallCmd(const QStringList &args)
+{
+    QProcess p;
+    p.start(QStringLiteral("firewall-cmd"), args);
+    p.waitForFinished(10000);
+    return p.exitCode() == 0 ? QString::fromUtf8(p.readAllStandardOutput()).trimmed() : QString();
+}
+
 inline bool enabled()
 {
+    if (useFirewalld()) {   // systemd answers without a password (firewall-cmd may ask for one: Action Center checks often)
+        QProcess p;
+        p.start(QStringLiteral("systemctl"), {QStringLiteral("is-active"), QStringLiteral("firewalld")});
+        p.waitForFinished(5000);
+        return QString::fromUtf8(p.readAllStandardOutput()).trimmed() == QLatin1String("active");
+    }
     return readValue(QStringLiteral("/etc/ufw/ufw.conf"), QStringLiteral("ENABLED")) == QLatin1String("yes");
 }
 
 inline bool blocksIncoming()
 {
+    if (useFirewalld()) {
+        // the target of the default zone (its file: the user's copy in /etc or the system's)
+        const QString zone = firewallCmd({QStringLiteral("--get-default-zone")});
+        for (const QString &dir : {QStringLiteral("/etc/firewalld/zones/"), QStringLiteral("/usr/lib/firewalld/zones/")}) {
+            QFile f(dir + zone + QStringLiteral(".xml"));
+            if (f.open(QIODevice::ReadOnly)) {
+                static const QRegularExpression target(QStringLiteral("<zone[^>]*target=\"([^\"]+)\""));
+                return target.match(QString::fromUtf8(f.readAll())).captured(1) != QLatin1String("ACCEPT");
+            }
+        }
+        return true;
+    }
     return readValue(QStringLiteral("/etc/default/ufw"), QStringLiteral("DEFAULT_INPUT_POLICY")) != QLatin1String("ACCEPT");
+}
+
+/** the commands of a change, in the firewall that is there */
+inline QString cmdOn()
+{
+    return useFirewalld() ? QStringLiteral("systemctl enable --now firewalld") : QStringLiteral("ufw --force enable");
+}
+inline QString cmdOff()
+{
+    return useFirewalld() ? QStringLiteral("systemctl disable --now firewalld") : QStringLiteral("ufw disable");
+}
+inline QString cmdRecommended()
+{
+    return useFirewalld() ? QStringLiteral("systemctl enable --now firewalld")
+                          : QStringLiteral("ufw default deny incoming && ufw default allow outgoing && ufw --force enable");
+}
+inline QString cmdDefaults()
+{
+    return useFirewalld() ? QStringLiteral("systemctl enable --now firewalld && Z=$(firewall-cmd --get-default-zone) && "
+                                           "firewall-cmd --permanent --load-zone-defaults=\"$Z\" && firewall-cmd --reload")
+                          : QStringLiteral("ufw --force reset && ufw default deny incoming && ufw default allow outgoing && ufw --force enable");
 }
 
 /** Runs ufw commands as root through pkexec (asks for the password like a UAC shield) */
@@ -80,7 +137,11 @@ inline bool runAsRoot(QWidget *parent, const QString &commands)
     QProcess p;
     QEventLoop loop;
     QObject::connect(&p, &QProcess::finished, &loop, &QEventLoop::quit);
-    p.start(QStringLiteral("pkexec"), {QStringLiteral("sh"), QStringLiteral("-c"), commands});
+    // firewalld: the permanent rules changed are made the running ones too
+    const QString script = useFirewalld() && (commands.contains(QLatin1String("--permanent --add")) || commands.contains(QLatin1String("--permanent --remove")))
+        ? QStringLiteral("%1; r=$?; firewall-cmd --reload >/dev/null 2>&1; exit $r").arg(commands)
+        : commands;
+    p.start(QStringLiteral("pkexec"), {QStringLiteral("sh"), QStringLiteral("-c"), script});
     if (!p.waitForStarted(3000)) {
         return false;
     }
@@ -121,8 +182,50 @@ struct Ufw {
     QList<Rule> rules;
 };
 
+/** firewalld's default zone as the rules of an ufw: its services (dapp) and ports */
+inline Ufw queryFirewalld()
+{
+    Ufw u;
+    u.enabled = enabled();
+    u.incoming = blocksIncoming() ? QStringLiteral("deny") : QStringLiteral("allow");
+    u.outgoing = QStringLiteral("allow");
+    if (!u.enabled) {
+        u.ok = true;   // nothing runs: the permanent setup is what will be
+    }
+    const QStringList pre = u.enabled ? QStringList() : QStringList{QStringLiteral("--permanent")};
+    QProcess p;
+    p.start(QStringLiteral("firewall-cmd"), pre + QStringList{QStringLiteral("--list-services")});
+    p.waitForFinished(10000);
+    if (p.exitCode() != 0) {
+        return u;
+    }
+    int n = 0;
+    for (const QString &svc : QString::fromUtf8(p.readAllStandardOutput()).split(QLatin1Char(' '), Qt::SkipEmptyParts)) {
+        Rule r;
+        r.position = ++n;
+        r.action = QStringLiteral("allow");
+        r.direction = QStringLiteral("in");
+        r.dapp = svc.trimmed();
+        u.rules.append(r);
+    }
+    for (const QString &port : firewallCmd(pre + QStringList{QStringLiteral("--list-ports")}).split(QLatin1Char(' '), Qt::SkipEmptyParts)) {
+        Rule r;
+        r.position = ++n;
+        r.action = QStringLiteral("allow");
+        r.direction = QStringLiteral("in");
+        r.dport = port.section(QLatin1Char('/'), 0, 0).replace(QLatin1Char('-'), QLatin1Char(':'));
+        r.protocol = port.section(QLatin1Char('/'), 1, 1);
+        u.rules.append(r);
+    }
+    u.ok = true;
+    return u;
+}
+
 inline Ufw queryUfw()
 {
+    if (useFirewalld()) {
+        return queryFirewalld();
+    }
     Ufw u;
     KAuth::Action a(QStringLiteral("org.kde.ufw.query"));
     a.setHelperId(QStringLiteral("org.kde.ufw"));
@@ -208,11 +311,21 @@ inline QList<Feature> features()
         {tr7("Steam (Remote Play and local network transfers)"), tr7("Game streaming and transferring games between the computers on your network."),
          QString(), {QStringLiteral("27036/tcp"), QStringLiteral("27031:27036/udp")}},
     };
+    if (useFirewalld()) {
+        // firewalld knows these as services
+        f = {{tr7("File and Printer Sharing"), tr7("Lets other computers on the network open your shared folders and printers (Samba)."), QStringLiteral("samba"), {}},
+             {tr7("Network Discovery"), tr7("Lets this computer find other network devices and be visible to them (mDNS)."), QStringLiteral("mdns"), {}},
+             {tr7("Remote Desktop"), tr7("Lets people connect to this computer with Remote Desktop Connection (RDP)."), QStringLiteral("rdp"), {}},
+             {tr7("Remote Management (SSH)"), tr7("Lets people log on to this computer through the SSH secure shell."), QStringLiteral("ssh"), {}},
+             {tr7("Print Service (CUPS)"), tr7("Lets other computers print on the printers of this computer."), QStringLiteral("ipp"), {}},
+             {QStringLiteral("KDE Connect"), tr7("Connection with your phone: notifications, files, clipboard."), QStringLiteral("kdeconnect"), {}},
+             f.at(4)};   // Steam: its ports
+    }
     const QHash<QString, QPair<QString, QString>> known{
         {QStringLiteral("CUPS"), {tr7("Print Service (CUPS)"), tr7("Lets other computers print on the printers of this computer.")}},
         {QStringLiteral("KDEConnect"), {QStringLiteral("KDE Connect"), tr7("Connection with your phone: notifications, files, clipboard.")}},
     };
-    for (const QString &app : appProfiles()) {
+    for (const QString &app : useFirewalld() ? QStringList() : appProfiles()) {
         const auto k = known.value(app, {app, tr7("ufw application profile \"%1\".").arg(app)});
         f.append({k.first, k.second, app, {}});
     }
@@ -262,6 +375,21 @@ inline QString quoted(QString s)
 inline QStringList featureCommands(const Feature &f, bool allow)
 {
     QStringList cmds;
+    if (useFirewalld()) {
+        const QString verb = allow ? QStringLiteral("firewall-cmd --permanent --add-") : QStringLiteral("firewall-cmd --permanent --remove-");
+        if (!f.app.isEmpty()) {
+            cmds << verb + QStringLiteral("service=") + quoted(f.app);
+        }
+        for (const QString &spec : f.portSpecs) {   // "139,445/tcp" -> one port (or range) each
+            const QString proto = spec.section(QLatin1Char('/'), 1, 1);
+            for (const QString &port : spec.section(QLatin1Char('/'), 0, 0).split(QLatin1Char(','))) {
+                for (const QString &pr : proto.isEmpty() ? QStringList{QStringLiteral("tcp"), QStringLiteral("udp")} : QStringList{proto}) {
+                    cmds << verb + QStringLiteral("port=") + QString(port).replace(QLatin1Char(':'), QLatin1Char('-')) + QLatin1Char('/') + pr;
+                }
+            }
+        }
+        return cmds;
+    }
     const QString verb = allow ? QStringLiteral("ufw allow ") : QStringLiteral("ufw delete allow ");
     if (!f.app.isEmpty()) {
         cmds << verb + quoted(f.app);
@@ -475,7 +603,7 @@ inline QWidget *sidePane(const Nav &nav, QWidget *page)
         box.addButton(tr7("No"), QMessageBox::NoRole);
         box.exec();
         if (box.clickedButton() == yes
-            && runAsRoot(page, QStringLiteral("ufw --force reset && ufw default deny incoming && ufw default allow outgoing && ufw --force enable"))) {
+            && runAsRoot(page, cmdDefaults())) {
             nav.open(StatusView);
         }
     }, true);
@@ -547,7 +675,7 @@ inline QWidget *buildStatusPage(const Nav &nav)
         auto *use = new QPushButton(QIcon::fromTheme(QStringLiteral("seven-cp-shield")), tr7("Use recommended settings"));
         wh->addWidget(use, 0, Qt::AlignVCenter);
         QObject::connect(use, &QPushButton::clicked, main, [main, nav] {
-            if (runAsRoot(main, QStringLiteral("ufw default deny incoming && ufw default allow outgoing && ufw --force enable"))) {
+            if (runAsRoot(main, cmdRecommended())) {
                 nav.open(StatusView);
             }
         });
@@ -624,7 +752,7 @@ inline QWidget *buildSettingsPage(const Nav &nav)
     });
     QObject::connect(ok, &QPushButton::clicked, page, [=] {
         const bool want = group->checkedId() == 1;
-        if (want == on || runAsRoot(page, want ? QStringLiteral("ufw --force enable") : QStringLiteral("ufw disable"))) {
+        if (want == on || runAsRoot(page, want ? cmdOn() : cmdOff())) {
             nav.open(StatusView);
         }
     });
@@ -764,7 +892,7 @@ inline QWidget *buildAllowedPage(const Nav &nav)
     QObject::connect(list, &QTreeWidget::currentItemChanged, page, updateButtons);
     QObject::connect(details, &QPushButton::clicked, page, [=] {
         const Feature f = feats.value(list->currentItem()->data(0, Qt::UserRole).toInt());
-        QString what = f.app.isEmpty() ? tr7("Ports: ") + f.portSpecs.join(QStringLiteral(", ")).toUpper() : tr7("ufw profile: ") + f.app;
+        QString what = f.app.isEmpty() ? tr7("Ports: ") + f.portSpecs.join(QStringLiteral(", ")).toUpper() : (useFirewalld() ? tr7("firewalld service: ") : tr7("ufw profile: ")) + f.app;
         QMessageBox box(QMessageBox::Information, tr7("Edit a Program"), f.name, QMessageBox::Ok, page);
         box.setInformativeText(f.description + QStringLiteral("\n\n") + what);
         box.exec();

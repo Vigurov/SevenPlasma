@@ -23,8 +23,14 @@ ask() {   # ask "question" -> 0 for yes (the default)
     case "$a" in ""|[TtYyТт]*) return 0 ;; *) return 1 ;; esac
 }
 [ "$(id -u)" -ne 0 ] || { echo "$(T "запускайте від звичайного користувача" "run as your normal user")"; exit 1; }
-if command -v apt-get >/dev/null; then PM=apt; else PM=pacman; fi
-installed() { if [ $PM = apt ]; then dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 2>/dev/null | awk '$1 == "ii" {print $2}' | sort -u; else pacman -Qq | sort -u; fi; }
+if command -v apt-get >/dev/null; then PM=apt; elif command -v pacman >/dev/null; then PM=pacman; else PM=dnf; fi
+installed() {
+    case $PM in
+        apt) dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 2>/dev/null | awk '$1 == "ii" {print $2}' | sort -u ;;
+        pacman) pacman -Qq | sort -u ;;
+        dnf) rpm -qa --qf '%{NAME}\n' | sort -u ;;
+    esac
+}
 
 echo "$(T "SevenPlasma буде видалено, а система повернеться до стану перед встановленням." "SevenPlasma will be removed and the system put back the way it was before the install.")"
 echo "$(T "Журнал: $LOG" "Log: $LOG")"
@@ -43,6 +49,7 @@ if [ -f "$BK/user-files.txt" ]; then   # what our programs' cmake installs put i
 fi
 systemctl --user unmask drkonqi-coredump-launcher.socket >/dev/null 2>&1 && systemctl --user start drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/bin/systemsettings "$L"/bin/kcmshell6 "$L"/bin/kinfocenter "$L"/bin/khelpcenter "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop "$HOME"/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh "$HOME"/.config/plasma-workspace/env/sevenplasma-path.sh "$HOME"/.config/autostart/org.kde.discover.notifier.desktop
+[ -L "$L/bin/qdbus6" ] && [ "$(readlink "$L/bin/qdbus6")" = "$(command -v qdbus-qt6 2>/dev/null)" ] && rm -f "$L/bin/qdbus6"
 rm -rf "$L"/share/seven-* "$L"/lib/sevenplasma "$L"/share/sevenplasma "$L"/share/kwin/scripts/sevenkeys
 rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
 find "$L/share/icons/hicolor" -name 'seven-*' -delete 2>/dev/null
@@ -75,14 +82,18 @@ if [ -s "$BK/system-files.txt" ]; then
 fi
 if [ ${#PKGS[@]} -gt 0 ]; then
     echo "$(T "Перевстановлюю оригінальні пакети (${#PKGS[@]}): потрібен інтернет..." "Reinstalling the original packages (${#PKGS[@]}): the internet is needed...")"
-    if [ $PM = apt ]; then
-        sudo NEEDRESTART_SUSPEND=1 apt-get -q -o DPkg::Lock::Timeout=900 install -y --reinstall "${PKGS[@]}" >> "$LOG" 2>&1
-    else
-        sudo pacman -S --noconfirm "${PKGS[@]}" >> "$LOG" 2>&1
-    fi
+    case $PM in
+        apt) sudo NEEDRESTART_SUSPEND=1 apt-get -q -o DPkg::Lock::Timeout=900 install -y --reinstall "${PKGS[@]}" >> "$LOG" 2>&1 ;;
+        pacman) sudo pacman -S --noconfirm "${PKGS[@]}" >> "$LOG" 2>&1 ;;
+        dnf) sudo dnf reinstall -y "${PKGS[@]}" >> "$LOG" 2>&1 ;;
+    esac
     if [ $? -ne 0 ]; then
         echo "$(T "Не вдалося перевстановити пакети. Повторіть пізніше:" "Could not reinstall the packages. Try again later:")"
-        if [ $PM = apt ]; then echo "  sudo apt-get install --reinstall ${PKGS[*]}"; else echo "  sudo pacman -S ${PKGS[*]}"; fi
+        case $PM in
+            apt) echo "  sudo apt-get install --reinstall ${PKGS[*]}" ;;
+            pacman) echo "  sudo pacman -S ${PKGS[*]}" ;;
+            dnf) echo "  sudo dnf reinstall ${PKGS[*]}" ;;
+        esac
     fi
 fi
 
@@ -90,7 +101,8 @@ fi
 S=$BK/system
 if [ -d "$S" ]; then
     echo "$(T "Заставка завантаження, екран входу, клавіатура, обліковий запис..." "Boot screen, logon screen, keyboard, account...")"
-    for f in /var/lib/sddm/state.conf /etc/default/keyboard /etc/X11/xorg.conf.d/00-keyboard.conf "/var/lib/AccountsService/users/$USER"; do
+    for f in /var/lib/sddm/state.conf /etc/default/keyboard /etc/X11/xorg.conf.d/00-keyboard.conf "/var/lib/AccountsService/users/$USER" \
+             /etc/plymouth/plymouthd.conf /etc/plymouth/plymouthd.confe; do
         c=$S/$(echo "$f" | tr / _)
         if [ -f "$c" ]; then
             sudo install -D -m "$(sudo stat -c %a "$f" 2>/dev/null || echo 644)" "$c" "$f"
@@ -102,6 +114,11 @@ if [ -d "$S" ]; then
     grep -qxF "/var/lib/AccountsService/icons/$USER" "$S/absent" 2>/dev/null && sudo rm -f "/var/lib/AccountsService/icons/$USER"
     sudo systemctl try-restart accounts-daemon.service 2>/dev/null || true
     # the boot screen as before: our alternative goes, a manual choice is chosen again
+    # the logon manager from before (Fedora: Plasma Login Manager)
+    dm=$(cat "$S/display-manager" 2>/dev/null)
+    if [ -n "$dm" ] && [ "$(basename "$dm")" != sddm.service ] && [ -f "$dm" ]; then
+        sudo systemctl enable --force "$(basename "$dm")" >> "$LOG" 2>&1 || true
+    fi
     sudo update-alternatives --remove default.plymouth /usr/share/plymouth/themes/sevenplasma/sevenplasma.plymouth >/dev/null 2>&1 || true
     mode=$(sed -n 1p "$S/plymouth" 2>/dev/null); old=$(sed -n 2p "$S/plymouth" 2>/dev/null)
     if [ "$mode" = manual ] && [ -f "$old" ]; then sudo update-alternatives --set default.plymouth "$old" >/dev/null 2>&1 || true
@@ -109,6 +126,8 @@ if [ -d "$S" ]; then
 fi
 echo "$(T "Оновлюю initramfs (заставка завантаження)..." "Updating the initramfs (boot screen)...")"
 [ $PM = apt ] && { sudo update-initramfs -u >> "$LOG" 2>&1 || true; }
+# Fedora: plymouthd.conf is back as it was (above): the initramfs gets the boot screen theme from it
+[ $PM = dnf ] && { sudo dracut -f >> "$LOG" 2>&1 || true; }
 # Arch with --boot-splash: the initramfs hooks, kernel options and Plymouth settings as before
 if [ -s "$BK/system/boot-files" ]; then
     while IFS= read -r f; do
@@ -125,6 +144,7 @@ sudo systemctl daemon-reload
 sudo fc-cache -f >/dev/null 2>&1
 
 # ------------------------------------------------------------------ packages installed for SevenPlasma
+SDDM_UID=$(id -u sddm 2>/dev/null || true)
 if [ -s "$BK/packages-added.txt" ]; then
     mapfile -t ADDED < <(installed | comm -12 "$BK/packages-added.txt" -)
     if [ ${#ADDED[@]} -gt 0 ] && ask "$(T "Видалити пакети, встановлені для збирання SevenPlasma (${#ADDED[@]})?" "Remove the packages installed for building SevenPlasma (${#ADDED[@]})?")"; then
@@ -138,6 +158,15 @@ if [ -s "$BK/packages-added.txt" ]; then
             if [ ${#GONE[@]} -gt 0 ]; then
                 if [ $YES -eq 1 ]; then sudo NEEDRESTART_SUSPEND=1 apt-get purge -y "${GONE[@]}"; else sudo NEEDRESTART_SUSPEND=1 apt-get purge "${GONE[@]}"; fi
             fi
+        elif [ $PM = dnf ]; then
+            # Fedora: ours become dependencies; those nothing needs any more are removed, in rounds, only ours
+            sudo dnf -y mark dependency "${ADDED[@]}" >> "$LOG" 2>&1
+            for _ in 1 2 3 4 5 6; do
+                mapfile -t GONE < <(dnf repoquery --installed --unneeded --qf '%{name}\n' 2>/dev/null | sort -u | comm -12 - "$BK/packages-added.txt")
+                [ ${#GONE[@]} -gt 0 ] || break
+                if [ $YES -eq 1 ]; then sudo dnf remove -y --setopt=clean_requirements_on_remove=False "${GONE[@]}" || break
+                else sudo dnf remove --setopt=clean_requirements_on_remove=False "${GONE[@]}" || break; fi
+            done
         else
             # Arch: ours become dependencies; those nothing needs any more (orphans) are removed with what only
             # they needed (pacman lists them first)
@@ -151,6 +180,12 @@ if [ -s "$BK/packages-added.txt" ]; then
             done
         fi
     fi
+fi
+
+# SDDM came with SevenPlasma (Fedora) and is gone again: its home (caches) and logind's settings of its account
+if grep -qx sddm "$BK/packages-added.txt" 2>/dev/null && ! installed | grep -qx sddm; then
+    sudo rm -rf /var/lib/sddm
+    [ -n "$SDDM_UID" ] && sudo rm -rf "/etc/systemd/system.control/user@$SDDM_UID.service.d" "/etc/systemd/system.control/user-$SDDM_UID.slice.d"
 fi
 
 # ------------------------------------------------------------------ the Plasma settings
