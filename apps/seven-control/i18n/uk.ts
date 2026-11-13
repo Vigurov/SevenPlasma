@@ -15363,5 +15363,13 @@ settings</source>
         <source>Windows edition</source>
         <translation>Випуск Windows</translation>
     </message>
+    <message>
+        <source>New updates are available</source>
+        <translation>Доступні нові оновлення</translation>
+    </message>
+    <message>
+        <source>Click to install them.</source>
+        <translation>Клацніть, щоб інсталювати їх.</translation>
+    </message>
 </context>
 </TS>

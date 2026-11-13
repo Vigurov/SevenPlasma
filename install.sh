@@ -468,11 +468,11 @@ mkdir -p "$HOME/.config/plasma-workspace/shutdown"
 printf '#!/bin/sh\nexec "%s/bin/seven-splash-wallpaper"\n' "$L" > "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
 chmod +x "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
 "$L/bin/seven-splash-wallpaper" || true
-for f in "$REPO"/data/systemd/*.service; do subst "$f" "$HOME/.config/systemd/user/$(basename "$f")"; done
+for f in "$REPO"/data/systemd/*.service "$REPO"/data/systemd/*.timer; do subst "$f" "$HOME/.config/systemd/user/$(basename "$f")"; done
 cp -r "$REPO"/apps/plasmoids/* "$L/share/plasma/plasmoids/"
 cp -r "$REPO/apps/kwin/sevenkeys" "$L/share/kwin/scripts/"
 run systemctl --user daemon-reload
-run systemctl --user enable seven-folder-refresh.service || true
+run systemctl --user enable seven-folder-refresh.service seven-wu-check.timer || true
 # "Open with" of programs that ask through xdg-desktop-portal (Chrome, Telegram, Flatpak...): our Windows 7 dialog
 mkdir -p "$L/share/dbus-1/services" "$HOME/.config/xdg-desktop-portal"
 printf '[D-BUS Service]\nName=org.freedesktop.impl.portal.desktop.win7\nExec=%s/bin/seven-control --portal\n' "$L" \

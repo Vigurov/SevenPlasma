@@ -43,7 +43,7 @@ sudo -n true 2>/dev/null || sudo -v || exit 1
 
 # ------------------------------------------------------------------ the user's SevenPlasma files
 echo "$(T "Програми й ресурси SevenPlasma..." "SevenPlasma programs and resources...")"
-systemctl --user disable --now seven-folder-refresh.service seven-soundfx.service 2>/dev/null
+systemctl --user disable --now seven-folder-refresh.service seven-soundfx.service seven-wu-check.timer seven-wu-check.service 2>/dev/null
 if [ -f "$BK/user-files.txt" ]; then   # what our programs' cmake installs put into ~/.local
     while IFS= read -r f; do case "$f" in "$L"/*) rm -f "$f" ;; esac; done < "$BK/user-files.txt"
 fi
@@ -54,7 +54,7 @@ rm -rf "$L"/share/seven-* "$L"/lib/sevenplasma "$L"/share/sevenplasma "$L"/share
 rm -rf "$L"/share/plasma/plasmoids/io.gitgud.wackyideas.*
 find "$L/share/icons/hicolor" -name 'seven-*' -delete 2>/dev/null
 rm -rf "$L/share/fonts/Windows 7" "$L/share/fonts/Selawik" "$L/share/sounds/Windows 7" "$L/share/wallpapers/Windows7" "$HOME/.config/Kvantum/Windows7"*
-rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME/.config/xdg-desktop-portal/kde-portals.conf" "$L"/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service "$HOME/.config/environment.d/60-sevenplasma.conf"
+rm -f "$HOME"/.config/systemd/user/seven-*.service "$HOME"/.config/systemd/user/seven-*.timer "$HOME/.config/seven-wu-trayrc" "$HOME/.config/xdg-desktop-portal/kde-portals.conf" "$L"/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service "$HOME/.config/environment.d/60-sevenplasma.conf"
 # the Recycle Bin icon seven-firstrun put on the desktop
 DESK=$(xdg-user-dir DESKTOP 2>/dev/null); rm -f "${DESK:-$HOME/Desktop}/seven-trash.desktop"
 # default programs that pointed to our programs

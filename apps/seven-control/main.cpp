@@ -1941,6 +1941,7 @@ private:
 #include <QDBusMessage>
 #include <QDBusConnection>
 #include <KConfigGroup>
+#include <KStatusNotifierItem>
 #include <KConfig>
 #include "win7windowclass.h"
 
@@ -2388,6 +2389,55 @@ int main(int argc, char **argv)
         Win7Wf::RuleWizard w(nullptr, true);
         w.exec();
         return 0;
+    }
+    // Windows Update's notification-area icon: started now and then by a systemd timer (seven-wu-check.timer);
+    // with updates waiting it stays and shows Windows 7's icon until they are installed or the page is opened,
+    // without any it ends at once (nothing runs for it the rest of the time)
+    if (app.arguments().contains(QStringLiteral("--wu-check"))) {
+        app.setQuitOnLastWindowClosed(false);
+        auto &engine = Win7Update::Engine::self();
+        auto *sni = new KStatusNotifierItem(QStringLiteral("seven-windows-update"), &app);
+        sni->setCategory(KStatusNotifierItem::SystemServices);
+        sni->setIconByName(QStringLiteral("seven-wu-app"));
+        sni->setTitle(tr7("Windows Update"));
+        sni->setStandardActionsEnabled(false);
+        sni->setStatus(KStatusNotifierItem::Passive);
+        auto open = [] {
+            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--windows-update")});
+            QCoreApplication::quit();
+        };
+        QObject::connect(sni, &KStatusNotifierItem::activateRequested, &app, open);
+        engine.listeners.append([sni] {
+            auto &e = Win7Update::Engine::self();
+            if (!e.loaded) {
+                return;
+            }
+            int important = 0;
+            for (const auto &u : std::as_const(e.updates)) {
+                important += u.important ? 1 : 0;
+            }
+            if (e.updates.isEmpty()) {
+                QCoreApplication::quit();
+                return;
+            }
+            const QString text = important > 0 ? Win7Update::countText(important, true) : Win7Update::countText(int(e.updates.size()), false);
+            sni->setToolTip(QStringLiteral("seven-wu-app"), tr7("Windows Update"), text);
+            if (sni->status() != KStatusNotifierItem::Active) {
+                sni->setStatus(KStatusNotifierItem::Active);
+                // Windows 7's balloon, once for each new set of updates
+                QSettings seen(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + QStringLiteral("/seven-wu-trayrc"), QSettings::IniFormat);
+                if (seen.value(QStringLiteral("count")).toInt() != int(e.updates.size())) {
+                    seen.setValue(QStringLiteral("count"), int(e.updates.size()));
+                    sni->showMessage(tr7("New updates are available"), tr7("Click to install them."), QStringLiteral("seven-wu-app"));
+                }
+            }
+        });
+        engine.load();
+        auto *again = new QTimer(&app);
+        again->setInterval(30 * 60 * 1000); // installed meanwhile (Control Panel, Discover, dnf...): the icon goes
+        QObject::connect(again, &QTimer::timeout, &app, [] { Win7Update::Engine::self().load(); });
+        again->start();
+        return app.exec();
     }
     if (app.arguments().contains(QStringLiteral("--wf"))) {
         app.setDesktopFileName(QStringLiteral("seven-wf"));

@@ -1,0 +1,10 @@
+[Unit]
+Description=Windows Update: look for waiting updates now and then
+PartOf=graphical-session.target
+
+[Timer]
+OnActiveSec=10min
+OnUnitInactiveSec=4h
+
+[Install]
+WantedBy=graphical-session.target

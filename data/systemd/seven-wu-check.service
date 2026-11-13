@@ -1,0 +1,10 @@
+[Unit]
+Description=Windows Update: the notification-area icon while updates are waiting
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+# looks at the package cache and ends at once when nothing is waiting; with updates it shows the icon until
+# they are installed or Windows Update is opened
+ExecStart=%h/.local/bin/seven-control --wu-check
+Nice=10
