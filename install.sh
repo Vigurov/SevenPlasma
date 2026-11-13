@@ -321,13 +321,12 @@ fi
 if [ -n "${PREBUILT_URL:-}" ] && { [ "$PREBUILT_URL" = file ] || curl -fsSL --retry 2 -o "$WORK/prebuilt.tar.xz" "$PREBUILT_URL" 2>> "$LOG"; }; then
     PREBUILT=$WORK/prebuilt
     sudo rm -rf "$PREBUILT"; mkdir -p "$PREBUILT"
-    run sudo tar -C "$PREBUILT" -xJf "$WORK/prebuilt.tar.xz"   # as root: the system part keeps root as owner
-    run sudo chown -R "$(id -u):$(id -g)" "$PREBUILT/local" "$PREBUILT/src" "$PREBUILT/runtime-packages.txt"
-    rm -f "$WORK/prebuilt.tar.xz"
+    # everything but the system part here (the system part goes straight into / later)
+    run tar -C "$PREBUILT" -xJf "$WORK/prebuilt.tar.xz" --exclude=./sys
 fi
 if [ -n "$PREBUILT" ] && [ "$(cat "$PREBUILT/key" 2>/dev/null)" != "$KEY" ]; then   # made for another system
     warn "$(L "готові файли для іншої системи ($(cat "$PREBUILT/key" 2>/dev/null)): збираю тут" "the prebuilt files are for another system ($(cat "$PREBUILT/key" 2>/dev/null)): building here")"
-    sudo rm -rf "$PREBUILT"; PREBUILT=""
+    sudo rm -rf "$PREBUILT"; PREBUILT=""; rm -f "$WORK/prebuilt.tar.xz"
 fi
 if [ -n "$PREBUILT" ]; then
     mapfile -t RT < "$PREBUILT/runtime-packages.txt"
@@ -346,13 +345,18 @@ case $PM in
 esac
 if [ -n "$PREBUILT" ]; then
     # the files the build put into the system and into ~/.local, recorded for uninstall.sh like built ones
-    (cd "$PREBUILT/sys" && find . \( -type f -o -type l \) | sed 's#^\.##') >> "$BK/system-files.txt"
-    run sudo cp -a --remove-destination "$PREBUILT/sys/." /   # (a running program is replaced, not overwritten)
+    tar -tJf "$WORK/prebuilt.tar.xz" ./sys | grep -v '/$' | sed 's#^\./sys##' >> "$BK/system-files.txt"
+    # with tar straight from the archive: new files get the system's own labels (SELinux: copies would carry the
+    # labels of the download folder and the system could no longer load its libraries), the folders already
+    # there keep theirs, a running program is replaced and not overwritten
+    run sudo tar -C / -xJf "$WORK/prebuilt.tar.xz" --strip-components=2 --no-overwrite-dir \
+        --no-same-permissions --no-selinux --no-xattrs ./sys
+    rm -f "$WORK/prebuilt.tar.xz"
     mkdir -p "$HOME/.local"
     (cd "$PREBUILT/local" && find . \( -type f -o -type l \) | sed "s#^\.#$HOME/.local#") >> "$BK/user-files.txt"
     cp -a --remove-destination "$PREBUILT/local/." "$HOME/.local/"
     run sudo ldconfig
-    sudo rm -rf "$PREBUILT/sys" "$PREBUILT/local"   # (src/ is used until the end)
+    rm -rf "$PREBUILT/local"   # (src/ is used until the end)
 fi
 # the packages installed for SevenPlasma (uninstall.sh offers to remove them again)
 installed | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
