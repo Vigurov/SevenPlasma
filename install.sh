@@ -106,7 +106,8 @@ esac
 # and the patched KDE parts use their private interfaces). With one for this system and this commit of the
 # repository nothing is compiled here.
 libver() { local f; f=$(ls /usr/lib64/lib"$1".so.6.* /usr/lib/lib"$1".so.6.* /usr/lib/*/lib"$1".so.6.* 2>/dev/null | head -1); [ -n "$f" ] && basename "$f" | sed "s/^lib$1\.so\.//"; }
-OSID=$(. /etc/os-release; echo "${ID}-${VERSION_ID:-rolling}")
+# (Arch and the distributions made from it are rolling: one key, whatever version an image of it states)
+OSID=$(. /etc/os-release; case " $ID ${ID_LIKE:-} " in *" arch "*) echo arch-rolling ;; *) echo "${ID}-${VERSION_ID:-rolling}" ;; esac)
 KEY="$OSID-plasma$PLASMA-kf$(libver KF6CoreAddons || true)-qt$(libver Qt6Core || true)"
 # the last commit that changed what goes into an archive (a commit of the README alone needs no new one)
 COMMIT=$(git -C "$REPO" log -1 --format=%H -- apps patches install.sh .github/workflows/prebuilt.yml 2>/dev/null | cut -c1-12 || true)
