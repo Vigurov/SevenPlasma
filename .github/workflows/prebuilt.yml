@@ -45,7 +45,7 @@ jobs:
             || { tail -100 /home/builder/.cache/sevenplasma-build/install.log; exit 1; }
           KEY=$(tar -xJOf /tmp/sevenplasma.tar.xz ./key)
           mkdir -p out && mv /tmp/sevenplasma.tar.xz "out/sevenplasma-$KEY.tar.xz"
-          echo "COMMIT=$(git -C "$GITHUB_WORKSPACE" rev-parse --short=12 HEAD)" >> "$GITHUB_ENV"
+          echo "COMMIT=${GITHUB_SHA::12}" >> "$GITHUB_ENV"   # (what install.sh asks for: git rev-parse --short=12)
           ls -l out
 
       - uses: softprops/action-gh-release@v2
