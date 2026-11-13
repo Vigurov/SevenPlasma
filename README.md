@@ -18,7 +18,7 @@ effects, logon screen and UAC are their work. SevenPlasma adds its own changes a
 |---|---|
 | **Shell** | AeroThemePlasma with changes: Start menu, taskbar, tray, tooltips, desktop, logon and lock screens (including accounts without a password, as in Windows 7) |
 | **Explorer** | Dolphin and KIO with changes: command bar, libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails |
-| **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update, Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
+| **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update (with its notification-area icon when updates are waiting), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
 | **Administrative tools** | Computer Management, Event Viewer, Disk Management, Windows Firewall with Advanced Security, Device Manager, Task Manager, Resource Monitor |
 | **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, gadgets, Run |
 | **Help and Support** | the Windows 7 Help window (Start menu → Help and Support) instead of KDE's online manual |
