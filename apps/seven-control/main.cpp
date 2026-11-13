@@ -56,6 +56,7 @@ static QString argAfterHelp(const QStringList &args)
 #include "win7sharing.h"
 #include "win7trash.h"
 #include "win7perf.h"
+#include "win7system.h"
 #include "win7games.h"
 #include "win7indexing.h"
 #include "win7properties.h"
@@ -176,6 +177,14 @@ std::function<void()> tool(const QString &name, const QString &fallback = QStrin
 {
     return [name, fallback] {
         launchWin7Tool(name, fallback);
+    };
+}
+
+/** System is a page of the Control Panel's window, as in Windows 7 */
+std::function<void()> systemPage()
+{
+    return [] {
+        g_openView(Win7System::SystemView);
     };
 }
 
@@ -387,7 +396,7 @@ QList<Item> allItems()
         {tr7("Mouse"), QStringLiteral("seven-cpi-mouse"), QStringLiteral("seven-cpi-mouse"), self({QStringLiteral("--mouse")})},
         {tr7("Personalization"), QStringLiteral("seven-cpi-personalize"), QStringLiteral("seven-cpi-personalize"), view(Win7Display::PersonalizeView)},
         {tr7("Default Programs"), QStringLiteral("seven-cpi-defaults"), QStringLiteral("seven-cpi-defaults"), view(Win7Programs::DefaultsView)},
-        {tr7("System"), QStringLiteral("seven-cpi-system"), QStringLiteral("seven-cpi-system"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
+        {tr7("System"), QStringLiteral("seven-cpi-system"), QStringLiteral("seven-cpi-system"), systemPage()},
         {tr7("Action Center"), QStringLiteral("seven-cpi-actioncenter"), QStringLiteral("seven-cpi-actioncenter"), view(Win7Action::CenterView)},
         {tr7("Fonts"), QStringLiteral("seven-cpi-fonts"), QStringLiteral("seven-cpi-fonts"), view(Win7Fonts::FontsView)},
         {tr7("Performance Information and Tools"), QStringLiteral("seven-cpi-perf"), QStringLiteral("seven-cpi-perf"), view(Win7Perf::PerfView)},
@@ -575,9 +584,9 @@ const QList<CategoryPage> &categoryPages()
              {QStringLiteral("seven-cpi-firewall"), tr7("Windows Firewall"), view(Win7Firewall::StatusView),
               {{tr7("Check firewall status"), view(Win7Firewall::StatusView)},
                {tr7("Allow a program through Windows Firewall"), view(Win7Firewall::AllowedView)}}},
-             {QStringLiteral("seven-cpi-system"), tr7("System"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter")),
-              {{tr7("View amount of RAM and processor speed"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
-               {tr7("See the name of this computer"), tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter"))},
+             {QStringLiteral("seven-cpi-system"), tr7("System"), systemPage(),
+              {{tr7("View amount of RAM and processor speed"), systemPage()},
+               {tr7("See the name of this computer"), systemPage()},
                {tr7("Check the Windows Experience Index"), view(Win7Perf::PerfView)},
                {tr7("Device Manager"), tool(QStringLiteral("seven-devmgr"), QStringLiteral("kinfocenter")), true}}},
              {QStringLiteral("seven-cpi-update"), tr7("Windows Update"), view(Win7Update::UpdateView),
@@ -1028,6 +1037,9 @@ private:
             return;
         }
         Win7Sound::playNavigationSound();
+        if (view == Win7System::SystemView) {
+            m_systemFromAll = m_view == LargeIcons || m_view == SmallIcons;
+        }
         m_history.append(m_view);
         m_future.clear();
         m_view = view;
@@ -1050,6 +1062,18 @@ private:
             crumbs = {{tr7("Games"), nullptr}};
         } else if (m_view >= FirstCategoryPage) {
             crumbs.append({categoryPages().at(m_view - FirstCategoryPage).title, nullptr});
+        } else if (m_view == Win7System::SystemView) {
+            // as in Windows 7: the way it was opened (category page or All Control Panel Items)
+            if (m_systemFromAll) {
+                crumbs.append({tr7("All Control Panel Items"), [this] {
+                                   setView(SmallIcons);
+                               }});
+            } else {
+                crumbs.append({tr7("System and Security"), [this] {
+                                   setView(FirstCategoryPage + 1);
+                               }});
+            }
+            crumbs.append({tr7("System"), nullptr});
         } else if (isFirewallView(m_view)) {
             crumbs.append({tr7("System and Security"), [this] {
                                setView(FirstCategoryPage + 1);
@@ -1284,6 +1308,8 @@ private:
             placeIcon = QStringLiteral("seven-cpi-trayicons");
         } else if (isFirewallView(m_view)) {
             placeIcon = QStringLiteral("seven-cpi-firewall");
+        } else if (m_view == Win7System::SystemView) {
+            placeIcon = QStringLiteral("seven-cpi-system");
         } else if (isDisplayView(m_view)) {
             placeIcon = (m_view == Win7Display::PersonalizeView || m_view == Win7Background::BackgroundView || m_view == Win7WindowColor::ColorView)
                 ? QStringLiteral("seven-cpi-personalize")
@@ -1544,6 +1570,19 @@ private:
                                     }};
             setWindowTitle(tr7("Notification Area Icons"));
             m_scroll->setWidget(m_view == Win7Tray::IconsView ? Win7Tray::buildIconsPage(nav) : Win7Tray::buildSystemPage(nav));
+            return;
+        }
+        if (m_view == Win7System::SystemView) {
+            Win7System::Nav nav{[this](int v) {
+                                    setView(v);
+                                },
+                                [this] {
+                                    setView(CategoryView);
+                                }};
+            nav.actionCenter = Win7Action::CenterView;
+            nav.windowsUpdate = Win7Update::UpdateView;
+            setWindowTitle(tr7("System"));
+            m_scroll->setWidget(Win7System::buildPage(nav));
             return;
         }
         if (isFirewallView(m_view)) {
@@ -1891,6 +1930,7 @@ private:
     Win7Programs::AssocPage *m_assoc = nullptr;
     Win7Header m_header;
     int m_view = CategoryView;
+    bool m_systemFromAll = false; // System was opened from All Control Panel Items (its address bar)
     QList<int> m_history;
     QList<int> m_future;
     QString m_filter;
@@ -2620,6 +2660,9 @@ int main(int argc, char **argv)
     }
     if (app.arguments().contains(QStringLiteral("--firewall")) && g_openView) {
         g_openView(Win7Firewall::StatusView);
+    }
+    if (app.arguments().contains(QStringLiteral("--system")) && g_openView) {
+        g_openView(Win7System::SystemView);
     }
     if (app.arguments().contains(QStringLiteral("--action-center")) && g_openView) {
         g_openView(Win7Action::CenterView);

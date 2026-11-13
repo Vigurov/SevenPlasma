@@ -75,12 +75,19 @@ systemctl --user mask --now drkonqi-coredump-launcher.socket >/dev/null 2>&1 || 
 # no Discover "Updates" gear in the tray: Windows 7 tells about updates through the Action Center flag
 mkdir -p "$HOME/.config/autostart"
 printf '[Desktop Entry]\nHidden=true\n' > "$HOME/.config/autostart/org.kde.discover.notifier.desktop"
-pkill -f /usr/lib/.*DiscoverNotifier >/dev/null 2>&1 || pkill -x DiscoverNotifier >/dev/null 2>&1 || true
-# Start menu: Run opens our dialog
-qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+# (running already in this first session: systemd started it from its autostart entry; /usr/lib/... on Ubuntu
+# and Arch, /usr/libexec on Fedora)
+systemctl --user stop app-org.kde.discover.notifier@autostart.service >/dev/null 2>&1 || true
+pkill -f '/DiscoverNotifier( |$)' >/dev/null 2>&1 || true
+# Start menu: Run opens our dialog; Games above Computer when the Windows 7 games are installed (Windows 7
+# Ultimate shows it by default)
+SIDE='{"Home directory":1,"Documents":1,"Pictures":1,"Music":1,"Computer":1,"Control Panel":1,"Devices and Printers":1,"Default Programs":1,"Help and Support":1}'
+[ -f "$HOME/.local/share/seven-control/games.json" ] && SIDE='{"Home directory":1,"Documents":1,"Pictures":1,"Music":1,"Games":1,"Computer":1,"Control Panel":1,"Devices and Printers":1,"Default Programs":1,"Help and Support":1}'
+qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
 panels().forEach(function (p) { p.widgets().forEach(function (w) {
-    if (w.type == "io.gitgud.wackyideas.SevenStart") { w.currentConfigGroup = ["General"]; w.writeConfig("defaultRunnerApp", "seven-control --run"); }
-}); });'
+    if (w.type == 'io.gitgud.wackyideas.SevenStart') { w.currentConfigGroup = ['General']; w.writeConfig('defaultRunnerApp', 'seven-control --run');
+        w.writeConfig('sidePanelVisibility', '$SIDE'); }
+}); });"
 
 # notification area as in a new Windows 7 account: Action Center (flag), Network and Volume always shown,
 # Power too on a laptop (a battery is there); everything else behind the arrow

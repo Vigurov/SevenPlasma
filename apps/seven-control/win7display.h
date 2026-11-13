@@ -975,7 +975,7 @@ inline QWidget *buildPersonalizePage(const Nav &nav)
                            {tr7("Change your account picture", "personalization"), [nav] { nav.open(28); /* Win7Users::PictureView, own account */ }}},
                           {{tr7("Display"), [nav] { nav.open(DisplayView); }},
                            {tr7("Taskbar and Start Menu"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--taskbar-props")}); }},
-                           {tr7("Ease of Access Center"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--ease")}); }}});
+                           {tr7("Ease of Access Center"), [nav] { nav.open(3); /* Win7Access::CenterView, in this window as in Windows 7 */ }}});
 
     auto *main = new QWidget;
     auto *mv = new QVBoxLayout(main);
@@ -2100,7 +2100,7 @@ inline QWidget *buildDisplayPage(const Nav &nav)
                            {tr7("Adjust ClearType text", "task"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--cttune")}); }},
                            {tr7("Set custom text size (DPI)"), [] { systemSettings(QStringLiteral("kcm_fonts")); }}},
                           {{tr7("Personalization"), [nav] { nav.open(PersonalizeView); }},
-                           {tr7("Devices and Printers"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--devices")}); }}});
+                           {tr7("Devices and Printers"), [nav] { nav.open(40); /* Win7Dev::DevicesView, in this window */ }}});
 
     auto *main = new QWidget;
     auto *mv = new QVBoxLayout(main);

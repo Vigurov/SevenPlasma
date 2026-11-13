@@ -44,6 +44,7 @@
 #include <QStandardPaths>
 #include <QStyle>
 #include <QSysInfo>
+#include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <cmath>

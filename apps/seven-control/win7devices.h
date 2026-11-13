@@ -1396,7 +1396,7 @@ private:
             c << Command{tr7("Remove device"), [this, d] { removeDevice(d); }, false, true};
             break;
         case Device::Computer:
-            c << Command{tr7("System properties"), [] { launchWin7Tool(QStringLiteral("seven-system"), QStringLiteral("kinfocenter")); }};
+            c << Command{tr7("System properties"), [this] { m_nav.open(98); /* Win7System::SystemView, in this window */ }};
             c << Command{tr7("Power options"), [this] { m_nav.open(Win7Power::PlansView); }};
             c << Command{tr7("Mouse settings"), [] { self({QStringLiteral("--mouse")}); }};
             c << Command{tr7("Keyboard settings"), [] { QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--keyboard")}); }};

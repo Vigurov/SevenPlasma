@@ -39,6 +39,9 @@ protected:
             QStyleOptionMenuItem opt;
             initStyleOption(&opt, a);
             opt.rect = actionGeometry(a);
+            // the item only: some styles (Kvantum) fill the whole bar (menuRect) behind a hovered item, which wiped
+            // the text of the items painted before it
+            opt.menuRect = opt.rect;
             // an app's own style sheet with item rules draws its items (transparent at rest) with its own colours
             if (styleSheet().contains(QLatin1String("::item")) || (opt.state & (QStyle::State_Selected | QStyle::State_Sunken))) {
                 style()->drawControl(QStyle::CE_MenuBarItem, &opt, &p, this);

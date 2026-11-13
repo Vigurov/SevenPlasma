@@ -122,6 +122,10 @@ settings</source>
         <translation>Диспетчер задач</translation>
     </message>
     <message>
+        <source>Performance Information and Tools</source>
+        <translation>Лічильники та засоби продуктивності</translation>
+    </message>
+    <message>
         <source>View basic information about your computer</source>
         <translation>Перегляд основних відомостей про ваш комп'ютер</translation>
     </message>
