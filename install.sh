@@ -108,7 +108,8 @@ esac
 libver() { local f; f=$(ls /usr/lib64/lib"$1".so.6.* /usr/lib/lib"$1".so.6.* /usr/lib/*/lib"$1".so.6.* 2>/dev/null | head -1); [ -n "$f" ] && basename "$f" | sed "s/^lib$1\.so\.//"; }
 OSID=$(. /etc/os-release; echo "${ID}-${VERSION_ID:-rolling}")
 KEY="$OSID-plasma$PLASMA-kf$(libver KF6CoreAddons || true)-qt$(libver Qt6Core || true)"
-COMMIT=$(git -C "$REPO" rev-parse --short=12 HEAD 2>/dev/null || true)
+# the last commit that changed what goes into an archive (a commit of the README alone needs no new one)
+COMMIT=$(git -C "$REPO" log -1 --format=%H -- apps patches install.sh .github/workflows/prebuilt.yml 2>/dev/null | cut -c1-12 || true)
 PREBUILT=""
 if [ $SOURCE = 0 ] && [ -z "$PACK" ] && [ $FORKS = 1 ] && [ -n "$COMMIT" ] && git -C "$REPO" diff --quiet HEAD -- apps patches 2>/dev/null; then
     PREBUILT_URL="https://github.com/Vigurov/SevenPlasma/releases/download/prebuilt-$COMMIT/sevenplasma-$KEY.tar.xz"

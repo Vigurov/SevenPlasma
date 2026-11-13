@@ -36,6 +36,8 @@ jobs:
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
 
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the history: the tag names the last commit that changed what is built
 
       - name: Build and pack
         run: |
@@ -45,7 +47,9 @@ jobs:
             || { tail -100 /home/builder/.cache/sevenplasma-build/install.log; exit 1; }
           KEY=$(tar -xJOf /tmp/sevenplasma.tar.xz ./key)
           mkdir -p out && mv /tmp/sevenplasma.tar.xz "out/sevenplasma-$KEY.tar.xz"
-          echo "COMMIT=${GITHUB_SHA::12}" >> "$GITHUB_ENV"   # (what install.sh asks for: git rev-parse --short=12)
+          # as install.sh computes it (run as the owner of the checkout: git refuses it to root)
+          COMMIT=$(su builder -c "git -C '$GITHUB_WORKSPACE' log -1 --format=%H -- apps patches install.sh .github/workflows/prebuilt.yml" | cut -c1-12)
+          [ -n "$COMMIT" ] && echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
           ls -l out
 
       - uses: softprops/action-gh-release@v2
