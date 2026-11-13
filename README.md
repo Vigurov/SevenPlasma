@@ -93,6 +93,14 @@ Type your password and press Enter.
 shortcuts), with no wizards or questions. A few minutes later the Windows Experience Index of your computer is
 rated in the background, as on a new Windows 7 (Control Panel → System shows it).
 
+The first login also turns off background helpers of KDE and the distribution that Windows 7 has no counterpart
+of, so the desktop needs less memory after login (measured: Fedora 1.88 → 1.44 GB, Kubuntu 1.32 → 1.22 GB): calendar reminders, which start
+Akonadi (the mail and calendar store of KDE programs with its database), screen sharing for X11 programs
+(xwaylandvideobridge), KDE Connect, the crash report pop-ups (abrt, apport) and KDE's push messages. Nothing is
+uninstalled: KMail and Kontact start Akonadi themselves when you open them, and KDE Connect and the calendar
+reminders can be turned back on in Control Panel → Programs → Turn Windows features on or off. The notification
+area loads only the items Windows 7 has a counterpart of.
+
 ![The desktop after the first login](docs/images/install-4-desktop.png)
 
 Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions),
@@ -112,6 +120,7 @@ with a warning. The installer speaks Ukrainian on a Ukrainian system and English
 - the files of AeroThemePlasma and of the patched Dolphin / KIO / Kvantum / libplasma are removed, and the
   original packages of your distribution are reinstalled;
 - the boot screen, the logon screen and session, the keyboard and account settings are as before;
+- the KDE background helpers the first login turned off start again;
 - your Plasma settings from before the install (theme, panel, wallpaper, shortcuts...) come back at the next
   login. Changes you made to them while SevenPlasma was installed are not kept;
 - if you agree, the packages installed only for building SevenPlasma are removed too. Updates of system

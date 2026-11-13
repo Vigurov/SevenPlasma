@@ -15371,5 +15371,21 @@ settings</source>
         <source>Click to install them.</source>
         <translation>Клацніть, щоб інсталювати їх.</translation>
     </message>
+    <message>
+        <source>KDE Connect</source>
+        <translation>KDE Connect</translation>
+    </message>
+    <message>
+        <source>Links this computer with your phone: notifications, files, clipboard and remote control. Runs in the background.</source>
+        <translation>Зв'язує цей комп'ютер із телефоном: сповіщення, файли, буфер обміну й дистанційне керування. Працює у фоновому режимі.</translation>
+    </message>
+    <message>
+        <source>Calendar reminders (Akonadi)</source>
+        <translation>Нагадування календаря (Akonadi)</translation>
+    </message>
+    <message>
+        <source>Reminds of calendar events in the background. Starts the mail and calendar store of KDE programs (about 400 MB of memory); KMail and Kontact start it themselves when it is off.</source>
+        <translation>Нагадує про події календаря у фоновому режимі. Запускає сховище пошти й календаря програм KDE (близько 400 МБ пам'яті); коли компонент вимкнено, KMail і Kontact запускають його самі.</translation>
+    </message>
 </context>
 </TS>

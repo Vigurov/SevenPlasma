@@ -79,6 +79,26 @@ printf '[Desktop Entry]\nHidden=true\n' > "$HOME/.config/autostart/org.kde.disco
 # and Arch, /usr/libexec on Fedora)
 systemctl --user stop app-org.kde.discover.notifier@autostart.service >/dev/null 2>&1 || true
 pkill -f '/DiscoverNotifier( |$)' >/dev/null 2>&1 || true
+# background helpers of KDE and the distribution that Windows 7 has no counterpart of, off at login (their
+# programs still work: KMail / Kontact start Akonadi themselves, KDE Connect can be turned on in Windows
+# Features). Only the user's autostart is overridden (marked, uninstall.sh removes these files again); an
+# entry the user has overridden already is left as it is.
+#   kalendarac: calendar reminders, it starts Akonadi (KDE's mail/calendar store + MariaDB, ~400 MB)
+#   xwaylandvideobridge: screen sharing for X11 programs; kdeconnect: phone link; geoclue demo agent;
+#   abrt applet (Fedora) and apport (Ubuntu): crash report pop-ups; kunifiedpush: push messages for KDE apps
+for d in org.kde.kalendarac org.kde.xwaylandvideobridge org.kde.kdeconnect.daemon geoclue-demo-agent \
+         org.freedesktop.problems.applet apport-gtk org.kde.kunifiedpush-distributor; do
+    f="$HOME/.config/autostart/$d.desktop"
+    [ -e "/etc/xdg/autostart/$d.desktop" ] && [ ! -e "$f" ] && printf '[Desktop Entry]\nHidden=true\nX-SevenPlasma=off\n' > "$f"
+    systemctl --user stop "app-$d@autostart.service" >/dev/null 2>&1 || true
+done
+if systemctl --user cat kunifiedpush-distributor.service >/dev/null 2>&1 && \
+   [ ! -e "$HOME/.config/systemd/user/kunifiedpush-distributor.service" ]; then
+    systemctl --user mask --now kunifiedpush-distributor.service >/dev/null 2>&1 || true
+fi
+command -v akonadictl >/dev/null && akonadictl stop >/dev/null 2>&1 || true
+pkill -x kdeconnectd >/dev/null 2>&1 || true   # (D-Bus started it for its tray item)
+
 # Start menu: Run opens our dialog; Games above Computer when the Windows 7 games are installed (Windows 7
 # Ultimate shows it by default)
 SIDE='{"Home directory":1,"Documents":1,"Pictures":1,"Music":1,"Computer":1,"Control Panel":1,"Devices and Printers":1,"Default Programs":1,"Help and Support":1}'
@@ -99,7 +119,9 @@ const shown = '$SHOWN'.split(','), keep = '$HIDE'.split(',').filter(function (x)
 panels().forEach(function (p) { p.widgets().forEach(function (w) {
     if (w.type != 'io.gitgud.wackyideas.systemtray') return;
     w.currentConfigGroup = ['General'];
-    const extra = String(w.readConfig('extraItems', '')).split(',').filter(function (x) { return x; });
+    const drop = ['org.kde.kdeconnect', 'org.kde.plasma.vault', 'org.kde.plasma.clipboard', 'org.kde.plasma.weather',
+                  'org.kde.plasma.dwellclicker', 'org.kde.kscreen', 'org.kde.plasma.mediacontroller', 'org.kde.plasma.cameraindicator'];
+    const extra = String(w.readConfig('extraItems', '')).split(',').filter(function (x) { return x && drop.indexOf(x) < 0; });
     shown.concat(keep).forEach(function (x) { if (extra.indexOf(x) < 0) extra.push(x); });
     w.writeConfig('extraItems', extra);
     w.writeConfig('shownItems', shown);

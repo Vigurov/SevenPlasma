@@ -101,6 +101,7 @@ inline QStringList windowsCommand(const QString &word, const QStringList &args)
         {QStringLiteral("wf.msc"), {QStringLiteral("--wf")}},
         {QStringLiteral("firewall.cpl"), {QStringLiteral("--firewall")}},
         {QStringLiteral("appwiz.cpl"), {QStringLiteral("--programs")}},
+        {QStringLiteral("optionalfeatures"), {QStringLiteral("--features")}},
         {QStringLiteral("ncpa.cpl"), {QStringLiteral("--net-connections")}},
         {QStringLiteral("desk.cpl"), {QStringLiteral("--resolution")}},
         {QStringLiteral("main.cpl"), {QStringLiteral("--mouse")}},

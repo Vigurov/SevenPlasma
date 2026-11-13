@@ -47,6 +47,10 @@ systemctl --user disable --now seven-folder-refresh.service seven-soundfx.servic
 if [ -f "$BK/user-files.txt" ]; then   # what our programs' cmake installs put into ~/.local
     while IFS= read -r f; do case "$f" in "$L"/*) rm -f "$f" ;; esac; done < "$BK/user-files.txt"
 fi
+# KDE's background helpers the first login turned off (marked autostart overrides, push service)
+grep -l '^X-SevenPlasma=off' "$HOME"/.config/autostart/*.desktop 2>/dev/null | while read -r f; do rm -f "$f"; done
+[ "$(readlink "$HOME/.config/systemd/user/kunifiedpush-distributor.service" 2>/dev/null)" = /dev/null ] && \
+    systemctl --user unmask kunifiedpush-distributor.service >/dev/null 2>&1 || true
 systemctl --user unmask drkonqi-coredump-launcher.socket >/dev/null 2>&1 && systemctl --user start drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 rm -f "$HOME/.config/sevenplasma-firstrun.done" "$L"/bin/seven-* "$L"/bin/systemsettings "$L"/bin/kcmshell6 "$L"/bin/kinfocenter "$L"/bin/khelpcenter "$L"/share/applications/seven-*.desktop "$L"/share/applications/seven_*.desktop "$HOME"/.config/autostart/seven-*.desktop "$HOME"/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh "$HOME"/.config/plasma-workspace/env/sevenplasma-path.sh "$HOME"/.config/autostart/org.kde.discover.notifier.desktop
 [ -L "$L/bin/qdbus6" ] && [ "$(readlink "$L/bin/qdbus6")" = "$(command -v qdbus-qt6 2>/dev/null)" ] && rm -f "$L/bin/qdbus6"

@@ -1660,7 +1660,62 @@ struct Feature {
     QStringList packages; // all of them installed = on
     QList<Feature> children;
     bool baloo = false; // "Windows Search" is Baloo file indexing
+    QString autostart;  // a background helper of KDE started at login (its autostart entry): on = it starts
+    QString trayItem;   // ...and its notification area item
 };
+
+/** a KDE helper's login autostart: /etc/xdg/autostart/<id>.desktop, unless the user's own copy hides it */
+namespace Win7Autostart
+{
+inline QString userFile(const QString &id)
+{
+    return QDir::homePath() + QStringLiteral("/.config/autostart/") + id + QStringLiteral(".desktop");
+}
+
+inline bool exists(const QString &id)
+{
+    return QFile::exists(QStringLiteral("/etc/xdg/autostart/") + id + QStringLiteral(".desktop"));
+}
+
+inline bool enabled(const QString &id)
+{
+    QFile f(userFile(id));
+    if (!f.open(QIODevice::ReadOnly)) {
+        return true;
+    }
+    return !QString::fromUtf8(f.readAll()).contains(QRegularExpression(QStringLiteral("^Hidden=true$"), QRegularExpression::MultilineOption));
+}
+
+/** turns the helper on or off for the next logins and now (the off state as the first login writes it) */
+inline void set(const QString &id, const QString &trayItem, bool on)
+{
+    QDir().mkpath(QDir::homePath() + QStringLiteral("/.config/autostart"));
+    QFile f(userFile(id));
+    if (on) {
+        f.remove();
+        if (!enabled(id) && f.open(QIODevice::WriteOnly)) { // the user's own file could not be removed
+            f.write("[Desktop Entry]\nHidden=false\n");
+        }
+        QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("--user"), QStringLiteral("start"), QStringLiteral("app-%1@autostart.service").arg(id)});
+    } else {
+        if (f.open(QIODevice::WriteOnly)) {
+            f.write("[Desktop Entry]\nHidden=true\nX-SevenPlasma=off\n");
+        }
+        QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("--user"), QStringLiteral("stop"), QStringLiteral("app-%1@autostart.service").arg(id)});
+    }
+    if (!trayItem.isEmpty()) {
+        const QString js = QStringLiteral(
+            "panels().forEach(function (p) { p.widgets().forEach(function (w) {"
+            " if (w.type != 'io.gitgud.wackyideas.systemtray') return; w.currentConfigGroup = ['General'];"
+            " var e = String(w.readConfig('extraItems', '')).split(',').filter(function (x) { return x && x != '%1'; });"
+            " var h = String(w.readConfig('hiddenItems', '')).split(',').filter(function (x) { return x && x != '%1'; });"
+            " if (%2) { e.push('%1'); h.push('%1'); } w.writeConfig('extraItems', e); w.writeConfig('hiddenItems', h); w.reloadConfig(); }); });")
+                               .arg(trayItem, on ? QStringLiteral("true") : QStringLiteral("false"));
+        QProcess::startDetached(QStringLiteral("qdbus6"), {QStringLiteral("org.kde.plasmashell"), QStringLiteral("/PlasmaShell"),
+                                                           QStringLiteral("org.kde.PlasmaShell.evaluateScript"), js});
+    }
+}
+}
 
 /** the name of a Kubuntu package on Arch / Fedora ("" = none there) */
 inline QString nativePackage(const QString &deb)
@@ -1707,6 +1762,10 @@ inline QList<Feature> baseFeatures()
          {{tr7("Client for NFS"), tr7("Connects to NFS shared folders."), {QStringLiteral("nfs-common")}, {}}}},
         {tr7("File Sharing (SMB)"), tr7("Lets you share the folders of this computer with other computers on the network."), {QStringLiteral("samba")}, {}},
         {tr7("Windows Search"), tr7("Indexes files for fast search in the Start menu and Explorer."), {}, {}, true},
+        {tr7("KDE Connect"), tr7("Links this computer with your phone: notifications, files, clipboard and remote control. Runs in the background."),
+         {}, {}, false, QStringLiteral("org.kde.kdeconnect.daemon"), QStringLiteral("org.kde.kdeconnect")},
+        {tr7("Calendar reminders (Akonadi)"), tr7("Reminds of calendar events in the background. Starts the mail and calendar store of KDE programs (about 400 MB of memory); KMail and Kontact start it themselves when it is off."),
+         {}, {}, false, QStringLiteral("org.kde.kalendarac")},
         {tr7("Virtual PC"), tr7("Creates and runs virtual machines."), {QStringLiteral("virt-manager")}, {}},
         {QStringLiteral("Microsoft .NET Framework (Mono)"), tr7("A runtime for .NET programs."), {QStringLiteral("mono-runtime")}, {}},
         {tr7("Java Runtime Environment"), tr7("Runs programs written in Java."), {QStringLiteral("default-jre")}, {}},
@@ -1920,6 +1979,9 @@ private:
         if (f.baloo) {
             return true;
         }
+        if (!f.autostart.isEmpty()) {
+            return Win7Autostart::exists(f.autostart);
+        }
         for (const QString &p : f.packages) {
             if (!m_available.contains(p) && !m_installed.contains(p)) {
                 return false;
@@ -1940,6 +2002,9 @@ private:
     {
         if (f.baloo) {
             return m_baloo;
+        }
+        if (!f.autostart.isEmpty()) {
+            return Win7Autostart::enabled(f.autostart);
         }
         for (const QString &p : f.packages) {
             if (!m_installed.contains(p)) {
@@ -1971,6 +2036,7 @@ private:
                 it->setData(0, Qt::UserRole, f.packages);
                 it->setData(0, Qt::UserRole + 1, f.baloo);
                 it->setData(0, Qt::UserRole + 2, on(f));
+                it->setData(0, Qt::UserRole + 3, QStringList{f.autostart, f.trayItem});
             } else {
                 it->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsAutoTristate);
                 for (const Feature &c : f.children) {
@@ -2005,6 +2071,17 @@ private:
             }
             if (item->data(0, Qt::UserRole + 1).toBool()) {
                 baloo = want ? 1 : 0;
+                continue;
+            }
+            const QStringList helper = item->data(0, Qt::UserRole + 3).toStringList();
+            if (helper.size() == 2 && !helper.first().isEmpty()) {
+                Win7Autostart::set(helper.first(), helper.last(), want);
+                if (!want && helper.first() == QLatin1String("org.kde.kalendarac")) {
+                    QProcess::startDetached(QStringLiteral("akonadictl"), {QStringLiteral("stop")});
+                }
+                if (!want && helper.first() == QLatin1String("org.kde.kdeconnect.daemon")) { // D-Bus started, not by its autostart unit
+                    QProcess::startDetached(QStringLiteral("pkill"), {QStringLiteral("-x"), QStringLiteral("kdeconnectd")});
+                }
                 continue;
             }
             for (const QString &p : item->data(0, Qt::UserRole).toStringList()) {
