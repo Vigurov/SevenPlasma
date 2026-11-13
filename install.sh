@@ -108,7 +108,8 @@ esac
 libver() { local f; f=$(ls /usr/lib64/lib"$1".so.6.* /usr/lib/lib"$1".so.6.* /usr/lib/*/lib"$1".so.6.* 2>/dev/null | head -1); [ -n "$f" ] && basename "$f" | sed "s/^lib$1\.so\.//"; }
 # (Arch and the distributions made from it are rolling: one key, whatever version an image of it states)
 OSID=$(. /etc/os-release; case " $ID ${ID_LIKE:-} " in *" arch "*) echo arch-rolling ;; *) echo "${ID}-${VERSION_ID:-rolling}" ;; esac)
-KEY="$OSID-plasma$PLASMA-kf$(libver KF6CoreAddons || true)-qt$(libver Qt6Core || true)"
+syskey() { echo "$OSID-plasma$(v plasma-workspace)-kf$(libver KF6CoreAddons || true)-qt$(libver Qt6Core || true)"; }
+KEY=$(syskey)
 # the last commit that changed what goes into an archive (a commit of the README alone needs no new one)
 COMMIT=$(git -C "$REPO" log -1 --format=%H -- apps patches install.sh .github/workflows/prebuilt.yml 2>/dev/null | cut -c1-12 || true)
 PREBUILT=""
@@ -314,6 +315,13 @@ FPKGS=(git cmake extra-cmake-modules ninja-build gcc-c++ make curl unzip gettext
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav)
 # a prebuilt archive for this system: only the packages its programs need at run time (listed in it by the build
 # server), no compilers and -dev packages
+# Arch is updated as a whole before anything is installed (pacman installs only on an up-to-date system), and
+# archives are built for the current packages: the system's key is the one after the update
+if [ $PM = pacman ] && [ -n "${PREBUILT_URL:-}${SEVENPLASMA_PREBUILT:-}" ]; then
+    run sudo pacman -Syu --noconfirm
+    KEY=$(syskey)
+    [ -z "${PREBUILT_URL:-}" ] || PREBUILT_URL="https://github.com/Vigurov/SevenPlasma/releases/download/prebuilt-$COMMIT/sevenplasma-$KEY.tar.xz"
+fi
 # (SEVENPLASMA_PREBUILT=FILE: an archive from the disk, for testing)
 if [ -n "${SEVENPLASMA_PREBUILT:-}" ] && [ $SOURCE = 0 ] && [ -z "$PACK" ]; then
     cp "$SEVENPLASMA_PREBUILT" "$WORK/prebuilt.tar.xz"; PREBUILT_URL=file
