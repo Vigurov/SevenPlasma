@@ -188,6 +188,7 @@ cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and in
     mkdir -p "$build/bin/x11"   # the KWin effects link to bin/x11/NAME.so, but nothing creates that folder
     run cmake --build "$build" -j"$JOBS"
     run sudo cmake --install "$build"
+    run sudo ldconfig   # new shared libraries are found at once
     { cat "$build/install_manifest.txt"; echo; } >> "$BK/system-files.txt" 2>/dev/null || true   # it has no last newline
 }
 
