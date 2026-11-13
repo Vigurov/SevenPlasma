@@ -74,9 +74,11 @@ Instead of `~/Downloads/Windows7.iso` write where your image is. When the instal
 
 ![Starting the installer](docs/images/install-1-start.png)
 
-**2.** The installer installs packages, builds AeroThemePlasma, the patched Dolphin / KIO / Kvantum and the
-programs, and takes the Windows 7 resources from your image. This takes **10–40 minutes**. When it says
-`Done`, restart the computer.
+**2.** The installer installs the packages and takes the Windows 7 resources from your image. When GitHub has
+already built SevenPlasma for exactly your system (the distribution and its versions of Plasma, KDE Frameworks and
+Qt), it downloads that and compiles nothing: **about 5 minutes**. Otherwise it builds AeroThemePlasma, the patched
+Dolphin / KIO / Kvantum and the programs on your computer: **10–40 minutes**. When it says `Done`, restart the
+computer.
 
 ![The installer has finished](docs/images/install-2-done.png)
 
@@ -94,6 +96,7 @@ rated in the background, as on a new Windows 7 (Control Panel → System shows i
 ![The desktop after the first login](docs/images/install-4-desktop.png)
 
 Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions),
+`--from-source` (build everything here even when a prebuilt version for your system exists),
 `--boot-splash` (Arch only: also turns on the "Starting Windows" boot screen, which needs a Plymouth hook in the
 initramfs and the `splash` kernel option; the uninstaller puts both back. On Kubuntu and Fedora the boot screen is
 always installed).

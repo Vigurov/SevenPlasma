@@ -119,11 +119,12 @@ inline QWidget *makeSidebar(const Nav &nav)
     QObject::connect(home, &QAction::triggered, home, [nav] {
         nav.home();
     });
-    auto *sidebar = new Aero::Sidebar(home, 200, nullptr, false);
+    auto *sidebar = new Aero::Sidebar(home, 200, nullptr, true);
 
     auto elevated = [sidebar](const QString &text, std::function<void()> fn) {
         auto *a = new QAction(text, sidebar);
-        a->setProperty("elevatedPriv", true); // Windows 7 blue/yellow shield
+        // the Windows 7 blue/yellow shield: our own picture (the style's SP_VistaShield is empty with Kvantum on X11)
+        a->setIcon(QIcon::fromTheme(QStringLiteral("seven-cp-shield"), qApp->style()->standardIcon(QStyle::SP_VistaShield)));
         QObject::connect(a, &QAction::triggered, a, fn);
         sidebar->addAction(a);
     };
@@ -184,7 +185,7 @@ inline QWidget *makeInfo(const Info &info, const Nav &nav)
     title->setStyleSheet(QStringLiteral("color: #003399;"));
     top->addWidget(title, 1, Qt::AlignTop);
     auto *help = new QToolButton;
-    help->setIcon(QIcon::fromTheme(QStringLiteral("browser-help"), QIcon::fromTheme(QStringLiteral("help-contents"))));
+    help->setIcon(QIcon::fromTheme(QStringLiteral("seven-mmc-help"), QIcon::fromTheme(QStringLiteral("browser-help"))));
     help->setAutoRaise(true);
     help->setToolTip(tr7("Get help"));
     QObject::connect(help, &QToolButton::clicked, [] {
@@ -311,7 +312,7 @@ inline QWidget *makeInfo(const Info &info, const Nav &nav)
     cl->setContentsMargins(0, 0, 0, 0);
     cl->setSpacing(4);
     auto *shield = new QLabel;
-    shield->setPixmap(qApp->style()->standardIcon(QStyle::SP_VistaShield).pixmap(16, 16));
+    shield->setPixmap(QIcon::fromTheme(QStringLiteral("seven-cp-shield"), qApp->style()->standardIcon(QStyle::SP_VistaShield)).pixmap(16, 16));
     cl->addWidget(shield, 0, Qt::AlignTop);
     cl->addWidget(new Link(tr7("Change\nsettings"), [] {
         QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--sysprops"), QStringLiteral("0")});

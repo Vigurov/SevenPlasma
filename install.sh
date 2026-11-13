@@ -10,6 +10,8 @@
 # --no-forks   do not build the patched Dolphin / KIO / Kvantum (Explorer look, Windows 7 file dialogs)
 # --boot-splash  Arch: also turn on the "Starting Windows" boot screen (adds Plymouth to the initramfs and
 #              "quiet splash" to the kernel options of GRUB or systemd-boot; uninstall.sh puts them back)
+# --from-source  build everything here even when a prebuilt archive for this system is available
+# --pack FILE  (for the build servers) build, then pack what was built into FILE (a prebuilt archive) and stop
 #
 # Tested on Kubuntu 26.04 (Plasma 6.6, X11 session), Arch Linux and Fedora 45 KDE (Plasma 6.8, Wayland session).
 set -Eeuo pipefail
@@ -24,6 +26,8 @@ ISO=""
 GAMES=1
 FORKS=1
 BOOTSPLASH=0
+SOURCE=0
+PACK=""
 YES=0
 JOBS=$(nproc)
 # the Plasma settings SevenPlasma changes (kept by the first install, put back by uninstall.sh)
@@ -43,6 +47,8 @@ while [ $# -gt 0 ]; do
         --no-games) GAMES=0; shift ;;
         --no-forks) FORKS=0; shift ;;
         --boot-splash) BOOTSPLASH=1; shift ;;
+        --from-source) SOURCE=1; shift ;;
+        --pack) PACK=$(readlink -f "$2"); shift 2 ;;
         --yes|-y) YES=1; shift ;;
         -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "$(L "Невідомий параметр: $1 (див. ./install.sh --help)" "Unknown option: $1 (see ./install.sh --help)")"; exit 1 ;;
@@ -94,6 +100,19 @@ case "$PLASMA" in
     *) die "$(L "потрібна Plasma 6.6 або 6.8 (знайдено: ${PLASMA:-?})" "Plasma 6.6 or 6.8 is needed (found: ${PLASMA:-?})")" ;;
 esac
 [ -z "$ISO" ] || [ -f "$ISO" ] || die "$(L "файл образу не знайдено: $ISO" "image file not found: $ISO")"
+
+# Prebuilt archives (built by GitHub for each commit of SevenPlasma, .github/workflows/prebuilt.yml) are made for
+# one system exactly: the distribution and the versions of Plasma, KDE Frameworks and Qt (the shell, KWin effects
+# and the patched KDE parts use their private interfaces). With one for this system and this commit of the
+# repository nothing is compiled here.
+libver() { local f; f=$(ls /usr/lib64/lib"$1".so.6.* /usr/lib/lib"$1".so.6.* /usr/lib/*/lib"$1".so.6.* 2>/dev/null | head -1); [ -n "$f" ] && basename "$f" | sed "s/^lib$1\.so\.//"; }
+OSID=$(. /etc/os-release; echo "${ID}-${VERSION_ID:-rolling}")
+KEY="$OSID-plasma$PLASMA-kf$(libver KF6CoreAddons || true)-qt$(libver Qt6Core || true)"
+COMMIT=$(git -C "$REPO" rev-parse --short=12 HEAD 2>/dev/null || true)
+PREBUILT=""
+if [ $SOURCE = 0 ] && [ -z "$PACK" ] && [ $FORKS = 1 ] && [ -n "$COMMIT" ] && git -C "$REPO" diff --quiet HEAD -- apps patches 2>/dev/null; then
+    PREBUILT_URL="https://github.com/Vigurov/SevenPlasma/releases/download/prebuilt-$COMMIT/sevenplasma-$KEY.tar.xz"
+fi
 [ $WAYLAND = 1 ] || [ "${XDG_SESSION_TYPE:-x11}" = x11 ] || warn "$(L "зараз сесія $XDG_SESSION_TYPE; SevenPlasma розрахована на X11 (її можна вибрати на екрані входу)" "this is a $XDG_SESSION_TYPE session; SevenPlasma is made for X11 (choose it on the logon screen)")"
 
 echo "$(L "SevenPlasma: вигляд Windows 7 для KDE Plasma" "SevenPlasma: the Windows 7 experience for KDE Plasma")"
@@ -166,6 +185,7 @@ retry() {   # network steps: up to 3 tries (a dropped connection is not the end 
 # pinned upstream versions the patches are made for: name url commit
 pin() { awk -v n="$1" '$1 == n {print $2, $3}' "$PD/BASES.txt"; }
 fetch() {   # fetch NAME DIR -> checkout of the pinned commit with our patch applied
+    [ -z "$PREBUILT" ] || return 0
     local name=$1 dir=$2 url commit
     read -r url commit < <(pin "$name")
     if [ ! -d "$dir/.git" ]; then retry git clone --filter=blob:none "$url" "$dir"; fi
@@ -181,6 +201,7 @@ fresh_build() {   # fresh_build SRC BUILD
     fi
 }
 cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and installs to /usr with sudo
+    [ -z "$PREBUILT" ] || return 0
     local src=$1 build=$2; shift 2
     fresh_build "$src" "$build"
     run cmake -S "$src" -B "$build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
@@ -190,9 +211,57 @@ cmake_install() {   # cmake_install SRC BUILD [cmake args...]   -> builds and in
     run sudo cmake --install "$build"
     run sudo ldconfig   # new shared libraries are found at once
     { cat "$build/install_manifest.txt"; echo; } >> "$BK/system-files.txt" 2>/dev/null || true   # it has no last newline
+    { cat "$build/install_manifest.txt"; echo; } >> "$WORK/built-system.txt" 2>/dev/null || true
+}
+
+# --pack: what this run built, as a prebuilt archive for systems like this one (the build servers run this):
+#   sys/      the files the cmake installs put under /usr (their manifests) and KIO's translation
+#   local/    our programs from ~/.local
+#   src/      the parts of AeroThemePlasma's sources the install still reads (Kvantum theme, logon pictures)
+#   runtime-packages.txt  the distribution packages all that needs at run time: the owners of the libraries
+#             its programs link to, and the packages of our list that are not for building
+owner_pkg() {
+    case $PM in
+        apt) dpkg -S "$1" 2>/dev/null | head -1 | cut -d: -f1 ;;
+        pacman) pacman -Qqo "$1" 2>/dev/null ;;
+        dnf) rpm -qf --qf '%{NAME}\n' "$1" 2>/dev/null | grep -v ' ' ;;
+    esac
+}
+pack_prebuilt() {
+    local P=$WORK/pack f lib
+    sudo rm -rf "$P"; mkdir -p "$P/sys" "$P/local" "$P/src/atp-main/misc/kvantum" "$P/src/atp-main/plasma/look-and-feel/authui7/contents"
+    sort -u "$WORK/built-system.txt" | while IFS= read -r f; do
+        if [ -n "$f" ] && { [ -e "$f" ] || [ -L "$f" ]; }; then sudo cp -a --parents "$f" "$P/sys/"; fi
+    done
+    sort -u "$WORK/built-user.txt" | while IFS= read -r f; do
+        case "$f" in "$HOME/.local/"*) [ -e "$f" ] || [ -L "$f" ] || continue; (cd "$HOME/.local" && cp -a --parents "${f#$HOME/.local/}" "$P/local/") ;; esac
+    done || true
+    cp -a "$WORK/atp/main/misc/kvantum/Windows7Aero" "$P/src/atp-main/misc/kvantum/"
+    cp -a "$WORK/atp/main/plasma/look-and-feel/authui7/contents/images" "$P/src/atp-main/plasma/look-and-feel/authui7/contents/"
+    {
+        # the libraries of the ELF files (ldd resolves them on this system)
+        find "$P/sys" "$P/local" -type f | while IFS= read -r f; do
+            head -c 4 "$f" | grep -qa ELF || continue
+            ldd "$f" 2>/dev/null | awk '$2 == "=>" && $3 ~ /^\// {print $3}'
+        done | sort -u | while IFS= read -r lib; do owner_pkg "$(readlink -f "$lib")" || true; owner_pkg "$lib" || true; done
+        # and our lists without what is only for building
+        case $PM in apt) printf '%s\n' "${PKGS[@]}" ;; pacman) printf '%s\n' "${APKGS[@]}" ;; dnf) printf '%s\n' "${FPKGS[@]}" ;; esac \
+            | grep -Evx '.*-dev|.*-devel|cmake|extra-cmake-modules|ninja|ninja-build|build-essential|base-devel|gcc-c\+\+|make|vulkan-headers|wayland-protocols|plasma-wayland-protocols|wine|gst-.*|gstreamer1-.*'
+        printf '%s\n' xz-utils
+    } | grep -v '^$' | sort -u > "$P/runtime-packages.txt"
+    [ $PM = apt ] || sed -i '/^xz-utils$/d' "$P/runtime-packages.txt"
+    [ $PM = apt ] || echo xz >> "$P/runtime-packages.txt"
+    echo "$KEY" > "$P/key"
+    run sudo tar -C "$P" --owner=0 --group=0 --numeric-owner -cJf "$PACK" .
+    sudo chown "$(id -u):$(id -g)" "$PACK"
+    note "$(L "готовий архів: $PACK ($KEY)" "prebuilt archive: $PACK ($KEY)")"
 }
 
 # ------------------------------------------------------------------ 1. packages
+# programs of a running Plasma session can crash while their libraries are replaced; KDE's crash handler then
+# crashes as well, again and again, until the memory is full (the first login turns it off for good anyway,
+# uninstall.sh turns it back on)
+systemctl --user mask --now drkonqi-coredump-launcher.socket >> "$LOG" 2>&1 || true
 step "$(L "Встановлення пакетів" "Installing packages")"
 PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unzip 7zip python3-pil python3-pyqt6
       qt6-base-dev qt6-svg-dev qt6-multimedia-dev qt6-tools-dev qt6-5compat-dev qt6-declarative-dev
@@ -241,6 +310,31 @@ FPKGS=(git cmake extra-cmake-modules ninja-build gcc-c++ make curl unzip gettext
        kf6-frameworkintegration-devel libacl-devel libmount-devel kvantum sddm plasma-nm plasma-pa spectacle plymouth
        plymouth-plugin-script)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav)
+# a prebuilt archive for this system: only the packages its programs need at run time (listed in it by the build
+# server), no compilers and -dev packages
+# (SEVENPLASMA_PREBUILT=FILE: an archive from the disk, for testing)
+if [ -n "${SEVENPLASMA_PREBUILT:-}" ] && [ $SOURCE = 0 ] && [ -z "$PACK" ]; then
+    cp "$SEVENPLASMA_PREBUILT" "$WORK/prebuilt.tar.xz"; PREBUILT_URL=file
+fi
+if [ -n "${PREBUILT_URL:-}" ] && { [ "$PREBUILT_URL" = file ] || curl -fsSL --retry 2 -o "$WORK/prebuilt.tar.xz" "$PREBUILT_URL" 2>> "$LOG"; }; then
+    PREBUILT=$WORK/prebuilt
+    sudo rm -rf "$PREBUILT"; mkdir -p "$PREBUILT"
+    run sudo tar -C "$PREBUILT" -xJf "$WORK/prebuilt.tar.xz"   # as root: the system part keeps root as owner
+    run sudo chown -R "$(id -u):$(id -g)" "$PREBUILT/local" "$PREBUILT/src" "$PREBUILT/runtime-packages.txt"
+    rm -f "$WORK/prebuilt.tar.xz"
+fi
+if [ -n "$PREBUILT" ] && [ "$(cat "$PREBUILT/key" 2>/dev/null)" != "$KEY" ]; then   # made for another system
+    warn "$(L "готові файли для іншої системи ($(cat "$PREBUILT/key" 2>/dev/null)): збираю тут" "the prebuilt files are for another system ($(cat "$PREBUILT/key" 2>/dev/null)): building here")"
+    sudo rm -rf "$PREBUILT"; PREBUILT=""
+fi
+if [ -n "$PREBUILT" ]; then
+    mapfile -t RT < "$PREBUILT/runtime-packages.txt"
+    note "$(L "є готові файли для цієї системи ($KEY): компілювати нічого не треба" "prebuilt files for this system ($KEY): nothing to compile")"
+    case $PM in apt) PKGS=("${RT[@]}") ;; pacman) APKGS=("${RT[@]}") ;; dnf) FPKGS=("${RT[@]}") ;; esac
+    [ $GAMES -eq 1 ] && [ -n "$ISO" ] && case $PM in
+        apt) PKGS+=(wine) ;; pacman) APKGS+=(wine gst-plugins-base gst-plugins-good gst-libav) ;;
+        dnf) FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav) ;; esac
+fi
 case $PM in
     apt)
         run sudo apt-get -o DPkg::Lock::Timeout=900 update
@@ -248,6 +342,16 @@ case $PM in
     pacman) run sudo pacman -Syu --noconfirm --needed "${APKGS[@]}" ;;
     dnf) run sudo dnf install -y --setopt=install_weak_deps=False "${FPKGS[@]}" ;;
 esac
+if [ -n "$PREBUILT" ]; then
+    # the files the build put into the system and into ~/.local, recorded for uninstall.sh like built ones
+    (cd "$PREBUILT/sys" && find . \( -type f -o -type l \) | sed 's#^\.##') >> "$BK/system-files.txt"
+    run sudo cp -a --remove-destination "$PREBUILT/sys/." /   # (a running program is replaced, not overwritten)
+    mkdir -p "$HOME/.local"
+    (cd "$PREBUILT/local" && find . \( -type f -o -type l \) | sed "s#^\.#$HOME/.local#") >> "$BK/user-files.txt"
+    cp -a --remove-destination "$PREBUILT/local/." "$HOME/.local/"
+    run sudo ldconfig
+    sudo rm -rf "$PREBUILT/sys" "$PREBUILT/local"   # (src/ is used until the end)
+fi
 # the packages installed for SevenPlasma (uninstall.sh offers to remove them again)
 installed | comm -13 "$BK/packages-before.txt" - >> "$BK/packages-added.txt"
 sort -u -o "$BK/packages-added.txt" "$BK/packages-added.txt"
@@ -263,10 +367,10 @@ for r in libplasma uac-polkit-agent smod aeroshell-workspace aeroshell-kwin-comp
 done
 # the icon and sound packs are AeroThemePlasma's own (Windows resources): installed from its repositories
 for r in aerothemeplasma-icons aerothemeplasma-sounds; do
-    [ -d "$WORK/atp/repos/$r/.git" ] || retry git clone --depth 1 "https://gitgud.io/aeroshell/atp/$r" "$WORK/atp/repos/$r"
+    [ -n "$PREBUILT" ] || [ -d "$WORK/atp/repos/$r/.git" ] || retry git clone --depth 1 "https://gitgud.io/aeroshell/atp/$r" "$WORK/atp/repos/$r"
 done
 fetch aerothemeplasma "$WORK/atp/main"
-if [ $WAYLAND = 0 ]; then   # (in patches/plasma-6.8 they are part of aerothemeplasma.patch)
+if [ $WAYLAND = 0 ] && [ -z "$PREBUILT" ]; then   # (in patches/plasma-6.8 they are part of aerothemeplasma.patch)
     run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-local-overrides.patch"
     run git -C "$WORK/atp/main" apply --whitespace=nowarn "$REPO/patches/atp-sddm.patch"
 fi
@@ -309,11 +413,14 @@ KIOVER=6.24.0; DOLVER=25.12.3; KVVER=1.1.5; DOLSRC=dolphin-aero
 [ $WAYLAND = 1 ] && { KIOVER=6.31.0; DOLVER=26.08.3; KVVER=1.1.9; DOLSRC=dolphin; }
 # KIO is a part of the system's Frameworks: built only at exactly their version. Dolphin of the same release series
 # and Kvantum (they only need Qt and Frameworks) are built at the version of the patch over whatever is installed.
-if [ $FORKS -eq 1 ]; then
+if [ -n "$PREBUILT" ]; then
+    note "$(L "з готових файлів" "from the prebuilt files")"
+elif [ $FORKS -eq 1 ]; then
     if [ "$(v $KIOPKG)" = "$KIOVER" ]; then
         fetch kio "$WORK/src/kio"
         cmake_install "$WORK/src/kio" "$WORK/src/kio/build" -DBUILD_TESTING=OFF
-        run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo || true
+        run msgfmt -o "$WORK/kio6-win7.mo" "$WORK/src/kio/po-win7/uk.po" && run sudo install -m 644 "$WORK/kio6-win7.mo" /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo \
+            && echo /usr/share/locale/uk/LC_MESSAGES/kio6-win7.mo >> "$WORK/built-system.txt" || true
     else warn "$(L "KIO $(v $KIOPKG) не та версія, для якої зроблені зміни ($KIOVER): діалоги файлів лишаться звичайні" "KIO $(v $KIOPKG) is not the version the changes are made for ($KIOVER): file dialogs stay as they are")"; fi
     if [ "${DOLVER%.*}" = "$(v dolphin | cut -d. -f1,2)" ]; then
         fetch $DOLSRC "$WORK/src/$DOLSRC"
@@ -329,7 +436,7 @@ note "$(L "готово" "done")"
 # ------------------------------------------------------------------ 4. our programs
 step "$(L "Програми Windows 7 (Панель керування, Paint, WMP, гаджети...)" "Windows 7 programs (Control Panel, Paint, WMP, gadgets...)")"
 for d in "$REPO"/apps/seven-*/; do
-    [ -f "$d/CMakeLists.txt" ] || continue
+    [ -f "$d/CMakeLists.txt" ] && [ -z "$PREBUILT" ] || continue
     n=$(basename "$d")
     note "$n"
     if [ "$n" = seven-folderthumb ]; then
@@ -340,8 +447,10 @@ for d in "$REPO"/apps/seven-*/; do
         run cmake --build "$WORK/build/$n" -j"$JOBS"
         run cmake --install "$WORK/build/$n"
         { cat "$WORK/build/$n/install_manifest.txt"; echo; } >> "$BK/user-files.txt" 2>/dev/null || true
+        { cat "$WORK/build/$n/install_manifest.txt"; echo; } >> "$WORK/built-user.txt" 2>/dev/null || true
     fi
 done
+[ -z "$PACK" ] || { pack_prebuilt; exit 0; }
 L=$HOME/.local
 mkdir -p "$L/bin" "$L/lib/sevenplasma" "$L/share/applications" "$L/share/plasma/plasmoids" "$L/share/kwin/scripts" \
          "$HOME/.config/autostart" "$HOME/.config/systemd/user"
@@ -374,6 +483,9 @@ run kbuildsycoca6 || true
 note "$(L "готово" "done")"
 
 # ------------------------------------------------------------------ 5. Windows 7 resources from the user's image
+# the parts of AeroThemePlasma's sources used from here on (the Kvantum theme, the logon pictures)
+ATPMAIN=$WORK/atp/main
+[ -z "$PREBUILT" ] || ATPMAIN=$PREBUILT/src/atp-main
 step "$(L "Ресурси Windows 7 з вашого образу" "Windows 7 resources from your image")"
 if [ -n "$ISO" ]; then
     note "$(L "читаю образ (кілька хвилин)..." "reading the image (a few minutes)...")"
@@ -397,9 +509,9 @@ if [ -n "$ISO" ]; then
     mkdir -p "$HOME/.config/Kvantum"
     for t in Windows7 Windows7Blue Windows7Desktop; do
         run python3 "$REPO/extract/kvbuild.py" "$REPO/kvantum/$t" "$W/Windows/Resources/Themes/Aero/aero.msstyles" \
-            "$WORK/atp/main/misc/kvantum/Windows7Aero/Windows7Aero.svg" "$HOME/.config/Kvantum"
+            "$ATPMAIN/misc/kvantum/Windows7Aero/Windows7Aero.svg" "$HOME/.config/Kvantum"
     done
-    run python3 "$REPO/extract/plymouth-build.py" "$W" "$WORK/atp/main" "$L/share/fonts/Windows 7" "$WORK/plymouth"
+    run python3 "$REPO/extract/plymouth-build.py" "$W" "$ATPMAIN" "$L/share/fonts/Windows 7" "$WORK/plymouth"
     run sudo mkdir -p /usr/share/plymouth/themes/sevenplasma
     run sudo cp "$WORK"/plymouth/*.png "$REPO"/boot/plymouth/sevenplasma.* /usr/share/plymouth/themes/sevenplasma/
     run sudo cp "$L/share/sounds/Windows 7" -r /usr/share/sounds/ 2>/dev/null || true
@@ -427,7 +539,7 @@ if [ -n "$ISO" ]; then
 else
     note "$(L "образ не вказано: беру тему Kvantum ATP і вільний шрифт Selawik" "no image given: using ATP's Kvantum theme and the free Selawik font")"
     mkdir -p "$HOME/.config/Kvantum" "$L/share/fonts/Selawik"
-    cp -r "$WORK/atp/main/misc/kvantum/Windows7Aero" "$HOME/.config/Kvantum/Windows7"
+    cp -r "$ATPMAIN/misc/kvantum/Windows7Aero" "$HOME/.config/Kvantum/Windows7"
     mv "$HOME/.config/Kvantum/Windows7/Windows7Aero.svg" "$HOME/.config/Kvantum/Windows7/Windows7.svg" 2>/dev/null || true
     cp "$REPO/kvantum/Windows7/Windows7.kvconfig" "$HOME/.config/Kvantum/Windows7/"
     if run curl -fsSL -o "$WORK/selawik.zip" https://github.com/microsoft/Selawik/releases/download/1.01/Selawik_Release.zip; then
@@ -607,6 +719,8 @@ else
     note "$(L "тема застосується під час наступного входу" "the theme is applied at the next login")"
 fi
 note "$(L "готово" "done")"
+
+[ -z "$PREBUILT" ] || sudo rm -rf "$PREBUILT"
 
 # ------------------------------------------------------------------ 8. done
 step "$(L "Готово" "Done")"

@@ -1,0 +1,74 @@
+# Prebuilt archives: install.sh then installs without compiling anything (it downloads the archive made for its
+# own system and commit: release "prebuilt-<commit>", asset "sevenplasma-<system key>.tar.xz"; without one it
+# builds as before). Each archive is made in a clean container of the distribution by install.sh --pack.
+name: Prebuilt archives
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/**', 'patches/**', 'install.sh', '.github/workflows/prebuilt.yml']
+  schedule:
+    - cron: '0 3 * * 1'   # weekly: the distributions update Plasma, Frameworks and Qt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['ubuntu:26.04', 'archlinux:latest', 'fedora:45']
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    container: ${{ matrix.image }}
+    steps:
+      - name: Plasma, base tools and a build user (install.sh does not run as root)
+        run: |
+          case "${{ matrix.image }}" in
+            ubuntu*) export DEBIAN_FRONTEND=noninteractive
+                     apt-get update && apt-get install -y sudo git curl ca-certificates python3 xz-utils plasma-workspace ;;
+            archlinux*) pacman -Syu --noconfirm --needed sudo git curl python xz plasma-workspace ;;
+            fedora*) dnf install -y sudo git curl python3 xz plasma-workspace ;;
+          esac
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+
+      - uses: actions/checkout@v4
+
+      - name: Build and pack
+        run: |
+          chown -R builder: "$GITHUB_WORKSPACE"
+          su builder -c "git config --global --add safe.directory '$GITHUB_WORKSPACE' && cd '$GITHUB_WORKSPACE' \
+            && DEBIAN_FRONTEND=noninteractive ./install.sh --yes --no-games --pack /tmp/sevenplasma.tar.xz" \
+            || { tail -100 /home/builder/.cache/sevenplasma-build/install.log; exit 1; }
+          KEY=$(tar -xJOf /tmp/sevenplasma.tar.xz ./key)
+          mkdir -p out && mv /tmp/sevenplasma.tar.xz "out/sevenplasma-$KEY.tar.xz"
+          echo "COMMIT=$(git -C "$GITHUB_WORKSPACE" rev-parse --short=12 HEAD)" >> "$GITHUB_ENV"
+          ls -l out
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prebuilt-${{ env.COMMIT }}
+          name: Prebuilt ${{ env.COMMIT }}
+          body: Archives for install.sh (built from ${{ github.sha }}). Not for downloading by hand.
+          prerelease: true
+          files: out/*.tar.xz
+
+  prune:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep the prebuilt releases of the last 5 commits
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const rels = await github.paginate(github.rest.repos.listReleases, {owner: context.repo.owner, repo: context.repo.repo});
+            const old = rels.filter(r => r.tag_name.startsWith('prebuilt-'))
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(5);
+            for (const r of old) {
+              await github.rest.repos.deleteRelease({owner: context.repo.owner, repo: context.repo.repo, release_id: r.id});
+              await github.rest.git.deleteRef({owner: context.repo.owner, repo: context.repo.repo, ref: `tags/${r.tag_name}`}).catch(() => {});
+            }
