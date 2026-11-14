@@ -2245,6 +2245,9 @@ int main(int argc, char **argv)
         (new Win7SndVol::Mixer)->show();
         return app.exec();
     }
+    if (app.arguments().contains(QStringLiteral("--visualfx-auto"))) {
+        return Win7VisualFx::applyAuto();
+    }
     if (app.arguments().contains(QStringLiteral("--visualfx-apply"))) {
         return Win7VisualFx::applyAtLogin();
     }
@@ -2394,6 +2397,10 @@ int main(int argc, char **argv)
     // with updates waiting it stays and shows Windows 7's icon until they are installed or the page is opened,
     // without any it ends at once (nothing runs for it the rest of the time)
     if (app.arguments().contains(QStringLiteral("--wu-check"))) {
+        // one icon: a second check (started by hand, or the timer while one still waits) leaves it to the first
+        if (!QDBusConnection::sessionBus().registerService(QStringLiteral("org.sevenplasma.WindowsUpdateCheck"))) {
+            return 0;
+        }
         app.setQuitOnLastWindowClosed(false);
         auto &engine = Win7Update::Engine::self();
         auto *sni = new KStatusNotifierItem(QStringLiteral("seven-windows-update"), &app);

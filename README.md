@@ -101,6 +101,12 @@ uninstalled: KMail and Kontact start Akonadi themselves when you open them, and 
 reminders can be turned back on in Control Panel → Programs → Turn Windows features on or off. The notification
 area loads only the items Windows 7 has a counterpart of.
 
+On a computer without graphics acceleration (software rendering, for example a virtual machine without 3D or a
+missing graphics driver) the first login also picks "Let Windows choose what's best for my computer" in Control
+Panel → System → Advanced system settings → Performance: glass, window animations and Aero Peek are off there, as
+Windows 7 used its Basic look without a proper display driver. "Adjust for best performance" turns all effects off
+on any computer; "Adjust for best appearance" turns them back on.
+
 ![The desktop after the first login](docs/images/install-4-desktop.png)
 
 Options: `--no-games` (no games), `--no-forks` (no patched Dolphin / KIO / Kvantum), `--yes` (no questions),

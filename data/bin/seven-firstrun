@@ -70,6 +70,9 @@ python3 "$HOME/.local/lib/sevenplasma/seven-shortcuts.py" || true
 # after this first login, at low priority (System then shows the base score instead of "not available")
 systemd-run --user --quiet --collect --on-active=3min --unit=seven-winsat-first \
     nice -n 19 ionice -c 3 "$HOME/.local/bin/seven-control" --winsat >/dev/null 2>&1 || true
+# Performance Options "Let Windows choose": without graphics acceleration (software rendering) glass, window
+# animations and Aero Peek go off, as Windows 7 falls back to its Basic look without a display driver
+"$HOME/.local/bin/seven-control" --visualfx-auto >/dev/null 2>&1 || true
 # no KDE crash dialog (DrKonqi): Plasma restarts its shell by itself, the dialog is KDE's own look
 systemctl --user mask --now drkonqi-coredump-launcher.socket >/dev/null 2>&1 || true
 # no Discover "Updates" gear in the tray: Windows 7 tells about updates through the Action Center flag

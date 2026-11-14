@@ -8,6 +8,10 @@
  *   Enable transparent glass                     -> KWin aeroglassblur
  *   Fade or slide menus into view                -> KWin fadingpopupsaero
  *   Smooth edges of screen fonts                 -> kdeglobals XftAntialias + fontconfig + Xft.antialias
+ * "Let Windows choose" looks at how KWin draws, as Windows 7 looks at the display driver: with software
+ * rendering (no graphics acceleration: llvmpipe...) glass, window animations and Aero Peek go off, the rest
+ * stays on (Windows 7 falls back to its Basic look there). The first login applies it (--visualfx-auto).
+ * On Wayland the compositor is the display server: desktop composition cannot be turned off, so it is not offered.
  * Effects with no counterpart here (cursor shadows, combo box sliding, folder backgrounds...) are left
  * out, as are Processor scheduling and Data Execution Prevention. Virtual memory shows the swap size.
  *
@@ -61,6 +65,36 @@ inline QDBusInterface &compositor()
 {
     static QDBusInterface i(QStringLiteral("org.kde.KWin"), QStringLiteral("/Compositor"), QStringLiteral("org.kde.kwin.Compositing"));
     return i;
+}
+
+inline bool wayland()
+{
+    return qEnvironmentVariable("XDG_SESSION_TYPE") == QLatin1String("wayland") || qEnvironmentVariableIsSet("WAYLAND_DISPLAY");
+}
+
+/** KWin draws without graphics acceleration (its support information names a software OpenGL renderer) */
+inline bool softwareRendering()
+{
+    QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"));
+    const QString info = QDBusReply<QString>(kwin.call(QStringLiteral("supportInformation"))).value();
+    for (const QString &line : info.split(QLatin1Char('\n'))) {
+        if (line.startsWith(QLatin1String("OpenGL renderer string:"))) {
+            const QString r = line.toLower();
+            return r.contains(QLatin1String("llvmpipe")) || r.contains(QLatin1String("softpipe")) || r.contains(QLatin1String("swrast"))
+                || r.contains(QLatin1String("software"));
+        }
+    }
+    return info.contains(QLatin1String("Compositing Type: QPainter")); // no OpenGL at all
+}
+
+/** what "Let Windows choose what's best for my computer" turns on */
+inline QList<bool> windowsChoice()
+{
+    QList<bool> on(EffectCount, true);
+    if (softwareRendering()) {
+        on[Windows] = on[Peek] = on[Glass] = on[Menus] = on[Controls] = false;
+    }
+    return on;
 }
 
 inline QStringList loadedEffects()
@@ -157,6 +191,28 @@ inline int applyAtLogin()
     if (!store().value(QStringLiteral("Composition"), true).toBool()) {
         setComposition(false);
     }
+    return 0;
+}
+
+inline void apply(const QList<bool> &want, const QList<bool> &was);
+
+/** --visualfx-auto (first login): "Let Windows choose" for this computer */
+inline int applyAuto()
+{
+    for (int i = 0; i < 20 && !compositor().isValid(); ++i) {
+        QThread::sleep(1);
+    }
+    store().setValue(QStringLiteral("Setting"), 0);
+    // written out whatever is loaded now: at login (and with software rendering, where KWin skips them by
+    // itself) the loaded effects do not tell what kwinrc says
+    const QList<bool> want = windowsChoice();
+    QList<bool> was = current();
+    for (const Item &it : items()) {
+        if (!it.kwin.isEmpty()) {
+            was[it.id] = !want[it.id];
+        }
+    }
+    apply(want, was);
     return 0;
 }
 
@@ -273,7 +329,11 @@ private:
         m_tree->setIndentation(0);
         m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
         for (const Item &it : items()) {
+            if (it.id == Composition && wayland()) {
+                continue;
+            }
             auto *ti = new QTreeWidgetItem(m_tree, {it.text});
+            ti->setData(0, Qt::UserRole, int(it.id));
             ti->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
             ti->setCheckState(0, m_was[it.id] ? Qt::Checked : Qt::Unchecked);
         }
@@ -285,13 +345,21 @@ private:
         });
         // the remembered choice, unless the effects were changed somewhere else since
         int choice = store().value(QStringLiteral("Setting"), -1).toInt();
-        const bool allOn = !m_was.contains(false), allOff = !m_was.contains(true);
-        if ((choice == 0 || choice == 1) && !allOn) {
+        // (only the effects offered here count: composition is always on under Wayland)
+        QList<bool> offered = m_was, windows = windowsChoice();
+        if (wayland()) {
+            offered.removeAt(Composition);
+            windows.removeAt(Composition);
+        }
+        const bool allOn = !offered.contains(false), allOff = !offered.contains(true), windowsOwn = offered == windows;
+        if (choice == 0 && !windowsOwn) {
+            choice = 3;
+        } else if (choice == 1 && !allOn) {
             choice = 3;
         } else if (choice == 2 && !allOff) {
             choice = 3;
         } else if (choice < 0) {
-            choice = allOn ? 0 : (allOff ? 2 : 3);
+            choice = windowsOwn ? 0 : allOn ? 1 : allOff ? 2 : 3;
         }
         m_radio[qBound(0, choice, 3)]->setChecked(true);
         return p;
@@ -314,8 +382,11 @@ private:
             return;
         }
         m_presetting = true;
+        const QList<bool> choice = windowsChoice();
         for (int r = 0; r < m_tree->topLevelItemCount(); ++r) {
-            m_tree->topLevelItem(r)->setCheckState(0, i == 2 ? Qt::Unchecked : Qt::Checked);
+            QTreeWidgetItem *ti = m_tree->topLevelItem(r);
+            const bool on = i == 0 ? choice[ti->data(0, Qt::UserRole).toInt()] : i == 1;
+            ti->setCheckState(0, on ? Qt::Checked : Qt::Unchecked);
         }
         m_presetting = false;
         m_apply->setEnabled(true);
@@ -323,9 +394,10 @@ private:
 
     void commit()
     {
-        QList<bool> want(EffectCount, true);
+        QList<bool> want = m_was; // (composition, not offered on Wayland, stays as it is)
         for (int r = 0; r < m_tree->topLevelItemCount(); ++r) {
-            want[items()[r].id] = m_tree->topLevelItem(r)->checkState(0) == Qt::Checked;
+            QTreeWidgetItem *ti = m_tree->topLevelItem(r);
+            want[ti->data(0, Qt::UserRole).toInt()] = ti->checkState(0) == Qt::Checked;
         }
         for (int i = 0; i < 4; ++i) {
             if (m_radio[i]->isChecked()) {
