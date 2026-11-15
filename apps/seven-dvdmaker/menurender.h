@@ -440,6 +440,13 @@ public:
                 const QRect r = fracRect(b.attribute(QStringLiteral("value")), sz).toAlignedRect().intersected(QRect(QPoint(), size));
                 list.append({name, QRect(r.x() & ~1, r.y() & ~1, r.width() & ~1, r.height() & ~1)}); // spumux wants even coordinates
             }
+            // the first button is the one a DVD player selects: the scenes (or Play) before the arrows
+            std::stable_sort(list.begin(), list.end(), [](const MenuButton &a, const MenuButton &b) {
+                auto rank = [](const QString &n) {
+                    return n.startsWith(QLatin1String("Scene")) || n == QLatin1String("PlayButton") ? 0 : n.endsWith(QLatin1String("MenuButton")) ? 2 : 1;
+                };
+                return rank(a.name) < rank(b.name);
+            });
             if (buttons) {
                 *buttons = list;
             }

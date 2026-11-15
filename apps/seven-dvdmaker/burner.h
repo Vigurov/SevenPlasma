@@ -597,7 +597,7 @@ private:
     {
         const QString iso = qEnvironmentVariable("SEVEN_DVDMAKER_ISO");
         if (m_device.isEmpty() && !iso.isEmpty()) {
-            run(QStringLiteral("xorriso"), {QStringLiteral("-as"), QStringLiteral("mkisofs"), QStringLiteral("-dvd-video"), QStringLiteral("-V"), QStringLiteral("DVD"),
+            run(QStringLiteral("mkisofs"), {QStringLiteral("-dvd-video"), QStringLiteral("-udf"), QStringLiteral("-V"), QStringLiteral("DVD"),
                                              QStringLiteral("-o"), iso, QStringLiteral("DVD")},
                 80, 100, 0, tr7("Burning DVD..."));
             return;
