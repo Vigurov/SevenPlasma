@@ -26,6 +26,7 @@
 #include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickWindow>
 #include <QSaveFile>
 #include <QSettings>
 #include <QStandardPaths>
@@ -480,6 +481,10 @@ private:
 
 int main(int argc, char **argv)
 {
+    // the whole interface is a 1366x768 canvas scaled to the window: distance field text gets pointed corners
+    // when scaled, curve rendering draws the glyph outlines smooth at any size
+    QQuickWindow::setTextRenderType(qEnvironmentVariableIsSet("SEVEN_MC_DF_TEXT") ? QQuickWindow::QtTextRendering
+                                                                                  : QQuickWindow::CurveTextRendering);
     QGuiApplication app(argc, argv);
     Win7I18n::install(&app);
     app.setApplicationName(QLatin1String(kApp));
