@@ -17,7 +17,7 @@ FocusScope {
     }
     Gallery {
         focus: true
-        x: 225; y: 230; width: vl.width - 225; height: 470
+        x: 225; y: 246; width: vl.width - 225; height: 470
         rows: vl.movies ? 2 : 3
         tileW: vl.movies ? 152 : 208
         tileH: vl.movies ? 214 : 117

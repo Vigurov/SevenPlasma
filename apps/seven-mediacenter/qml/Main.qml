@@ -96,7 +96,8 @@ Window {
 
     // ---------------------------------------------------------------- pages
     // each page: {kind, ...}; the start menu is the bottom of the stack
-    property var stack: [{ kind: library.firstRun ? "welcome" : "start" }]
+    property var stack: startPage === "" ? [{ kind: library.firstRun ? "welcome" : "start" }]
+                                         : [{ kind: "start" }, startPage === "videos" ? { kind: "videos", title: "video library" } : { kind: startPage }]
     readonly property var page: stack[stack.length - 1]
     function open(p) { stack = stack.concat([p]) }
     function goBack() {
@@ -155,7 +156,8 @@ Window {
 
         // the clock and the logo of the top right corner (not over full-screen pictures and video)
         Row {
-            visible: ["start", "music", "pictures", "videos", "extras", "album", "folder", "message"].includes(win.page.kind)
+            // the mouse controls take the clock's place
+            visible: ["start", "music", "pictures", "videos", "extras", "album", "folder", "message"].includes(win.page.kind) && !chrome.shown
             anchors { top: parent.top; right: parent.right; topMargin: 13; rightMargin: 42 }
             spacing: 10
             Text {
@@ -182,10 +184,10 @@ Window {
             MouseArea { anchors.fill: parent; onClicked: win.open({ kind: "nowplaying" }) }
         }
 
-    }
 
-    // the mouse controls are not scaled with the canvas
-    MouseChrome { id: chrome; anchors.fill: parent }
+        // the mouse controls: part of the scaled canvas, like in Windows 7
+        MouseChrome { id: chrome; anchors.fill: parent }
+    }
 
     // ---------------------------------------------------------------- keys of the remote control (keyboard shortcuts)
     Shortcut { sequences: ["Backspace", "Escape", "Back"]; onActivated: win.goBack() }

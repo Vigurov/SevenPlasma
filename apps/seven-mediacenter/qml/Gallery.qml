@@ -56,10 +56,10 @@ FocusScope {
                 width: g.tileW; height: g.tileH
                 scale: t.focused ? 1.12 : 1
                 Behavior on scale { NumberAnimation { duration: 150 } }
-                Rectangle { anchors.fill: parent; color: "#10305a"; visible: img.status !== Image.Ready }
+                Rectangle { anchors.fill: parent; color: "#10305a"; visible: img.status !== Image.Ready && !t.modelData.collage }
                 Image {
                     anchors.fill: parent
-                    visible: img.status !== Image.Ready
+                    visible: img.status !== Image.Ready && !t.modelData.collage
                     source: win.res(g.noImage)
                     fillMode: Image.PreserveAspectFit
                 }
@@ -82,6 +82,22 @@ FocusScope {
                     font.family: win.fontRegular
                     font.pixelSize: 22
                     color: win.offWhite
+                }
+                // a folder of pictures: one big and two small pictures with the name, on the tile's own blue
+                Rectangle {
+                    visible: !!t.modelData.collage
+                    anchors.fill: parent
+                    color: t.focused ? "#3c7ab8" : "#1e4374"
+                    Image { x: 8; y: 4; width: 126; height: 97; source: t.modelData.collage ? (t.modelData.collage[0] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 260 }
+                    Image { x: 139; y: 4; width: 56; height: 47; source: t.modelData.collage ? (t.modelData.collage[1] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 120 }
+                    Image { x: 139; y: 54; width: 56; height: 47; source: t.modelData.collage ? (t.modelData.collage[2] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 120 }
+                    Text {
+                        x: 16; y: 112; width: parent.width - 24
+                        elide: Text.ElideRight
+                        text: t.modelData.text || ""
+                        font.family: win.fontRegular; font.pixelSize: 20
+                        color: win.offWhite
+                    }
                 }
                 BorderImage {
                     visible: t.focused

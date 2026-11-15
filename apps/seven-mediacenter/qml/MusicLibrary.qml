@@ -63,7 +63,7 @@ FocusScope {
         id: gallery
         visible: lib.pivot !== 3 && lib.pivot !== 4
         focus: visible
-        x: 225; y: 230
+        x: 225; y: 246
         width: lib.width - 225
         height: 460
         items: lib.items

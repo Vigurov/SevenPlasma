@@ -95,11 +95,9 @@ FocusScope {
 
     // ---------------------------------------------------------------- categories
     // the distance of a category from the selected one (-4..+1 are visible)
+    // the list is shown as it is (above: the ones before, below: the next), only the keys go round
     function offsetOf(i) {
-        const n = categories.length
-        let d = (i - cat + n) % n
-        if (d > 1) d -= n
-        return d
+        return i - cat
     }
     Repeater {
         model: menu.categories.length
@@ -136,15 +134,13 @@ FocusScope {
         width: menu.width
         height: 200
         readonly property var links: menu.categories[menu.cat].links
-        // the focused tile stays at x 230, the others line up around it
-        function xOf(i) {
-            let x = 230
-            if (i < menu.link) {
-                for (let k = i; k < menu.link; ++k) x -= 160 + 12
-            } else {
-                for (let k = menu.link; k < i; ++k) x += k === menu.link ? 258 + 34 : 160 + 12
-            }
-            return x
+        // the focused tile stays at x 230; measured on Windows 7: the next tiles' centres are 246 away from the
+        // focused one's, then 199 apart
+        function centerOf(i) {
+            const c = 230 + 129
+            const d = i - menu.link
+            if (d === 0) return c
+            return c + Math.sign(d) * (246 + (Math.abs(d) - 1) * 199)
         }
         Repeater {
             model: strip.links
@@ -153,8 +149,8 @@ FocusScope {
                 required property var modelData
                 required property int index
                 readonly property bool focused: index === menu.link
-                x: strip.xOf(index)
-                width: focused ? 258 : 160
+                width: focused ? 258 : 190
+                x: strip.centerOf(index) - width / 2
                 height: 200
                 Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
@@ -186,7 +182,10 @@ FocusScope {
                 }
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: tile.focused ? 150 : 124
+                    y: tile.focused ? 143 : 113
+                    width: tile.focused ? implicitWidth : Math.min(implicitWidth, 190)
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
                     text: win.tr(tile.modelData.t)
                     font.family: win.fontRegular
                     font.pixelSize: tile.focused ? 31 : 21 // 23 / 16 pt

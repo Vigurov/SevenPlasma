@@ -22,28 +22,25 @@ FocusScope {
     Gallery {
         id: g
         focus: true
-        x: 225; y: 230; width: lib.width - 225; height: 470
-        rows: 2
-        tileW: 202; tileH: 151
+        x: 224; y: 246; width: lib.width - 224; height: 420
+        rows: 1
+        tileW: 213; tileH: 150
         labelLines: 0
-        items: lib.folders.map(f => ({ text: f.name, folder: f }))
+        items: lib.folders.map(f => ({ text: f.name, collage: f.items.slice(0, 3).map(p => p.file) }))
         onActivated: i => win.open({ kind: "folder", folder: lib.folders[i] })
     }
-    // the folder tiles: one big and two small pictures, the name over them
-    Repeater {
-        model: lib.folders
-        delegate: Item {
-            required property var modelData
-            required property int index
-            x: g.x + Math.floor(index / 2) * 202 - g.scrollX + 4
-            y: g.y + (index % 2) * g.cellH + 4
-            width: 194; height: 143
-            visible: x > 0 && x < lib.width
-            Image { x: 0; y: 0; width: 126; height: 104; source: modelData.items[0] ? modelData.items[0].file : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 260 }
-            Image { x: 130; y: 0; width: 64; height: 50; source: modelData.items[1] ? modelData.items[1].file : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 140 }
-            Image { x: 130; y: 54; width: 64; height: 50; source: modelData.items[2] ? modelData.items[2].file : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 140 }
-            Text { x: 8; y: 110; width: 180; elide: Text.ElideRight; text: modelData.name; font.family: win.fontRegular; font.pixelSize: 18; color: win.offWhite }
-        }
+    // the focused folder: its place, the date and the number of pictures (as Windows 7 shows "Public Pictures : Sample Pictures")
+    Column {
+        visible: lib.folders.length > 0
+        x: 244; y: 456
+        readonly property var f: lib.folders[g.currentIndex] || null
+        Text { text: parent.f ? win.tr("Pictures") + " : " + parent.f.name : ""; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite }
+        Text { text: parent.f ? parent.f.items[0].date + "   " + win.tr("%1 items").arg(parent.f.items.length) : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }
+    }
+    Text {
+        anchors { right: parent.right; rightMargin: 110; bottom: parent.bottom; bottomMargin: 74 }
+        text: (g.currentIndex + 1) + " | " + lib.folders.length
+        font.family: win.fontRegular; font.pixelSize: 26; color: win.offWhite
     }
     Text {
         visible: lib.folders.length === 0

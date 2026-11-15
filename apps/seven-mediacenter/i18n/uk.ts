@@ -108,6 +108,10 @@
         <translation>На вашому телевізорі</translation>
     </message>
     <message>
+        <source>%1 items</source>
+        <translation>Елементів: %1</translation>
+    </message>
+    <message>
         <source>Pictures</source>
         <translation>Зображення</translation>
     </message>

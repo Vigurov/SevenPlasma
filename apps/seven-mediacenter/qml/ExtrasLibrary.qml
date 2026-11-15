@@ -11,7 +11,7 @@ FocusScope {
     LibraryHeader { title: win.tr("extras library"); pivots: [win.tr("all"), win.tr("games")]; pivot: 0 }
     Gallery {
         focus: true
-        x: 225; y: 230; width: ex.width - 225; height: 470
+        x: 225; y: 246; width: ex.width - 225; height: 470
         rows: 2
         tileW: 160; tileH: 120
         labelLines: 1

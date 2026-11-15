@@ -1,7 +1,8 @@
 /*
- * Media Center's mouse controls ("two foot" UI, drawn at their own pixel size, not scaled with the canvas):
- * Back and the Start button top left, the window buttons top right in full screen, the transport bar bottom
- * right. They come with the mouse and go after three quiet seconds.
+ * Media Center's mouse controls ("two foot" UI): Back and the Start button top left, the window buttons top
+ * right in full screen, the transport bar bottom right. They are part of the scaled 1366x768 canvas; the
+ * positions are measured on Windows 7 (centres of the buttons). They come with the mouse and go after three
+ * quiet seconds.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -13,7 +14,6 @@ Item {
     property bool shown: false
     Timer { id: hideTimer; interval: 3000; onTriggered: chrome.shown = false }
     HoverHandler {
-        id: hover
         onPointChanged: { chrome.shown = true; hideTimer.restart() }
     }
 
@@ -31,7 +31,18 @@ Item {
             onClicked: b.clicked()
         }
     }
-    component Divider: Image { source: win.res("TWOFOOT.CONTROL.DIVIDER"); anchors.verticalCenter: parent ? parent.verticalCenter : undefined }
+    // a button of the transport bar by its centre's distance from the right edge
+    component BarButton: Button {
+        property real fromRight
+        x: chrome.width - fromRight - width / 2
+        y: 738 - height / 2
+    }
+    component Divider: Image {
+        property real fromRight
+        source: win.res("TWOFOOT.CONTROL.DIVIDER")
+        x: chrome.width - fromRight - width / 2
+        y: 738 - height / 2
+    }
 
     Item {
         anchors.fill: parent
@@ -43,49 +54,44 @@ Item {
             visible: win.visibility === Window.FullScreen
             source: win.res("TWOFOOT.FULLSCREEN.TOPBAR.LEFT")
         }
-        Row {
-            x: 12; y: 10
-            spacing: 6
-            Button { name: "GOBACK"; enabledButton: win.stack.length > 1; onClicked: win.goBack() }
-            Button { name: "MENU"; anchors.verticalCenter: parent.verticalCenter; onClicked: win.goHome() }
-        }
+        Button { x: 18; y: 13; name: "GOBACK"; enabledButton: win.stack.length > 1; onClicked: win.goBack() }
+        Button { x: 62; y: 10; name: "MENU"; onClicked: win.goHome() }
 
         Image {
             visible: win.visibility === Window.FullScreen
             anchors.right: parent.right
             source: win.res("TWOFOOT.FULLSCREEN.TOPBAR.RIGHT")
-            Row {
-                anchors { right: parent.right; top: parent.top; rightMargin: 12; topMargin: 10 }
-                Button { name: "MINIMIZE"; onClicked: win.showMinimized() }
-                Button { name: "RESTORE"; onClicked: win.showNormal() }
-                Button { name: "EXIT"; onClicked: Qt.quit() }
-            }
+        }
+        Row {
+            visible: win.visibility === Window.FullScreen
+            anchors { right: parent.right; rightMargin: 12; top: parent.top; topMargin: 2 }
+            spacing: 10
+            Button { name: "MINIMIZE"; onClicked: win.showMinimized() }
+            Button { name: "RESTORE"; onClicked: win.showNormal() }
+            Button { name: "EXIT"; onClicked: Qt.quit() }
         }
 
         Image {
             anchors { right: parent.right; bottom: parent.bottom }
             source: win.res("TWOFOOT.FULLSCREEN.BOTTOMBAR.RIGHT")
-            Row {
-                anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter; verticalCenterOffset: 3 }
-                spacing: 0
-                // record, guide and the channel buttons need a TV tuner
-                Button { name: "RECORD"; enabledButton: false }
-                Button { name: "GUIDE"; enabledButton: false }
-                Button { name: "MINUS"; enabledButton: false }
-                Button { name: "PLUS"; enabledButton: false }
-                Divider {}
-                Button { name: "STOP"; enabledButton: win.hasMedia; onClicked: win.stop() }
-                Divider {}
-                Button { name: "BACKWARD"; enabledButton: win.hasMedia; onClicked: win.mediaPlayer.position = Math.max(0, win.mediaPlayer.position - 10000) }
-                Button { name: "PREVIOUS"; enabledButton: win.hasMedia; onClicked: win.previous() }
-                Button { name: win.playing ? "PAUSE" : "PLAY"; anchors.verticalCenter: parent.verticalCenter; enabledButton: win.hasMedia; onClicked: win.togglePlay() }
-                Button { name: "NEXT"; enabledButton: win.hasMedia && !win.videoMode; onClicked: win.next() }
-                Button { name: "FORWARD"; enabledButton: win.hasMedia; onClicked: win.mediaPlayer.position = win.mediaPlayer.position + 30000 }
-                Divider {}
-                Button { name: win.audioOutput.muted ? "MUTEON" : "MUTE"; onClicked: win.audioOutput.muted = !win.audioOutput.muted }
-                Button { name: "MINUS"; onClicked: win.audioOutput.volume = Math.max(0, win.audioOutput.volume - 0.05) }
-                Button { name: "PLUS"; onClicked: win.audioOutput.volume = Math.min(1, win.audioOutput.volume + 0.05) }
-            }
+            opacity: 0.6
         }
+        // record, guide and the channel buttons need a TV tuner
+        BarButton { fromRight: 548; name: "RECORD"; enabledButton: false }
+        BarButton { fromRight: 507; name: "GUIDE"; enabledButton: false }
+        BarButton { fromRight: 464; name: "MINUS"; enabledButton: false }
+        BarButton { fromRight: 423; name: "PLUS"; enabledButton: false }
+        Divider { fromRight: 399 }
+        BarButton { fromRight: 377; name: "STOP"; enabledButton: win.hasMedia; onClicked: win.stop() }
+        Divider { fromRight: 353 }
+        BarButton { fromRight: 331; name: "BACKWARD"; enabledButton: win.hasMedia; onClicked: win.mediaPlayer.position = Math.max(0, win.mediaPlayer.position - 10000) }
+        BarButton { fromRight: 289; name: "PREVIOUS"; enabledButton: win.hasMedia; onClicked: win.previous() }
+        BarButton { fromRight: 245; name: win.playing ? "PAUSE" : "PLAY"; enabledButton: win.hasMedia; onClicked: win.togglePlay() }
+        BarButton { fromRight: 201; name: "NEXT"; enabledButton: win.hasMedia && !win.videoMode; onClicked: win.next() }
+        BarButton { fromRight: 159; name: "FORWARD"; enabledButton: win.hasMedia; onClicked: win.mediaPlayer.position = win.mediaPlayer.position + 30000 }
+        Divider { fromRight: 133 }
+        BarButton { fromRight: 113; name: win.audioOutput.muted ? "MUTEON" : "MUTE"; onClicked: win.audioOutput.muted = !win.audioOutput.muted }
+        BarButton { fromRight: 70; name: "MINUS"; onClicked: win.audioOutput.volume = Math.max(0, win.audioOutput.volume - 0.05) }
+        BarButton { fromRight: 29; name: "PLUS"; onClicked: win.audioOutput.volume = Math.min(1, win.audioOutput.volume + 0.05) }
     }
 }

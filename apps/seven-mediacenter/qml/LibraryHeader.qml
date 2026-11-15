@@ -18,15 +18,15 @@ Item {
 
     Text {
         anchors { right: parent.right; rightMargin: 56 }
-        y: 52
+        y: 36
         text: h.title
         font.family: win.fontLight
-        font.pixelSize: 58
+        font.pixelSize: 64
         color: win.lightBlue
         opacity: 0.45
     }
     Column {
-        x: 197; y: 68
+        x: 197; y: 131 - h.commands.length * 34
         Repeater {
             model: h.commands
             delegate: Row {
@@ -40,7 +40,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: cmd.modelData.t
                     font.family: win.fontRegular
-                    font.pixelSize: 22
+                    font.pixelSize: 25
                     color: cmdMouse.containsMouse ? win.offWhite : win.lightBlue
                     MouseArea { id: cmdMouse; anchors.fill: parent; hoverEnabled: true; onClicked: h.commandChosen(cmd.index) }
                 }
@@ -49,7 +49,7 @@ Item {
     }
     Row {
         x: 197; y: 140
-        spacing: 46
+        spacing: 63
         Repeater {
             model: h.pivots
             delegate: Row {
