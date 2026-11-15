@@ -154,7 +154,7 @@ dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notif
 # Paint, Snipping Tool, Solitaire) instead of the distribution's favourites. Plasma keeps favourites in the activity database;
 # with the old list removed there, the Start widget imports its "favoriteApps" again when it starts.
 # (a new favourites client starts from kicker-extra-favoritesrc: ours in ~/.config hides the distribution's)
-printf '[General]\nPrepend=seven-gettingstarted.desktop;seven-mediacenter.desktop;seven-calc.desktop;seven-stickynotes.desktop;seven-paint.desktop;seven-snip.desktop;seven_Solitaire.desktop;\nIgnoreDefaults=true\n' \
+printf '[General]\nPrepend=seven-gettingstarted.desktop;seven-mediacenter.desktop;seven-calc.desktop;seven-stickynotes.desktop;seven-paint.desktop;seven-snip.desktop;seven_Solitaire.desktop;seven-dvdmaker.desktop;\nIgnoreDefaults=true\n' \
     > "$HOME/.config/kicker-extra-favoritesrc"
 systemctl --user stop plasma-plasmashell.service plasma-kactivitymanagerd.service
 python3 - <<'PY'
@@ -182,7 +182,7 @@ for k in ('_add panel', '_display_settings', '_lock_screen', '_logout', '_open_t
     for c in ('0', '1'):
         subprocess.run(['kwriteconfig6', '--file', apps, '--group', 'ActionPlugins', '--group', c, '--group', 'RightButton;NoModifier',
                         '--key', k, 'false'])
-fav = 'seven-gettingstarted.desktop,seven-mediacenter.desktop,seven-calc.desktop,seven-stickynotes.desktop,seven-paint.desktop,seven-snip.desktop,seven_Solitaire.desktop'
+fav = 'seven-gettingstarted.desktop,seven-mediacenter.desktop,seven-calc.desktop,seven-stickynotes.desktop,seven-paint.desktop,seven-snip.desktop,seven_Solitaire.desktop,seven-dvdmaker.desktop'
 cur = None
 for line in open(apps, encoding='utf-8') if os.path.exists(apps) else []:
     m = re.match(r'^\[(.*)\]$', line.strip())

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Windows DVD Maker
+Name[uk]=Windows DVD Maker
+Comment=Burn pictures and video to DVD.
+Comment[uk]=Запис зображень і відео на DVD.
+Exec=seven-dvdmaker %F
+Icon=seven-dvdmaker
+Categories=AudioVideo;DiscBurning;
+MimeType=video/mp4;video/x-msvideo;video/mpeg;video/x-ms-wmv;video/quicktime;video/x-matroska;video/webm;
+StartupWMClass=seven-dvdmaker

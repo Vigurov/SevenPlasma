@@ -4,7 +4,7 @@
 set -e
 DEV=${DEV:-$HOME/src}
 R=$(cd "$(dirname "$0")/.." && pwd)
-for d in bluetooth-plasmoid calc ccc common control devmgr folderthumb gadgets igfx mediacenter nvidia paint photoviewer snip stickynotes system taskmgr wmp; do
+for d in bluetooth-plasmoid calc ccc common control devmgr dvdmaker folderthumb gadgets igfx mediacenter nvidia paint photoviewer snip stickynotes system taskmgr wmp; do
     [ -d "$DEV/win7-$d" ] || continue
     rsync -a --delete --exclude='build*/' --exclude='*.bak*' --exclude='*.before*' --exclude='*.dll' --exclude='*.exe' \
         --exclude='*.ico' --exclude='*.png' --exclude='*.gif' --exclude='*.jpg' --exclude='*.wav' --exclude='*.ttf' \

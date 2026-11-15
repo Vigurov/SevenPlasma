@@ -275,6 +275,21 @@ def main():
         dest = os.path.join(a.dest, r['dest'])
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         try:
+            if r['from'] == 'dir':
+                # a folder of the image as it is (DVD Maker's menu styles), without the kinds in "skip"
+                base = find_ci(src.root, r['src'])
+                if not base or not os.path.isdir(base):
+                    raise KeyError(r['src'])
+                skip = tuple('.' + e.lower() for e in r.get('skip', []))
+                for d, _, files in os.walk(base):
+                    for f in files:
+                        if f.lower().endswith(skip):
+                            continue
+                        out = os.path.join(dest, os.path.relpath(os.path.join(d, f), base))
+                        os.makedirs(os.path.dirname(out), exist_ok=True)
+                        shutil.copyfile(os.path.join(d, f), out)
+                done += 1
+                continue
             if r['from'] == 'rcdata-dir':
                 # every PNG of a resource library (Media Center's ehres.dll: ~2300 named pictures) into one folder,
                 # without the high-contrast variants (HC1. / HC2.)

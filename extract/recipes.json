@@ -33037,5 +33037,97 @@
 "from": "icon",
 "id": "IDI_APP",
 "extra": "256@32"
+},
+{
+"dest": "seven-dvdmaker/DvdStyles",
+"src": "Program Files/DVD Maker/Shared/DvdStyles",
+"from": "dir",
+"skip": [
+"wmv"
+]
+},
+{
+"dest": "seven-dvdmaker/dvdstyles.xml",
+"src": "Program Files/DVD Maker/OmdProject.dll",
+"from": "resource",
+"id": "DVDSTYLES",
+"extra": "RT_XML"
+},
+{
+"dest": "seven-dvdmaker/toolbar.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 2271,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/intro.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 463,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/filmframe.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 450,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/slideshow.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 2241,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/disc.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 2240,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/pv-menu.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 2523,
+"extra": ""
+},
+{
+"dest": "seven-dvdmaker/pv-play.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "bitmap",
+"id": 2512,
+"extra": ""
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-dvdmaker.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "icon",
+"id": 128,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/32x32/apps/seven-dvdmaker.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "icon",
+"id": 128,
+"extra": "32@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-dvdmaker.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "icon",
+"id": 128,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-dvdmaker.png",
+"src": "Program Files/DVD Maker/DVDMaker.exe",
+"from": "icon",
+"id": 128,
+"extra": "256@32"
 }
 ]
