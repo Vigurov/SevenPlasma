@@ -54,7 +54,8 @@ Item {
             visible: win.visibility === Window.FullScreen
             source: win.res("TWOFOOT.FULLSCREEN.TOPBAR.LEFT")
         }
-        Button { x: 18; y: 13; name: "GOBACK"; enabledButton: win.stack.length > 1; onClicked: win.goBack() }
+        // Windows 7 keeps Back blue on the start menu too
+        Button { x: 18; y: 13; name: "GOBACK"; onClicked: win.goBack() }
         Button { x: 62; y: 10; name: "MENU"; onClicked: win.goHome() }
 
         Image {
@@ -64,7 +65,7 @@ Item {
         }
         Row {
             visible: win.visibility === Window.FullScreen
-            anchors { right: parent.right; rightMargin: 12; top: parent.top; topMargin: 2 }
+            anchors { right: parent.right; rightMargin: 20; top: parent.top; topMargin: 12 }
             spacing: 10
             Button { name: "MINIMIZE"; onClicked: win.showMinimized() }
             Button { name: "RESTORE"; onClicked: win.showNormal() }

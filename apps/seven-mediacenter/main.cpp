@@ -498,6 +498,7 @@ int main(int argc, char **argv)
     // test hook: --page KIND opens that page of the menus (music, pictures, videos, extras...) over the start menu
     const int pageArg = app.arguments().indexOf(QStringLiteral("--page"));
     engine.rootContext()->setContextProperty(QStringLiteral("startPage"), pageArg > 0 ? app.arguments().value(pageArg + 1) : QString());
+    engine.rootContext()->setContextProperty(QStringLiteral("startMaximized"), app.arguments().contains(QStringLiteral("--maximized")));
     engine.rootContext()->setContextProperty(QStringLiteral("startFullScreen"), app.arguments().contains(QStringLiteral("/directmedia")) || app.arguments().contains(QStringLiteral("--fullscreen")));
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (engine.rootObjects().isEmpty()) {

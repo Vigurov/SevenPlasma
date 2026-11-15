@@ -17,7 +17,10 @@ Window {
     visible: true
     color: "black"
     title: qsTranslate("Win7", "Windows Media Center")
-    visibility: startFullScreen ? Window.FullScreen : Window.Windowed
+    visibility: startFullScreen ? Window.FullScreen : startMaximized ? Window.Maximized : Window.Windowed
+    // Media Center has no maximized window: maximizing it (the button, a double click on the title bar) goes to
+    // full screen, without the glass frame, and its own minimize/restore/close buttons appear at the top right
+    onVisibilityChanged: if (visibility === Window.Maximized) Qt.callLater(() => win.visibility = Window.FullScreen)
 
     // Colors.mcml / FontNames.mcml
     readonly property color offWhite: "#f2f2f2"
