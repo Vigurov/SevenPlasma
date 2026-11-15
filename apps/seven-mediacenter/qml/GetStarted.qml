@@ -14,6 +14,7 @@ FocusScope {
         { key: "CUSTOM", title: "Custom", head: "", text: "Set up Windows Media Center by walking through each step of the configuration process, including TV." }
     ]
     property int sel: 1
+    onSelChanged: win.sound("focus")
     function choose(i) {
         if (i === 0) { Qt.openUrlExternally("http://go.microsoft.com/fwlink/?LinkId=145765"); return }
         library.firstRun = false

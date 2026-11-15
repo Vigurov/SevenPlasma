@@ -14,6 +14,7 @@ Item {
     width: Math.max(200, label.implicitWidth + 60)
     height: 44
     readonly property bool lit: focused || ma.containsMouse
+    onLitChanged: if (lit) win.sound("focus")
     BorderImage {
         anchors.fill: parent
         source: win.res(b.lit ? "COMMON.BUTTON.LEFT.FOCUS" : "COMMON.BUTTON.FIRSTRUN.NOFOCUS.FULL")

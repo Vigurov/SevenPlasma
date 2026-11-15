@@ -15,6 +15,7 @@ FocusScope {
     property int labelLines: 2
     property bool square: true
     property int currentIndex: 0
+    onCurrentIndexChanged: win.sound("focus")
     // delegate data: image (url), text, sub; empty image shows the noImage picture
     property string noImage: "BROWSE.NOIMAGE"
     signal activated(int index)

@@ -53,12 +53,16 @@ FocusScope {
         }
     }
 
+    // the arrows light up under the mouse (PIVOT.ARROW.* white, light blue otherwise)
     component Arrow: Image {
+        id: arrow
+        property string side
         signal clicked()
-        MouseArea { anchors.fill: parent; onClicked: parent.clicked() }
+        source: win.res("PIVOT.ARROW." + side + (am.containsMouse ? "" : ".DORMANT"))
+        MouseArea { id: am; anchors.fill: parent; anchors.margins: -12; hoverEnabled: true; onContainsMouseChanged: if (containsMouse) win.sound("focus"); onClicked: { win.sound("mini"); arrow.clicked() } }
     }
-    Arrow { source: win.res("PIVOT.ARROW.LEFT"); x: 120; y: 455; onClicked: welcome.step(-1) }
-    Arrow { source: win.res("PIVOT.ARROW.RIGHT"); x: welcome.width - 120 - width; y: 455; onClicked: welcome.step(1) }
+    Arrow { side: "LEFT"; x: 120; y: 455; onClicked: welcome.step(-1) }
+    Arrow { side: "RIGHT"; x: welcome.width - 120 - width; y: 455; onClicked: welcome.step(1) }
 
     Text {
         anchors.horizontalCenter: parent.horizontalCenter

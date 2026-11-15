@@ -11,6 +11,7 @@ FocusScope {
     readonly property var album: win.page.album
     readonly property var rows: [{ cmd: "add" }, { cmd: "play" }].concat(album.tracks.map((t, i) => ({ track: t, i: i })))
     property int cur: 1
+    onCurChanged: win.sound("focus")
     function run(r) {
         if (r.cmd === "add") { win.addToQueue(album.tracks); return }
         if (r.cmd === "play") { win.playSongs(album.tracks, 0); win.open({ kind: "nowplaying" }); return }

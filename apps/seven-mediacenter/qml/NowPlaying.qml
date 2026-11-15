@@ -11,9 +11,11 @@ FocusScope {
     readonly property var song: win.current
     readonly property var menuItems: ["View Song List", "Visualize", "Play Pictures", "Shuffle", "Repeat"]
     property int cur: 0
+    onCurChanged: win.sound("focus")
     property bool songList: false
     property bool visualize: false
     function run(i) {
+        if (i !== 2) win.sound("mini")
         if (i === 0) songList = !songList
         if (i === 1) visualize = !visualize
         if (i === 2) {

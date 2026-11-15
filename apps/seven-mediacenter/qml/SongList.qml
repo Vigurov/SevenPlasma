@@ -21,6 +21,7 @@ FocusScope {
         clip: true
         model: sl.songs
         highlightMoveDuration: 150
+        onCurrentIndexChanged: win.sound("focus")
         boundsBehavior: Flickable.StopAtBounds
         delegate: Item {
             id: row

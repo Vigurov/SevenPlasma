@@ -20,7 +20,7 @@ Window {
     visibility: startFullScreen ? Window.FullScreen : startMaximized ? Window.Maximized : Window.Windowed
     // Media Center has no maximized window: maximizing it (the button, a double click on the title bar) goes to
     // full screen, without the glass frame, and its own minimize/restore/close buttons appear at the top right
-    onVisibilityChanged: if (visibility === Window.Maximized) Qt.callLater(() => win.visibility = Window.FullScreen)
+    onVisibilityChanged: if (win.visibility === Window.Maximized) Qt.callLater(() => win.visibility = Window.FullScreen)
 
     // Colors.mcml / FontNames.mcml
     readonly property color offWhite: "#f2f2f2"
@@ -104,13 +104,26 @@ Window {
     property var stack: startPage === "" ? [{ kind: library.firstRun ? "welcome" : "start" }]
                                          : [{ kind: "start" }, startPage === "videos" ? { kind: "videos", title: "video library" } : { kind: startPage }]
     readonly property var page: stack[stack.length - 1]
-    function open(p) { stack = stack.concat([p]) }
+    // the sounds of the interface (ehres.dll): Focus_a when the focus moves (keys or the mouse), Select_a when a
+    // command goes somewhere, MiniSelect_a for one that doesn't, Intro_a when Media Center starts (Launch.mcml)
+    SoundEffect { id: sndFocus; source: library.res + "FOCUS_A.WAV" }
+    SoundEffect { id: sndSelect; source: library.res + "SELECT_A.WAV" }
+    SoundEffect { id: sndMini; source: library.res + "MINISELECT_A.WAV" }
+    SoundEffect { id: sndIntro; source: library.res + "INTRO_A.WAV" }
+    function sound(name) {
+        const s = name === "select" ? sndSelect : name === "mini" ? sndMini : name === "intro" ? sndIntro : sndFocus
+        if (s.status === SoundEffect.Ready) s.play()
+    }
+    Timer { running: startPage === ""; interval: 300; onTriggered: win.sound("intro") }
+
+    function open(p) { sound("select"); stack = stack.concat([p]) }
     function goBack() {
         if (page.kind === "video") { stop() }
-        if (stack.length > 1) { stack = stack.slice(0, stack.length - 1) }
+        if (stack.length > 1) { sound("select"); stack = stack.slice(0, stack.length - 1) }
     }
     function goHome() {
         if (page.kind === "video") { stop() }
+        sound("select")
         stack = [{ kind: "start" }]
     }
 

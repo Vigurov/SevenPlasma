@@ -21,6 +21,8 @@ Item {
         id: b
         property string name
         property bool enabledButton: true
+        // the transport buttons don't go anywhere (MiniSelect_a); Back and Start play Select_a through goBack/goHome
+        property bool miniSound: true
         signal clicked()
         source: win.res("TWOFOOT.CONTROL." + name + (!enabledButton ? ".DISABLED" : ma.pressed ? ".PRESSED" : ma.containsMouse ? ".FOCUS" : ".NOFOCUS"))
         MouseArea {
@@ -28,7 +30,8 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             enabled: b.enabledButton
-            onClicked: b.clicked()
+            onContainsMouseChanged: if (containsMouse) win.sound("focus")
+            onClicked: { if (b.miniSound) win.sound("mini"); b.clicked() }
         }
     }
     // a button of the transport bar by its centre's distance from the right edge
@@ -55,8 +58,8 @@ Item {
             source: win.res("TWOFOOT.FULLSCREEN.TOPBAR.LEFT")
         }
         // Windows 7 keeps Back blue on the start menu too
-        Button { x: 18; y: 13; name: "GOBACK"; onClicked: win.goBack() }
-        Button { x: 62; y: 10; name: "MENU"; onClicked: win.goHome() }
+        Button { x: 18; y: 13; name: "GOBACK"; miniSound: false; onClicked: win.goBack() }
+        Button { x: 62; y: 10; name: "MENU"; miniSound: false; onClicked: win.goHome() }
 
         Image {
             visible: win.visibility === Window.FullScreen

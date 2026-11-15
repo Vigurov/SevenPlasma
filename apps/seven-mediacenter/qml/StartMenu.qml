@@ -41,12 +41,15 @@ FocusScope {
     }
     function remember() { win.startCat = cat; win.startLinks = linkOf }
     function setCat(c) {
-        cat = (c + categories.length) % categories.length
+        c = (c + categories.length) % categories.length
+        if (c !== cat) win.sound("focus")
+        cat = c
         remember()
     }
     function setLink(i) {
         const l = linkOf.slice()
         l[cat] = Math.max(0, Math.min(categories[cat].links.length - 1, i))
+        if (l[cat] !== link) win.sound("focus")
         linkOf = l
         remember()
     }
@@ -109,7 +112,7 @@ FocusScope {
             text: win.tr(menu.categories[index].title)
             font.family: win.fontLight
             font.pixelSize: 59 // 44 pt of StartMenuCategory.mcml
-            color: selected ? win.offWhite : win.lightBlue
+            color: selected || catMouse.containsMouse ? win.offWhite : win.lightBlue
             x: selected ? 223 : 243
             // centres measured on Windows 7: 424 selected, 331 / 262 / 192 / 122 above, 715 below
             y: (d === 0 ? 424 : d < 0 ? 331 + (d + 1) * 70 : 715) - height / 2
@@ -119,6 +122,7 @@ FocusScope {
             Behavior on opacity { NumberAnimation { duration: 250 } }
             Behavior on x { NumberAnimation { duration: 250 } }
             MouseArea {
+                id: catMouse
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: menu.setCat(catTitle.index)

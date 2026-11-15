@@ -291,13 +291,13 @@ def main():
                 done += 1
                 continue
             if r['from'] == 'rcdata-dir':
-                # every PNG of a resource library (Media Center's ehres.dll: ~2300 named pictures) into one folder,
-                # without the high-contrast variants (HC1. / HC2.)
+                # every PNG and WAV of a resource library (Media Center's ehres.dll: ~2300 named pictures and its
+                # sounds) into one folder, without the high-contrast variants (HC1. / HC2.)
                 _, res = src.resources(r['src'])
                 os.makedirs(dest, exist_ok=True)
                 for t, i, blob in res:
                     name = str(i)
-                    if t == 10 and name.upper().endswith('.PNG') and not name.upper().startswith(('HC1.', 'HC2.')):
+                    if t == 10 and name.upper().endswith(('.PNG', '.WAV')) and not name.upper().startswith(('HC1.', 'HC2.')):
                         open(os.path.join(dest, name.upper()), 'wb').write(blob)
                 if not os.listdir(dest):
                     raise KeyError(r['src'])
