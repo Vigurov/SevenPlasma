@@ -22,6 +22,8 @@ Window {
     // Colors.mcml / FontNames.mcml
     readonly property color offWhite: "#f2f2f2"
     readonly property color lightBlue: "#97d9ff"
+    // commands and the pivot items that aren't chosen
+    readonly property color cyan: "#02a6d4"
     readonly property color yellow: "#ffff64"
     readonly property string fontRegular: "Segoe Media Center"
     readonly property string fontLight: "Segoe Media Center Light"

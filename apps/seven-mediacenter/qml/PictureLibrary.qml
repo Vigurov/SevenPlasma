@@ -32,7 +32,7 @@ FocusScope {
     // the focused folder: its place, the date and the number of pictures (as Windows 7 shows "Public Pictures : Sample Pictures")
     Column {
         visible: lib.folders.length > 0
-        x: 244; y: 456
+        x: 223; y: 454
         readonly property var f: lib.folders[g.currentIndex] || null
         Text { text: parent.f ? win.tr("Pictures") + " : " + parent.f.name : ""; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite }
         Text { text: parent.f ? parent.f.items[0].date + "   " + win.tr("%1 items").arg(parent.f.items.length) : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }

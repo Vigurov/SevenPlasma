@@ -54,8 +54,12 @@ FocusScope {
             Item {
                 id: pic
                 width: g.tileW; height: g.tileH
-                scale: t.focused ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 150 } }
+                // the focused tile grows a quarter, mostly downwards (measured on Windows 7)
+                transform: Scale {
+                    origin.x: g.tileW / 2; origin.y: g.tileH * 0.225
+                    xScale: t.focused ? 1.267 : 1; yScale: xScale
+                    Behavior on xScale { NumberAnimation { duration: 150 } }
+                }
                 Rectangle { anchors.fill: parent; color: "#10305a"; visible: img.status !== Image.Ready && !t.modelData.collage }
                 Image {
                     anchors.fill: parent
@@ -87,12 +91,12 @@ FocusScope {
                 Rectangle {
                     visible: !!t.modelData.collage
                     anchors.fill: parent
-                    color: t.focused ? "#3c7ab8" : "#1e4374"
+                    color: t.focused ? "#4586ac" : "#1f4576"
                     Image { x: 8; y: 4; width: 126; height: 97; source: t.modelData.collage ? (t.modelData.collage[0] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 260 }
                     Image { x: 139; y: 4; width: 56; height: 47; source: t.modelData.collage ? (t.modelData.collage[1] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 120 }
                     Image { x: 139; y: 54; width: 56; height: 47; source: t.modelData.collage ? (t.modelData.collage[2] || "") : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 120 }
                     Text {
-                        x: 16; y: 112; width: parent.width - 24
+                        x: 10; y: 112; width: parent.width - 18
                         elide: Text.ElideRight
                         text: t.modelData.text || ""
                         font.family: win.fontRegular; font.pixelSize: 20
@@ -109,7 +113,7 @@ FocusScope {
             }
             Text {
                 visible: g.labelLines > 0
-                y: g.tileH + (t.focused ? 14 : 4)
+                y: g.tileH + (t.focused ? Math.round(g.tileH * 0.775 * 0.267) + 6 : 4)
                 width: g.tileW - 6
                 text: t.modelData.text || ""
                 wrapMode: Text.WordWrap

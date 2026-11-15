@@ -26,7 +26,7 @@ Item {
         opacity: 0.45
     }
     Column {
-        x: 197; y: 131 - h.commands.length * 34
+        x: 184; y: 131 - h.commands.length * 34
         Repeater {
             model: h.commands
             delegate: Row {
@@ -35,20 +35,20 @@ Item {
                 required property int index
                 spacing: 10
                 height: 34
-                Image { source: win.res(cmd.modelData.icon); width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter; fillMode: Image.PreserveAspectFit }
+                Image { source: win.res(cmd.modelData.icon + (cmdMouse.containsMouse ? ".FOCUS" : "")); anchors.verticalCenter: parent.verticalCenter }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: cmd.modelData.t
                     font.family: win.fontRegular
                     font.pixelSize: 25
-                    color: cmdMouse.containsMouse ? win.offWhite : win.lightBlue
+                    color: cmdMouse.containsMouse ? win.offWhite : win.cyan
                     MouseArea { id: cmdMouse; anchors.fill: parent; hoverEnabled: true; onClicked: h.commandChosen(cmd.index) }
                 }
             }
         }
     }
     Row {
-        x: 197; y: 140
+        x: 200; y: 136
         spacing: 63
         Repeater {
             model: h.pivots
@@ -57,17 +57,19 @@ Item {
                 required property string modelData
                 required property int index
                 readonly property bool sel: index === h.pivot
-                spacing: 8
-                Image { visible: pv.sel; source: win.res("PIVOT.ARROW.LEFT.NOFOCUS"); height: 22; width: 12; anchors.verticalCenter: parent.verticalCenter; fillMode: Image.PreserveAspectFit }
+                spacing: 11
+                // the next item follows the chosen one's right arrow closer than the usual gap
+                width: implicitWidth - (sel ? 21 : 0)
+                Image { visible: pv.sel; source: win.res("PIVOT.ARROW.LEFT.DORMANT"); anchors.verticalCenter: parent.verticalCenter }
                 Text {
                     text: pv.modelData
                     font.family: pv.sel ? win.fontSemibold : win.fontRegular
                     font.pixelSize: pv.sel ? 30 : 24
-                    color: pv.sel ? win.offWhite : win.lightBlue
+                    color: pv.sel ? win.lightBlue : win.cyan
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea { anchors.fill: parent; onClicked: h.pivotChosen(pv.index) }
                 }
-                Image { visible: pv.sel; source: win.res("PIVOT.ARROW.RIGHT.NOFOCUS"); height: 22; width: 12; anchors.verticalCenter: parent.verticalCenter; fillMode: Image.PreserveAspectFit }
+                Image { visible: pv.sel; source: win.res("PIVOT.ARROW.RIGHT.DORMANT"); anchors.verticalCenter: parent.verticalCenter }
             }
         }
     }
