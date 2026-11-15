@@ -8,7 +8,10 @@ import QtQuick
 FocusScope {
     id: vl
     readonly property bool movies: win.page.title === "movie library"
+    Keys.onUpPressed: header.enter()
     LibraryHeader {
+        id: header
+
         title: win.tr(win.page.title)
         commands: vl.movies ? [] : [{ t: win.tr("play all"), icon: "BROWSE.CMD.PLAY" }]
         pivots: vl.movies ? [win.tr("title"), win.tr("year"), win.tr("genre")] : [win.tr("folders"), win.tr("date taken"), win.tr("shared")]

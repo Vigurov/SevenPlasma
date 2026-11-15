@@ -8,7 +8,9 @@ import QtQuick
 FocusScope {
     id: ex
     readonly property var games: library.games
-    LibraryHeader { title: win.tr("extras library"); pivots: [win.tr("all"), win.tr("games")]; pivot: 0 }
+    Keys.onUpPressed: header.enter()
+    LibraryHeader {
+        id: header; title: win.tr("extras library"); pivots: [win.tr("all"), win.tr("games")]; pivot: 0 }
     Gallery {
         focus: true
         x: 225; y: 246; width: ex.width - 225; height: 470

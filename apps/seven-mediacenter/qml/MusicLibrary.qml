@@ -47,7 +47,10 @@ FocusScope {
         if (e.key === Qt.Key_PageDown) { setPivot(pivot + 1); e.accepted = true }
     }
 
+    Keys.onUpPressed: header.enter()
     LibraryHeader {
+        id: header
+
         title: lib.filter ? lib.filter.value : win.tr("music library")
         commands: [{ t: win.tr("play all"), icon: "BROWSE.CMD.PLAY" }, { t: win.tr("search"), icon: "BROWSE.CMD.SEARCH" }]
         pivots: lib.pivots.map(p => win.tr(p))

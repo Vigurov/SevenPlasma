@@ -23,7 +23,8 @@ FocusScope {
     Keys.onRightPressed: currentIndex = Math.min(items.length - 1, currentIndex + rows)
     Keys.onLeftPressed: currentIndex = Math.max(0, currentIndex - rows)
     Keys.onDownPressed: if (currentIndex % rows < rows - 1 && currentIndex + 1 < items.length) currentIndex++
-    Keys.onUpPressed: if (currentIndex % rows > 0) currentIndex--
+    // Up from the top row goes on to the page (its pivots)
+    Keys.onUpPressed: e => { if (currentIndex % rows > 0) currentIndex--; else e.accepted = false }
     Keys.onReturnPressed: if (items.length) activated(currentIndex)
     Keys.onEnterPressed: if (items.length) activated(currentIndex)
     WheelHandler { onWheel: e => g.currentIndex = Math.max(0, Math.min(g.items.length - 1, g.currentIndex + (e.angleDelta.y > 0 ? -g.rows : g.rows))) }

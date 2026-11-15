@@ -15,7 +15,10 @@ FocusScope {
         if (pivot === 1) a.sort((x, y) => x.time - y.time)
         return a
     }
+    Keys.onUpPressed: header.enter()
     LibraryHeader {
+        id: header
+
         title: pf.folder.name
         commands: [{ t: win.tr("play slide show"), icon: "BROWSE.CMD.PLAY" }]
         pivots: [win.tr("by name"), win.tr("by date"), win.tr("by rating")]

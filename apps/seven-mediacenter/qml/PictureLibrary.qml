@@ -12,7 +12,10 @@ FocusScope {
     readonly property var folders: library.pictureFolders
     function allPictures() { let a = []; for (const f of folders) a = a.concat(f.items); return a }
 
+    Keys.onUpPressed: header.enter()
     LibraryHeader {
+        id: header
+
         title: win.tr("picture library")
         commands: [{ t: win.tr("play slide show"), icon: "BROWSE.CMD.PLAY" }]
         pivots: lib.pivots.map(p => win.tr(p))
