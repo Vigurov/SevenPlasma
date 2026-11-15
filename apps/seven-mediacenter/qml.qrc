@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/AlbumDetails.qml</file>
+        <file>qml/ExtrasLibrary.qml</file>
+        <file>qml/Gallery.qml</file>
+        <file>qml/GetStarted.qml</file>
+        <file>qml/LibraryHeader.qml</file>
+        <file>qml/Main.qml</file>
+        <file>qml/MessagePage.qml</file>
+        <file>qml/MouseChrome.qml</file>
+        <file>qml/MusicLibrary.qml</file>
+        <file>qml/NowPlaying.qml</file>
+        <file>qml/PageBackground.qml</file>
+        <file>qml/PictureFolder.qml</file>
+        <file>qml/PictureLibrary.qml</file>
+        <file>qml/PictureViewer.qml</file>
+        <file>qml/SongList.qml</file>
+        <file>qml/StartMenu.qml</file>
+        <file>qml/VideoLibrary.qml</file>
+        <file>qml/VideoPage.qml</file>
+        <file>qml/Welcome.qml</file>
+        <file>qml/WmcButton.qml</file>
+    </qresource>
+</RCC>

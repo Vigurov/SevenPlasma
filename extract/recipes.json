@@ -32989,5 +32989,53 @@
 "from": "icon",
 "id": 1,
 "extra": "16@32"
+},
+{
+"dest": "seven-mediacenter/res",
+"src": "Windows/ehome/ehres.dll",
+"from": "rcdata-dir"
+},
+{
+"dest": "fonts/Windows 7/segmcr.ttf",
+"src": "Windows/ehome/segmcr.ttf",
+"from": "file"
+},
+{
+"dest": "fonts/Windows 7/segmcsb.ttf",
+"src": "Windows/ehome/segmcsb.ttf",
+"from": "file"
+},
+{
+"dest": "fonts/Windows 7/segoemcl.ttf",
+"src": "Windows/ehome/segoemcl.ttf",
+"from": "file"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-mediacenter.png",
+"src": "Windows/ehome/ehshell.exe",
+"from": "icon",
+"id": "IDI_APP",
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/32x32/apps/seven-mediacenter.png",
+"src": "Windows/ehome/ehshell.exe",
+"from": "icon",
+"id": "IDI_APP",
+"extra": "32@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-mediacenter.png",
+"src": "Windows/ehome/ehshell.exe",
+"from": "icon",
+"id": "IDI_APP",
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-mediacenter.png",
+"src": "Windows/ehome/ehshell.exe",
+"from": "icon",
+"id": "IDI_APP",
+"extra": "256@32"
 }
 ]

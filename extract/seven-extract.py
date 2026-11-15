@@ -275,6 +275,19 @@ def main():
         dest = os.path.join(a.dest, r['dest'])
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         try:
+            if r['from'] == 'rcdata-dir':
+                # every PNG of a resource library (Media Center's ehres.dll: ~2300 named pictures) into one folder,
+                # without the high-contrast variants (HC1. / HC2.)
+                _, res = src.resources(r['src'])
+                os.makedirs(dest, exist_ok=True)
+                for t, i, blob in res:
+                    name = str(i)
+                    if t == 10 and name.upper().endswith('.PNG') and not name.upper().startswith(('HC1.', 'HC2.')):
+                        open(os.path.join(dest, name.upper()), 'wb').write(blob)
+                if not os.listdir(dest):
+                    raise KeyError(r['src'])
+                done += 1
+                continue
             if r['from'] == 'resource' or r['from'] == 'file' and not dest.lower().endswith(('.png', '.gif', '.jpg', '.jpeg')) or \
                r['from'] == 'file' and os.path.splitext(dest)[1].lower() == os.path.splitext(r['src'])[1].lower():
                 open(dest, 'wb').write(src.file_bytes(r))

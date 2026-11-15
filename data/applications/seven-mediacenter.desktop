@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Windows Media Center
+Name[uk]=Windows Media Center
+Comment=Home entertainment: pictures, videos, music and TV
+Comment[uk]=Домашні розваги: зображення, відео, музика й телебачення
+Exec=seven-mediacenter
+Icon=seven-mediacenter
+Categories=AudioVideo;Player;Video;Audio;
+StartupWMClass=seven-mediacenter

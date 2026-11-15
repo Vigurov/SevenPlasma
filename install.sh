@@ -283,7 +283,8 @@ PKGS=(git gettext cmake ninja-build build-essential extra-cmake-modules curl unz
       libkf6userfeedback-dev libkf6archive-dev libkf6bookmarks-dev libkf6codecs-dev libkf6completion-dev libkf6doctools-dev
       libkf6itemviews-dev libkf6jobwidgets-dev libkf6configwidgets-dev libkf6itemmodels-dev libkf6package-dev qt6-wayland-dev
       libdrm-dev qt6-wayland-private-dev wayland-protocols libwayland-dev libxslt1-dev libxml2-dev
-      qt6-style-kvantum plymouth plymouth-themes ufw libxtst6 x11-xserver-utils kio-admin)
+      qt6-style-kvantum plymouth plymouth-themes ufw libxtst6 x11-xserver-utils kio-admin
+      qml6-module-qtmultimedia qml6-module-qtquick qml6-module-qtquick-window ffmpeg dvdauthor dvd+rw-tools xorriso)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && PKGS+=(wine)
 # Arch: AeroThemePlasma's list for Arch and what our programs need
 APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-virtualkeyboard qt6-multimedia qt6-5compat
@@ -291,7 +292,7 @@ APKGS=(git cmake extra-cmake-modules ninja curl unzip base-devel gettext qt6-vir
        kvantum sddm sddm-kcm plasma-nm plasma-pa plasma-workspace plasma-desktop libplasma packagekit-qt6 libksysguard
        baloo-widgets polkit-qt6 python-pyqt6 python-pillow 7zip fontconfig freetype2 kio kparts kxmlgui knotifications
        kglobalaccel kwindowsystem kiconthemes kcmutils kitemmodels ktextwidgets kuserfeedback kdoctools plasma-activities-stats
-       plymouth xorg-xrandr spectacle kio-admin)
+       plymouth xorg-xrandr spectacle kio-admin ffmpeg dvdauthor dvd+rw-tools libisoburn)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && APKGS+=(wine gst-plugins-base gst-plugins-good gst-libav)   # the games' sounds go through GStreamer
 # Fedora: the same, by the names of its -devel packages
 FPKGS=(git cmake extra-cmake-modules ninja-build gcc-c++ make curl unzip gettext 7zip python3-pillow python3-pyqt6
@@ -311,7 +312,7 @@ FPKGS=(git cmake extra-cmake-modules ninja-build gcc-c++ make curl unzip gettext
        kf6-kconfigwidgets-devel kf6-karchive-devel kf6-kirigami-addons fontconfig-devel freetype-devel libxslt-devel
        libxml2-devel libxcb-devel libXtst xrandr layer-shell-qt-devel kwayland-devel kf6-kded-devel kf6-kwallet-devel
        kf6-frameworkintegration-devel libacl-devel libmount-devel kvantum sddm plasma-nm plasma-pa spectacle plymouth
-       plymouth-plugin-script kio-admin)
+       plymouth-plugin-script kio-admin qt6-qtmultimedia ffmpeg-free dvdauthor dvd+rw-tools xorriso)
 [ $GAMES -eq 1 ] && [ -n "$ISO" ] && FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav)
 # a prebuilt archive for this system: only the packages its programs need at run time (listed in it by the build
 # server), no compilers and -dev packages
@@ -339,8 +340,13 @@ fi
 if [ -n "$PREBUILT" ]; then
     mapfile -t RT < "$PREBUILT/runtime-packages.txt"
     note "$(L "є готові файли для цієї системи ($KEY): компілювати нічого не треба" "prebuilt files for this system ($KEY): nothing to compile")"
-    # + kio-admin: Explorer copies into C:\ and other system folders through it (asks for administrator permission)
-    case $PM in apt) PKGS=("${RT[@]}" kio-admin) ;; pacman) APKGS=("${RT[@]}" kio-admin) ;; dnf) FPKGS=("${RT[@]}" kio-admin) ;; esac
+    # + what programs start rather than link: kio-admin (Explorer copying into C:\ as administrator), Media Center's
+    # QML modules and ffmpeg, DVD Maker's dvdauthor / growisofs / xorriso
+    case $PM in
+        apt) PKGS=("${RT[@]}" kio-admin qml6-module-qtmultimedia qml6-module-qtquick qml6-module-qtquick-window ffmpeg dvdauthor dvd+rw-tools xorriso) ;;
+        pacman) APKGS=("${RT[@]}" kio-admin qt6-multimedia ffmpeg dvdauthor dvd+rw-tools libisoburn) ;;
+        dnf) FPKGS=("${RT[@]}" kio-admin qt6-qtmultimedia ffmpeg-free dvdauthor dvd+rw-tools xorriso) ;;
+    esac
     [ $GAMES -eq 1 ] && [ -n "$ISO" ] && case $PM in
         apt) PKGS+=(wine) ;; pacman) APKGS+=(wine gst-plugins-base gst-plugins-good gst-libav) ;;
         dnf) FPKGS+=(wine gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugin-libav) ;; esac
