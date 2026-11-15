@@ -47,7 +47,7 @@ FocusScope {
         if (e.key === Qt.Key_PageDown) { setPivot(pivot + 1); e.accepted = true }
     }
 
-    Keys.onUpPressed: header.enter()
+    Keys.onUpPressed: header.enterPivots()
     LibraryHeader {
         id: header
 
@@ -62,18 +62,21 @@ FocusScope {
         }
     }
 
+    // albums: few of them make one row of 152 covers with labels, more make 3 rows of 122 (Audio1Row/3Row/
+    // 5RowGalleryItem); artists, genres... are 3 rows
+    readonly property int galleryRows: pivot === 0 ? (items.length <= 7 ? 1 : items.length <= 120 ? 3 : 5) : 3
     Gallery {
         id: gallery
         visible: lib.pivot !== 3 && lib.pivot !== 4
         focus: visible
-        x: 225; y: 246
+        x: 225; y: 244
         width: lib.width - 225
         height: 460
         items: lib.items
-        rows: lib.pivot === 0 ? 2 : 3
-        tileW: lib.pivot === 0 ? 152 : 230
-        tileH: lib.pivot === 0 ? 152 : 92
-        labelLines: lib.pivot === 0 ? 2 : 0
+        rows: lib.galleryRows
+        tileW: lib.galleryRows === 1 ? 152 : lib.galleryRows === 3 ? 122 : 72
+        tileH: tileW
+        labelLines: lib.galleryRows === 1 ? 2 : 0
         noImage: lib.pivot === 0 ? "AUDIO.NOCOVER.1.LARGE" : "BROWSE.AUDIO.NOIMAGE"
         onActivated: i => lib.activate(i)
         Keys.onPressed: e => {
@@ -81,6 +84,25 @@ FocusScope {
             if (e.key === Qt.Key_PageDown) { lib.setPivot(lib.pivot + 1); e.accepted = true }
         }
     }
+    // the focused album's details under the gallery, at the album's column (ItemMetaData): the title 22 pt
+    // semibold white, the artist and "1 track   3:20   2004" 18 pt light blue
+    Column {
+        readonly property var it: lib.items[gallery.currentIndex] || null
+        visible: gallery.visible && gallery.activeFocus && it !== null && lib.pivot === 0
+        // at the focused item's left, kept between 30 left of the gallery and 248 into it (DetailsMetadataLayoutInput)
+        x: 225 + Math.max(-30, Math.min(248, Math.floor(gallery.currentIndex / gallery.rows) * gallery.cellW - gallery.scrollX))
+        y: 244 + gallery.rows * gallery.cellH - 13
+        spacing: -2
+        Text { text: parent.it ? parent.it.text : ""; font.family: win.fontSemibold; font.pixelSize: 27; color: win.offWhite }
+        Text { text: parent.it && parent.it.album ? parent.it.album.artist : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue; transform: Translate { y: -2 } }
+        Text {
+            readonly property var a: parent.it ? parent.it.album : null
+            text: a ? [a.tracks.length === 1 ? win.tr("1 track") : win.tr("%1 tracks").arg(a.tracks.length), win.fmtTime(a.duration), a.year].filter(x => x).join("  \u200a") : ""
+            font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue
+            transform: Translate { y: -2 }
+        }
+    }
+    Pager { visible: gallery.visible && lib.items.length > 0; current: gallery.currentIndex + 1; total: lib.items.length; opacity: gallery.opacity }
 
     SongList {
         visible: lib.pivot === 3

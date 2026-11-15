@@ -109,12 +109,17 @@ Window {
     SoundEffect { id: sndFocus; source: library.res + "FOCUS_A.WAV" }
     SoundEffect { id: sndSelect; source: library.res + "SELECT_A.WAV" }
     SoundEffect { id: sndMini; source: library.res + "MINISELECT_A.WAV" }
-    SoundEffect { id: sndIntro; source: library.res + "INTRO_A.WAV" }
-    function sound(name) {
-        const s = name === "select" ? sndSelect : name === "mini" ? sndMini : name === "intro" ? sndIntro : sndFocus
-        if (s.status === SoundEffect.Ready) s.play()
+    SoundEffect {
+        id: sndIntro
+        source: library.res + "INTRO_A.WAV"
+        // once loaded, when Media Center opens normally
+        property bool done: false
+        onStatusChanged: if (status === SoundEffect.Ready && !done && startPage === "") { done = true; play() }
     }
-    Timer { running: startPage === ""; interval: 300; onTriggered: win.sound("intro") }
+    // play() before the file is loaded is kept and played as soon as it is
+    function sound(name) {
+        (name === "select" ? sndSelect : name === "mini" ? sndMini : name === "intro" ? sndIntro : sndFocus).play()
+    }
 
     function open(p) { sound("select"); stack = stack.concat([p]) }
     function goBack() {
@@ -174,20 +179,21 @@ Window {
 
         // the clock and the logo of the top right corner (not over full-screen pictures and video)
         Row {
-            // the mouse controls take the clock's place
-            visible: ["start", "music", "pictures", "videos", "extras", "album", "folder", "message"].includes(win.page.kind) && !chrome.shown
-            anchors { top: parent.top; right: parent.right; topMargin: 13; rightMargin: 42 }
-            spacing: 10
+            // only the start menu shows the clock (the libraries don't); the mouse controls take its place
+            visible: win.page.kind === "start" && !chrome.shown
+            // Clock.mcml: 16 pt semibold; the logo at its 36x36, measured on Windows 7
+            anchors { top: parent.top; right: parent.right; topMargin: 26; rightMargin: 48 }
+            spacing: 12
             Text {
                 id: clock
                 anchors.verticalCenter: parent.verticalCenter
-                font.family: win.fontRegular
-                font.pixelSize: 22
+                font.family: win.fontSemibold
+                font.pixelSize: 21
                 color: win.offWhite
                 text: Qt.formatTime(new Date(), Qt.locale().timeFormat(Locale.ShortFormat))
                 Timer { interval: 10000; running: true; repeat: true; onTriggered: clock.text = Qt.formatTime(new Date(), Qt.locale().timeFormat(Locale.ShortFormat)) }
             }
-            Image { source: win.res("STARTMENU.LOGO.SMALL"); width: 32; height: 32; anchors.verticalCenter: parent.verticalCenter }
+            Image { source: win.res("STARTMENU.LOGO.SMALL"); anchors.verticalCenter: parent.verticalCenter }
         }
 
         // the "now playing" inset of the menus: the album and a stop button, bottom left

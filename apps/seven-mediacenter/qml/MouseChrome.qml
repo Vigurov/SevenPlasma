@@ -13,8 +13,16 @@ Item {
     id: chrome
     property bool shown: false
     Timer { id: hideTimer; interval: 3000; onTriggered: chrome.shown = false }
-    HoverHandler {
-        onPointChanged: { chrome.shown = true; hideTimer.restart() }
+    property point lastPoint: Qt.point(-1, -1)
+    // only a real move of the pointer shows them (not the pointer resting over the window when it opens)
+    Connections {
+        target: pointer
+        function onMoved(p) {
+            if (chrome.lastPoint.x >= 0 && (Math.abs(p.x - chrome.lastPoint.x) > 1 || Math.abs(p.y - chrome.lastPoint.y) > 1)) {
+                chrome.shown = true; hideTimer.restart()
+            }
+            chrome.lastPoint = p
+        }
     }
 
     component Button: Image {

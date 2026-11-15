@@ -19,23 +19,50 @@ FocusScope {
     // delegate data: image (url), text, sub; empty image shows the noImage picture
     property string noImage: "BROWSE.NOIMAGE"
     signal activated(int index)
-    readonly property int cellH: tileH + (labelLines > 0 ? 16 + labelLines * 22 : 8)
+    // 1-row items (BrowseGalleryItem.mcml: 1RowGalleryItem) are 218 high with their label; the gallery's grid has 2
+    // between items (GalleryDefaultLayout Spacing="2, 2")
+    readonly property int cellH: labelLines > 0 ? tileH + 66 : tileH + 2
+    readonly property int cellW: tileW + 2
+    // while the pivots or the commands have the focus, the gallery dims and nothing in it is focused
+    opacity: activeFocus ? 1 : 0.75
+    Behavior on opacity { NumberAnimation { duration: 300 } }
 
-    Keys.onRightPressed: currentIndex = Math.min(items.length - 1, currentIndex + rows)
-    Keys.onLeftPressed: currentIndex = Math.max(0, currentIndex - rows)
+    // more items than fit: the gallery goes round (Repeat="WhenTooBig" RepeatGap="70"), the focused column stays
+    // at the left and the ones before it show on the left
+    readonly property int columns: Math.ceil(items.length / rows)
+    readonly property bool wraps: columns * cellW > width
+    readonly property real loopW: columns * cellW + 70
+    function step(d) {
+        const n = items.length
+        if (!n) return
+        let i = currentIndex + d
+        if (wraps) i = ((i % n) + n) % n
+        currentIndex = Math.max(0, Math.min(n - 1, i))
+    }
+    Keys.onRightPressed: step(rows)
+    Keys.onLeftPressed: step(-rows)
     Keys.onDownPressed: if (currentIndex % rows < rows - 1 && currentIndex + 1 < items.length) currentIndex++
     // Up from the top row goes on to the page (its pivots)
     Keys.onUpPressed: e => { if (currentIndex % rows > 0) currentIndex--; else e.accepted = false }
     Keys.onReturnPressed: if (items.length) activated(currentIndex)
     Keys.onEnterPressed: if (items.length) activated(currentIndex)
-    WheelHandler { onWheel: e => g.currentIndex = Math.max(0, Math.min(g.items.length - 1, g.currentIndex + (e.angleDelta.y > 0 ? -g.rows : g.rows))) }
+    WheelHandler { onWheel: e => g.step(e.angleDelta.y > 0 ? -g.rows : g.rows) }
 
-    // keep the focused column in view, like the gallery's auto scroll
+    // where column c shows: in a gallery that goes round, the copy nearest the left
+    function shownX(col) {
+        const x = col * cellW - scrollX
+        if (!wraps) return x
+        let m = ((x % loopW) + loopW) % loopW
+        if (m > width) m -= loopW
+        return m
+    }
+    // keep the focused column in view, like the gallery's auto scroll (locked at the left when it goes round)
     property real scrollX: 0
-    readonly property real colX: Math.floor(currentIndex / rows) * tileW
+    readonly property real colX: Math.floor(currentIndex / rows) * cellW
     onColXChanged: {
-        if (colX - scrollX > width - tileW * 2) scrollX = colX - width + tileW * 2
-        if (colX - scrollX < tileW) scrollX = Math.max(0, colX - tileW)
+        if (wraps) { scrollX += shownX(Math.floor(currentIndex / rows)); return }
+        if (colX - scrollX > width - cellW * 2) scrollX = colX - width + cellW * 2
+        if (colX - scrollX < cellW) scrollX = Math.max(0, colX - cellW)
     }
     Behavior on scrollX { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
     clip: false
@@ -47,19 +74,19 @@ FocusScope {
             required property var modelData
             required property int index
             readonly property bool focused: index === g.currentIndex && g.activeFocus
-            x: Math.floor(index / g.rows) * g.tileW - g.scrollX
+            x: g.shownX(Math.floor(index / g.rows))
             y: (index % g.rows) * g.cellH
-            width: g.tileW
+            width: g.cellW
             height: g.cellH
             visible: x > -g.tileW * 2 && x < g.width + g.tileW
             z: focused ? 2 : 1
             Item {
                 id: pic
                 width: g.tileW; height: g.tileH
-                // the focused tile grows a quarter, mostly downwards (measured on Windows 7)
+                // the focused tile grows 26 % (FocusScale 1.26), mostly downwards (measured on Windows 7)
                 transform: Scale {
-                    origin.x: g.tileW / 2; origin.y: g.tileH * 0.225
-                    xScale: t.focused ? 1.267 : 1; yScale: xScale
+                    origin.x: g.tileW / 2; origin.y: g.tileH * 0.18
+                    xScale: t.focused ? 1.26 : 1; yScale: xScale
                     Behavior on xScale { NumberAnimation { duration: 150 } }
                 }
                 Rectangle { anchors.fill: parent; color: "#10305a"; visible: img.status !== Image.Ready && !t.modelData.collage }
@@ -101,7 +128,7 @@ FocusScope {
                         x: 10; y: 112; width: parent.width - 18
                         elide: Text.ElideRight
                         text: t.modelData.text || ""
-                        font.family: win.fontRegular; font.pixelSize: 20
+                        font.family: win.fontRegular; font.pixelSize: 21
                         color: win.offWhite
                     }
                 }
@@ -113,18 +140,20 @@ FocusScope {
                     border { left: 10; top: 10; right: 10; bottom: 10 }
                 }
             }
+            // the label under a 1-row item: 16 pt light blue, two lines in 140 (LabelTileSize); the focused item hides
+            // it (its details are shown under the gallery)
             Text {
-                visible: g.labelLines > 0
-                y: g.tileH + (t.focused ? Math.round(g.tileH * 0.775 * 0.267) + 6 : 4)
-                width: g.tileW - 6
+                visible: g.labelLines > 0 && !t.focused
+                y: g.tileH - 1
+                width: Math.max(140, g.tileW - 12)
                 text: t.modelData.text || ""
                 wrapMode: Text.WordWrap
                 maximumLineCount: g.labelLines
                 elide: Text.ElideRight
+                lineHeight: 0.85
                 font.family: win.fontRegular
-                font.pixelSize: 18
-                color: win.offWhite
-                opacity: t.focused ? 1 : 0.85
+                font.pixelSize: 21
+                color: win.lightBlue
             }
             MouseArea {
                 anchors.fill: parent

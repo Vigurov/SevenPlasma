@@ -15,6 +15,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QDirIterator>
+#include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
 #include <QGuiApplication>
@@ -27,6 +28,9 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QTimer>
+#include <QMouseEvent>
+#include <QKeyEvent>
 #include <QSaveFile>
 #include <QSettings>
 #include <QStandardPaths>
@@ -132,16 +136,20 @@ QJsonObject probeSong(const QString &path)
 }
 
 /** a frame of a video for its tile */
+double videoDuration(const QString &path);
+// the frame Windows 7 shows for a video: 10 s in (a third of a shorter one)
 QString videoThumb(const QString &path)
 {
-    const QString out = cacheDir() + QStringLiteral("/thumbs/") + hashName(path + QString::number(QFileInfo(path).lastModified().toSecsSinceEpoch())) + QStringLiteral(".jpg");
+    const QString out = cacheDir() + QStringLiteral("/thumbs/") + hashName(path + QString::number(QFileInfo(path).lastModified().toSecsSinceEpoch()) + QStringLiteral("t10")) + QStringLiteral(".jpg");
     if (!QFileInfo::exists(out)) {
+        const double len = videoDuration(path);
+        const QString at = QString::number(len > 0 && len < 30 ? len / 3 : 10.0, 'f', 2);
         QProcess f;
-        f.start(QStringLiteral("ffmpeg"), {QStringLiteral("-v"), QStringLiteral("quiet"), QStringLiteral("-y"), QStringLiteral("-ss"), QStringLiteral("5"),
+        f.start(QStringLiteral("ffmpeg"), {QStringLiteral("-v"), QStringLiteral("quiet"), QStringLiteral("-y"), QStringLiteral("-ss"), at,
                                            QStringLiteral("-i"), path, QStringLiteral("-vf"), QStringLiteral("scale=320:-2"), QStringLiteral("-frames:v"),
                                            QStringLiteral("1"), out});
         f.waitForFinished(20000);
-        if (!QFileInfo::exists(out)) { // shorter than 5 s
+        if (!QFileInfo::exists(out)) { // too short
             f.start(QStringLiteral("ffmpeg"), {QStringLiteral("-v"), QStringLiteral("quiet"), QStringLiteral("-y"), QStringLiteral("-i"), path,
                                                QStringLiteral("-vf"), QStringLiteral("scale=320:-2"), QStringLiteral("-frames:v"), QStringLiteral("1"), out});
             f.waitForFinished(20000);
@@ -149,6 +157,71 @@ QString videoThumb(const QString &path)
     }
     return QFileInfo::exists(out) ? QUrl::fromLocalFile(out).toString() : QString();
 }
+
+// a video's length in seconds (ffprobe)
+double videoDuration(const QString &path)
+{
+    QProcess f;
+    f.start(QStringLiteral("ffprobe"), {QStringLiteral("-v"), QStringLiteral("quiet"), QStringLiteral("-show_entries"), QStringLiteral("format=duration"),
+                                        QStringLiteral("-of"), QStringLiteral("csv=p=0"), path});
+    f.waitForFinished(10000);
+    return QString::fromLatin1(f.readAllStandardOutput()).trimmed().toDouble();
+}
+}
+
+// a JPEG's EXIF: the date it was taken (DateTimeOriginal) and the Windows rating (0x4746, 0-5 stars)
+struct PhotoInfo {
+    QDateTime taken;
+    int rating = 0;
+};
+static PhotoInfo readExif(const QString &path)
+{
+    PhotoInfo info;
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) {
+        return info;
+    }
+    const QByteArray head = f.read(256 * 1024);
+    if (!head.startsWith("\xFF\xD8")) {
+        return info;
+    }
+    int pos = 2;
+    while (pos + 4 < head.size() && uchar(head[pos]) == 0xFF) {
+        const int marker = uchar(head[pos + 1]);
+        const int len = (uchar(head[pos + 2]) << 8) | uchar(head[pos + 3]);
+        if (marker == 0xE1 && head.mid(pos + 4, 6) == QByteArray("Exif\0\0", 6)) {
+            const QByteArray t = head.mid(pos + 10, len - 8);
+            const bool le = t.startsWith("II");
+            auto u16 = [&](int o) -> int { return o + 2 > t.size() ? 0 : le ? (uchar(t[o]) | uchar(t[o + 1]) << 8) : (uchar(t[o]) << 8 | uchar(t[o + 1])); };
+            auto u32 = [&](int o) -> quint32 { return quint32(u16(le ? o : o + 2)) | quint32(u16(le ? o + 2 : o)) << 16; };
+            auto walk = [&](int ifd, auto &&onTag) {
+                const int n = u16(ifd);
+                for (int i = 0; i < n && ifd + 2 + i * 12 + 12 <= t.size(); ++i) {
+                    const int e = ifd + 2 + i * 12;
+                    onTag(u16(e), u16(e + 2), u32(e + 4), e + 8);
+                }
+            };
+            int exifIfd = 0;
+            walk(int(u32(4)), [&](int tag, int, quint32, int val) {
+                if (tag == 0x4746) {
+                    info.rating = u16(val);
+                }
+                if (tag == 0x8769) {
+                    exifIfd = int(u32(val));
+                }
+            });
+            if (exifIfd > 0) {
+                walk(exifIfd, [&](int tag, int, quint32 count, int val) {
+                    if (tag == 0x9003 && count >= 19) {
+                        info.taken = QDateTime::fromString(QString::fromLatin1(t.mid(int(u32(val)), 19)), QStringLiteral("yyyy:MM:dd HH:mm:ss"));
+                    }
+                });
+            }
+            break;
+        }
+        pos += 2 + len;
+    }
+    return info;
 }
 
 /** The media libraries and the settings, for QML ("library") */
@@ -309,7 +382,8 @@ public:
                                        {QStringLiteral("file"), QUrl::fromLocalFile(f).toString()},
                                        {QStringLiteral("folder"), QDir(videosDir).relativeFilePath(fi.absolutePath())},
                                        {QStringLiteral("date"), fi.lastModified().toString(QStringLiteral("dd.MM.yyyy"))},
-                                       {QStringLiteral("thumb"), videoThumb(f)}});
+                                       {QStringLiteral("thumb"), videoThumb(f)},
+                                       {QStringLiteral("duration"), videoDuration(f)}});
             }
             return out;
         }));
@@ -366,10 +440,14 @@ private:
             QVariantList items;
             for (const QString &p : std::as_const(pics)) {
                 const QFileInfo fi(p);
+                // Windows 7 shows the date the picture was taken and its rating, from its EXIF
+                const PhotoInfo exif = readExif(p);
+                const QDateTime when = exif.taken.isValid() ? exif.taken : fi.lastModified();
                 items.append(QVariantMap{{QStringLiteral("name"), fi.completeBaseName()},
                                          {QStringLiteral("file"), QUrl::fromLocalFile(p).toString()},
-                                         {QStringLiteral("date"), fi.lastModified().toString(QStringLiteral("dd.MM.yyyy"))},
-                                         {QStringLiteral("time"), double(fi.lastModified().toSecsSinceEpoch())}});
+                                         {QStringLiteral("date"), when.toString(QStringLiteral("dd.MM.yyyy"))},
+                                         {QStringLiteral("time"), double(when.toSecsSinceEpoch())},
+                                         {QStringLiteral("rating"), exif.rating}});
             }
             folders.append(QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("items"), items}});
         };
@@ -479,12 +557,36 @@ private:
     bool m_scanning = false;
 };
 
+// the mouse moving anywhere over the window (for the mouse controls), without taking the hover from the items
+// under the pointer, which a HoverHandler over the whole interface does
+class PointerWatch : public QObject
+{
+    Q_OBJECT
+public:
+    using QObject::QObject;
+Q_SIGNALS:
+    void moved(QPointF pos);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override
+    {
+        if (e->type() == QEvent::MouseMove || e->type() == QEvent::HoverMove) {
+            Q_EMIT moved(static_cast<QSinglePointEvent *>(e)->scenePosition());
+        }
+        return QObject::eventFilter(o, e);
+    }
+};
+
 int main(int argc, char **argv)
 {
     // the whole interface is a 1366x768 canvas scaled to the window: distance field text gets pointed corners
     // when scaled, curve rendering draws the glyph outlines smooth at any size
     QQuickWindow::setTextRenderType(qEnvironmentVariableIsSet("SEVEN_MC_DF_TEXT") ? QQuickWindow::QtTextRendering
                                                                                   : QQuickWindow::CurveTextRendering);
+    // Qt's PipeWire audio looks the default output up by name and misses Bluetooth ones (PipeWire names their node
+    // differently), so the sound went to the built-in speakers; the PulseAudio backend follows the default output
+    if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND"))
+        qputenv("QT_AUDIO_BACKEND", "pulseaudio");
     QGuiApplication app(argc, argv);
     Win7I18n::install(&app);
     app.setApplicationName(QLatin1String(kApp));
@@ -500,11 +602,55 @@ int main(int argc, char **argv)
     engine.rootContext()->setContextProperty(QStringLiteral("startPage"), pageArg > 0 ? app.arguments().value(pageArg + 1) : QString());
     engine.rootContext()->setContextProperty(QStringLiteral("startMaximized"), app.arguments().contains(QStringLiteral("--maximized")));
     engine.rootContext()->setContextProperty(QStringLiteral("startFullScreen"), app.arguments().contains(QStringLiteral("/directmedia")) || app.arguments().contains(QStringLiteral("--fullscreen")));
+    PointerWatch pointer;
+    engine.rootContext()->setContextProperty(QStringLiteral("pointer"), &pointer);
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (engine.rootObjects().isEmpty()) {
         return 1;
     }
+    engine.rootObjects().constFirst()->installEventFilter(&pointer);
     library.scan();
+
+    // test hook: SEVEN_MC_TEST_INPUT="2000;move 370,115;500;key Down;click 860,224" plays mouse moves, clicks and keys
+    // (window pixels) after the given pauses, to compare the states with Windows 7 screenshots
+    const QString script = qEnvironmentVariable("SEVEN_MC_TEST_INPUT");
+    if (!script.isEmpty()) {
+        auto *win = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        int at = 0;
+        for (const QString &step : script.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+            bool num = false;
+            const int ms = step.trimmed().toInt(&num);
+            if (num) {
+                at += ms;
+                continue;
+            }
+            QTimer::singleShot(at, win, [win, step] {
+                const QStringList w = step.trimmed().split(QLatin1Char(' '));
+                const QStringList xy = w.value(1).split(QLatin1Char(','));
+                const QPointF p(xy.value(0).toDouble(), xy.value(1).toDouble());
+                if (w[0] == QLatin1String("move") || w[0] == QLatin1String("click")) {
+                    QMouseEvent move(QEvent::MouseMove, p, win->mapToGlobal(p), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(win, &move);
+                }
+                if (w[0] == QLatin1String("click")) {
+                    QMouseEvent press(QEvent::MouseButtonPress, p, win->mapToGlobal(p), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(win, &press);
+                    QMouseEvent release(QEvent::MouseButtonRelease, p, win->mapToGlobal(p), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(win, &release);
+                }
+                if (w[0] == QLatin1String("key")) {
+                    static const QHash<QString, int> keys{{QStringLiteral("Up"), Qt::Key_Up}, {QStringLiteral("Down"), Qt::Key_Down},
+                                                          {QStringLiteral("Left"), Qt::Key_Left}, {QStringLiteral("Right"), Qt::Key_Right},
+                                                          {QStringLiteral("Return"), Qt::Key_Return}, {QStringLiteral("Back"), Qt::Key_Backspace}};
+                    const int k = keys.value(w.value(1));
+                    QKeyEvent press(QEvent::KeyPress, k, Qt::NoModifier);
+                    QCoreApplication::sendEvent(win, &press);
+                    QKeyEvent release(QEvent::KeyRelease, k, Qt::NoModifier);
+                    QCoreApplication::sendEvent(win, &release);
+                }
+            });
+        }
+    }
     return app.exec();
 }
 

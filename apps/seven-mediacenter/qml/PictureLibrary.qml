@@ -12,7 +12,7 @@ FocusScope {
     readonly property var folders: library.pictureFolders
     function allPictures() { let a = []; for (const f of folders) a = a.concat(f.items); return a }
 
-    Keys.onUpPressed: header.enter()
+    Keys.onUpPressed: header.enterPivots()
     LibraryHeader {
         id: header
 
@@ -27,7 +27,8 @@ FocusScope {
         focus: true
         x: 224; y: 246; width: lib.width - 224; height: 420
         rows: 1
-        tileW: 213; tileH: 150
+        // 1RowGalleryItem4x3: 203x152
+        tileW: 203; tileH: 152
         labelLines: 0
         items: lib.folders.map(f => ({ text: f.name, collage: f.items.slice(0, 3).map(p => p.file) }))
         onActivated: i => win.open({ kind: "folder", folder: lib.folders[i] })
@@ -35,16 +36,12 @@ FocusScope {
     // the focused folder: its place, the date and the number of pictures (as Windows 7 shows "Public Pictures : Sample Pictures")
     Column {
         visible: lib.folders.length > 0
-        x: 223; y: 454
+        x: 225; y: 452
         readonly property var f: lib.folders[g.currentIndex] || null
         Text { text: parent.f ? win.tr("Pictures") + " : " + parent.f.name : ""; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite }
         Text { text: parent.f ? parent.f.items[0].date + "   " + win.tr("%1 items").arg(parent.f.items.length) : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }
     }
-    Text {
-        anchors { right: parent.right; rightMargin: 110; bottom: parent.bottom; bottomMargin: 74 }
-        text: (g.currentIndex + 1) + " | " + lib.folders.length
-        font.family: win.fontRegular; font.pixelSize: 26; color: win.offWhite
-    }
+    Pager { current: g.currentIndex + 1; total: lib.folders.length; opacity: g.opacity }
     Text {
         visible: lib.folders.length === 0
         x: 225; y: 260

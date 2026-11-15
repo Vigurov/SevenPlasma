@@ -102,25 +102,53 @@ FocusScope {
     function offsetOf(i) {
         return i - cat
     }
+    // the categories; the one under the chosen one fades out towards the bottom (y 704 to 740, measured on
+    // Windows 7): its lower part is drawn in thin bands, each more transparent
+    readonly property real fadeTop: 704
+    readonly property real fadeHeight: 36
     Repeater {
         model: menu.categories.length
-        delegate: Text {
+        delegate: Item {
             id: catTitle
             required property int index
             readonly property int d: menu.offsetOf(index)
             readonly property bool selected: d === 0
-            text: win.tr(menu.categories[index].title)
-            font.family: win.fontLight
-            font.pixelSize: 59 // 44 pt of StartMenuCategory.mcml
-            color: selected || catMouse.containsMouse ? win.offWhite : win.lightBlue
+            readonly property string label: win.tr(menu.categories[index].title)
+            readonly property color tint: selected || catMouse.containsMouse ? win.offWhite : win.lightBlue
+            width: full.implicitWidth; height: full.implicitHeight
             x: selected ? 223 : 243
             // centres measured on Windows 7: 424 selected, 331 / 262 / 192 / 122 above, 715 below
             y: (d === 0 ? 424 : d < 0 ? 331 + (d + 1) * 70 : 715) - height / 2
-            opacity: d === 0 ? 1 : d === -1 ? 0.62 : d === -2 ? 0.5 : d === -3 ? 0.4 : d === -4 ? 0.22 : d === 1 ? 0.3 : 0
+            opacity: d === 0 ? 1 : d === -1 ? 0.62 : d === -2 ? 0.5 : d === -3 ? 0.4 : d === -4 ? 0.22 : d === 1 ? 0.27 : 0
             visible: opacity > 0
             Behavior on y { enabled: Math.abs(catTitle.d) <= 1 || catTitle.d === -2; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             Behavior on opacity { NumberAnimation { duration: 250 } }
             Behavior on x { NumberAnimation { duration: 250 } }
+            component Label: Text {
+                text: catTitle.label
+                font.family: win.fontLight
+                font.pixelSize: 59 // 44 pt of StartMenuCategory.mcml
+                color: catTitle.tint
+            }
+            readonly property real cut: menu.fadeTop - y
+            Item {
+                width: parent.width; height: Math.max(0, Math.min(parent.height, catTitle.cut))
+                clip: true
+                Label { id: full }
+            }
+            Repeater {
+                model: 12
+                delegate: Item {
+                    required property int index
+                    readonly property real bandTop: catTitle.cut + index * menu.fadeHeight / 12
+                    visible: bandTop < catTitle.height && bandTop + menu.fadeHeight / 12 > 0
+                    y: Math.max(0, bandTop); width: catTitle.width
+                    height: Math.max(0, bandTop + menu.fadeHeight / 12 - y)
+                    clip: true
+                    opacity: 1 - (index + 0.5) / 12
+                    Label { y: -parent.y }
+                }
+            }
             MouseArea {
                 id: catMouse
                 anchors.fill: parent
@@ -158,12 +186,13 @@ FocusScope {
                 height: 200
                 Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
+                // StartMenuQuickLink.mcml: focused, the picture fits 250 wide (ThumbMargins 4, 36, 4, 96 of 258x272)
                 Image {
                     id: pic
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: tile.focused ? 0 : 27
-                    width: tile.focused ? 258 : 162
-                    height: tile.focused ? 145 : 91
+                    y: tile.focused ? 2 : 27
+                    width: tile.focused ? 250 : 162
+                    height: tile.focused ? 140.5 : 91
                     source: win.res("STARTMENU.QUICKLINK." + tile.modelData.img + (tile.focused ? ".FOCUS" : ".NOFOCUS"))
                     opacity: tile.focused ? 1 : 0.5
                     smooth: true
@@ -172,7 +201,7 @@ FocusScope {
                 BorderImage {
                     visible: tile.focused
                     anchors.fill: pic
-                    anchors.margins: -2
+                    anchors { leftMargin: -3.5; topMargin: -3.5; bottomMargin: -3.5; rightMargin: -0.5 }
                     opacity: 0.75
                     source: win.res("SELECTOR")
                     border { left: 10; top: 10; right: 10; bottom: 10 }
@@ -184,8 +213,9 @@ FocusScope {
                     source: win.res("SELECTOR.FOCUSLOOP.GLOW.GLASS")
                     opacity: 0.35
                 }
+                // the focused label ends 10 before the tile's right (LabelMargins 0, 0, 10, 0), the others centred
                 Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    x: tile.focused ? parent.width - 15 - width : (parent.width - width) / 2
                     y: tile.focused ? 143 : 113
                     width: tile.focused ? implicitWidth : Math.min(implicitWidth, 190)
                     horizontalAlignment: Text.AlignHCenter
@@ -193,6 +223,7 @@ FocusScope {
                     text: win.tr(tile.modelData.t)
                     font.family: win.fontRegular
                     font.pixelSize: tile.focused ? 31 : 21 // 23 / 16 pt
+                    font.letterSpacing: tile.focused ? -0.33 : 0
                     color: win.offWhite
                     opacity: tile.focused ? 1 : 0.5
                 }
