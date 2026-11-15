@@ -2623,6 +2623,10 @@ int main(int argc, char **argv)
     }
     // name and icon of our stream in the volume mixer
     qputenv("PULSE_PROP", "application.name='Windows Media Player' application.icon_name='seven-wmp' media.role='music'");
+    // Qt's PipeWire audio looks the default output up by name and misses Bluetooth ones (PipeWire names their node
+    // differently), so the sound went to the built-in speakers; the PulseAudio backend follows the default output
+    if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND"))
+        qputenv("QT_AUDIO_BACKEND", "pulseaudio");
     QApplication app(argc, argv);
     Win7I18n::install(&app);
     app.setOrganizationName(QStringLiteral("win7"));
