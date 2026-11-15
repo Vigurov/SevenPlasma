@@ -7,6 +7,22 @@ HideIcon=true
 
 [Windeco Exception 1]
 Enabled=true
+ExceptionPattern=^(Sticky Notes|Записки)$
+ExceptionType=1
+HideCaption=false
+HideIcon=true
+HideMinMax=true
+
+[Windeco Exception 2]
+Enabled=true
+ExceptionPattern=^(Destination Folder Access Denied|Немає доступу до цільової папки)( — .*)?$
+ExceptionType=1
+HideCaption=false
+HideIcon=true
+HideMinMax=true
+
+[Windeco Exception 3]
+Enabled=true
 ExceptionPattern=^(Зберегти як|Відкрити|Save As|Open)( — .*)?$
 ExceptionType=1
 HideCaption=false
@@ -14,7 +30,7 @@ HideIcon=true
 HideInnerBorder=true
 HideMinMax=true
 
-[Windeco Exception 2]
+[Windeco Exception 4]
 Enabled=true
 ExceptionPattern=(^|\s)seven-cpanel(\s|$)
 ExceptionType=0
@@ -22,7 +38,7 @@ HideCaption=true
 HideIcon=true
 HideInnerBorder=true
 
-[Windeco Exception 3]
+[Windeco Exception 5]
 Enabled=true
 ExceptionPattern=(^|\s)seven-explorer(\s|$)
 ExceptionType=0
@@ -30,20 +46,20 @@ HideCaption=true
 HideIcon=true
 HideInnerBorder=true
 
-[Windeco Exception 4]
+[Windeco Exception 6]
 Enabled=true
 ExceptionPattern=(^|\s)seven-dialog(\s|$)
 ExceptionType=0
 HideIcon=true
 HideMinMax=true
 
-[Windeco Exception 5]
+[Windeco Exception 7]
 Enabled=true
 ExceptionPattern=^dolphin( |$)
 ExceptionType=0
 HideInnerBorder=true
 
-[Windeco Exception 6]
+[Windeco Exception 8]
 Enabled=true
 ExceptionPattern=^seven-control( |$)
 ExceptionType=0

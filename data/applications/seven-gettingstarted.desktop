@@ -1,0 +1,65 @@
+[Desktop Entry]
+Type=Application
+Name=Getting Started
+Name[uk]=Приступаючи до роботи
+Comment=Learn about Windows features and start using them.
+Comment[uk]=Ознайомлення з функціями Windows і початок роботи з ними.
+Exec=seven-control --getting-started
+Icon=seven-gettingstarted
+Categories=Settings;
+StartupWMClass=seven-cpanel
+Actions=Discover;Personalize;Transfer;Homegroup;UAC;Live;Backup;Users;TextSize;
+
+[Desktop Action Discover]
+Name=Discover Windows 7
+Name[uk]=Знайомство з Windows 7
+Exec=seven-control --gs-task discover
+Icon=seven-gs-discover
+
+[Desktop Action Personalize]
+Name=Personalize Windows
+Name[uk]=Персоналізація Windows
+Exec=seven-control --gs-task personalize
+Icon=seven-gs-personalize
+
+[Desktop Action Transfer]
+Name=Transfer your files
+Name[uk]=Перенесення файлів
+Exec=seven-control --gs-task transfer
+Icon=seven-gs-transfer
+
+[Desktop Action Homegroup]
+Name=Share with a homegroup
+Name[uk]=Спільний доступ через домашню групу
+Exec=seven-control --gs-task homegroup
+Icon=seven-gs-homegroup
+
+[Desktop Action UAC]
+Name=Change UAC settings
+Name[uk]=Змінити параметри UAC
+Exec=seven-control --gs-task uac
+Icon=seven-gs-uac
+
+[Desktop Action Live]
+Name=Get Windows Live Essentials
+Name[uk]=Отримати основні компоненти Windows Live
+Exec=seven-control --gs-task live
+Icon=seven-gs-live
+
+[Desktop Action Backup]
+Name=Back up your files
+Name[uk]=Архівація файлів
+Exec=seven-control --gs-task backup
+Icon=seven-gs-backup
+
+[Desktop Action Users]
+Name=Add new users
+Name[uk]=Додати нових користувачів
+Exec=seven-control --gs-task users
+Icon=seven-gs-users
+
+[Desktop Action TextSize]
+Name=Change text size
+Name[uk]=Змінити розмір тексту
+Exec=seven-control --gs-task textsize
+Icon=seven-gs-textsize

@@ -15387,5 +15387,153 @@ settings</source>
         <source>Reminds of calendar events in the background. Starts the mail and calendar store of KDE programs (about 400 MB of memory); KMail and Kontact start it themselves when it is off.</source>
         <translation>Нагадує про події календаря у фоновому режимі. Запускає сховище пошти й календаря програм KDE (близько 400 МБ пам'яті); коли компонент вимкнено, KMail і Kontact запускають його самі.</translation>
     </message>
+    <message>
+        <source>welcome</source>
+        <translation>ласкаво просимо</translation>
+    </message>
+    <message>
+        <source>Go online to find out what&apos;s new in Windows 7</source>
+        <translation>Дізнайтеся в Інтернеті про нові можливості Windows 7</translation>
+    </message>
+    <message>
+        <source>Discover new features that can help you be productive, stay safer, and have fun</source>
+        <translation>Відкрийте для себе нові функції, які допоможуть працювати продуктивніше, безпечніше й цікавіше</translation>
+    </message>
+    <message>
+        <source>Find out everything you need to know about setting up your computer</source>
+        <translation>Дізнайтеся все, що потрібно для налаштування комп'ютера</translation>
+    </message>
+    <message>
+        <source>Go online to learn more</source>
+        <translation>Докладніше в Інтернеті</translation>
+    </message>
+    <message>
+        <source>Personalize Windows</source>
+        <translation>Персоналізація Windows</translation>
+    </message>
+    <message>
+        <source>Make your computer look the way you want it to</source>
+        <translation>Налаштуйте вигляд комп'ютера на свій смак</translation>
+    </message>
+    <message>
+        <source>Choose a theme to change the desktop background, window color, sounds, and screen saver all at once</source>
+        <translation>Виберіть тему, щоб одразу змінити фон робочого стола, колір вікон, звуки та заставку</translation>
+    </message>
+    <message>
+        <source>Create and save your own themes</source>
+        <translation>Створюйте й зберігайте власні теми</translation>
+    </message>
+    <message>
+        <source>Share themes with friends and family</source>
+        <translation>Діліться темами з друзями та родиною</translation>
+    </message>
+    <message>
+        <source>Or change the pictures, color, and sounds individually</source>
+        <translation>Або змінюйте малюнки, колір і звуки окремо</translation>
+    </message>
+    <message>
+        <source>Transfer files and settings from another computer</source>
+        <translation>Перенесення файлів і параметрів з іншого комп'ютера</translation>
+    </message>
+    <message>
+        <source>Make the move to your new computer easier by transferring files and settings from your old computer all at once</source>
+        <translation>Полегште перехід на новий комп'ютер, перенісши всі файли й параметри зі старого одночасно</translation>
+    </message>
+    <message>
+        <source>Move documents, music, photos, favorites, e-mail, program settings, and more</source>
+        <translation>Переносьте документи, музику, фотографії, вибране, пошту, параметри програм тощо</translation>
+    </message>
+    <message>
+        <source>Open Windows Easy Transfer</source>
+        <translation>Відкрити засіб перенесення даних Windows</translation>
+    </message>
+    <message>
+        <source>Use a homegroup to share with other computers in your home</source>
+        <translation>Спільний доступ з іншими комп'ютерами вдома через домашню групу</translation>
+    </message>
+    <message>
+        <source>Share pictures, music, videos, documents, and printers with other computers in your homegroup</source>
+        <translation>Надавайте іншим комп'ютерам домашньої групи доступ до зображень, музики, відео, документів і принтерів</translation>
+    </message>
+    <message>
+        <source>Choose which files and folders to share</source>
+        <translation>Виберіть файли й папки для спільного доступу</translation>
+    </message>
+    <message>
+        <source>Create a new homegroup or add this computer to an existing one</source>
+        <translation>Створіть нову домашню групу або приєднайте цей комп'ютер до наявної</translation>
+    </message>
+    <message>
+        <source>Set up a homegroup</source>
+        <translation>Налаштувати домашню групу</translation>
+    </message>
+    <message>
+        <source>Choose when to be notified about changes to your computer</source>
+        <translation>Виберіть, коли отримувати сповіщення про зміни на комп'ютері</translation>
+    </message>
+    <message>
+        <source>Make changes to your User Account Control settings</source>
+        <translation>Змініть параметри контролю облікових записів користувачів</translation>
+    </message>
+    <message>
+        <source>Go online to get Windows Live Essentials</source>
+        <translation>Отримати основні компоненти Windows Live в Інтернеті</translation>
+    </message>
+    <message>
+        <source>Windows Live Essentials is a set of free programs to help you:</source>
+        <translation>Основні компоненти Windows Live – набір безкоштовних програм, які допомагають:</translation>
+    </message>
+    <message>
+        <source>Stay in touch with the people you care about using Windows Live Messenger and Mail</source>
+        <translation>Підтримувати зв'язок із близькими за допомогою Windows Live Messenger і Пошти</translation>
+    </message>
+    <message>
+        <source>Edit and publish photos, blogs, and videos using Windows Live Photo Gallery, Writer, and Movie Maker</source>
+        <translation>Редагувати й публікувати фото, блоги та відео за допомогою фотоальбому Windows Live, Writer і Movie Maker</translation>
+    </message>
+    <message>
+        <source>Customize your web browser and stay safer online using Windows Live Toolbar and Family Safety</source>
+        <translation>Налаштовувати браузер і безпечніше працювати в Інтернеті з панеллю Windows Live і Сімейною безпекою</translation>
+    </message>
+    <message>
+        <source>Back up your files</source>
+        <translation>Архівація файлів</translation>
+    </message>
+    <message>
+        <source>Automatically save copies of your photos, music, and other files</source>
+        <translation>Автоматично зберігайте копії фото, музики та інших файлів</translation>
+    </message>
+    <message>
+        <source>Set up automatic backup and learn about other ways to recover information</source>
+        <translation>Налаштуйте автоматичну архівацію й дізнайтеся про інші способи відновлення даних</translation>
+    </message>
+    <message>
+        <source>Add new users to your computer</source>
+        <translation>Додавання нових користувачів на комп'ютер</translation>
+    </message>
+    <message>
+        <source>Give other users access to this computer</source>
+        <translation>Надайте іншим користувачам доступ до цього комп'ютера</translation>
+    </message>
+    <message>
+        <source>Add new users</source>
+        <translation>Додати нових користувачів</translation>
+    </message>
+    <message>
+        <source>Change the size of the text on your screen</source>
+        <translation>Зміна розміру тексту на екрані</translation>
+    </message>
+    <message>
+        <source>Make text and other items on your screen larger or smaller</source>
+        <translation>Збільшуйте або зменшуйте текст та інші елементи на екрані</translation>
+    </message>
+    <message>
+        <source>Adjust your screen resolution</source>
+        <translation>Налаштуйте роздільну здатність екрана</translation>
+    </message>
+    <message>
+        <source>Change text size</source>
+        <translation>Змінити розмір тексту</translation>
+    </message>
 </context>
 </TS>

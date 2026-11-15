@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index 54d0db951..c62da443b 100644
+index 54d0db9..c62da44 100644
 --- a/README.md
 +++ b/README.md
 @@ -1,3 +1,17 @@
@@ -21,7 +21,7 @@ index 54d0db951..c62da443b 100644
  
  Dolphin is KDE's file manager that lets you navigate and browse the contents of your hard drives, USB sticks, SD cards, and more. Creating, moving, or deleting files and folders is simple and fast. See more information [on Dolphin's homepage](https://apps.kde.org/dolphin/).
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 319c5512b..ec4f32d20 100644
+index 319c551..ec4f32d 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -284,6 +284,11 @@ install(FILES dolphinpartactions.desktop DESTINATION "${KDE_INSTALL_DATADIR}/dol
@@ -89,7 +89,7 @@ index 319c5512b..ec4f32d20 100644
  
  if(HAVE_PACKAGEKIT)
 diff --git a/src/admin/bar.cpp b/src/admin/bar.cpp
-index 34b7b5028..9818ed2d7 100644
+index 34b7b50..9818ed2 100644
 --- a/src/admin/bar.cpp
 +++ b/src/admin/bar.cpp
 @@ -59,7 +59,7 @@ Bar::Bar(DolphinViewContainer *parentViewContainer)
@@ -128,7 +128,7 @@ index 34b7b5028..9818ed2d7 100644
  }
  
 diff --git a/src/admin/workerintegration.cpp b/src/admin/workerintegration.cpp
-index 2e1986bae..d1a324218 100644
+index 2e1986b..d1a3242 100644
 --- a/src/admin/workerintegration.cpp
 +++ b/src/admin/workerintegration.cpp
 @@ -7,6 +7,8 @@
@@ -175,7 +175,7 @@ index 2e1986bae..d1a324218 100644
              instance->m_actAsAdminAction->setEnabled(true);
              instance->m_actAsAdminAction->setChecked(false);
 diff --git a/src/dbusinterface.cpp b/src/dbusinterface.cpp
-index 18544493c..d84bb7419 100644
+index 1854449..d84bb74 100644
 --- a/src/dbusinterface.cpp
 +++ b/src/dbusinterface.cpp
 @@ -33,6 +33,10 @@ void DBusInterface::ShowFolders(const QStringList &uriList, const QString &start
@@ -200,13 +200,15 @@ index 18544493c..d84bb7419 100644
          Dolphin::openNewWindow(urls, nullptr, Dolphin::OpenNewWindowFlag::Select);
      };
 diff --git a/src/dolphincontextmenu.cpp b/src/dolphincontextmenu.cpp
-index b9b6edd8d..0d366918a 100644
+index b9b6edd..58bdebb 100644
 --- a/src/dolphincontextmenu.cpp
 +++ b/src/dolphincontextmenu.cpp
-@@ -6,6 +6,15 @@
+@@ -5,6 +5,16 @@
+  */
  
  #include "dolphincontextmenu.h"
- 
++#include "views/win7elevate.h"
++
 +#include <KActionMenu>
 +#include <QFile>
 +#include <QFileInfo>
@@ -215,11 +217,10 @@ index b9b6edd8d..0d366918a 100644
 +#include <QProcess>
 +#include <KIO/JobUiDelegateFactory>
 +#include <KIO/OpenUrlJob>
-+
+ 
  #include "dolphin_contextmenusettings.h"
  #include "dolphin_generalsettings.h"
- #include "dolphinmainwindow.h"
-@@ -17,13 +26,16 @@
+@@ -17,13 +27,16 @@
  #include "settings/dolphinsettingsdialog.h"
  #include "trash/dolphintrash.h"
  #include "views/dolphinview.h"
@@ -236,7 +237,7 @@ index b9b6edd8d..0d366918a 100644
  #include <KIO/RestoreJob>
  #include <KJobWidgets>
  #include <KLocalizedString>
-@@ -34,6 +46,10 @@
+@@ -34,6 +47,10 @@
  #include <QClipboard>
  #include <QKeyEvent>
  #include <QAction>
@@ -247,7 +248,7 @@ index b9b6edd8d..0d366918a 100644
  
  DolphinContextMenu::DolphinContextMenu(DolphinMainWindow *parent,
                                         const KFileItem &fileInfo,
-@@ -67,7 +83,6 @@ DolphinContextMenu::~DolphinContextMenu()
+@@ -67,7 +84,6 @@ DolphinContextMenu::~DolphinContextMenu()
  
  void DolphinContextMenu::addAllActions()
  {
@@ -255,7 +256,7 @@ index b9b6edd8d..0d366918a 100644
  
      // get the context information
      const auto scheme = m_baseUrl.scheme();
-@@ -121,34 +136,9 @@ bool DolphinContextMenu::eventFilter(QObject *object, QEvent *event)
+@@ -121,34 +137,9 @@ bool DolphinContextMenu::eventFilter(QObject *object, QEvent *event)
  
  void DolphinContextMenu::addTrashContextMenu()
  {
@@ -292,7 +293,16 @@ index b9b6edd8d..0d366918a 100644
  }
  
  void DolphinContextMenu::configureTrash()
-@@ -268,114 +258,276 @@ void DolphinContextMenu::addItemContextMenu()
+@@ -223,7 +214,7 @@ void DolphinContextMenu::addDirectoryItemContextMenu()
+     DolphinNewFileMenu *newFileMenu = new DolphinNewFileMenu(newDirAction, newFileAction, m_mainWindow);
+     newFileMenu->checkUpToDate();
+     newFileMenu->setWorkingDirectory(m_fileInfo.url());
+-    newFileMenu->setEnabled(selectedItemsProps.supportsWriting());
++    newFileMenu->setEnabled(selectedItemsProps.supportsWriting() || Win7Elevate::needsElevation(m_fileInfo.url()));
+     connect(newFileMenu, &DolphinNewFileMenu::fileCreated, newFileMenu, &DolphinNewFileMenu::deleteLater);
+     connect(newFileMenu, &DolphinNewFileMenu::fileCreationRejected, newFileMenu, &DolphinNewFileMenu::deleteLater);
+     connect(newFileMenu, &DolphinNewFileMenu::directoryCreated, newFileMenu, [newFileMenu, mainWindow = m_mainWindow](const QUrl &newDirectory) {
+@@ -268,114 +259,276 @@ void DolphinContextMenu::addItemContextMenu()
      Q_ASSERT(!m_fileInfo.isNull());
  
      const KFileItemListProperties &selectedItemsProps = selectedItemsProperties();
@@ -646,13 +656,14 @@ index b9b6edd8d..0d366918a 100644
  
      QAction *propertiesAction = m_mainWindow->actionCollection()->action(QStringLiteral("properties"));
 diff --git a/src/dolphinmainwindow.cpp b/src/dolphinmainwindow.cpp
-index c8e7e5f7e..e420ae143 100644
+index c8e7e5f..298bdff 100644
 --- a/src/dolphinmainwindow.cpp
 +++ b/src/dolphinmainwindow.cpp
-@@ -7,6 +7,12 @@
+@@ -7,6 +7,13 @@
   */
  
  #include "dolphinmainwindow.h"
++#include "views/win7elevate.h"
 +#include <QHelpEvent>
 +#include <QToolTip>
 +#include <KConfigGroup>
@@ -662,7 +673,7 @@ index c8e7e5f7e..e420ae143 100644
  
  #include "admin/workerintegration.h"
  #include "dolphin_generalsettings.h"
-@@ -21,12 +27,19 @@
+@@ -21,12 +28,19 @@
  #include "dolphintabpage.h"
  #include "dolphinurlnavigatorscontroller.h"
  #include "dolphinviewcontainer.h"
@@ -682,7 +693,7 @@ index c8e7e5f7e..e420ae143 100644
  #include "selectionmode/actiontexthelper.h"
  #if KIO_VERSION >= QT_VERSION_CHECK(6, 24, 0)
  #include "servicemenushortcutmanager.h"
-@@ -41,6 +54,7 @@
+@@ -41,6 +55,7 @@
  
  #include <KActionCollection>
  #include <KActionMenu>
@@ -690,7 +701,7 @@ index c8e7e5f7e..e420ae143 100644
  #include <KAuthorized>
  #include <KColorSchemeManager>
  #include <KColorSchemeMenu>
-@@ -50,7 +64,10 @@
+@@ -50,7 +65,10 @@
  #include <KDialogJobUiDelegate>
  #include <KDualAction>
  #include <KFileItemListProperties>
@@ -701,7 +712,7 @@ index c8e7e5f7e..e420ae143 100644
  #include <KIO/JobUiDelegateFactory>
  #include <KIO/OpenFileManagerWindowJob>
  #include <KIO/OpenUrlJob>
-@@ -70,12 +87,26 @@
+@@ -70,12 +88,26 @@
  #include <KToolBar>
  #include <KToolBarPopupAction>
  #include <KUrlComboBox>
@@ -728,7 +739,7 @@ index c8e7e5f7e..e420ae143 100644
  #include <QApplication>
  #include <QClipboard>
  #include <QCloseEvent>
-@@ -83,6 +114,17 @@
+@@ -83,6 +115,17 @@
  #include <QDialog>
  #include <QDomDocument>
  #include <QFileInfo>
@@ -746,7 +757,7 @@ index c8e7e5f7e..e420ae143 100644
  #include <QLineEdit>
  #include <QMenuBar>
  #include <QPushButton>
-@@ -93,11 +135,19 @@
+@@ -93,11 +136,19 @@
  #include <QToolButton>
  #include <QtConcurrentRun>
  #include <dolphindebug.h>
@@ -766,7 +777,7 @@ index c8e7e5f7e..e420ae143 100644
  #endif
  
  namespace
-@@ -113,11 +163,482 @@ const int MaxNumberOfNavigationentries = 12;
+@@ -113,11 +164,482 @@ const int MaxNumberOfNavigationentries = 12;
  const int MaxActivateTabShortcuts = 9;
  }
  
@@ -1249,7 +1260,7 @@ index c8e7e5f7e..e420ae143 100644
      , m_actionHandler(nullptr)
      , m_remoteEncoding(nullptr)
      , m_settingsDialog()
-@@ -141,7 +662,9 @@ DolphinMainWindow::DolphinMainWindow()
+@@ -141,7 +663,9 @@ DolphinMainWindow::DolphinMainWindow()
      new MainWindowAdaptor(this);
  
  #ifndef Q_OS_WIN
@@ -1260,7 +1271,7 @@ index c8e7e5f7e..e420ae143 100644
  #endif
      setComponentName(QStringLiteral("dolphin"), QGuiApplication::applicationDisplayName());
      setObjectName(QStringLiteral("Dolphin#"));
-@@ -169,9 +692,9 @@ DolphinMainWindow::DolphinMainWindow()
+@@ -169,9 +693,9 @@ DolphinMainWindow::DolphinMainWindow()
  
      setAcceptDrops(true);
  
@@ -1273,7 +1284,7 @@ index c8e7e5f7e..e420ae143 100644
      m_tabWidget->setObjectName("tabWidget");
      connect(m_tabWidget, &DolphinTabWidget::activeViewChanged, this, &DolphinMainWindow::activeViewChanged);
      connect(m_tabWidget, &DolphinTabWidget::tabCountChanged, this, &DolphinMainWindow::tabCountChanged);
-@@ -198,8 +721,13 @@ DolphinMainWindow::DolphinMainWindow()
+@@ -198,8 +722,14 @@ DolphinMainWindow::DolphinMainWindow()
      connect(this, &DolphinMainWindow::urlChanged, m_remoteEncoding, &DolphinRemoteEncoding::slotAboutToOpenUrl);
  
      m_disabledActionNotifier = new DisabledActionNotifier(this);
@@ -1282,14 +1293,15 @@ index c8e7e5f7e..e420ae143 100644
 +    connect(m_disabledActionNotifier, &DisabledActionNotifier::disabledActionTriggered, this, [this](const QAction *action, const QString &reason) {
 +        // Win7 never shows an inline bar here: Ctrl+V with an empty clipboard
 +        // does nothing, and permission problems come up as a dialog.
-+        if (action == actionCollection()->action(KStandardAction::name(KStandardAction::Paste)) && m_activeViewContainer->rootItem().isWritable()) {
++        if (action == actionCollection()->action(KStandardAction::name(KStandardAction::Paste))
++            && (m_activeViewContainer->rootItem().isWritable() || Win7Elevate::needsElevation(m_activeViewContainer->url()))) {
 +            return;
 +        }
 +        KMessageBox::error(this, reason);
      });
  
      setupDockWidgets();
-@@ -247,6 +775,17 @@ DolphinMainWindow::DolphinMainWindow()
+@@ -247,6 +777,17 @@ DolphinMainWindow::DolphinMainWindow()
          addHamburgerMenuToToolbar();
      }
  
@@ -1307,7 +1319,7 @@ index c8e7e5f7e..e420ae143 100644
      updateAllowedToolbarAreas();
      updateNavigatorsBackground();
  
-@@ -267,6 +806,70 @@ DolphinMainWindow::DolphinMainWindow()
+@@ -267,6 +808,70 @@ DolphinMainWindow::DolphinMainWindow()
      });
      connect(GeneralSettings::self(), &GeneralSettings::splitViewChanged, this, &DolphinMainWindow::slotSplitViewChanged);
      connect(GeneralSettings::self(), &GeneralSettings::tabBarChanged, this, &DolphinMainWindow::slotTabBarChanged);
@@ -1378,7 +1390,7 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  DolphinMainWindow::~DolphinMainWindow()
-@@ -361,15 +964,47 @@ void DolphinMainWindow::pasteIntoFolder()
+@@ -361,15 +966,47 @@ void DolphinMainWindow::pasteIntoFolder()
      m_activeViewContainer->view()->pasteIntoFolder();
  }
  
@@ -1427,7 +1439,7 @@ index c8e7e5f7e..e420ae143 100644
      m_activeViewContainer->setUrl(url);
      updateFileAndEditActions();
      updatePasteAction();
-@@ -378,7 +1013,9 @@ void DolphinMainWindow::changeUrl(const QUrl &url)
+@@ -378,7 +1015,9 @@ void DolphinMainWindow::changeUrl(const QUrl &url)
      m_diskSpaceUsageMenu->setUrl(url);
  
      // will signal used urls to activities manager, too
@@ -1438,7 +1450,7 @@ index c8e7e5f7e..e420ae143 100644
  
      Q_EMIT urlChanged(url);
  }
-@@ -443,6 +1080,10 @@ void DolphinMainWindow::updateHistory()
+@@ -443,6 +1082,10 @@ void DolphinMainWindow::updateHistory()
          forwardAction->setWhatsThis(xi18nc("@info:whatsthis go forward", "This undoes a <interface>Go|Back</interface> action."));
          forwardAction->setEnabled(index > 0);
      }
@@ -1449,7 +1461,7 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  void DolphinMainWindow::updateFilterBarAction(bool show)
-@@ -615,6 +1256,27 @@ void DolphinMainWindow::showEvent(QShowEvent *event)
+@@ -615,6 +1258,27 @@ void DolphinMainWindow::showEvent(QShowEvent *event)
  {
      KXmlGuiWindow::showEvent(event);
  
@@ -1477,7 +1489,16 @@ index c8e7e5f7e..e420ae143 100644
      if (!event->spontaneous() && m_activeViewContainer) {
          m_activeViewContainer->view()->setFocus();
      }
-@@ -1010,10 +1672,43 @@ void DolphinMainWindow::slotAboutToShowBackPopupMenu()
+@@ -944,7 +1608,7 @@ void DolphinMainWindow::updatePasteAction()
+     QPair<bool, QString> pasteInfo = m_activeViewContainer->view()->pasteInfo();
+     pasteAction->setEnabled(pasteInfo.first);
+     m_disabledActionNotifier->setDisabledReason(pasteAction,
+-                                                m_activeViewContainer->rootItem().isWritable()
++                                                m_activeViewContainer->rootItem().isWritable() || Win7Elevate::needsElevation(m_activeViewContainer->url())
+                                                     ? i18nc("@info", "Cannot paste: The clipboard is empty.")
+                                                     : i18nc("@info", "Cannot paste: You do not have permission to write into this folder."));
+     pasteAction->setText(pasteInfo.second);
+@@ -1010,10 +1674,43 @@ void DolphinMainWindow::slotAboutToShowBackPopupMenu()
      int entries = 0;
      QMenu *menu = m_backAction->popupMenu();
      menu->clear();
@@ -1524,7 +1545,7 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  void DolphinMainWindow::slotGoBack(QAction *action)
-@@ -1023,6 +1718,10 @@ void DolphinMainWindow::slotGoBack(QAction *action)
+@@ -1023,6 +1720,10 @@ void DolphinMainWindow::slotGoBack(QAction *action)
      for (int i = gotoIndex - urlNavigator->historyIndex(); i > 0; --i) {
          goBack();
      }
@@ -1535,7 +1556,18 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  void DolphinMainWindow::slotBackForwardActionMiddleClicked(QAction *action)
-@@ -1682,6 +2381,9 @@ void DolphinMainWindow::activeViewChanged(DolphinViewContainer *viewContainer)
+@@ -1508,7 +2209,9 @@ void DolphinMainWindow::slotWriteStateChanged(bool isFolderWritable)
+ {
+     // trash:/ is writable but we don't want to create new items in it.
+     // TODO: remove the trash check once https://phabricator.kde.org/T8234 is implemented
+-    newFileMenu()->setEnabled(isFolderWritable && m_activeViewContainer->url().scheme() != QLatin1String("trash"));
++    // Windows 7 makes new folders in C:\ too (as administrator, views/win7elevate.h)
++    newFileMenu()->setEnabled((isFolderWritable || Win7Elevate::needsElevation(m_activeViewContainer->url()))
++                              && m_activeViewContainer->url().scheme() != QLatin1String("trash"));
+     // When the menu is disabled, actions in it are disabled later in the event loop, and we need to set the disabled reason after that.
+     QTimer::singleShot(0, this, [this]() {
+         m_disabledActionNotifier->setDisabledReason(actionCollection()->action(QStringLiteral("create_file")),
+@@ -1682,6 +2385,9 @@ void DolphinMainWindow::activeViewChanged(DolphinViewContainer *viewContainer)
      }
  
      connectViewSignals(viewContainer);
@@ -1545,7 +1577,7 @@ index c8e7e5f7e..e420ae143 100644
  
      m_actionHandler->setCurrentView(viewContainer->view());
  
-@@ -1715,12 +2417,51 @@ void DolphinMainWindow::tabCountChanged(int count)
+@@ -1715,12 +2421,51 @@ void DolphinMainWindow::tabCountChanged(int count)
      actionCollection()->action(QStringLiteral("activate_prev_tab"))->setEnabled(enableTabActions);
  }
  
@@ -1598,7 +1630,7 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  void DolphinMainWindow::slotStorageTearDownFromPlacesRequested(const QString &mountPath)
-@@ -1784,7 +2525,488 @@ void DolphinMainWindow::setViewsToHomeIfMountPathOpen(const QString &mountPath)
+@@ -1784,7 +2529,488 @@ void DolphinMainWindow::setViewsToHomeIfMountPathOpen(const QString &mountPath)
  
  void DolphinMainWindow::setupActions()
  {
@@ -2087,7 +2119,7 @@ index c8e7e5f7e..e420ae143 100644
  
      // setup 'File' menu
      m_newFileMenu = new DolphinNewFileMenu(nullptr, nullptr, this);
-@@ -2322,6 +3544,24 @@ void DolphinMainWindow::setupActions()
+@@ -2322,6 +3548,24 @@ void DolphinMainWindow::setupActions()
      actionCollection()->addAction(QStringLiteral("window_color_sheme"), windowColorSchemeMenu);
  
      m_recentFiles = new KRecentFilesAction(this);
@@ -2112,7 +2144,7 @@ index c8e7e5f7e..e420ae143 100644
  }
  
  void DolphinMainWindow::setupDockWidgets()
-@@ -2351,19 +3591,15 @@ void DolphinMainWindow::setupDockWidgets()
+@@ -2351,19 +3595,15 @@ void DolphinMainWindow::setupDockWidgets()
      infoDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
  
  #if HAVE_BALOO
@@ -2137,7 +2169,7 @@ index c8e7e5f7e..e420ae143 100644
  #endif
  
      // i18n: This is the last paragraph for the "What's This"-texts of all four panels.
-@@ -2503,7 +3739,18 @@ void DolphinMainWindow::setupDockWidgets()
+@@ -2503,7 +3743,18 @@ void DolphinMainWindow::setupDockWidgets()
  
      m_placesPanel = new PlacesPanel(placesDock);
      m_placesPanel->setCustomContextMenuActions({lockLayoutAction});
@@ -2157,7 +2189,7 @@ index c8e7e5f7e..e420ae143 100644
  
      createPanelAction(QIcon::fromTheme(QStringLiteral("compass")), Qt::Key_F9, placesDock, QStringLiteral("show_places_panel"));
  
-@@ -2591,6 +3838,848 @@ void DolphinMainWindow::setupDockWidgets()
+@@ -2591,6 +3842,848 @@ void DolphinMainWindow::setupDockWidgets()
      });
  }
  
@@ -3006,7 +3038,16 @@ index c8e7e5f7e..e420ae143 100644
  void DolphinMainWindow::setupFileItemActions()
  {
      if (m_fileItemActions) {
-@@ -2900,7 +4989,7 @@ void DolphinMainWindow::updateSplitActions()
+@@ -2653,7 +4746,7 @@ void DolphinMainWindow::updateFileAndEditActions()
+ 
+         const bool enableMoveToTrash = capabilitiesSource.isLocal() && capabilitiesSource.supportsMoving();
+ 
+-        renameAction->setEnabled(capabilitiesSource.supportsMoving());
++        renameAction->setEnabled(capabilitiesSource.supportsMoving() || Win7Elevate::parentsNeedElevation(list));
+         m_disabledActionNotifier->setDisabledReason(renameAction, i18nc("@info", "Cannot rename: You do not have permission to rename items in this folder."));
+         deleteAction->setEnabled(capabilitiesSource.supportsDeleting());
+         m_disabledActionNotifier->setDisabledReason(deleteAction,
+@@ -2900,7 +4993,7 @@ void DolphinMainWindow::updateSplitActions()
              m_splitViewAction->addAction(popoutSplitAction);
          }
      } else {
@@ -3016,7 +3057,7 @@ index c8e7e5f7e..e420ae143 100644
          m_splitViewAction->setToolTip(i18nc("@info", "Split view"));
          m_splitViewAction->setIcon(QIcon::fromTheme(QStringLiteral("view-split-left-right")));
 diff --git a/src/dolphinmainwindow.h b/src/dolphinmainwindow.h
-index 50e944fa7..f80bb1af5 100644
+index 50e944f..f80bb1a 100644
 --- a/src/dolphinmainwindow.h
 +++ b/src/dolphinmainwindow.h
 @@ -40,6 +40,8 @@ class DolphinSettingsDialog;
@@ -3052,7 +3093,7 @@ index 50e944fa7..f80bb1af5 100644
      DolphinViewActionHandler *m_actionHandler;
      DolphinRemoteEncoding *m_remoteEncoding;
 diff --git a/src/dolphinnavigatorswidgetaction.cpp b/src/dolphinnavigatorswidgetaction.cpp
-index 184530bc5..192c0a74f 100644
+index 184530b..192c0a7 100644
 --- a/src/dolphinnavigatorswidgetaction.cpp
 +++ b/src/dolphinnavigatorswidgetaction.cpp
 @@ -105,6 +105,8 @@ void DolphinNavigatorsWidgetAction::createSecondaryUrlNavigator()
@@ -3118,7 +3159,7 @@ index 184530bc5..192c0a74f 100644
      emptyTrashButton->setDisabled(Trash::isEmpty());
      return emptyTrashButton;
 diff --git a/src/dolphinnavigatorswidgetaction.h b/src/dolphinnavigatorswidgetaction.h
-index 8395f0b91..8b94ca6ee 100644
+index 8395f0b..8b94ca6 100644
 --- a/src/dolphinnavigatorswidgetaction.h
 +++ b/src/dolphinnavigatorswidgetaction.h
 @@ -14,12 +14,54 @@
@@ -3221,7 +3262,7 @@ index 8395f0b91..8b94ca6ee 100644
      /**
       * There should always ever be one navigatorsWidget for this action so
 diff --git a/src/dolphinui.rc b/src/dolphinui.rc
-index 395436d74..6c7910842 100644
+index 395436d..6c79108 100644
 --- a/src/dolphinui.rc
 +++ b/src/dolphinui.rc
 @@ -1,6 +1,6 @@
@@ -3260,7 +3301,7 @@ index 395436d74..6c7910842 100644
      <ActionProperties scheme="Default">
          <Action priority="0" name="go_back"/>
 diff --git a/src/dolphinurlnavigatorscontroller.cpp b/src/dolphinurlnavigatorscontroller.cpp
-index 9405bb862..274220da4 100644
+index 9405bb8..274220d 100644
 --- a/src/dolphinurlnavigatorscontroller.cpp
 +++ b/src/dolphinurlnavigatorscontroller.cpp
 @@ -31,7 +31,9 @@ void DolphinUrlNavigatorsController::slotPlacesPanelVisibilityChanged(bool visib
@@ -3283,13 +3324,14 @@ index 9405bb862..274220da4 100644
  
  #include "moc_dolphinurlnavigatorscontroller.cpp"
 diff --git a/src/dolphinviewcontainer.cpp b/src/dolphinviewcontainer.cpp
-index 2834d2855..ddd0e7e71 100644
+index 2834d28..45cf8d8 100644
 --- a/src/dolphinviewcontainer.cpp
 +++ b/src/dolphinviewcontainer.cpp
-@@ -5,6 +5,10 @@
+@@ -5,6 +5,11 @@
   */
  
  #include "dolphinviewcontainer.h"
++#include "views/win7elevate.h"
 +#include "../../seven-common/win7libraryheader.h"
 +#include "win7computerpage.h"
 +
@@ -3297,7 +3339,7 @@ index 2834d2855..ddd0e7e71 100644
  
  #include "admin/bar.h"
  #include "admin/workerintegration.h"
-@@ -24,6 +28,8 @@
+@@ -24,6 +29,8 @@
  
  #include <KActionCollection>
  #include <KApplicationTrader>
@@ -3306,7 +3348,7 @@ index 2834d2855..ddd0e7e71 100644
  #include <KFileItemActions>
  #include <KFilePlacesModel>
  #include <KIO/JobUiDelegateFactory>
-@@ -60,10 +66,11 @@ struct LayoutStructure {
+@@ -60,10 +67,11 @@ struct LayoutStructure {
      int adminBar = 1;
      int messageWidget = 2;
      int selectionModeTopBar = 3;
@@ -3322,7 +3364,7 @@ index 2834d2855..ddd0e7e71 100644
  };
  constexpr LayoutStructure positionFor;
  
-@@ -116,12 +123,18 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
+@@ -116,12 +124,18 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
      connect(m_filterBar, &FilterBar::focusViewRequest, this, &DolphinViewContainer::requestFocus);
  
      // Initialize the main view
@@ -3343,7 +3385,7 @@ index 2834d2855..ddd0e7e71 100644
      connect(m_urlNavigator.get(), &DolphinUrlNavigator::urlChanged, this, &DolphinViewContainer::slotUrlNavigatorLocationChanged);
      connect(m_urlNavigator.get(), &DolphinUrlNavigator::urlAboutToBeChanged, this, &DolphinViewContainer::slotUrlNavigatorLocationAboutToBeChanged);
      connect(m_urlNavigator.get(), &DolphinUrlNavigator::urlSelectionRequested, this, &DolphinViewContainer::slotUrlSelectionRequested);
-@@ -177,6 +190,17 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
+@@ -177,6 +191,17 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
      connect(undoManager, &KIO::FileUndoManager::jobRecordingFinished, this, &DolphinViewContainer::delayedStatusBarUpdate);
  
      m_topLayout->addWidget(m_messageWidget, positionFor.messageWidget, 0);
@@ -3361,7 +3403,7 @@ index 2834d2855..ddd0e7e71 100644
      m_topLayout->addWidget(m_view, positionFor.view, 0);
      m_topLayout->addWidget(m_filterBar, positionFor.filterBar, 0);
      if (GeneralSettings::showStatusBar() == GeneralSettings::EnumShowStatusBar::FullWidth) {
-@@ -215,15 +239,58 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
+@@ -215,15 +240,58 @@ DolphinViewContainer::DolphinViewContainer(const QUrl &url, QWidget *parent)
      // Update the view with the current state of the filter bar (from the state config)
      m_view->setFilterMode(m_filterBar->filterMode());
      m_view->setFilterCaseSensitive(m_filterBar->isCaseSensitive());
@@ -3420,7 +3462,7 @@ index 2834d2855..ddd0e7e71 100644
  KFileItem DolphinViewContainer::rootItem() const
  {
      return m_view->rootItem();
-@@ -284,7 +351,7 @@ void DolphinViewContainer::connectUrlNavigator(DolphinUrlNavigator *urlNavigator
+@@ -284,7 +352,7 @@ void DolphinViewContainer::connectUrlNavigator(DolphinUrlNavigator *urlNavigator
      Q_ASSERT(m_urlNavigator.get() != urlNavigator);
      Q_ASSERT(m_view);
  
@@ -3429,7 +3471,16 @@ index 2834d2855..ddd0e7e71 100644
      urlNavigator->setShowHiddenFolders(m_view->hiddenFilesShown());
      urlNavigator->setSortHiddenFoldersLast(m_view->sortHiddenLast());
      if (m_urlNavigatorVisualState) {
-@@ -394,7 +461,7 @@ void DolphinViewContainer::setSearchBarVisible(bool visible)
+@@ -305,7 +373,7 @@ void DolphinViewContainer::connectUrlNavigator(DolphinUrlNavigator *urlNavigator
+         m_view->setFocus();
+     });
+ 
+-    urlNavigator->setReadOnlyBadgeVisible(rootItem().isLocalFile() && !rootItem().isWritable());
++    urlNavigator->setReadOnlyBadgeVisible(rootItem().isLocalFile() && !rootItem().isWritable() && !Win7Elevate::needsElevation(rootItem().url()));
+ 
+     m_urlNavigatorConnected = urlNavigator;
+ }
+@@ -394,7 +462,7 @@ void DolphinViewContainer::setSearchBarVisible(bool visible)
  
  bool DolphinViewContainer::isSearchBarVisible() const
  {
@@ -3438,7 +3489,7 @@ index 2834d2855..ddd0e7e71 100644
  }
  
  void DolphinViewContainer::setFocusToSearchBar()
-@@ -585,6 +652,10 @@ QString DolphinViewContainer::captionWindowTitle() const
+@@ -585,6 +653,10 @@ QString DolphinViewContainer::captionWindowTitle() const
  
  QString DolphinViewContainer::caption() const
  {
@@ -3449,7 +3500,16 @@ index 2834d2855..ddd0e7e71 100644
      // see KUrlNavigatorPrivate::firstButtonText().
      if (url().path().isEmpty() || url().path() == QLatin1Char('/')) {
          QUrlQuery query(url());
-@@ -755,6 +826,13 @@ void DolphinViewContainer::slotUrlIsFileError(const QUrl &url)
+@@ -707,7 +779,7 @@ void DolphinViewContainer::slotDirectoryLoadingCompleted()
+     }
+ 
+     if (m_urlNavigatorConnected) {
+-        m_urlNavigatorConnected->setReadOnlyBadgeVisible(rootItem().isLocalFile() && !rootItem().isWritable());
++        m_urlNavigatorConnected->setReadOnlyBadgeVisible(rootItem().isLocalFile() && !rootItem().isWritable() && !Win7Elevate::needsElevation(rootItem().url()));
+     }
+ 
+     // Update admin bar visibility
+@@ -755,6 +827,13 @@ void DolphinViewContainer::slotUrlIsFileError(const QUrl &url)
      showMessage(xi18nc("@info", "Trying to open a file as a folder: <filename>%1</filename>", item.url().toString()), KMessageWidget::Error, {m_openAsFile});
  }
  
@@ -3463,7 +3523,7 @@ index 2834d2855..ddd0e7e71 100644
  void DolphinViewContainer::slotItemActivated(const KFileItem &item)
  {
      // It is possible to activate items on inactive views by
-@@ -770,7 +848,7 @@ void DolphinViewContainer::slotItemActivated(const KFileItem &item)
+@@ -770,7 +849,7 @@ void DolphinViewContainer::slotItemActivated(const KFileItem &item)
              Q_EMIT activeTabRequested(url);
          } else if (modifiers & Qt::ControlModifier) {
              Q_EMIT tabRequested(url);
@@ -3472,7 +3532,7 @@ index 2834d2855..ddd0e7e71 100644
              Dolphin::openNewWindow({KFilePlacesModel::convertedUrl(url)}, this);
          } else {
              setUrl(url);
-@@ -896,6 +974,21 @@ void DolphinViewContainer::slotUrlNavigatorLocationChanged(const QUrl &url)
+@@ -896,6 +975,21 @@ void DolphinViewContainer::slotUrlNavigatorLocationChanged(const QUrl &url)
          m_urlNavigatorConnected->slotReturnPressed();
      }
  
@@ -3494,7 +3554,7 @@ index 2834d2855..ddd0e7e71 100644
      if (KProtocolManager::supportsListing(url)) {
          if (isSearchUrl(url)) {
              setSearchBarVisible(true);
-@@ -1023,9 +1116,9 @@ void DolphinViewContainer::slotErrorMessageFromView(const QString &message, cons
+@@ -1023,9 +1117,9 @@ void DolphinViewContainer::slotErrorMessageFromView(const QString &message, cons
      if (kioErrorCode == KIO::ERR_CANNOT_ENTER_DIRECTORY && m_view->url().scheme() == QStringLiteral("file")
          && KProtocolInfo::isKnownProtocol(QStringLiteral("admin")) && !rootItem().isReadable()) {
          // Explain to users that they need authentication to see the folder contents.
@@ -3507,7 +3567,7 @@ index 2834d2855..ddd0e7e71 100644
              m_authorizeToEnterFolderAction = new QAction{actAsAdminAction->icon(), actAsAdminAction->text(), this};
              m_authorizeToEnterFolderAction->setToolTip(actAsAdminAction->toolTip());
              m_authorizeToEnterFolderAction->setWhatsThis(actAsAdminAction->whatsThis());
-@@ -1034,7 +1127,11 @@ void DolphinViewContainer::slotErrorMessageFromView(const QString &message, cons
+@@ -1034,7 +1128,11 @@ void DolphinViewContainer::slotErrorMessageFromView(const QString &message, cons
                  actAsAdminAction->trigger();
              });
          }
@@ -3521,7 +3581,7 @@ index 2834d2855..ddd0e7e71 100644
      } else if (kioErrorCode == KIO::ERR_DOES_NOT_EXIST && m_view->url().isLocalFile()) {
          if (!m_createFolderAction) {
 diff --git a/src/dolphinviewcontainer.h b/src/dolphinviewcontainer.h
-index 6a5bfb4e6..1b64e8eab 100644
+index 6a5bfb4..1b64e8e 100644
 --- a/src/dolphinviewcontainer.h
 +++ b/src/dolphinviewcontainer.h
 @@ -36,6 +36,8 @@ namespace Search
@@ -3566,7 +3626,7 @@ index 6a5bfb4e6..1b64e8eab 100644
  
 diff --git a/src/dolphinwindowheader.cpp b/src/dolphinwindowheader.cpp
 new file mode 100644
-index 000000000..f72d23800
+index 0000000..f72d238
 --- /dev/null
 +++ b/src/dolphinwindowheader.cpp
 @@ -0,0 +1,26 @@
@@ -3598,7 +3658,7 @@ index 000000000..f72d23800
 +}
 diff --git a/src/dolphinwindowheader.h b/src/dolphinwindowheader.h
 new file mode 100644
-index 000000000..66073a259
+index 0000000..66073a2
 --- /dev/null
 +++ b/src/dolphinwindowheader.h
 @@ -0,0 +1,22 @@
@@ -3626,7 +3686,7 @@ index 000000000..66073a259
 +#endif // DOLPHINWINDOWHEADER_H
 diff --git a/src/dolphinwindowheader.ui b/src/dolphinwindowheader.ui
 new file mode 100644
-index 000000000..1b0a9caf4
+index 0000000..1b0a9ca
 --- /dev/null
 +++ b/src/dolphinwindowheader.ui
 @@ -0,0 +1,138 @@
@@ -3769,7 +3829,7 @@ index 000000000..1b0a9caf4
 + <connections/>
 +</ui>
 diff --git a/src/global.cpp b/src/global.cpp
-index b32549102..e4e268b28 100644
+index b325491..e4e268b 100644
 --- a/src/global.cpp
 +++ b/src/global.cpp
 @@ -39,8 +39,23 @@ QUrl Dolphin::homeUrl()
@@ -3797,7 +3857,7 @@ index b32549102..e4e268b28 100644
  
      if (flags.testFlag(OpenNewWindowFlag::Select)) {
 diff --git a/src/global.h b/src/global.h
-index 81ade47fa..1462df349 100644
+index 81ade47..1462df3 100644
 --- a/src/global.h
 +++ b/src/global.h
 @@ -8,6 +8,7 @@
@@ -3825,7 +3885,7 @@ index 81ade47fa..1462df349 100644
   * Attaches URLs to an existing Dolphin instance if possible.
   * If @p preferredService is a valid dbus service, it will be tried first.
 diff --git a/src/itemactions/setfoldericonitemaction.json b/src/itemactions/setfoldericonitemaction.json
-index 5c633125e..b97501f22 100644
+index 5c63312..b97501f 100644
 --- a/src/itemactions/setfoldericonitemaction.json
 +++ b/src/itemactions/setfoldericonitemaction.json
 @@ -10,14 +10,12 @@
@@ -3857,7 +3917,7 @@ index 5c633125e..b97501f22 100644
          "Name[sr@ijekavian]": "Постави иконицу фасцикле",
          "Name[sr@ijekavianlatin]": "Postavi ikonicu fascikle",
 diff --git a/src/kitemviews/kfileitemlistwidget.cpp b/src/kitemviews/kfileitemlistwidget.cpp
-index ccb1819af..b4c2df6dc 100644
+index ccb1819..b4c2df6 100644
 --- a/src/kitemviews/kfileitemlistwidget.cpp
 +++ b/src/kitemviews/kfileitemlistwidget.cpp
 @@ -58,8 +58,15 @@ QString KFileItemListWidgetInformant::roleText(const QByteArray &role, const QHa
@@ -3888,7 +3948,7 @@ index ccb1819af..b4c2df6dc 100644
          text = KStandardItemListWidgetInformant::roleText(role, values, forUsageAs);
      }
 diff --git a/src/kitemviews/kfileitemmodel.cpp b/src/kitemviews/kfileitemmodel.cpp
-index 704d1825a..b52757efb 100644
+index 704d182..b52757e 100644
 --- a/src/kitemviews/kfileitemmodel.cpp
 +++ b/src/kitemviews/kfileitemmodel.cpp
 @@ -8,6 +8,8 @@
@@ -3929,7 +3989,7 @@ index 704d1825a..b52757efb 100644
      } else if (m_requestRole[TypeRole] && isDir) {
          static const QString folderMimeType = item.mimeComment();
 diff --git a/src/kitemviews/kfileitemmodelrolesupdater.cpp b/src/kitemviews/kfileitemmodelrolesupdater.cpp
-index 6f86e1b38..68fd2212b 100644
+index 6f86e1b..68fd221 100644
 --- a/src/kitemviews/kfileitemmodelrolesupdater.cpp
 +++ b/src/kitemviews/kfileitemmodelrolesupdater.cpp
 @@ -6,6 +6,17 @@
@@ -4004,7 +4064,7 @@ index 6f86e1b38..68fd2212b 100644
  
      QStringList overlays = item.overlays();
 diff --git a/src/kitemviews/kfileitemmodelrolesupdater.h b/src/kitemviews/kfileitemmodelrolesupdater.h
-index 61e85188e..b38379567 100644
+index 61e8518..b383795 100644
 --- a/src/kitemviews/kfileitemmodelrolesupdater.h
 +++ b/src/kitemviews/kfileitemmodelrolesupdater.h
 @@ -359,6 +359,8 @@ private:
@@ -4017,7 +4077,7 @@ index 61e85188e..b38379567 100644
      // Property for setEnlargeSmallPreviews()/enlargeSmallPreviews()
      bool m_enlargeSmallPreviews;
 diff --git a/src/kitemviews/kitemlistview.cpp b/src/kitemviews/kitemlistview.cpp
-index 5ff1be1a0..c357c9853 100644
+index 5ff1be1..c357c98 100644
 --- a/src/kitemviews/kitemlistview.cpp
 +++ b/src/kitemviews/kitemlistview.cpp
 @@ -47,6 +47,20 @@ const int RubberFadeSpeed = 150;
@@ -4074,7 +4134,7 @@ index 5ff1be1a0..c357c9853 100644
      } else if (requiredWidth > availableWidth && m_visibleRoles.count() > 1) {
          // Shrink the first column to be able to show as much other
 diff --git a/src/kitemviews/kitemlistwidget.cpp b/src/kitemviews/kitemlistwidget.cpp
-index e792844b0..67ac8409b 100644
+index e792844..67ac840 100644
 --- a/src/kitemviews/kitemlistwidget.cpp
 +++ b/src/kitemviews/kitemlistwidget.cpp
 @@ -122,7 +122,8 @@ void KItemListWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
@@ -4088,7 +4148,7 @@ index e792844b0..67ac8409b 100644
          // Only pass State_Selected when the item is actually selected, not just when
          // it has keyboard focus (m_current), to avoid styles drawing a persistent
 diff --git a/src/kitemviews/kstandarditemlistview.cpp b/src/kitemviews/kstandarditemlistview.cpp
-index 53d9dd377..75b2540c9 100644
+index 53d9dd3..75b2540 100644
 --- a/src/kitemviews/kstandarditemlistview.cpp
 +++ b/src/kitemviews/kstandarditemlistview.cpp
 @@ -19,7 +19,8 @@ KStandardItemListView::KStandardItemListView(QGraphicsWidget *parent)
@@ -4102,7 +4162,7 @@ index 53d9dd377..75b2540c9 100644
  
  KStandardItemListView::~KStandardItemListView() = default;
 diff --git a/src/kitemviews/kstandarditemlistwidget.cpp b/src/kitemviews/kstandarditemlistwidget.cpp
-index ddd3fe0c0..6043e00fb 100644
+index ddd3fe0..6043e00 100644
 --- a/src/kitemviews/kstandarditemlistwidget.cpp
 +++ b/src/kitemviews/kstandarditemlistwidget.cpp
 @@ -245,7 +245,8 @@ void KStandardItemListWidgetInformant::calculateDetailsLayoutItemSizeHints(QVect
@@ -4137,7 +4197,7 @@ index ddd3fe0c0..6043e00fb 100644
      rect.adjust(-frameWidth, -frameWidth, frameWidth, frameWidth);
      rect.translate(pos());
 diff --git a/src/kitemviews/private/kitemlistheaderwidget.cpp b/src/kitemviews/private/kitemlistheaderwidget.cpp
-index f385e6644..d4686a7e0 100644
+index f385e66..d4686a7 100644
 --- a/src/kitemviews/private/kitemlistheaderwidget.cpp
 +++ b/src/kitemviews/private/kitemlistheaderwidget.cpp
 @@ -10,6 +10,9 @@
@@ -4297,7 +4357,7 @@ index f385e6644..d4686a7e0 100644
  
  void KItemListHeaderWidget::updatePressedRoleIndex(const QPointF &pos)
 diff --git a/src/kitemviews/private/kitemlistroleeditor.cpp b/src/kitemviews/private/kitemlistroleeditor.cpp
-index cec9bb98b..6c3224449 100644
+index cec9bb9..6c32244 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.cpp
 +++ b/src/kitemviews/private/kitemlistroleeditor.cpp
 @@ -139,8 +139,30 @@ void KItemListRoleEditor::keyPressEvent(QKeyEvent *event)
@@ -4332,7 +4392,7 @@ index cec9bb98b..6c3224449 100644
  
      const auto originalSize = size();
 diff --git a/src/kitemviews/private/kitemlistroleeditor.h b/src/kitemviews/private/kitemlistroleeditor.h
-index 3956380cd..ab0de1dc1 100644
+index 3956380..ab0de1d 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.h
 +++ b/src/kitemviews/private/kitemlistroleeditor.h
 @@ -45,6 +45,12 @@ public:
@@ -4357,7 +4417,7 @@ index 3956380cd..ab0de1dc1 100644
  };
  
 diff --git a/src/main.cpp b/src/main.cpp
-index 3c89f98a9..ae6e35f98 100644
+index 3c89f98..ae6e35f 100644
 --- a/src/main.cpp
 +++ b/src/main.cpp
 @@ -13,6 +13,7 @@
@@ -4513,7 +4573,7 @@ index 3c89f98a9..ae6e35f98 100644
              // Successfully attached to existing instance of Dolphin
              return 0;
 diff --git a/src/org.kde.dolphin.desktop b/src/org.kde.dolphin.desktop
-index 7700446c2..3f9e541e6 100755
+index 7700446..3f9e541 100755
 --- a/src/org.kde.dolphin.desktop
 +++ b/src/org.kde.dolphin.desktop
 @@ -1,5 +1,5 @@
@@ -4619,10 +4679,10 @@ index 7700446c2..3f9e541e6 100755
 +StartupWMClass=seven-explorer
 diff --git a/src/panels/places/win7navigationpane.cpp b/src/panels/places/win7navigationpane.cpp
 new file mode 100644
-index 000000000..cce0cdc24
+index 0000000..8de8d67
 --- /dev/null
 +++ b/src/panels/places/win7navigationpane.cpp
-@@ -0,0 +1,751 @@
+@@ -0,0 +1,853 @@
 +/*
 + * Windows 7 Explorer style navigation pane.
 + *
@@ -4636,6 +4696,11 @@ index 000000000..cce0cdc24
 +#include <QStyledItemDelegate>
 +
 +#include "win7computerpage.h"
++#include "views/draganddrophelper.h"
++
++#include <KFileItem>
++#include <KIO/DropJob>
++#include <QTimer>
 +
 +#include <KConfigGroup>
 +#include <KFilePlacesModel>
@@ -4806,7 +4871,104 @@ index 000000000..cce0cdc24
 +
 +    connect(this, &QWidget::customContextMenuRequested, this, &Win7NavigationPane::showContextMenu);
 +
++    setAcceptDrops(true);
++    viewport()->setAcceptDrops(true);
++    setDropIndicatorShown(false);
++    // hovering a collapsed item while dragging opens it, as in Windows 7
++    m_dragExpandTimer = new QTimer(this);
++    m_dragExpandTimer->setSingleShot(true);
++    m_dragExpandTimer->setInterval(700);
++    connect(m_dragExpandTimer, &QTimer::timeout, this, [this]() {
++        if (m_dragExpandIndex.isValid()) {
++            expand(m_dragExpandIndex);
++        }
++    });
++
 +    updateStyleSheet(false);
++}
++
++QModelIndex Win7NavigationPane::dropTarget(const QPoint &pos, const QMimeData *mime) const
++{
++    if (!mime || !mime->hasUrls()) {
++        return {};
++    }
++    const QModelIndex index = indexAt(pos);
++    const QUrl url = index.data(UrlRole).toUrl();
++    if (!index.isValid() || !url.isLocalFile() || index.data(Qt::UserRole + 50).toBool()) {
++        return {};
++    }
++    const KFileItem item(url);
++    if (!DragAndDropHelper::supportsDropping(item) || DragAndDropHelper::urlListMatchesUrl(mime->urls(), url)) {
++        return {};
++    }
++    return index;
++}
++
++void Win7NavigationPane::setDropHover(const QModelIndex &index)
++{
++    if (index != m_hoverIndex) {
++        m_hoverIndex = index;
++        m_arrowHot = false;
++        viewport()->update();
++    }
++}
++
++void Win7NavigationPane::dragEnterEvent(QDragEnterEvent *event)
++{
++    if (event->mimeData()->hasUrls()) {
++        event->acceptProposedAction();
++    } else {
++        event->ignore();
++    }
++}
++
++void Win7NavigationPane::dragMoveEvent(QDragMoveEvent *event)
++{
++    const QPoint pos = event->position().toPoint();
++    const QModelIndex hover = indexAt(pos);
++    if (hover != m_dragExpandIndex) {
++        m_dragExpandIndex = hover;
++        if (hover.isValid() && !isExpanded(hover) && (model()->hasChildren(hover) || hover.data(LazyRole).toBool())) {
++            m_dragExpandTimer->start();
++        } else {
++            m_dragExpandTimer->stop();
++        }
++    }
++    const QModelIndex target = dropTarget(pos, event->mimeData());
++    setDropHover(target);
++    if (target.isValid()) {
++        event->acceptProposedAction();
++    } else {
++        event->ignore();
++    }
++}
++
++void Win7NavigationPane::dragLeaveEvent(QDragLeaveEvent *event)
++{
++    m_dragExpandTimer->stop();
++    m_dragExpandIndex = QPersistentModelIndex();
++    setDropHover(QModelIndex());
++    QTreeView::dragLeaveEvent(event);
++}
++
++void Win7NavigationPane::dropEvent(QDropEvent *event)
++{
++    m_dragExpandTimer->stop();
++    m_dragExpandIndex = QPersistentModelIndex();
++    const QModelIndex target = dropTarget(event->position().toPoint(), event->mimeData());
++    setDropHover(QModelIndex());
++    if (!target.isValid()) {
++        event->ignore();
++        return;
++    }
++    event->acceptProposedAction();
++    if (KIO::DropJob *job = DragAndDropHelper::dropUrls(target.data(UrlRole).toUrl(), event, this)) {
++        connect(job, &KJob::result, this, [this](KJob *job) {
++            if (job->error() && job->error() != KIO::ERR_USER_CANCELED) {
++                Q_EMIT errorMessage(job->errorString());
++            }
++        });
++    }
 +}
 +
 +QStandardItem *Win7NavigationPane::addGroup(const QString &text, const QString &iconName, const QUrl &url)
@@ -5376,10 +5538,10 @@ index 000000000..cce0cdc24
 +#include "moc_win7navigationpane.cpp"
 diff --git a/src/panels/places/win7navigationpane.h b/src/panels/places/win7navigationpane.h
 new file mode 100644
-index 000000000..64a537458
+index 0000000..5a7a569
 --- /dev/null
 +++ b/src/panels/places/win7navigationpane.h
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Windows 7 Explorer style navigation pane:
 + * Favorites, Libraries, Homegroup, Computer, Network as a tree.
@@ -5397,6 +5559,7 @@ index 000000000..64a537458
 +class KFilePlacesModel;
 +class QStandardItem;
 +class QStandardItemModel;
++class QTimer;
 +
 +class Win7NavigationPane : public QTreeView
 +{
@@ -5422,6 +5585,11 @@ index 000000000..64a537458
 +    void drawRow(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 +    void mouseMoveEvent(QMouseEvent *event) override;
 +    QSize sizeHint() const override;
++    // Windows 7: files can be dropped on any folder, disk or library of the pane
++    void dragEnterEvent(QDragEnterEvent *event) override;
++    void dragMoveEvent(QDragMoveEvent *event) override;
++    void dragLeaveEvent(QDragLeaveEvent *event) override;
++    void dropEvent(QDropEvent *event) override;
 +
 +private:
 +    QStandardItem *addGroup(const QString &text, const QString &iconName, const QUrl &url);
@@ -5436,6 +5604,8 @@ index 000000000..64a537458
 +    QRect arrowRect(const QModelIndex &index) const;
 +    void rebuildFavorites();
 +    void saveFavorites();
++    QModelIndex dropTarget(const QPoint &pos, const QMimeData *mime) const;
++    void setDropHover(const QModelIndex &index);
 +
 +    QStandardItemModel *m_model;
 +    KFilePlacesModel *m_places;
@@ -5446,11 +5616,13 @@ index 000000000..64a537458
 +    QStringList m_deviceSignature;
 +    QPersistentModelIndex m_hoverIndex;
 +    bool m_arrowHot = false;
++    QTimer *m_dragExpandTimer = nullptr;
++    QPersistentModelIndex m_dragExpandIndex;
 +};
 +
 +#endif // WIN7NAVIGATIONPANE_H
 diff --git a/src/search/bar.cpp b/src/search/bar.cpp
-index 7e31cb0f2..cecb62def 100644
+index 7e31cb0..cecb62d 100644
 --- a/src/search/bar.cpp
 +++ b/src/search/bar.cpp
 @@ -60,7 +60,8 @@ Bar::Bar(const std::shared_ptr<const DolphinQuery> &dolphinQuery, QWidget *paren
@@ -5507,7 +5679,7 @@ index 7e31cb0f2..cecb62def 100644
  }
  
 diff --git a/src/search/bar.h b/src/search/bar.h
-index 1017d813f..4c24f2d55 100644
+index 1017d81..4c24f2d 100644
 --- a/src/search/bar.h
 +++ b/src/search/bar.h
 @@ -17,6 +17,7 @@
@@ -5536,7 +5708,7 @@ index 1017d813f..4c24f2d55 100644
  
  }
 diff --git a/src/search/popup.cpp b/src/search/popup.cpp
-index 66dc4f7e4..5c7452d0f 100644
+index 66dc4f7..5c7452d 100644
 --- a/src/search/popup.cpp
 +++ b/src/search/popup.cpp
 @@ -66,13 +66,13 @@ QWidget *Popup::init()
@@ -5651,7 +5823,7 @@ index 66dc4f7e4..5c7452d0f 100644
      return containerWidget;
  }
 diff --git a/src/search/popup.h b/src/search/popup.h
-index 5ebcc51a3..910719a21 100644
+index 5ebcc51..910719a 100644
 --- a/src/search/popup.h
 +++ b/src/search/popup.h
 @@ -19,6 +19,7 @@
@@ -5686,11 +5858,43 @@ index 5ebcc51a3..910719a21 100644
      QRadioButton *m_searchInFileNamesRadioButton = nullptr;
      QRadioButton *m_searchInFileContentsRadioButton = nullptr;
      QRadioButton *m_filenamesearchRadioButton = nullptr;
+diff --git a/src/settings/dolphin_detailsmodesettings.kcfg b/src/settings/dolphin_detailsmodesettings.kcfg
+index 52d85fa..8a82141 100644
+--- a/src/settings/dolphin_detailsmodesettings.kcfg
++++ b/src/settings/dolphin_detailsmodesettings.kcfg
+@@ -29,7 +29,8 @@
+         </entry>
+         <entry name="LeftPadding" type="UInt">
+             <label>Left side padding</label>
+-            <default>20</default>
++            <!-- Windows 7: icons and the Name header start 19 px from the navigation pane -->
++            <default>12</default>
+         </entry>
+         <entry name="RightPadding" type="UInt">
+             <label>Right side padding</label>
+@@ -41,7 +42,8 @@
+         </entry>
+         <entry name="ExpandableFolders" type="Bool">
+             <label>Expandable folders</label>
+-            <default>true</default>
++            <!-- Windows 7: the Details view has no expand arrows -->
++            <default>false</default>
+         </entry>
+     </group>
+ </kcfg>
 diff --git a/src/views/dolphinview.cpp b/src/views/dolphinview.cpp
-index d61858fdd..bb732db3a 100644
+index d61858f..6775e39 100644
 --- a/src/views/dolphinview.cpp
 +++ b/src/views/dolphinview.cpp
-@@ -156,6 +156,7 @@ DolphinView::DolphinView(const QUrl &url, QWidget *parent)
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include "dolphinview.h"
++#include "win7elevate.h"
+ 
+ #include "dolphin_detailsmodesettings.h"
+ #include "dolphin_generalsettings.h"
+@@ -156,6 +157,7 @@ DolphinView::DolphinView(const QUrl &url, QWidget *parent)
      m_view->setEnlargeSmallPreviews(GeneralSettings::enlargeSmallPreviews());
  
      m_container = new KItemListContainer(controller, this);
@@ -5698,7 +5902,7 @@ index d61858fdd..bb732db3a 100644
      m_container->installEventFilter(this);
  #ifndef QT_NO_ACCESSIBILITY
      m_view->setAccessibleParentsObject(m_container);
-@@ -180,22 +181,18 @@ DolphinView::DolphinView(const QUrl &url, QWidget *parent)
+@@ -180,22 +182,18 @@ DolphinView::DolphinView(const QUrl &url, QWidget *parent)
      // Don't consume mouse events
      m_placeholderLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
  
@@ -5727,7 +5931,7 @@ index d61858fdd..bb732db3a 100644
  
      controller->setSelectionBehavior(KItemListController::MultiSelection);
      connect(controller, &KItemListController::itemActivated, this, &DolphinView::slotItemActivated);
-@@ -1638,7 +1635,8 @@ void DolphinView::onDirectoryLoadingCompletedAfterJob()
+@@ -1638,7 +1636,8 @@ void DolphinView::onDirectoryLoadingCompletedAfterJob()
  void DolphinView::slotJobResult(KJob *job)
  {
      if (job->error() && job->error() != KIO::ERR_USER_CANCELED) {
@@ -5737,7 +5941,7 @@ index d61858fdd..bb732db3a 100644
      }
      if (!m_selectJobCreatedItems) {
          m_selectedUrls.clear();
-@@ -1942,35 +1940,36 @@ void DolphinView::observeCreatedDirectory(const QUrl &newDirectoryUrl)
+@@ -1942,35 +1941,36 @@ void DolphinView::observeCreatedDirectory(const QUrl &newDirectoryUrl)
          return;
      }
  
@@ -5794,7 +5998,7 @@ index d61858fdd..bb732db3a 100644
  }
  
  void DolphinView::observeCreatedItem(const QUrl &url)
-@@ -1979,6 +1978,12 @@ void DolphinView::observeCreatedItem(const QUrl &url)
+@@ -1979,6 +1979,12 @@ void DolphinView::observeCreatedItem(const QUrl &url)
          return;
      }
  
@@ -5807,7 +6011,7 @@ index d61858fdd..bb732db3a 100644
      // select the new file
      if (!m_model->fileItem(url).isNull()) {
          forceUrlsSelection(url, {url});
-@@ -2301,6 +2306,19 @@ void DolphinView::slotRoleEditingFinished(int index, const QByteArray &role, con
+@@ -2301,6 +2307,19 @@ void DolphinView::slotRoleEditingFinished(int index, const QByteArray &role, con
          const KFileItem &oldItem = items.first();
          const EditResult retVal = value.value<EditResult>();
          const QString newName = retVal.newName;
@@ -5827,19 +6031,36 @@ index d61858fdd..bb732db3a 100644
          if (!newName.isEmpty() && newName != oldItem.text() && newName != QLatin1Char('.') && newName != QLatin1String("..")) {
              const QUrl oldUrl = oldItem.url();
  
-@@ -2651,6 +2669,11 @@ void DolphinView::applyDynamicView()
+@@ -2375,9 +2394,14 @@ void DolphinView::slotRoleEditingFinished(int index, const QByteArray &role, con
+                     }
+                 }
+ 
+-            KIO::Job *job = KIO::moveAs(oldUrl, newUrl);
++            // Windows 7 renames in C:\ too: as administrator (win7elevate.h)
++            const bool elevate = Win7Elevate::needsElevation(oldUrl.adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash));
++            KIO::Job *job = elevate ? KIO::moveAs(Win7Elevate::adminUrl(oldUrl), Win7Elevate::adminUrl(newUrl)) : KIO::moveAs(oldUrl, newUrl);
+             KJobWidgets::setWindow(job, this);
+-            KIO::FileUndoManager::self()->recordJob(KIO::FileUndoManager::Rename, {oldUrl}, newUrl, job);
++            KIO::FileUndoManager::self()->recordJob(KIO::FileUndoManager::Rename,
++                                                    {elevate ? Win7Elevate::adminUrl(oldUrl) : oldUrl},
++                                                    elevate ? Win7Elevate::adminUrl(newUrl) : newUrl,
++                                                    job);
+             job->uiDelegate()->setAutoErrorHandlingEnabled(true);
+ 
+             if (m_model->index(newUrl) < 0) {
+@@ -2651,6 +2675,11 @@ void DolphinView::applyDynamicView()
  
  void DolphinView::pasteToUrl(const QUrl &url)
  {
-+    // Win7: with nothing usable on the clipboard, Paste is simply a no-op.
++    // Win7: with nothing usable on the clipboard (no copied files, no picture), Paste is simply a no-op.
 +    const QMimeData *mimeData = QApplication::clipboard()->mimeData();
-+    if (!mimeData || !KIO::canPasteMimeData(mimeData)) {
++    if (!mimeData || (!mimeData->hasUrls() && !KIO::canPasteMimeData(mimeData))) {
 +        return;
 +    }
      KIO::PasteJob *job = KIO::paste(QApplication::clipboard()->mimeData(), url);
      KJobWidgets::setWindow(job, this);
      m_clearSelectionBeforeSelectingNewItems = true;
-@@ -2661,7 +2684,8 @@ void DolphinView::pasteToUrl(const QUrl &url)
+@@ -2661,7 +2690,8 @@ void DolphinView::pasteToUrl(const QUrl &url)
          connect(copyJob, &KIO::CopyJob::copying, this, &DolphinView::slotItemCreatedFromJob);
          connect(copyJob, &KIO::CopyJob::moving, this, &DolphinView::slotItemCreatedFromJob);
          connect(copyJob, &KIO::CopyJob::warning, this, [this](KJob *job, const QString & /*warning*/) {
@@ -5849,7 +6070,7 @@ index d61858fdd..bb732db3a 100644
          });
          connect(copyJob, &KIO::CopyJob::linking, this, [this](KIO::Job *job, const QString &src, const QUrl &dest) {
              Q_UNUSED(job)
-@@ -2830,7 +2854,7 @@ void DolphinView::updatePlaceholderLabel()
+@@ -2830,7 +2860,7 @@ void DolphinView::updatePlaceholderLabel()
      } else if (m_url.scheme() == QLatin1String("baloosearch") || m_url.scheme() == QLatin1String("filenamesearch")) {
          m_placeholderLabel->setText(i18n("No items matching the search"));
      } else if (m_url.scheme() == QLatin1String("trash") && m_url.path() == QLatin1String("/")) {
@@ -5858,7 +6079,7 @@ index d61858fdd..bb732db3a 100644
      } else if (m_url.scheme() == QLatin1String("tags")) {
          if (m_url.path() == QLatin1Char('/')) {
              m_placeholderLabel->setText(i18n("No tags"));
-@@ -2858,7 +2882,7 @@ void DolphinView::updatePlaceholderLabel()
+@@ -2858,7 +2888,7 @@ void DolphinView::updatePlaceholderLabel()
      } else if (m_url.scheme() == QLatin1String("bluetooth")) {
          m_placeholderLabel->setText(i18n("No Bluetooth devices found"));
      } else {
@@ -5868,10 +6089,18 @@ index d61858fdd..bb732db3a 100644
  
      m_placeholderLabel->setVisible(true);
 diff --git a/src/views/dolphinviewactionhandler.cpp b/src/views/dolphinviewactionhandler.cpp
-index 6fd5d6b88..34939925e 100644
+index 6fd5d6b..123a155 100644
 --- a/src/views/dolphinviewactionhandler.cpp
 +++ b/src/views/dolphinviewactionhandler.cpp
-@@ -83,9 +83,8 @@ void DolphinViewActionHandler::createActions(SelectionMode::ActionTextHelper *ac
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include "dolphinviewactionhandler.h"
++#include "win7elevate.h"
+ 
+ #include "kitemviews/kfileitemlisttostring.h"
+ #include "kitemviews/kfileitemmodel.h"
+@@ -83,9 +84,8 @@ void DolphinViewActionHandler::createActions(SelectionMode::ActionTextHelper *ac
      // This action doesn't appear in the GUI, it's for the shortcut only.
      // KNewFileMenu takes care of the GUI stuff.
      QAction *newDirAction = m_actionCollection->addAction(QStringLiteral("create_dir"));
@@ -5882,7 +6111,7 @@ index 6fd5d6b88..34939925e 100644
      newDirAction->setEnabled(false); // Will be enabled in slotWriteStateChanged(bool) if the current URL is writable
      connect(newDirAction, &QAction::triggered, this, [this] {
          Q_EMIT createDirectoryTriggered(m_currentView->url());
-@@ -100,7 +99,7 @@ void DolphinViewActionHandler::createActions(SelectionMode::ActionTextHelper *ac
+@@ -100,7 +100,7 @@ void DolphinViewActionHandler::createActions(SelectionMode::ActionTextHelper *ac
      });
  
      QAction *newFileAction = m_actionCollection->addAction(QStringLiteral("create_file"));
@@ -5891,8 +6120,38 @@ index 6fd5d6b88..34939925e 100644
      newFileAction->setIcon(QIcon::fromTheme(QStringLiteral("document-new")));
      newFileAction->setEnabled(false); // Will be enabled in slotWriteStateChanged(bool) if the current URL is writable
      connect(newFileAction, &QAction::triggered, this, &DolphinViewActionHandler::createFileTriggered);
+@@ -769,6 +769,8 @@ void DolphinViewActionHandler::slotHiddenFilesShownChanged(bool shown)
+ 
+ void DolphinViewActionHandler::slotWriteStateChanged(bool isFolderWritable)
+ {
++    // Windows 7 makes new items in C:\ too (as administrator, win7elevate.h)
++    isFolderWritable = isFolderWritable || Win7Elevate::needsElevation(currentView()->url());
+     const bool supportsMakeDir = KProtocolManager::supportsMakeDir(currentView()->url());
+     m_actionCollection->action(QStringLiteral("create_dir"))->setEnabled(isFolderWritable && supportsMakeDir);
+     m_actionCollection->action(QStringLiteral("create_file"))->setEnabled(isFolderWritable);
+diff --git a/src/views/draganddrophelper.cpp b/src/views/draganddrophelper.cpp
+index 125e4e7..c77f45d 100644
+--- a/src/views/draganddrophelper.cpp
++++ b/src/views/draganddrophelper.cpp
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include "draganddrophelper.h"
++#include "win7elevate.h"
+ 
+ #include <KIO/DropJob>
+ #include <KJobWidgets>
+@@ -63,7 +64,7 @@ KIO::DropJob *DragAndDropHelper::dropUrls(const QUrl &destUrl, QDropEvent *event
+ 
+ bool DragAndDropHelper::supportsDropping(const KFileItem &destItem)
+ {
+-    return (destItem.isDir() && destItem.isWritable()) || destItem.isDesktopFile() || (destItem.isFile() && destItem.isLocalFile() && destItem.isExecutable());
++    return (destItem.isDir() && (destItem.isWritable() || Win7Elevate::needsElevation(destItem.url()))) || destItem.isDesktopFile() || (destItem.isFile() && destItem.isLocalFile() && destItem.isExecutable());
+ }
+ 
+ void DragAndDropHelper::updateDropAction(QDropEvent *event, const QUrl &destUrl)
 diff --git a/src/views/viewproperties.cpp b/src/views/viewproperties.cpp
-index fe2da8564..385d15a6e 100644
+index fe2da85..385d15a 100644
 --- a/src/views/viewproperties.cpp
 +++ b/src/views/viewproperties.cpp
 @@ -149,6 +149,17 @@ bool ViewProperties::isDefaults() const
@@ -5923,9 +6182,81 @@ index fe2da8564..385d15a6e 100644
      } else if (useGlobalViewProps) {
          m_filePath = destinationDir(QStringLiteral("global"));
      } else if (url.isLocalFile()) {
+diff --git a/src/views/win7elevate.h b/src/views/win7elevate.h
+new file mode 100644
+index 0000000..8c5c87b
+--- /dev/null
++++ b/src/views/win7elevate.h
+@@ -0,0 +1,66 @@
++/*
++ * Windows 7: folders of the system disk the user may not write to (C:\ itself, C:\Windows...) still take
++ * drops, pasting, new items and renaming; KIO then asks "Destination Folder Access Denied" and does it as
++ * administrator through kio-admin (see win7elevate_p.h in the KIO tree).
++ *
++ * SPDX-License-Identifier: GPL-2.0-or-later
++ */
++
++#ifndef WIN7ELEVATE_H
++#define WIN7ELEVATE_H
++
++#include <KFileItem>
++#include <KProtocolInfo>
++
++#include <QFileInfo>
++#include <QStorageInfo>
++#include <QUrl>
++
++namespace Win7Elevate
++{
++inline bool needsElevation(const QUrl &dir)
++{
++    if (!dir.isLocalFile()) {
++        return false;
++    }
++    const QString path = dir.toLocalFile();
++    const QFileInfo info(path);
++    if (!info.isDir() || info.isWritable()) {
++        return false;
++    }
++    for (const char *virt : {"/proc", "/sys", "/dev", "/run"}) {
++        const QString v = QLatin1String(virt);
++        if (path == v || path.startsWith(v + QLatin1Char('/'))) {
++            return false;
++        }
++    }
++    const QStorageInfo storage(path);
++    if (!storage.isValid() || storage.isReadOnly() || !storage.device().startsWith("/dev/")) {
++        return false;
++    }
++    return KProtocolInfo::isKnownProtocol(QStringLiteral("admin"));
++}
++
++/** All items are in folders that need administrator permission (renaming them goes through admin:/) */
++inline bool parentsNeedElevation(const KFileItemList &items)
++{
++    if (items.isEmpty()) {
++        return false;
++    }
++    for (const KFileItem &item : items) {
++        if (!needsElevation(item.url().adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash))) {
++            return false;
++        }
++    }
++    return true;
++}
++
++inline QUrl adminUrl(const QUrl &url)
++{
++    QUrl admin(url);
++    admin.setScheme(QStringLiteral("admin"));
++    return admin;
++}
++}
++
++#endif
 diff --git a/src/win7computerpage.cpp b/src/win7computerpage.cpp
 new file mode 100644
-index 000000000..c6f5c8846
+index 0000000..c6f5c88
 --- /dev/null
 +++ b/src/win7computerpage.cpp
 @@ -0,0 +1,1014 @@
@@ -6945,7 +7276,7 @@ index 000000000..c6f5c8846
 +#include "moc_win7computerpage.cpp"
 diff --git a/src/win7computerpage.h b/src/win7computerpage.h
 new file mode 100644
-index 000000000..67a14a2aa
+index 0000000..67a14a2
 --- /dev/null
 +++ b/src/win7computerpage.h
 @@ -0,0 +1,59 @@
@@ -7010,7 +7341,7 @@ index 000000000..67a14a2aa
 +#endif // WIN7COMPUTERPAGE_H
 diff --git a/src/win7detailspane.cpp b/src/win7detailspane.cpp
 new file mode 100644
-index 000000000..d8a52d47e
+index 0000000..d8a52d4
 --- /dev/null
 +++ b/src/win7detailspane.cpp
 @@ -0,0 +1,226 @@
@@ -7242,7 +7573,7 @@ index 000000000..d8a52d47e
 +#include "moc_win7detailspane.cpp"
 diff --git a/src/win7detailspane.h b/src/win7detailspane.h
 new file mode 100644
-index 000000000..f0e5485de
+index 0000000..f0e5485
 --- /dev/null
 +++ b/src/win7detailspane.h
 @@ -0,0 +1,44 @@
@@ -7292,7 +7623,7 @@ index 000000000..f0e5485de
 +#endif // WIN7DETAILSPANE_H
 diff --git a/src/win7previewpane.cpp b/src/win7previewpane.cpp
 new file mode 100644
-index 000000000..7d0991668
+index 0000000..7d09916
 --- /dev/null
 +++ b/src/win7previewpane.cpp
 @@ -0,0 +1,168 @@
@@ -7466,7 +7797,7 @@ index 000000000..7d0991668
 +#include "moc_win7previewpane.cpp"
 diff --git a/src/win7previewpane.h b/src/win7previewpane.h
 new file mode 100644
-index 000000000..3a9039a4a
+index 0000000..3a9039a
 --- /dev/null
 +++ b/src/win7previewpane.h
 @@ -0,0 +1,53 @@
@@ -7525,7 +7856,7 @@ index 000000000..3a9039a4a
 +#endif
 diff --git a/src/win7viewmodemenu.cpp b/src/win7viewmodemenu.cpp
 new file mode 100644
-index 000000000..d33715044
+index 0000000..d337150
 --- /dev/null
 +++ b/src/win7viewmodemenu.cpp
 @@ -0,0 +1,332 @@
@@ -7863,7 +8194,7 @@ index 000000000..d33715044
 +#include "moc_win7viewmodemenu.cpp"
 diff --git a/src/win7viewmodemenu.h b/src/win7viewmodemenu.h
 new file mode 100644
-index 000000000..df983e822
+index 0000000..df983e8
 --- /dev/null
 +++ b/src/win7viewmodemenu.h
 @@ -0,0 +1,75 @@

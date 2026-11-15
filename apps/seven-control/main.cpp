@@ -56,6 +56,7 @@ static QString argAfterHelp(const QStringList &args)
 #include "win7sharing.h"
 #include "win7trash.h"
 #include "win7perf.h"
+#include "win7gettingstarted.h"
 #include "win7system.h"
 #include "win7games.h"
 #include "win7indexing.h"
@@ -363,10 +364,35 @@ bool hiddenVendorPanel(const QString &icon, const GpuPanels &g)
         || (icon == QLatin1String("seven-igfx") && !g.intel);
 }
 
+/** What the tasks of Getting Started (OobeFldr.dll) open: one of our pages... */
+int gettingStartedView(const QString &task)
+{
+    static const QHash<QString, int> views{{QStringLiteral("personalize"), Win7Display::PersonalizeView},
+                                           {QStringLiteral("transfer"), Win7Backup::BackupView}, // no Windows Easy Transfer: backups move files between computers
+                                           {QStringLiteral("backup"), Win7Backup::BackupView},
+                                           {QStringLiteral("uac"), Win7Action::CenterView},
+                                           {QStringLiteral("users"), Win7Users::HomeView},
+                                           {QStringLiteral("textsize"), Win7Display::DisplayView}};
+    return views.value(task, -1);
+}
+
+/** ...or something outside the Control Panel (the web pages of Windows 7's links, the homegroup) */
+void gettingStartedExternal(const QString &task)
+{
+    if (task == QLatin1String("discover")) {
+        QDesktopServices::openUrl(QUrl(QStringLiteral("http://go.microsoft.com/fwlink/?LinkID=139460")));
+    } else if (task == QLatin1String("live")) {
+        QDesktopServices::openUrl(QUrl(QStringLiteral("http://go.microsoft.com/fwlink/?LinkId=130744")));
+    } else if (task == QLatin1String("homegroup")) {
+        launch(QStringLiteral("dolphin"), {QStringLiteral("smb:/")});
+    }
+}
+
 QList<Item> allItems()
 {
     QList<Item> items{
         {tr7("AutoPlay"), QStringLiteral("seven-cpi-autostart"), QStringLiteral("seven-cpi-autostart"), view(Win7Autoplay::AutoplayView)},
+        {tr7("Getting Started"), QStringLiteral("seven-cpi-gettingstarted"), QStringLiteral("seven-cpi-gettingstarted"), view(Win7GettingStarted::GettingStartedView)},
         {tr7("Recovery"), QStringLiteral("seven-cpi-recovery"), QStringLiteral("seven-cpi-recovery"), view(Win7Backup::RecoveryView)},
         {tr7("Device Manager"), QStringLiteral("seven-cpi-devmgr"), QStringLiteral("seven-cpi-devmgr"), tool(QStringLiteral("seven-devmgr"), QStringLiteral("kinfocenter"))},
         {tr7("Sound"), QStringLiteral("seven-cpi-sound"), QStringLiteral("seven-cpi-sound"), self({QStringLiteral("--sound")})},
@@ -1204,6 +1230,11 @@ private:
                                }});
             }
             crumbs.append({Win7Backup::viewTitle(m_view), nullptr});
+        } else if (m_view == Win7GettingStarted::GettingStartedView) {
+            crumbs.append({tr7("All Control Panel Items"), [this] {
+                               setView(SmallIcons);
+                           }});
+            crumbs.append({tr7("Getting Started"), nullptr});
         } else if (Win7Perf::isPerfView(m_view)) {
             crumbs.append({tr7("All Control Panel Items"), [this] {
                                setView(SmallIcons);
@@ -1328,6 +1359,8 @@ private:
             placeIcon = QStringLiteral("seven-cpi-actioncenter");
         } else if (Win7Perf::isPerfView(m_view)) {
             placeIcon = QStringLiteral("seven-cpi-perf");
+        } else if (m_view == Win7GettingStarted::GettingStartedView) {
+            placeIcon = QStringLiteral("seven-cpi-gettingstarted");
         } else if (Win7Games::isGamesView(m_view)) {
             placeIcon = QStringLiteral("seven-games");
         } else if (isFontsView(m_view)) {
@@ -1466,6 +1499,18 @@ private:
         if (Win7Games::isGamesView(m_view)) {
             setWindowTitle(tr7("Games"));
             m_scroll->setWidget(Win7Games::buildGamesPage());
+            return;
+        }
+        if (m_view == Win7GettingStarted::GettingStartedView) {
+            setWindowTitle(tr7("Getting Started"));
+            m_scroll->setWidget(Win7GettingStarted::build([this](const QString &task) {
+                const int v = gettingStartedView(task);
+                if (v >= 0) {
+                    setView(v);
+                } else {
+                    gettingStartedExternal(task);
+                }
+            }));
             return;
         }
         if (Win7Perf::isPerfView(m_view)) {
@@ -2720,6 +2765,21 @@ int main(int argc, char **argv)
     }
     if (app.arguments().contains(QStringLiteral("--system")) && g_openView) {
         g_openView(Win7System::SystemView);
+    }
+    if (app.arguments().contains(QStringLiteral("--getting-started")) && g_openView) {
+        g_openView(Win7GettingStarted::GettingStartedView);
+    }
+    // a task of Getting Started straight from its jump list in the Start menu
+    const int gsTask = app.arguments().indexOf(QStringLiteral("--gs-task"));
+    if (gsTask > 0 && g_openView) {
+        const QString task = app.arguments().value(gsTask + 1);
+        const int v = gettingStartedView(task);
+        if (v >= 0) {
+            g_openView(v);
+        } else {
+            gettingStartedExternal(task);
+            return 0;
+        }
     }
     if (app.arguments().contains(QStringLiteral("--action-center")) && g_openView) {
         g_openView(Win7Action::CenterView);

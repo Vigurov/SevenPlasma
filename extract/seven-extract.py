@@ -19,7 +19,8 @@ from win7index import PE, dib_to_image, icon_frame, ico_frames, unpremultiply, c
 # what has to come out of install.wim for the recipes
 WIM_PATHS = ['Windows/System32/*.dll', 'Windows/System32/*.exe', 'Windows/System32/*.cpl', 'Windows/System32/*.ocx',
              'Windows/System32/*.ax', 'Windows/*.exe', 'Windows/Resources/*', 'Windows/Fonts/*', 'Windows/Media/*',
-             'Windows/Web/*', 'Program Files/*', 'ProgramData/Microsoft/User Account Pictures/*',
+             'Windows/Web/*', 'Windows/Branding/*', 'Windows/ehome/*', 'Windows/System32/migwiz/*', 'Program Files/*',
+             'ProgramData/Microsoft/User Account Pictures/*',
              'Users/Public/Pictures/Sample Pictures/*']
 
 

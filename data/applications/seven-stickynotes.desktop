@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=Sticky Notes
+Name[uk]=Записки
+Comment=Take quick notes with Sticky Notes
+Comment[uk]=Швидкі нотатки за допомогою записок
+Exec=seven-stickynotes
+Icon=seven-stickynotes
+Categories=Utility;
+StartupWMClass=seven-stickynotes
+Actions=NewNote;
+
+[Desktop Action NewNote]
+Name=New Note
+Name[uk]=Нова записка
+Exec=seven-stickynotes --new-note
+Icon=list-add

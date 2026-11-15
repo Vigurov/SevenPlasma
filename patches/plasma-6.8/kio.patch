@@ -502,7 +502,7 @@ index 00c5fca..998752e 100644
      KF6::IconThemes   # KIconLoader
      KF6::IconWidgets   # KIconButton
 diff --git a/src/filewidgets/kdiroperator.cpp b/src/filewidgets/kdiroperator.cpp
-index 40a009b..2e1d7ef 100644
+index 40a009b..d547ece 100644
 --- a/src/filewidgets/kdiroperator.cpp
 +++ b/src/filewidgets/kdiroperator.cpp
 @@ -50,6 +50,17 @@
@@ -523,7 +523,7 @@ index 40a009b..2e1d7ef 100644
  #include <QActionGroup>
  #include <QApplication>
  #include <QDebug>
-@@ -1199,6 +1210,164 @@ void KDirOperator::activatedMenu(const KFileItem &item, const QPoint &pos)
+@@ -1199,6 +1210,166 @@ void KDirOperator::activatedMenu(const KFileItem &item, const QPoint &pos)
  {
      updateSelectionDependentActions();
  
@@ -551,7 +551,9 @@ index 40a009b..2e1d7ef 100644
 +            KIO::setClipboardDataCut(mime, cutting);
 +            QGuiApplication::clipboard()->setMimeData(mime);
 +        };
-+        const bool canPaste = KIO::canPasteMimeData(QGuiApplication::clipboard()->mimeData());
++        // copied files, or a picture (canPasteMimeData leaves text out, like Windows)
++        const QMimeData *clip = QGuiApplication::clipboard()->mimeData();
++        const bool canPaste = clip && (clip->hasUrls() || KIO::canPasteMimeData(clip));
 +        auto paste = [this](const QUrl &dest) {
 +            KIO::Job *job = KIO::paste(QGuiApplication::clipboard()->mimeData(), dest);
 +            KJobWidgets::setWindow(job, this);
@@ -688,7 +690,7 @@ index 40a009b..2e1d7ef 100644
      d->m_newFileMenu->setWorkingDirectory(item.url());
      d->m_newFileMenu->checkUpToDate();
  
-@@ -2773,8 +2942,10 @@ void KDirOperatorPrivate::openContextMenu(const QPoint &pos)
+@@ -2773,8 +2944,10 @@ void KDirOperatorPrivate::openContextMenu(const QPoint &pos)
      const QModelIndex proxyIndex = m_itemView->indexAt(pos);
      const QModelIndex dirIndex = m_proxyModel->mapToSource(proxyIndex);
      KFileItem item = m_dirModel->itemForIndex(dirIndex);
@@ -955,7 +957,7 @@ index c7cbed3..4a152c6 100644
          KFileFilter allFilter(i18n("All Files"), {}, {QStringLiteral("application/octet-stream")});
  
 diff --git a/src/filewidgets/kfilewidget.cpp b/src/filewidgets/kfilewidget.cpp
-index 86abbf2..db136d7 100644
+index 86abbf2..109f975 100644
 --- a/src/filewidgets/kfilewidget.cpp
 +++ b/src/filewidgets/kfilewidget.cpp
 @@ -13,6 +13,36 @@
@@ -1222,7 +1224,7 @@ index 86abbf2..db136d7 100644
      });
  
      m_ops->dirLister()->setAutoErrorHandlingEnabled(false);
-@@ -1145,12 +1338,554 @@ void KFileWidgetPrivate::initDirOpWidgets()
+@@ -1145,12 +1338,555 @@ void KFileWidgetPrivate::initDirOpWidgets()
  
      initToolbar();
  
@@ -1460,7 +1462,8 @@ index 86abbf2..db136d7 100644
 +            del->setEnabled(any);
 +            rename->setEnabled(m_ops->selectedItems().count() == 1);
 +            props->setEnabled(true);
-+            paste->setEnabled(KIO::canPasteMimeData(QGuiApplication::clipboard()->mimeData()));
++            const QMimeData *clip = QGuiApplication::clipboard()->mimeData();
++            paste->setEnabled(clip && (clip->hasUrls() || KIO::canPasteMimeData(clip)));
 +            undo->setEnabled(KIO::FileUndoManager::self()->isUndoAvailable());
 +            redo->setEnabled(false);
 +            // as in Windows 7's Save / Open dialog: these three are always greyed out there
@@ -1781,7 +1784,7 @@ index 86abbf2..db136d7 100644
  }
  
  void KFileWidgetPrivate::initZoomWidget()
-@@ -1325,7 +2060,7 @@ void KFileWidgetPrivate::initLocationWidget()
+@@ -1325,7 +2061,7 @@ void KFileWidgetPrivate::initLocationWidget()
      m_locationEdit->lineEdit()->setClearButtonEnabled(false);
  
      QAction *clearAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-clear")), {}, m_locationEdit->lineEdit());
@@ -1790,7 +1793,7 @@ index 86abbf2..db136d7 100644
      clearAction->setVisible(false);
      q->connect(clearAction, &QAction::triggered, m_locationEdit->lineEdit(), &QLineEdit::clear);
      q->connect(m_locationEdit->lineEdit(), &QLineEdit::textEdited, q, [this, clearAction]() {
-@@ -1336,7 +2071,7 @@ void KFileWidgetPrivate::initLocationWidget()
+@@ -1336,7 +2072,7 @@ void KFileWidgetPrivate::initLocationWidget()
      });
  
      QAction *undoAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-undo")), i18nc("@info:tooltip", "Undo filename change"), m_locationEdit->lineEdit());
@@ -1799,7 +1802,7 @@ index 86abbf2..db136d7 100644
      undoAction->setVisible(false);
      q->connect(undoAction, &QAction::triggered, m_locationEdit->lineEdit(), &QLineEdit::undo);
      q->connect(m_locationEdit->lineEdit(), &QLineEdit::textEdited, q, [this, undoAction]() {
-@@ -1503,7 +2238,18 @@ void KFileWidgetPrivate::initPlacesPanel()
+@@ -1503,7 +2239,18 @@ void KFileWidgetPrivate::initPlacesPanel()
      // TODO: KDE5 ### REMOVE THIS when KDirOperator's initial URL (in the c'tor) is gone.
      m_placesView->setUrl(m_url);
  
@@ -1819,7 +1822,7 @@ index 86abbf2..db136d7 100644
      m_placesViewSplitter->insertWidget(0, m_placesDock);
  
      // initialize the size of the splitter
-@@ -1513,6 +2259,10 @@ void KFileWidgetPrivate::initPlacesPanel()
+@@ -1513,6 +2260,10 @@ void KFileWidgetPrivate::initPlacesPanel()
      setPlacesViewSplitterSizes();
  
      QObject::connect(m_placesDock, &QDockWidget::visibilityChanged, q, [this](bool visible) {
@@ -1830,7 +1833,7 @@ index 86abbf2..db136d7 100644
          togglePlacesPanel(visible, m_placesDock);
      });
  }
-@@ -1534,9 +2284,18 @@ void KFileWidgetPrivate::initGUI()
+@@ -1534,9 +2285,18 @@ void KFileWidgetPrivate::initGUI()
      m_boxLayout = new QVBoxLayout(q);
      m_boxLayout->setContentsMargins(0, 0, 0, 0); // no additional margin to the already existing
  
@@ -1849,7 +1852,7 @@ index 86abbf2..db136d7 100644
      m_boxLayout->addWidget(m_placesViewSplitter);
  
      QObject::connect(m_placesViewSplitter, &QSplitter::splitterMoved, q, [this](int pos, int index) {
-@@ -1553,24 +2312,231 @@ void KFileWidgetPrivate::initGUI()
+@@ -1553,24 +2313,231 @@ void KFileWidgetPrivate::initGUI()
  
      m_lafBox->addRow(m_quickFilter);
      m_lafBox->addRow(m_locationLabel, m_locationEdit);
@@ -2089,7 +2092,7 @@ index 86abbf2..db136d7 100644
  
      auto updateTabOrder = [this]() {
          // First the url navigator and its internal tab order
-@@ -1707,6 +2673,9 @@ void KFileWidgetPrivate::urlEntered(const QUrl &url)
+@@ -1707,6 +2674,9 @@ void KFileWidgetPrivate::urlEntered(const QUrl &url)
  
      if (m_placesView) {
          m_placesView->setUrl(url);
@@ -2099,7 +2102,7 @@ index 86abbf2..db136d7 100644
      }
  
      m_messageWidget->hide();
-@@ -2021,6 +2990,59 @@ void KFileWidget::showEvent(QShowEvent *event)
+@@ -2021,6 +2991,59 @@ void KFileWidget::showEvent(QShowEvent *event)
      }
      d->m_ops->clearHistory();
  
@@ -2159,7 +2162,7 @@ index 86abbf2..db136d7 100644
      QWidget::showEvent(event);
  }
  
-@@ -2202,7 +3224,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
+@@ -2202,7 +3225,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
  
      d->m_operationMode = mode;
      d->m_keepLocation = (mode == Saving);
@@ -2168,7 +2171,7 @@ index 86abbf2..db136d7 100644
      if (mode == Opening) {
          // don't use KStandardGuiItem::open() here which has trailing ellipsis!
          d->m_okButton->setText(i18n("&Open"));
-@@ -2224,6 +3246,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
+@@ -2224,6 +3247,7 @@ void KFileWidget::setOperationMode(OperationMode mode)
          d->m_ops->setIsSaving(mode == Saving);
      }
      d->updateFilterText();
@@ -2176,7 +2179,7 @@ index 86abbf2..db136d7 100644
  }
  
  KFileWidget::OperationMode KFileWidget::operationMode() const
-@@ -2523,7 +3546,7 @@ void KFileWidgetPrivate::updateAutoSelectExtension()
+@@ -2523,7 +3547,7 @@ void KFileWidgetPrivate::updateAutoSelectExtension()
                                                       whatsThisExtension)
                                                + QLatin1String("</qt>"));
  
@@ -2185,7 +2188,7 @@ index 86abbf2..db136d7 100644
  
          // update the current filename's extension
          updateLocationEditExtension(lastExtension);
-@@ -2961,7 +3984,7 @@ void KFileWidgetPrivate::setNonExtSelection()
+@@ -2961,7 +3985,7 @@ void KFileWidgetPrivate::setNonExtSelection()
  // filter has been set; otherwise, the text is "Filter:"
  void KFileWidgetPrivate::updateFilterText()
  {
@@ -4052,10 +4055,18 @@ index 0000000..e175760
 +
 +#endif // KFILEWIN7VIEWMENU_H
 diff --git a/src/filewidgets/knewfilemenu.cpp b/src/filewidgets/knewfilemenu.cpp
-index a0b8ae9..90d9e7b 100644
+index a0b8ae9..5a907b1 100644
 --- a/src/filewidgets/knewfilemenu.cpp
 +++ b/src/filewidgets/knewfilemenu.cpp
-@@ -684,6 +684,35 @@ void KNewFileMenuPrivate::executeRealFileOrDir(const KNewFileMenuSingleton::Entr
+@@ -9,6 +9,7 @@
+ 
+ #include "knewfilemenu.h"
+ #include "../utils_p.h"
++#include "../widgets/win7elevate_p.h"
+ #include "kfilewidgets_debug.h"
+ #include "knameandurlinputdialog.h"
+ #include "ui_knewfilemenu_newfiledialog.h"
+@@ -684,6 +685,35 @@ void KNewFileMenuPrivate::executeRealFileOrDir(const KNewFileMenuSingleton::Entr
          text = KFileUtils::suggestName(directory, text);
      }
  
@@ -4091,7 +4102,29 @@ index a0b8ae9..90d9e7b 100644
      m_label->setText(entry.comment);
      setIcon(entry.icon);
  
-@@ -1448,7 +1477,8 @@ void KNewFileMenu::createDirectory()
+@@ -736,7 +766,7 @@ void KNewFileMenuPrivate::executeStrategy()
+     }
+ 
+     // The template is not a desktop file [or it's a URL one] >>> Copy it
+-    QUrl dest = m_menuWorkingDirectory;
++    QUrl dest = Win7Elevate::needsElevation(m_menuWorkingDirectory) ? Win7Elevate::adminUrl(m_menuWorkingDirectory) : m_menuWorkingDirectory;
+     dest.setPath(Utils::concatPaths(dest.path(), KIO::encodeFileName(chosenFileName)));
+ 
+     KIO::Job *kjob;
+@@ -909,7 +939,11 @@ void KNewFileMenuPrivate::slotCreateDirectory()
+     }
+ 
+     KIO::Job *job;
+-    if (name.contains(QLatin1Char('/'))) {
++    // Windows 7: a new folder in C:\ is made as administrator (win7elevate_p.h)
++    const bool elevate = Win7Elevate::needsElevation(baseUrl);
++    if (elevate && !name.contains(QLatin1Char('/'))) {
++        job = KIO::mkdir(Win7Elevate::adminUrl(url));
++    } else if (name.contains(QLatin1Char('/'))) {
+         // If the name contains any slashes, use mkpath so that a/b/c works.
+         job = KIO::mkpath(url, baseUrl);
+         KIO::FileUndoManager::self()->recordJob(KIO::FileUndoManager::Mkpath, QList<QUrl>(), url, job);
+@@ -1448,7 +1482,8 @@ void KNewFileMenu::createDirectory()
          qCWarning(KFILEWIDGETS_LOG) << "Directory creation is already running for " << d->m_baseUrl;
      }
  
@@ -4101,7 +4134,7 @@ index a0b8ae9..90d9e7b 100644
  
      auto nameJob = new KIO::NameFinderJob(d->m_baseUrl, name, this);
      connect(nameJob, &KJob::result, this, [nameJob, name, this]() mutable {
-@@ -1456,7 +1486,17 @@ void KNewFileMenu::createDirectory()
+@@ -1456,7 +1491,17 @@ void KNewFileMenu::createDirectory()
              d->m_baseUrl = nameJob->baseUrl();
              name = nameJob->finalName();
          }
@@ -4109,7 +4142,7 @@ index a0b8ae9..90d9e7b 100644
 +        QUrl url = d->m_baseUrl;
 +        url.setPath(Utils::concatPaths(url.path(), name));
 +        Q_EMIT directoryCreationStarted(url);
-+        KIO::Job *job = KIO::mkdir(url);
++        KIO::Job *job = KIO::mkdir(Win7Elevate::needsElevation(d->m_baseUrl) ? Win7Elevate::adminUrl(url) : url);
 +        KIO::FileUndoManager::self()->recordJob(KIO::FileUndoManager::Mkdir, QList<QUrl>(), url, job);
 +        job->setProperty("newDirectoryURL", url);
 +        KJobWidgets::setWindow(job, d->m_parentWidget);
@@ -4120,6 +4153,27 @@ index a0b8ae9..90d9e7b 100644
      });
      nameJob->start();
      Q_EMIT directoryCreationStarted(d->m_baseUrl);
+@@ -1697,7 +1742,7 @@ void KNewFileMenu::slotResult(KJob *job)
+         } else {
+             KIO::CopyJob *copyJob = ::qobject_cast<KIO::CopyJob *>(job);
+             if (copyJob) {
+-                const QUrl destUrl = copyJob->destUrl();
++                const QUrl destUrl = Win7Elevate::fileUrl(copyJob->destUrl());
+                 const QUrl localUrl = d->mostLocalUrl(destUrl);
+                 if (localUrl.isLocalFile()) {
+                     // Normal (local) file. Need to "touch" it, kio_file copied the mtime.
+@@ -1707,9 +1752,9 @@ void KNewFileMenu::slotResult(KJob *job)
+             } else if (KIO::SimpleJob *simpleJob = ::qobject_cast<KIO::SimpleJob *>(job)) {
+                 // Called in the storedPut() case
+ #ifdef WITH_QTDBUS
+-                org::kde::KDirNotify::emitFilesAdded(simpleJob->url().adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash));
++                org::kde::KDirNotify::emitFilesAdded(Win7Elevate::fileUrl(simpleJob->url()).adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash));
+ #endif
+-                Q_EMIT fileCreated(simpleJob->url());
++                Q_EMIT fileCreated(Win7Elevate::fileUrl(simpleJob->url()));
+             }
+         }
+     }
 diff --git a/src/filewidgets/kurlnavigator.cpp b/src/filewidgets/kurlnavigator.cpp
 index fba3d8c..974f88a 100644
 --- a/src/filewidgets/kurlnavigator.cpp
@@ -4416,10 +4470,18 @@ index 2d18330..1565d59 100644
      if (!askHandler) {
          auto *delegate = uiDelegate();
 diff --git a/src/widgets/dropjob.cpp b/src/widgets/dropjob.cpp
-index 3aedfa6..45aac81 100644
+index 3aedfa6..04b7f7a 100644
 --- a/src/widgets/dropjob.cpp
 +++ b/src/widgets/dropjob.cpp
-@@ -42,6 +42,7 @@
+@@ -6,6 +6,7 @@
+ */
+ 
+ #include "dropjob.h"
++#include "win7elevate_p.h"
+ 
+ #include "job_p.h"
+ #include "jobuidelegate.h"
+@@ -42,6 +43,7 @@
  
  #include <QDropEvent>
  #include <QFileInfo>
@@ -4427,7 +4489,15 @@ index 3aedfa6..45aac81 100644
  #include <QMenu>
  #include <QMetaEnum>
  #include <QMimeData>
-@@ -189,8 +190,7 @@ DropMenu::DropMenu(QWidget *parent)
+@@ -166,6 +168,7 @@ public:
+     QList<QAction *> m_appActions;
+     QList<QAction *> m_pluginActions;
+     bool m_triggered; // Tracks whether an action has been triggered in the popup menu.
++    bool m_win7Elevate = false; // Windows 7: ask, then copy as administrator (win7elevate_p.h)
+     QSet<KIO::DropMenu *> m_menus;
+ 
+     Q_DECLARE_PUBLIC(DropJob)
+@@ -189,8 +192,7 @@ DropMenu::DropMenu(QWidget *parent)
      : QMenu(parent)
      , m_extraActionsSeparator(nullptr)
  {
@@ -4437,7 +4507,7 @@ index 3aedfa6..45aac81 100644
  
      m_lastSeparator = new QAction(this);
      m_lastSeparator->setSeparator(true);
-@@ -298,34 +298,25 @@ void DropJobPrivate::slotStart()
+@@ -298,34 +300,25 @@ void DropJobPrivate::slotStart()
  
  void DropJobPrivate::fillPopupMenu(KIO::DropMenu *popup)
  {
@@ -4484,7 +4554,21 @@ index 3aedfa6..45aac81 100644
      popup->addAction(popupLinkAction);
  
      if (m_dropjobFlags & DropJobFlag::ExcludePluginsActions) {
-@@ -445,7 +436,8 @@ void DropJobPrivate::handleCopyToDirectory()
+@@ -428,8 +421,11 @@ void DropJobPrivate::handleCopyToDirectory()
+     }
+ 
+     if (!m_destItem.isNull() && !m_destItem.isWritable()) {
+-        slotDropActionDetermined(KIO::ERR_WRITE_ACCESS_DENIED);
+-        return;
++        if (!Win7Elevate::needsElevation(m_destUrl)) {
++            slotDropActionDetermined(KIO::ERR_WRITE_ACCESS_DENIED);
++            return;
++        }
++        m_win7Elevate = true;
+     }
+ 
+     // Check what the source can do
+@@ -445,7 +441,8 @@ void DropJobPrivate::handleCopyToDirectory()
      // Check if the default behavior has been changed to MoveAction, read from kdeglobals
      const KConfigGroup g = KConfigGroup(KSharedConfig::openConfig(), QStringLiteral("KDE"));
      QMetaEnum metaEnum = QMetaEnum::fromType<DndBehavior>();
@@ -4494,7 +4578,7 @@ index 3aedfa6..45aac81 100644
      bool defaultActionIsMove = metaEnum.keyToValue(configValue.toLocal8Bit().constData());
  
      KMountPoint::List mountPoints;
-@@ -603,16 +595,17 @@ void DropJobPrivate::handleCopyToDirectory()
+@@ -603,16 +600,17 @@ void DropJobPrivate::handleCopyToDirectory()
          if (m_keyboardModifiers == Qt::NoModifier) {
              m_dropAction = Qt::MoveAction;
              err = KJob::NoError; // Ok
@@ -4516,6 +4600,38 @@ index 3aedfa6..45aac81 100644
      }
      slotDropActionDetermined(err);
  }
+@@ -683,6 +681,18 @@ void DropJobPrivate::slotDropActionDetermined(int error)
+ void DropJobPrivate::doCopyToDirectory()
+ {
+     Q_Q(DropJob);
++    if (m_win7Elevate) {
++        m_win7Elevate = false;
++        const Win7Elevate::Operation op = m_dropAction == Qt::MoveAction ? Win7Elevate::Move
++            : m_dropAction == Qt::LinkAction                            ? Win7Elevate::Link
++                                                                        : Win7Elevate::Copy;
++        if (Win7Elevate::askDestinationAccess(KJobWidgets::window(q), m_destUrl, op) != Win7Elevate::Continue) {
++            q->setError(KIO::ERR_USER_CANCELED);
++            q->emitResult();
++            return;
++        }
++        m_destUrl = Win7Elevate::adminUrl(m_destUrl);
++    }
+     KIO::CopyJob *job = nullptr;
+     switch (m_dropAction) {
+     case Qt::MoveAction:
+@@ -710,10 +720,10 @@ void DropJobPrivate::doCopyToDirectory()
+     job->setParentJob(q);
+     job->setMetaData(m_metaData);
+     QObject::connect(job, &KIO::CopyJob::copyingDone, q, [q](KIO::Job *, const QUrl &, const QUrl &to) {
+-        Q_EMIT q->itemCreated(to);
++        Q_EMIT q->itemCreated(Win7Elevate::fileUrl(to));
+     });
+     QObject::connect(job, &KIO::CopyJob::copyingLinkDone, q, [q](KIO::Job *, const QUrl &, const QString &, const QUrl &to) {
+-        Q_EMIT q->itemCreated(to);
++        Q_EMIT q->itemCreated(Win7Elevate::fileUrl(to));
+     });
+     q->addSubjob(job);
+ 
 diff --git a/src/widgets/kdirmodel.cpp b/src/widgets/kdirmodel.cpp
 index 35afa32..7abd0c9 100644
 --- a/src/widgets/kdirmodel.cpp
@@ -4643,13 +4759,14 @@ index 69459f7..1cd2b39 100644
      /*!
       * Called when the user presses 'Ok'.
 diff --git a/src/widgets/paste.cpp b/src/widgets/paste.cpp
-index 3b8eeee..ee5ad28 100644
+index 3b8eeee..65a0fba 100644
 --- a/src/widgets/paste.cpp
 +++ b/src/widgets/paste.cpp
-@@ -6,6 +6,10 @@
+@@ -6,6 +6,11 @@
  */
  
  #include "paste.h"
++#include "win7elevate_p.h"
 +#include <QDir>
 +#include <QStandardPaths>
 +#include <QImage>
@@ -4657,7 +4774,7 @@ index 3b8eeee..ee5ad28 100644
  #include "kio_widgets_debug.h"
  
  #include "../utils_p.h"
-@@ -172,11 +176,55 @@ static QStringList extractFormats(const QMimeData *mimeData)
+@@ -172,11 +177,55 @@ static QStringList extractFormats(const QMimeData *mimeData)
  
  KIOWIDGETS_EXPORT bool KIO::canPasteMimeData(const QMimeData *data)
  {
@@ -4714,6 +4831,80 @@ index 3b8eeee..ee5ad28 100644
      QByteArray ba;
      const QString suggestedFilename = QString::fromUtf8(mimeData->data(QStringLiteral("application/x-kde-suggestedfilename")));
  
+@@ -239,7 +288,8 @@ KIOWIDGETS_EXPORT QString KIO::pasteActionText(const QMimeData *mimeData, bool *
+             if (destItem.url().isEmpty()) {
+                 *enable = false;
+             } else {
+-                *enable = destItem.isWritable();
++                // Windows 7: pasting into C:\ asks for administrator permission (win7elevate_p.h)
++                *enable = destItem.isWritable() || (destItem.isDir() && Win7Elevate::needsElevation(destItem.url()));
+             }
+         } else {
+             *enable = false;
+diff --git a/src/widgets/pastejob.cpp b/src/widgets/pastejob.cpp
+index e58f2cc..6953e96 100644
+--- a/src/widgets/pastejob.cpp
++++ b/src/widgets/pastejob.cpp
+@@ -10,6 +10,7 @@
+ 
+ #include "kio_widgets_debug.h"
+ #include "paste.h"
++#include "win7elevate_p.h"
+ 
+ #include <QMimeData>
+ #include <QTimer>
+@@ -64,6 +65,14 @@ void PasteJobPrivate::slotStart()
+         return;
+     }
+     const bool move = KIO::isClipboardDataCut(m_mimeData);
++    if (Win7Elevate::needsElevation(m_destDir)) {
++        if (Win7Elevate::askDestinationAccess(KJobWidgets::window(q), m_destDir, move ? Win7Elevate::Move : Win7Elevate::Copy) != Win7Elevate::Continue) {
++            q->setError(KIO::ERR_USER_CANCELED);
++            q->emitResult();
++            return;
++        }
++        m_destDir = Win7Elevate::adminUrl(m_destDir);
++    }
+     KIO::Job *job = nullptr;
+     KIO::CopyJob *copyJob = nullptr;
+     if (m_mimeData->hasUrls()) {
+@@ -120,7 +129,7 @@ void PasteJob::slotResult(KJob *job)
+     }
+     KIO::SimpleJob *simpleJob = qobject_cast<KIO::SimpleJob *>(job);
+     if (simpleJob) {
+-        Q_EMIT itemCreated(simpleJob->url());
++        Q_EMIT itemCreated(Win7Elevate::fileUrl(simpleJob->url()));
+     }
+ 
+     removeSubjob(job);
+diff --git a/src/widgets/pastejob_p.h b/src/widgets/pastejob_p.h
+index 196f4c5..970cbdc 100644
+--- a/src/widgets/pastejob_p.h
++++ b/src/widgets/pastejob_p.h
+@@ -40,13 +40,21 @@ public:
+     Q_DECLARE_PUBLIC(PasteJob)
+ 
+     void slotStart();
++    // Windows 7 (win7elevate_p.h): the views get file:/ back for what was pasted as administrator
++    static QUrl win7FileUrl(QUrl url)
++    {
++        if (url.scheme() == QLatin1String("admin")) {
++            url.setScheme(QStringLiteral("file"));
++        }
++        return url;
++    }
+     void slotCopyingDone(KIO::Job *, const QUrl &, const QUrl &to)
+     {
+-        Q_EMIT q_func()->itemCreated(to);
++        Q_EMIT q_func()->itemCreated(win7FileUrl(to));
+     }
+     void slotCopyingLinkDone(KIO::Job *, const QUrl &, const QString &, const QUrl &to)
+     {
+-        Q_EMIT q_func()->itemCreated(to);
++        Q_EMIT q_func()->itemCreated(win7FileUrl(to));
+     }
+ 
+     static inline PasteJob *newJob(const QMimeData *mimeData, const QUrl &destDir, JobFlags flags, bool clipboard)
 diff --git a/src/widgets/widgetsopenwithhandler.cpp b/src/widgets/widgetsopenwithhandler.cpp
 index 8133c2e..6ef326d 100644
 --- a/src/widgets/widgetsopenwithhandler.cpp
@@ -4752,3 +4943,213 @@ index 8133c2e..6ef326d 100644
      KOpenWithDialog *dialog = new KOpenWithDialog(urls, mimeType, QString(), QString(), parentWidget);
      dialog->setAttribute(Qt::WA_DeleteOnClose);
      connect(dialog, &QDialog::accepted, this, [=, this]() {
+diff --git a/src/widgets/win7elevate_p.h b/src/widgets/win7elevate_p.h
+new file mode 100644
+index 0000000..be021aa
+--- /dev/null
++++ b/src/widgets/win7elevate_p.h
+@@ -0,0 +1,204 @@
++/*
++ * Windows 7 "Destination Folder Access Denied": copying, moving or pasting into a folder of the system disk
++ * the user may not write to (C:\ itself, C:\Windows...) asks once and then does it as administrator
++ * (the admin:/ worker of kio-admin, authorised through polkit = the UAC prompt).
++ *
++ * SPDX-License-Identifier: LGPL-2.0-or-later
++ */
++
++#ifndef WIN7ELEVATE_P_H
++#define WIN7ELEVATE_P_H
++
++#include <KLocalizedString>
++#include <KProtocolInfo>
++
++#include <QDateTime>
++#include <QDialog>
++#include <QFileInfo>
++#include <QHBoxLayout>
++#include <QIcon>
++#include <QLabel>
++#include <QLocale>
++#include <QPushButton>
++#include <QStorageInfo>
++#include <QStyle>
++#include <QUrl>
++#include <QVBoxLayout>
++
++namespace Win7Elevate
++{
++/** A local folder on a real disk that the user cannot write to, while kio-admin can */
++inline bool needsElevation(const QUrl &dir)
++{
++    if (!dir.isLocalFile()) {
++        return false;
++    }
++    const QString path = dir.toLocalFile();
++    const QFileInfo info(path);
++    if (!info.isDir() || info.isWritable()) {
++        return false;
++    }
++    for (const char *virt : {"/proc", "/sys", "/dev", "/run"}) {
++        const QString v = QLatin1String(virt);
++        if (path == v || path.startsWith(v + QLatin1Char('/'))) {
++            return false;
++        }
++    }
++    const QStorageInfo storage(path);
++    if (!storage.isValid() || storage.isReadOnly() || !storage.device().startsWith("/dev/")) {
++        return false;
++    }
++    return KProtocolInfo::isKnownProtocol(QStringLiteral("admin"));
++}
++
++inline QUrl adminUrl(const QUrl &url)
++{
++    QUrl admin(url);
++    admin.setScheme(QStringLiteral("admin"));
++    return admin;
++}
++
++/** admin:/ URLs the job reports go back to file:/ for the views that started it */
++inline QUrl fileUrl(const QUrl &url)
++{
++    if (url.scheme() != QLatin1String("admin")) {
++        return url;
++    }
++    QUrl file(url);
++    file.setScheme(QStringLiteral("file"));
++    return file;
++}
++
++enum Answer {
++    Continue,
++    Skip,
++    Cancel,
++};
++
++enum Operation {
++    Copy,
++    Move,
++    Link,
++};
++
++/** Asks like Windows 7 Explorer; the dialog shows the folder (or the disk, for its root) */
++inline Answer askDestinationAccess(QWidget *parent, const QUrl &dir, Operation op)
++{
++    const QString path = dir.toLocalFile();
++    const QStorageInfo storage(path);
++    const bool isRoot = QFileInfo(path).canonicalFilePath() == QFileInfo(storage.rootPath()).canonicalFilePath();
++
++    QDialog dlg(parent);
++    dlg.setWindowTitle(i18nd("sevenplasma", "Destination Folder Access Denied"));
++    dlg.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
++
++    auto *outer = new QHBoxLayout(&dlg);
++    outer->setContentsMargins(11, 11, 15, 13);
++    outer->setSpacing(17);
++
++    auto *warning = new QLabel(&dlg);
++    warning->setPixmap(QIcon::fromTheme(QStringLiteral("dialog-warning")).pixmap(32, 32));
++    warning->setAlignment(Qt::AlignLeft | Qt::AlignTop);
++    outer->addWidget(warning, 0, Qt::AlignTop);
++
++    auto *col = new QVBoxLayout;
++    col->setSpacing(0);
++    outer->addLayout(col, 1);
++
++    const QString question = op == Move ? i18nd("sevenplasma", "You'll need to provide administrator permission to move to this folder")
++        : op == Link                    ? i18nd("sevenplasma", "You'll need to provide administrator permission to create a shortcut in this folder")
++                                        : i18nd("sevenplasma", "You'll need to provide administrator permission to copy to this folder");
++    auto *text = new QLabel(question, &dlg);
++    text->setContentsMargins(0, 3, 0, 0);
++    col->addWidget(text);
++
++    auto *body = new QHBoxLayout;
++    body->setContentsMargins(0, 0, 0, 0);
++    body->setSpacing(4);
++    col->addLayout(body);
++
++    QString details;
++    QIcon bigIcon;
++    if (isRoot) {
++        // the Computer page calls the disk Linux runs from "Local Disk (C:)", whatever its label
++        const QString name = storage.name().isEmpty() || storage.rootPath() == QLatin1String("/") ? i18nd("sevenplasma", "Local Disk") : storage.name();
++        const QLocale locale;
++        details = name + QLatin1Char('\n')
++            + i18nd("sevenplasma", "Space free: %1", locale.formattedDataSize(storage.bytesAvailable(), 1, QLocale::DataSizeTraditionalFormat))
++            + QLatin1Char('\n')
++            + i18nd("sevenplasma", "Total size: %1", locale.formattedDataSize(storage.bytesTotal(), 1, QLocale::DataSizeTraditionalFormat));
++        bigIcon = QIcon::fromTheme(storage.rootPath() == QLatin1String("/") ? QStringLiteral("drive-harddisk-system") : QStringLiteral("drive-harddisk"),
++                                   QIcon::fromTheme(QStringLiteral("drive-harddisk")));
++    } else {
++        const QFileInfo info(path);
++        QDateTime created = info.birthTime();
++        if (!created.isValid()) {
++            created = info.lastModified();
++        }
++        details = info.fileName() + QLatin1Char('\n')
++            + i18nd("sevenplasma", "Date created: %1", QLocale().toString(created, QStringLiteral("dd.MM.yyyy H:mm")));
++        bigIcon = QIcon::fromTheme(QStringLiteral("folder"));
++    }
++
++    auto *picture = new QLabel(&dlg);
++    picture->setPixmap(bigIcon.pixmap(128, 128));
++    picture->setFixedSize(128, 128);
++    picture->setAlignment(Qt::AlignCenter);
++    body->addWidget(picture, 0, Qt::AlignTop);
++
++    auto *info = new QLabel(details, &dlg);
++    info->setContentsMargins(0, 12, 0, 0);
++    info->setAlignment(Qt::AlignLeft | Qt::AlignTop);
++    body->addWidget(info, 1, Qt::AlignTop);
++
++    auto *buttons = new QHBoxLayout;
++    buttons->setContentsMargins(0, 0, 0, 0);
++    buttons->setSpacing(15);
++    buttons->addStretch(1);
++    col->addSpacing(4);
++    col->addLayout(buttons);
++
++    // the shield is drawn inside the button: the Kvantum theme leaves push button icons out
++    auto *cont = new QPushButton(&dlg);
++    cont->setAccessibleName(i18nd("sevenplasma", "Continue"));
++    auto *contLayout = new QHBoxLayout(cont);
++    contLayout->setContentsMargins(4, 0, 4, 0);
++    contLayout->setSpacing(2);
++    auto *shield = new QLabel(cont);
++    shield->setPixmap(QIcon::fromTheme(QStringLiteral("seven-uac-shield"), dlg.style()->standardIcon(QStyle::SP_VistaShield)).pixmap(16, 16));
++    auto *contText = new QLabel(i18nd("sevenplasma", "Continue"), cont);
++    for (QLabel *l : {shield, contText}) {
++        l->setAttribute(Qt::WA_TransparentForMouseEvents);
++    }
++    contLayout->addStretch(1);
++    contLayout->addWidget(shield);
++    contLayout->addWidget(contText);
++    contLayout->addStretch(1);
++    auto *skip = new QPushButton(i18nd("sevenplasma", "Skip"), &dlg);
++    auto *cancel = new QPushButton(i18nd("sevenplasma", "Cancel"), &dlg);
++    for (QPushButton *b : {cont, skip, cancel}) {
++        b->setMinimumSize(87, 23);
++        b->setAutoDefault(false);
++        buttons->addWidget(b);
++    }
++    cont->setDefault(true);
++    cont->setFocus();
++
++    Answer answer = Cancel;
++    QObject::connect(cont, &QPushButton::clicked, &dlg, [&] {
++        answer = Continue;
++        dlg.accept();
++    });
++    QObject::connect(skip, &QPushButton::clicked, &dlg, [&] {
++        answer = Skip;
++        dlg.reject();
++    });
++    QObject::connect(cancel, &QPushButton::clicked, &dlg, &QDialog::reject);
++
++    dlg.setFixedSize(QSize(qMax(dlg.sizeHint().width(), 478), dlg.sizeHint().height()));
++    dlg.exec();
++    return answer;
++}
++}
++
++#endif

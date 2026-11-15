@@ -379,10 +379,54 @@ new mode 100644
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItem.qml b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItem.qml
 old mode 100755
 new mode 100644
-index 9fecad7..90b6535
+index 9fecad7..a1a24e6
 --- a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItem.qml
 +++ b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItem.qml
-@@ -96,7 +96,8 @@ Item {
+@@ -70,6 +70,43 @@ Item {
+ 
+     readonly property bool isNew: model?.isNewlyInstalled ?? false
+ 
++    // Windows 7 jump list: the program's tasks (desktop actions) and recent files, shown in the right column;
++    // the programs pinned to / often used in the Start menu have it, All Programs and search results do not
++    readonly property bool jumpListEnabled: !listItem.appView && !root.searching && !root.showingAllPrograms
++    property var jumpEntries: []
++    function buildJumpEntries() {
++        if (!model || !model.favoriteId || !hasActionList) {
++            return [];
++        }
++        const list = model.actionList || [];
++        let tasks = [], recent = [];
++        for (let i = 0; i < list.length; ++i) {
++            const a = list[i];
++            if (!a) {
++                continue;
++            }
++            const e = { text: a.text, icon: a.icon, actionId: a.actionId, actionArgument: a.actionArgument };
++            if (a.actionId === "_kicker_jumpListAction") {
++                tasks.push(e);
++            } else if (a.actionId === "_kicker_recentDocument") {
++                recent.push(e);
++            }
++        }
++        let out = [];
++        if (recent.length > 0) {
++            out.push({ type: "title", text: i18nd("sevenplasma", "Recent") });
++            out = out.concat(recent.slice(0, 10));
++        }
++        if (tasks.length > 0) {
++            out.push({ type: "title", text: i18nd("sevenplasma", "Tasks") });
++            out = out.concat(tasks);
++        }
++        return out;
++    }
++    Component.onCompleted: Qt.callLater(() => { listItem.jumpEntries = listItem.buildJumpEntries(); })
++    readonly property bool hasJumpList: jumpListEnabled && jumpEntries.length > 0
++    readonly property bool jumpListOpen: hasJumpList && root.jumpListShown && root.jumpListOwner === listItem
++
+     onAboutToShowActionMenu: (actionMenu) => { // Loads context menu items here
+         var actionList = hasActionList ? model.actionList : [];
+         if(model.favoriteId) { // If we have a launchable application, try allowing the user to pin it
+@@ -96,7 +133,8 @@ Item {
                  actionList = [...actionList, pinAction]; // Use spread operator and pass that to the fillActionMenu function
              }
          }
@@ -392,7 +436,16 @@ index 9fecad7..90b6535
      }
  
      onActionTriggered: (actionId, actionArgument) => {
-@@ -193,6 +194,7 @@ Item {
+@@ -163,7 +201,7 @@ Item {
+         imagePath: Qt.resolvedUrl("svgs/menuitem.svg")
+         prefix: "hover"
+         opacity: {
+-            if(ma.containsMouse) return 1;
++            if(ma.containsMouse || listItem.jumpListOpen) return 1;
+             if(listItem.listView.currentIndex === listItem.itemIndex && listItem.parent.childIndex === -1) return 0.5;
+             return 0;
+         }
+@@ -193,13 +231,14 @@ Item {
  
      PlasmaComponents.Label {
          id: titleElement
@@ -400,6 +453,91 @@ index 9fecad7..90b6535
  
          y: Math.round((parent.height - titleElement.height - ( (subTitleElement.text != "") ? subTitleElement.implicitHeight : 0) ) / 2)
          anchors {
+             left: elementIcon.right
+             right: parent.right
+             leftMargin: listItem.appView ? Kirigami.Units.mediumSpacing-1 : Kirigami.Units.smallSpacing * 2
+-            rightMargin: Kirigami.Units.smallSpacing * 2
++            rightMargin: listItem.hasJumpList ? 26 : Kirigami.Units.smallSpacing * 2
+         }
+         height: implicitHeight //undo PC2 height override, remove when porting to PC3
+         // TODO: games should always show the by name!
+@@ -209,6 +248,61 @@ Item {
+         color: "#000000"
+     }
+ 
++    // the split part of a program with a jump list: a line and the arrow, highlighted on its own when hovered
++    Item {
++        id: jumpArrow
++        visible: listItem.hasJumpList
++        z: 1 // above the item's own mouse area
++        width: 22
++        anchors {
++            top: background.top
++            bottom: background.bottom
++            right: background.right
++        }
++        KSvg.FrameSvgItem {
++            anchors.fill: parent
++            imagePath: Qt.resolvedUrl("svgs/menuitem.svg")
++            prefix: "hover"
++            visible: arrowMouse.containsMouse
++        }
++        Rectangle {
++            visible: ma.containsMouse || arrowMouse.containsMouse || listItem.jumpListOpen
++            x: 0
++            width: 1
++            anchors { top: parent.top; bottom: parent.bottom; topMargin: 3; bottomMargin: 3 }
++            color: "#a8c0dc"
++            opacity: 0.8
++        }
++        Canvas {
++            id: arrowShape
++            width: 4
++            height: 7
++            anchors.centerIn: parent
++            anchors.horizontalCenterOffset: 1
++            onPaint: {
++                const c = getContext("2d");
++                c.reset();
++                c.fillStyle = "#000000";
++                c.beginPath();
++                c.moveTo(0, 0);
++                c.lineTo(4, 3.5);
++                c.lineTo(0, 7);
++                c.closePath();
++                c.fill();
++            }
++        }
++        MouseArea {
++            id: arrowMouse
++            anchors.fill: parent
++            hoverEnabled: true
++            onEntered: {
++                listItem.listView.currentIndex = model.index;
++                root.requestJumpList(listItem, listItem.jumpEntries, true);
++            }
++            onClicked: root.requestJumpList(listItem, listItem.jumpEntries, true)
++        }
++    }
++
+     PlasmaComponents.Label {
+         id: subTitleElement
+ 
+@@ -277,6 +371,14 @@ Item {
+             }
+             listItem.listView.currentIndex = model.index;
+             Qt.callLater(() => toolTipTimer.start());
++            if (listItem.jumpListEnabled) {
++                listItem.jumpEntries = listItem.buildJumpEntries(); // recent files may have changed
++                if (listItem.hasJumpList) {
++                    root.requestJumpList(listItem, listItem.jumpEntries, false);
++                } else {
++                    root.releaseJumpList();
++                }
++            }
+         }
+         onExited: {
+              toolTipTimer.stop();
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItemChild.qml b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/KickoffItemChild.qml
 old mode 100755
 new mode 100644
@@ -434,7 +572,7 @@ index 0a37b48..5403c84
          elide: Text.ElideRight
          anchors.left: showIcon ? icon.right : parent.left
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/MenuRepresentation.qml b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/MenuRepresentation.qml
-index d77e8d9..fc77d8b 100644
+index d77e8d9..5ff3e57 100644
 --- a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/MenuRepresentation.qml
 +++ b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/MenuRepresentation.qml
 @@ -23,6 +23,7 @@ pragma ComponentBehavior: Bound
@@ -445,7 +583,76 @@ index d77e8d9..fc77d8b 100644
  import QtQuick.Window
  import QtCore
  
-@@ -348,56 +349,71 @@ PlasmaCore.Dialog {
+@@ -64,6 +65,51 @@ PlasmaCore.Dialog {
+ 	property int cellCount: Plasmoid.configuration.numberRows + faves.getFavoritesCount()
+     property bool searching: (searchField.text != "")
+     property bool showingAllPrograms: false
++    // Windows 7 jump list: the hovered program's tasks / recent files take the place of the right column
++    property var jumpListOwner: null
++    property var jumpListEntries: []
++    readonly property bool jumpListShown: jumpListEntries.length > 0 && !searching && !showingAllPrograms
++    property var pendingJumpOwner: null
++    property var pendingJumpEntries: []
++    function requestJumpList(owner, entries, immediate) {
++        jumpHideTimer.stop();
++        if (owner === jumpListOwner && jumpListShown) {
++            jumpShowTimer.stop();
++            return;
++        }
++        pendingJumpOwner = owner;
++        pendingJumpEntries = entries;
++        if (immediate) {
++            jumpShowTimer.stop();
++            showPendingJumpList();
++        } else {
++            jumpShowTimer.restart();
++        }
++    }
++    function showPendingJumpList() {
++        jumpListOwner = pendingJumpOwner;
++        jumpListEntries = pendingJumpEntries;
++    }
++    // hovering a program without a jump list: the right column comes back after the menu delay
++    function releaseJumpList() {
++        jumpShowTimer.stop();
++        if (jumpListShown) {
++            jumpHideTimer.restart();
++        }
++    }
++    function keepJumpList() {
++        jumpHideTimer.stop();
++        jumpShowTimer.stop();
++    }
++    function hideJumpList() {
++        jumpShowTimer.stop();
++        jumpHideTimer.stop();
++        jumpListOwner = null;
++        jumpListEntries = [];
++    }
++    // (the root is a Dialog, whose children go to mainItem: the timers are properties)
++    property Timer jumpShowTimer: Timer { interval: 400; onTriggered: root.showPendingJumpList() }
++    property Timer jumpHideTimer: Timer { interval: 400; onTriggered: root.hideJumpList() }
+     property bool firstTimePopup: false // To make sure the user icon is displayed properly.
+     property bool firstTimeShadowSetup: false
+ 
+@@ -107,6 +153,7 @@ PlasmaCore.Dialog {
+ 		popupPosition();
+         if (!visible) {
+             reset();
++            hideJumpList();
+ 			firstTimePopup = false;
+         } else {
+             requestActivate();
+@@ -263,7 +310,7 @@ PlasmaCore.Dialog {
+ 				title: "aeroshell-floatingavatar"
+ 				backgroundHints: PlasmaCore.Types.NoBackground // To prevent the dialog background SVG from being rendered, we want a fully transparent window.
+ 
+-				visible: root.visible && !searching && compositingEnabled && !root.isTouchingTopEdge() //Plasmoid.location != PlasmaCore.Types.TopEdge
++				visible: root.visible && !searching && !root.jumpListShown && compositingEnabled && !root.isTouchingTopEdge() //Plasmoid.location != PlasmaCore.Types.TopEdge
+ 				opacity: firstTimePopup ? 1.0 : 0.0 // To prevent even more NP-hard unpredictable behavior
+ 
+ 				mainItem: FloatingIcon {
+@@ -348,56 +395,71 @@ PlasmaCore.Dialog {
  			}
  		}
  
@@ -560,7 +767,52 @@ index d77e8d9..fc77d8b 100644
  			}
  		}
  
-@@ -694,7 +710,7 @@ PlasmaCore.Dialog {
+@@ -478,6 +540,44 @@ PlasmaCore.Dialog {
+             }
+         }
+ 
++        // the jump list and, under the Shut down button, the search row's band reaching the right edge
++        JumpListPanel {
++            id: jumpListPanel
++            z: 5
++            visible: root.jumpListShown
++            x: backgroundRect.x + backgroundRect.width
++            y: backgroundRect.y + 2
++            width: mainFocusScope.width - x - backgroundRect.x
++            height: backgroundRect.y + searchBackground.y - backgroundBorderLine.height - y
++            entries: root.jumpListShown ? root.jumpListEntries : []
++            onHovered: root.keepJumpList()
++            onEntryActivated: entry => {
++                const owner = root.jumpListOwner;
++                root.hideJumpList();
++                if (owner) {
++                    owner.actionTriggered(entry.actionId, entry.actionArgument);
++                }
++                root.visible = false;
++            }
++        }
++        Rectangle {
++            z: 5
++            visible: root.jumpListShown
++            x: jumpListPanel.x
++            y: jumpListPanel.y + jumpListPanel.height
++            width: jumpListPanel.width
++            height: backgroundRect.y + searchBackground.y + searchBackground.height - y
++            color: searchPanelBackgroundColor
++            Rectangle {
++                width: parent.width
++                height: backgroundBorderLine.height
++                gradient: Gradient {
++                    GradientStop { position: 0.0; color: "#ccd9ea" }
++                    GradientStop { position: 1.0; color: "#f0f4fa" }
++                }
++            }
++        }
++
+         ColumnLayout {
+ 			id: leftSidebar
+ 			anchors {
+@@ -694,7 +794,7 @@ PlasmaCore.Dialog {
  				}
  				Text {
  					id: showingAllProgramsText
@@ -569,7 +821,7 @@ index d77e8d9..fc77d8b 100644
  					font.pixelSize: 12
  					anchors.left: arrowDirection.right
  					anchors.leftMargin: Kirigami.Units.mediumSpacing
-@@ -725,6 +741,7 @@ PlasmaCore.Dialog {
+@@ -725,6 +825,7 @@ PlasmaCore.Dialog {
  			}
  			PlasmaExtras.ActionTextField {
  				id: searchField
@@ -577,7 +829,7 @@ index d77e8d9..fc77d8b 100644
  
  				focus: true
  				Layout.topMargin: 15
-@@ -750,8 +767,9 @@ PlasmaCore.Dialog {
+@@ -750,8 +851,9 @@ PlasmaCore.Dialog {
  						anchors.leftMargin: Kirigami.Units.smallSpacing*2-1
  						anchors.bottomMargin: 2
  						font.italic: true
@@ -588,7 +840,15 @@ index d77e8d9..fc77d8b 100644
  						verticalAlignment: Text.AlignVCenter
  						visible: !searching
  						style: Text.Outline
-@@ -1044,6 +1062,7 @@ PlasmaCore.Dialog {
+@@ -973,6 +1075,7 @@ PlasmaCore.Dialog {
+         Column {
+             id: sidePanel
+             z: searching ? 3 : 7
++            visible: !root.jumpListShown
+             anchors{
+                 left: leftSidebar.right
+                 top: parent.top
+@@ -1044,6 +1147,7 @@ PlasmaCore.Dialog {
  						itemIcon: sidePanelModels.firstCategory[index].itemIcon
  						description: sidePanelModels.firstCategory[index].description
  						executableString: sidePanelModels.firstCategory[index].executableString
@@ -596,7 +856,7 @@ index d77e8d9..fc77d8b 100644
  						visible: typeof columnItems.sidePanelVisibility[sidePanelModels.firstCategory[index].name] !== "undefined"
  						executeProgram: sidePanelModels.firstCategory[index].executeProgram
  						onVisibleChanged: {
-@@ -1076,6 +1095,7 @@ PlasmaCore.Dialog {
+@@ -1076,6 +1180,7 @@ PlasmaCore.Dialog {
  						description: sidePanelModels.secondCategory[index].description
  						itemIcon: sidePanelModels.secondCategory[index].itemIcon
  						executableString: sidePanelModels.secondCategory[index].executableString
@@ -604,7 +864,7 @@ index d77e8d9..fc77d8b 100644
  						visible: typeof columnItems.sidePanelVisibility[sidePanelModels.secondCategory[index].name] !== "undefined"
  						menuModel: sidePanelModels.secondCategory[index].menuModel
  						executeProgram: sidePanelModels.secondCategory[index].executeProgram
-@@ -1180,23 +1200,23 @@ PlasmaCore.Dialog {
+@@ -1180,23 +1285,23 @@ PlasmaCore.Dialog {
  						shutdownToolTip.showToolTip();
  					}
  				}
@@ -644,7 +904,7 @@ index d77e8d9..fc77d8b 100644
  				}
  				onFocusChanged: {
  					if(focus) shutdownTimer.start();
-@@ -1209,7 +1229,7 @@ PlasmaCore.Dialog {
+@@ -1209,10 +1314,10 @@ PlasmaCore.Dialog {
  
  				Text {
  					id: shutDownText
@@ -652,8 +912,12 @@ index d77e8d9..fc77d8b 100644
 +					text: [i18nd("sevenplasma", "Switch User"), i18nd("sevenplasma", "Log off"), i18nd("sevenplasma", "Lock"), i18nd("sevenplasma", "Restart"), i18nd("sevenplasma", "Sleep"), i18nd("sevenplasma", "Shut down")][Math.max(0, Math.min(5, Plasmoid.configuration.powerButtonAction))]
  
  					font.pixelSize: 12
- 					color: searching ? shutdownTextColor : Kirigami.Theme.textColor
-@@ -1255,9 +1275,8 @@ PlasmaCore.Dialog {
+-					color: searching ? shutdownTextColor : Kirigami.Theme.textColor
++					color: (searching || root.jumpListShown) ? shutdownTextColor : Kirigami.Theme.textColor
+ 					anchors.horizontalCenter: parent.horizontalCenter
+ 					anchors.verticalCenter: parent.verticalCenter
+ 					anchors.verticalCenterOffset: -1
+@@ -1255,9 +1360,8 @@ PlasmaCore.Dialog {
  						shutdown.focus = false;
  					}
  					onClicked: {
@@ -665,6 +929,130 @@ index d77e8d9..fc77d8b 100644
  						root.visible = false;
  					}
  				}
+@@ -1331,7 +1435,7 @@ PlasmaCore.Dialog {
+ 					anchors.horizontalCenterOffset: -1
+ 					width: Kirigami.Units.iconSizes.smallMedium - Kirigami.Units.smallSpacing / 2
+ 					height: Kirigami.Units.iconSizes.smallMedium - Kirigami.Units.smallSpacing / 2 +1
+-					elementId: searching ? "more-ltr-black" : "more-ltr-light";
++					elementId: (searching || root.jumpListShown) ? "more-ltr-black" : "more-ltr-light";
+ 				}
+ 				//enabled: pmEngine.data["Sleep States"]["LockScreen"]
+ 				size: iconSizeSide
+diff --git a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/JumpListPanel.qml b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/JumpListPanel.qml
+new file mode 100644
+index 0000000..80db645
+--- /dev/null
++++ b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/JumpListPanel.qml
+@@ -0,0 +1,109 @@
++/*
++ * Windows 7 jump list of the Start menu: it takes the place of the right column while a program with tasks or
++ * recent files is hovered ("Tasks", "Recent"; 16 px icons, rows of 22 px, the light gradient of Windows 7).
++ *
++ * SPDX-License-Identifier: GPL-2.0-or-later
++ */
++import QtQuick
++import org.kde.kirigami as Kirigami
++import org.kde.ksvg as KSvg
++import org.kde.plasma.components as PlasmaComponents
++
++Item {
++    id: panel
++
++    property var entries: [] // {type: "title", text} or {text, icon, actionId, actionArgument}
++    signal entryActivated(var entry)
++    signal hovered()
++
++    Rectangle {
++        anchors.fill: parent
++        gradient: Gradient {
++            GradientStop { position: 0.0; color: "#edf3fa" }
++            GradientStop { position: 0.47; color: "#fcfdfe" }
++            GradientStop { position: 1.0; color: "#edf3fa" }
++        }
++    }
++    // the edge next to the programs column
++    Rectangle { x: 0; width: 1; height: parent.height; color: "#d6e5f5" }
++    Rectangle { x: 1; width: 1; height: parent.height; color: "#f0f5fc"; opacity: 0.8 }
++    Rectangle { x: 2; width: 1; height: parent.height; color: "#f5f8fd"; opacity: 0.6 }
++
++    MouseArea {
++        anchors.fill: parent
++        hoverEnabled: true
++        onEntered: panel.hovered()
++        onPositionChanged: panel.hovered()
++    }
++
++    Column {
++        x: 0
++        y: 1
++        width: parent.width
++        Repeater {
++            model: panel.entries
++            delegate: Item {
++                id: row
++                width: parent.width
++                readonly property bool isTitle: modelData.type === "title"
++                height: isTitle ? 23 : 22
++
++                // "Tasks" and the line after it
++                PlasmaComponents.Label {
++                    id: titleLabel
++                    visible: row.isTitle
++                    x: 16
++                    anchors.verticalCenter: parent.verticalCenter
++                    text: modelData.text || ""
++                    font.pixelSize: 12
++                    color: "#1e395b"
++                }
++                Rectangle {
++                    visible: row.isTitle
++                    x: titleLabel.x + titleLabel.implicitWidth + 5
++                    width: parent.width - x - 9
++                    height: 1
++                    anchors.verticalCenter: parent.verticalCenter
++                    anchors.verticalCenterOffset: 1
++                    color: "#a5b9dd"
++                }
++
++                KSvg.FrameSvgItem {
++                    visible: !row.isTitle && entryMouse.containsMouse
++                    anchors.fill: parent
++                    anchors.leftMargin: 9
++                    anchors.rightMargin: 6
++                    imagePath: Qt.resolvedUrl("svgs/menuitem.svg")
++                    prefix: "hover"
++                }
++                Kirigami.Icon {
++                    visible: !row.isTitle
++                    x: 19
++                    anchors.verticalCenter: parent.verticalCenter
++                    width: 16
++                    height: 16
++                    animated: false
++                    source: row.isTitle ? "" : (modelData.icon || "")
++                }
++                PlasmaComponents.Label {
++                    visible: !row.isTitle
++                    x: 39
++                    width: parent.width - x - 10
++                    anchors.verticalCenter: parent.verticalCenter
++                    text: row.isTitle ? "" : (modelData.text || "")
++                    elide: Text.ElideRight
++                    font.pixelSize: 12
++                    color: "#000000"
++                }
++                MouseArea {
++                    id: entryMouse
++                    anchors.fill: parent
++                    enabled: !row.isTitle
++                    hoverEnabled: true
++                    onEntered: panel.hovered()
++                    onClicked: panel.entryActivated(modelData)
++                }
++            }
++        }
++    }
++}
 diff --git a/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/SearchView.qml b/plasma/plasmoids/io.gitgud.wackyideas.SevenStart/contents/ui/SearchView.qml
 old mode 100755
 new mode 100644

@@ -16,11 +16,11 @@ effects, logon screen and UAC are their work. SevenPlasma adds its own changes a
 
 | | |
 |---|---|
-| **Shell** | AeroThemePlasma with changes: Start menu, taskbar, tray, tooltips, desktop, logon and lock screens (including accounts without a password, as in Windows 7) |
-| **Explorer** | Dolphin and KIO with changes: command bar, libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails |
-| **Control Panel** | sound, volume mixer, display, personalization, network, firewall, Windows Update (with its notification-area icon when updates are waiting), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
+| **Shell** | AeroThemePlasma with changes: Start menu (with Windows 7 jump lists: a program's tasks and recent files), taskbar, tray, tooltips, desktop, logon and lock screens (including accounts without a password, as in Windows 7) |
+| **Explorer** | Dolphin and KIO with changes: command bar, navigation pane (files can be dropped on its folders and disks), libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails; copying into C:\ and other system folders asks "Destination Folder Access Denied" → Continue, as in Windows 7 |
+| **Control Panel** | Getting Started, sound, volume mixer, display, personalization, network, firewall, Windows Update (with its notification-area icon when updates are waiting), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
 | **Administrative tools** | Computer Management, Event Viewer, Disk Management, Windows Firewall with Advanced Security, Device Manager, Task Manager, Resource Monitor |
-| **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, gadgets, Run |
+| **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Sticky Notes, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, gadgets, Run |
 | **Help and Support** | the Windows 7 Help window (Start menu → Help and Support) instead of KDE's online manual |
 | **Keyboard** | the shortcuts of Windows 7 (Win+E, Win+R, Win+P, Win+U, Win+L, Win+arrows, Ctrl+Shift+Esc, Print, Alt+Space…); KDE's own extra shortcuts are turned off |
 | **Several screens** | Win+P display switcher (Computer only, Duplicate, Extend, Projector only); a screen connected later gets the same background |
@@ -183,6 +183,10 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
   - the Snipping Tool takes its pictures through Spectacle (installed with SevenPlasma);
   - on Fedora the firewall is firewalld: Windows Firewall (on / off, allowed programs, restore defaults) works with it,
     the rules of "Windows Firewall with Advanced Security" can be seen but changed only with ufw (Kubuntu, Arch).
+- Copying, moving, new folders and renaming in C:\ and other system folders go through kio-admin after the
+  UAC password prompt; files and folders made there belong to the administrator (root). Deleting there is not done
+  as administrator yet, and declining the password prompt shows "Access denied" with Retry / Cancel (Windows 7 just
+  stops).
 - Every interface picture comes from your Windows 7 image or is drawn by SevenPlasma; the pictures of the
   graphics card panels, Microsoft Office and WinRAR are not in Windows 7 (the panels use your Linux driver's
   icons).

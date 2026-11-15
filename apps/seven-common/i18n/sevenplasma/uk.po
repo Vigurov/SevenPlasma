@@ -1214,3 +1214,39 @@ msgstr "Не вдалося ввімкнути план «%1»"
 msgid "Welcome"
 msgstr "Ласкаво просимо"
 
+
+msgid "Destination Folder Access Denied"
+msgstr "Немає доступу до цільової папки"
+
+msgid "You'll need to provide administrator permission to move to this folder"
+msgstr "Щоб перемістити до цієї папки, потрібен дозвіл адміністратора"
+
+msgid "You'll need to provide administrator permission to copy to this folder"
+msgstr "Щоб скопіювати до цієї папки, потрібен дозвіл адміністратора"
+
+msgid "You'll need to provide administrator permission to create a shortcut in this folder"
+msgstr "Щоб створити ярлик у цій папці, потрібен дозвіл адміністратора"
+
+msgid "Local Disk"
+msgstr "Локальний диск"
+
+msgid "Space free: %1"
+msgstr "Вільно: %1"
+
+msgid "Total size: %1"
+msgstr "Загальний розмір: %1"
+
+msgid "Date created: %1"
+msgstr "Дата створення: %1"
+
+msgid "Continue"
+msgstr "Продовжити"
+
+msgid "Skip"
+msgstr "Пропустити"
+
+msgid "Recent"
+msgstr "Останні"
+
+msgid "Tasks"
+msgstr "Завдання"

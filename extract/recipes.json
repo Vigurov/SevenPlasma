@@ -32499,5 +32499,495 @@
 "extra": "48@32"
 }
 ]
+},
+{
+"dest": "seven-stickynotes/new.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3400,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/new-hot.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3410,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/new-pressed.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3420,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/delete.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3403,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/delete-hot.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3413,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/delete-pressed.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3423,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/grip.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3011,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-purple.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3044,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-blue.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3046,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-green.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3047,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-pink.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3048,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-white.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3049,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/swatch-yellow.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "bitmap",
+"id": 3050,
+"extra": ""
+},
+{
+"dest": "seven-stickynotes/shadow-3022.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3022,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3023.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3023,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3024.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3024,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3025.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3025,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3026.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3026,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3027.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3027,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3028.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3028,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3029.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3029,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3030.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3030,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3031.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3031,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3032.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3032,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-stickynotes/shadow-3033.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "image",
+"id": 3033,
+"extra": "IMAGE"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/24x24/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "24@32"
+},
+{
+"dest": "icons/hicolor/32x32/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "32@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/64x64/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "64@32"
+},
+{
+"dest": "icons/hicolor/256x256/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-stickynotes.png",
+"src": "Windows/System32/StikyNot.exe",
+"from": "icon",
+"id": 101,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-discover.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1076,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-discover.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1076,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-personalize.png",
+"src": "Windows/System32/themecpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-personalize.png",
+"src": "Windows/System32/themecpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-transfer.png",
+"src": "Windows/System32/migwiz/migwiz.exe",
+"from": "icon",
+"id": 50,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-transfer.png",
+"src": "Windows/System32/migwiz/migwiz.exe",
+"from": "icon",
+"id": 50,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-homegroup.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 1013,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-homegroup.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 1013,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-uac.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 78,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-uac.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 78,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-live.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1077,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-live.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1077,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-backup.png",
+"src": "Windows/System32/sdcpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-backup.png",
+"src": "Windows/System32/sdcpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-users.png",
+"src": "Windows/System32/usercpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-users.png",
+"src": "Windows/System32/usercpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gs-textsize.png",
+"src": "Windows/System32/Display.dll",
+"from": "icon",
+"id": 1,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gs-textsize.png",
+"src": "Windows/System32/Display.dll",
+"from": "icon",
+"id": 1,
+"extra": "256@32"
+},
+{
+"dest": "seven-control/gettingstarted/banner.png",
+"src": "Windows/System32/OobeFldr.dll",
+"from": "bitmap",
+"id": 102,
+"extra": ""
+},
+{
+"dest": "seven-control/gettingstarted/arrow.png",
+"src": "Windows/System32/OobeFldr.dll",
+"from": "bitmap",
+"id": 101,
+"extra": ""
+},
+{
+"dest": "seven-control/gettingstarted/arrow-hot.png",
+"src": "Windows/System32/OobeFldr.dll",
+"from": "bitmap",
+"id": 100,
+"extra": ""
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-cpi-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/32x32/apps/seven-cpi-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "32@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-cpi-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-cpi-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/32x32/apps/seven-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "32@32"
+},
+{
+"dest": "icons/hicolor/48x48/apps/seven-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "48@32"
+},
+{
+"dest": "icons/hicolor/128x128/apps/seven-gettingstarted.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1075,
+"extra": "256@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-discover.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1076,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-personalize.png",
+"src": "Windows/System32/themecpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-transfer.png",
+"src": "Windows/System32/migwiz/migwiz.exe",
+"from": "icon",
+"id": 50,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-homegroup.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 1013,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-uac.png",
+"src": "Windows/System32/imageres.dll",
+"from": "icon",
+"id": 78,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-live.png",
+"src": "Windows/Branding/ShellBrd/shellbrd.dll",
+"from": "icon",
+"id": 1077,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-backup.png",
+"src": "Windows/System32/sdcpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-users.png",
+"src": "Windows/System32/usercpl.dll",
+"from": "icon",
+"id": 1,
+"extra": "16@32"
+},
+{
+"dest": "icons/hicolor/16x16/apps/seven-gs-textsize.png",
+"src": "Windows/System32/Display.dll",
+"from": "icon",
+"id": 1,
+"extra": "16@32"
 }
 ]
