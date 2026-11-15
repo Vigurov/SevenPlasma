@@ -121,7 +121,7 @@ FocusScope {
     }
     SongList {
         visible: np.songList
-        x: 363; y: 200; width: 880; height: 480
+        anchors.fill: parent
         songs: win.queue
         onActivated: i => win.playSongs(win.queue, i)
     }

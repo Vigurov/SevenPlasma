@@ -34,7 +34,13 @@ FocusScope {
     }
     function enterPivots() { enter(); cmd = -1 }
     function enterCommand(i) { enter(); if (cmd !== i) win.sound("focus"); cmd = i }
-    function leave() { cmd = -1; if (back) back.forceActiveFocus() }
+    // the page's content items (the first visible one takes the focus back), else the item that had it
+    property var targets: []
+    function leave() {
+        cmd = -1
+        const b = targets.find(t => t && t.visible) || back
+        if (b) Qt.callLater(() => b.forceActiveFocus())
+    }
     onActiveFocusChanged: if (!activeFocus) cmd = -1
     Keys.onUpPressed: if (commands.length) enterCommand(cmd < 0 ? commands.length - 1 : Math.max(0, cmd - 1))
     Keys.onDownPressed: {

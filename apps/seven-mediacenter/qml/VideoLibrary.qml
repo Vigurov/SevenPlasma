@@ -145,7 +145,6 @@ FocusScope {
                     font.family: win.fontSemibold
                     font.pixelSize: row.focused ? 37 : 32 // 24 pt, 1.16 larger when focused
                     color: row.focused ? win.offWhite : win.lightBlue
-                    opacity: row.focused ? 1 : 0.6
                 }
                 MouseArea {
                     anchors.fill: parent

@@ -33,17 +33,22 @@ FocusScope {
             GradientStop { position: 0.35; color: "#3d7cc0" }
             GradientStop { position: 1.0; color: "#2865a8" }
         }
-        Text { id: albumWord; x: 84; y: 30; text: win.tr("album"); font.family: win.fontLight; font.pixelSize: 58; color: win.offWhite }
-        Text { x: albumWord.x + albumWord.implicitWidth + 26; y: 52; text: win.tr("actions"); font.family: win.fontLight; font.pixelSize: 36; color: win.lightBlue; opacity: 0.6 }
+        Text { id: albumWord; x: 84; y: 19; text: win.tr("album"); font.family: win.fontLight; font.pixelSize: 65; color: win.offWhite }
+        Text { x: albumWord.x + albumWord.implicitWidth + 26; y: 41; text: win.tr("actions"); font.family: win.fontLight; font.pixelSize: 36; color: win.lightBlue; opacity: 0.6 }
         Column {
-            x: 84; y: 118; spacing: 2
+            x: 84; y: 118; spacing: -3
             Text { text: d.album.album; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite; width: 560; elide: Text.ElideRight }
             Text { text: d.album.artist; font.family: win.fontRegular; font.pixelSize: 24; color: win.offWhite }
             Text {
-                topPadding: 8
+                topPadding: 1
                 text: (d.album.tracks.length === 1 ? win.tr("1 track") : win.tr("%1 tracks").arg(d.album.tracks.length)) + "  " + win.fmtTime(d.album.duration) + "  " + d.album.year
                 font.family: win.fontRegular; font.pixelSize: 18; color: win.offWhite
             }
+        }
+        Row {
+            x: 717; y: 64; spacing: 14
+            Image { source: win.res("DETAILS.LEFT.CHEVRON.DISABLED") }
+            Image { source: win.res("DETAILS.RIGHT.CHEVRON.NOFOCUS") }
         }
         Image {
             x: 636; y: 208; width: 142; height: 142
@@ -52,7 +57,8 @@ FocusScope {
         }
         ListView {
             id: list
-            x: 76; y: 272; width: 520; height: parent.height - 300
+            // measured on Windows 7: the command icons at 59, the songs at 84 (66 focused), the lengths ending at 755
+            x: 50; y: 272; width: 705; height: parent.height - 300
             clip: true
             model: d.rows
             currentIndex: d.cur
@@ -61,13 +67,13 @@ FocusScope {
                 required property var modelData
                 required property int index
                 width: list.width
-                height: index === 1 ? 64 : modelData.cmd ? 36 : 44
+                height: index === 1 ? 86 : modelData.cmd ? 36 : 44
                 readonly property bool lit: index === d.cur
                 Row {
                     visible: !!row.modelData.cmd
-                    x: 8; spacing: 10; anchors.verticalCenter: parent.verticalCenter; anchors.verticalCenterOffset: row.index === 1 ? -10 : 0
+                    x: 0; spacing: 10; anchors.verticalCenter: parent.verticalCenter; anchors.verticalCenterOffset: row.index === 1 ? -21 : 0
                     Image {
-                        source: win.res(row.modelData.cmd === "add" ? (row.lit ? "DETAILS.CMD.ADD.FOCUS" : "DETAILS.CMD.ADD.DORMANT") : (row.lit ? "DETAILS.CMD.PLAY.FOCUS" : "DETAILS.CMD.PLAY.DORMANT"))
+                        source: win.res(row.modelData.cmd === "add" ? (row.lit ? "DETAILS.CMD.ADD.FOCUS" : "DETAILS.CMD.ADD") : (row.lit ? "DETAILS.CMD.PLAY.FOCUS" : "DETAILS.CMD.PLAY"))
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
@@ -79,17 +85,17 @@ FocusScope {
                 }
                 Text {
                     visible: !row.modelData.cmd
-                    x: 8; anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 90; elide: Text.ElideRight
+                    x: row.lit ? 16 : 34; anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 140; elide: Text.ElideRight
                     text: row.modelData.track ? row.modelData.track.title : ""
-                    font.family: win.fontRegular; font.pixelSize: 24
+                    font.family: row.lit ? win.fontSemibold : win.fontRegular; font.pixelSize: row.lit ? 28 : 24
                     color: row.lit ? win.offWhite : win.lightBlue
                 }
                 Text {
                     visible: !row.modelData.cmd
-                    anchors { right: parent.right; rightMargin: -140; verticalCenter: parent.verticalCenter }
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                     text: row.modelData.track ? win.fmtTime(row.modelData.track.duration) : ""
-                    font.family: win.fontRegular; font.pixelSize: 24
+                    font.family: row.lit ? win.fontSemibold : win.fontRegular; font.pixelSize: row.lit ? 28 : 24
                     color: row.lit ? win.offWhite : win.lightBlue
                 }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: d.cur = row.index; onClicked: d.run(row.modelData) }
