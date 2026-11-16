@@ -3,6 +3,7 @@
         <file>qml/AlbumDetails.qml</file>
         <file>qml/ExtrasLibrary.qml</file>
         <file>qml/Gallery.qml</file>
+        <file>qml/GroupedGallery.qml</file>
         <file>qml/Pager.qml</file>
         <file>qml/GetStarted.qml</file>
         <file>qml/LibraryHeader.qml</file>

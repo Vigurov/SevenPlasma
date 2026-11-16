@@ -20,7 +20,9 @@ FocusScope {
         for (const s of songs) {
             const v = String(s[field] || "")
             if (v === "") continue
-            if (!m[v]) m[v] = { big: v, text: v, value: v, image: s.cover || "" }
+            if (!m[v]) m[v] = { big: v, text: v, value: v, image: s.cover || "", tracks: 0, duration: 0 }
+            m[v].tracks++
+            m[v].duration += s.duration || 0
         }
         return Object.keys(m).sort((a, b) => a.localeCompare(b)).map(k => m[k])
     }
@@ -43,7 +45,7 @@ FocusScope {
     }
     function setPivot(p) { pivot = (p + pivots.length) % pivots.length; win.page.pivot = pivot }
     // a new pivot keeps the focus where it is (on the pivots); otherwise its content takes it
-    onPivotChanged: if (!header.activeFocus) Qt.callLater(() => [gallery, songList, nameList, playlists].find(t => t.visible).forceActiveFocus())
+    onPivotChanged: if (!header.activeFocus) Qt.callLater(() => [gallery, songList, nameList, playlists, artistGroups].find(t => t.visible).forceActiveFocus())
     Keys.onPressed: e => {
         if (e.key === Qt.Key_PageUp) { setPivot(pivot - 1); e.accepted = true }
         if (e.key === Qt.Key_PageDown) { setPivot(pivot + 1); e.accepted = true }
@@ -52,7 +54,7 @@ FocusScope {
     Keys.onUpPressed: header.enterPivots()
     LibraryHeader {
         id: header
-        targets: [gallery, songList, nameList, playlists]
+        targets: [gallery, songList, nameList, playlists, artistGroups]
 
         title: lib.filter ? lib.filter.value : win.tr("music library")
         commands: lib.pivot === 4 ? [] : [{ t: win.tr("play all"), icon: "BROWSE.CMD.PLAY" }, { t: win.tr("search"), icon: "BROWSE.CMD.SEARCH" }]
@@ -70,9 +72,10 @@ FocusScope {
     readonly property int galleryRows: pivot === 0 ? (items.length <= 7 ? 1 : items.length <= 120 ? 3 : 5) : 3
     Gallery {
         id: gallery
-        visible: lib.pivot === 0 || lib.pivot === 2
+        visible: lib.pivot === 0
         focus: true
-        x: 225; y: 244
+        // 3-row galleries sit higher (measured on Windows 7: 204, a row of 152 at 244)
+        x: 225; y: lib.galleryRows === 1 ? 244 : 204
         width: lib.width - 225
         height: 460
         items: lib.items
@@ -94,7 +97,7 @@ FocusScope {
         visible: gallery.visible && gallery.activeFocus && it !== null && lib.pivot === 0
         // at the focused item's left, kept between 30 left of the gallery and 248 into it (DetailsMetadataLayoutInput)
         x: 225 + Math.max(-30, Math.min(248, Math.floor(gallery.currentIndex / gallery.rows) * gallery.cellW - gallery.scrollX))
-        y: 244 + gallery.rows * gallery.cellH - 13
+        y: gallery.y + gallery.rows * gallery.cellH - 13
         spacing: -2
         Text { text: parent.it ? parent.it.text : ""; font.family: win.fontSemibold; font.pixelSize: 27; color: win.offWhite }
         Text { text: parent.it && parent.it.album ? parent.it.album.artist : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue; transform: Translate { y: -2 } }
@@ -107,13 +110,47 @@ FocusScope {
     }
     Pager { visible: gallery.visible && lib.items.length > 0; current: gallery.currentIndex + 1; total: lib.items.length; opacity: gallery.opacity }
 
-    // artists, composers, years and album artists are lists of names, like the songs
+    // album artists: the albums in groups, each artist's name on its side (BrowseGroupedGallery)
+    GroupedGallery {
+        id: artistGroups
+        visible: lib.pivot === 7
+        anchors.fill: parent
+        groups: {
+            const m = {}
+            for (const a of lib.albums) { const k = a.artist || ""; (m[k] = m[k] || []).push({ image: a.cover, album: a }) }
+            return Object.keys(m).sort((a, b) => a.localeCompare(b)).map(k => ({ name: k, items: m[k] }))
+        }
+        onActivated: it => win.open({ kind: "album", album: it.album })
+    }
+    Column {
+        readonly property var c: artistGroups.cells[artistGroups.current] || null
+        readonly property var a: c ? c.item.album : null
+        visible: artistGroups.visible && artistGroups.activeFocus && a !== null
+        x: 225; y: 592
+        spacing: -3
+        Text { text: parent.a ? parent.a.album : ""; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite }
+        Text { text: parent.a ? parent.a.artist : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }
+        Text {
+            readonly property var a: parent.a
+            text: a ? [a.tracks.length === 1 ? win.tr("1 track") : win.tr("%1 tracks").arg(a.tracks.length), win.fmtTime(a.duration), a.year].filter(x => x).join("  \u200a") : ""
+            font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue
+        }
+    }
+    Pager {
+        visible: artistGroups.visible
+        readonly property var c: artistGroups.cells[artistGroups.current] || null
+        current: c ? artistGroups.cells.filter(x => x.group === c.group).indexOf(c) + 1 : 0
+        total: c ? artistGroups.groups[c.group].items.length : 0
+        opacity: artistGroups.activeFocus ? 1 : 0.75
+    }
+    // artists, genres, composers and years are lists of names, like the songs
     SongList {
         id: nameList
-        visible: [1, 5, 6, 7].includes(lib.pivot) && lib.items.length > 0
+        visible: [1, 2, 5, 6].includes(lib.pivot) && lib.items.length > 0
         anchors.fill: parent
         showRating: false
-        songs: lib.items.map(it => ({ title: it.text }))
+        // under the list: "1 track  3:20" of the focused name
+        songs: lib.items.map(it => ({ title: it.text, artist: (it.tracks === 1 ? win.tr("1 track") : win.tr("%1 tracks").arg(it.tracks)) + "  \u200a" + win.fmtTime(it.duration) }))
         onActivated: i => lib.activate(i)
     }
     // playlists: Windows 7's auto playlists in two columns under "AUTO PLAYLISTS", "ACTIONS" at the right

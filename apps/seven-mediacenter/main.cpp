@@ -326,8 +326,13 @@ public:
                         break;
                     }
                 }
+                // the game's own Media Center tile (<Game>MCE.png of Windows 7, extracted as EXTRAS.<GAME>.PNG); Windows 7
+                // lists only the games that have one
+                const QString key = QFileInfo(f).completeBaseName().section(QLatin1Char('_'), 1).remove(QLatin1Char('_')).toUpper();
+                const QString tile = m_res + QStringLiteral("/EXTRAS.") + key + QStringLiteral(".PNG");
                 out.append(QVariantMap{{QStringLiteral("name"), name},
                                        {QStringLiteral("icon"), s.value(QStringLiteral("Icon")).toString()},
+                                       {QStringLiteral("tile"), QFileInfo::exists(tile) ? QUrl::fromLocalFile(tile).toString() : QString()},
                                        {QStringLiteral("desktop"), QDir(d).filePath(f)}});
             }
         }

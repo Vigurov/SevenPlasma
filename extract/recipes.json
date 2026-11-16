@@ -32996,6 +32996,41 @@
 "from": "rcdata-dir"
 },
 {
+"dest": "seven-mediacenter/res/EXTRAS.CHESS.PNG",
+"src": "Program Files/Microsoft Games/Chess/ChessMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.FREECELL.PNG",
+"src": "Program Files/Microsoft Games/FreeCell/FreeCellMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.HEARTS.PNG",
+"src": "Program Files/Microsoft Games/Hearts/HeartsMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.MAHJONG.PNG",
+"src": "Program Files/Microsoft Games/Mahjong/MahjongMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.PURBLEPLACE.PNG",
+"src": "Program Files/Microsoft Games/Purble Place/PurblePlaceMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.SOLITAIRE.PNG",
+"src": "Program Files/Microsoft Games/Solitaire/SolitaireMCE.png",
+"from": "file"
+},
+{
+"dest": "seven-mediacenter/res/EXTRAS.SPIDERSOLITAIRE.PNG",
+"src": "Program Files/Microsoft Games/SpiderSolitaire/SpiderSolitaireMCE.png",
+"from": "file"
+},
+{
 "dest": "fonts/Windows 7/segmcr.ttf",
 "src": "Windows/ehome/segmcr.ttf",
 "from": "file"

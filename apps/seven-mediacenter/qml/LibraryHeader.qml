@@ -168,7 +168,7 @@ FocusScope {
     function posOf(c, i) { let s = c * loopLength; for (let j = 0; j < i; j++) s += widths[j] + 65.6; return s }
     property int targetCopy: 0
     property real scroll: 0
-    Behavior on scroll { id: scrollAnim; NumberAnimation { duration: 500; easing.type: Easing.OutQuad } }
+    Behavior on scroll { id: scrollAnim; NumberAnimation { id: scrollNum; duration: 500; easing.type: Easing.OutQuad } }
     onPivotChanged: { measure(); scroll = posOf(targetCopy, pivot) }
     function copyNow() { return loops && loopLength > 0 ? Math.round((scroll - posOf(0, pivot)) / loopLength) : 0 }
     function step(d) {
@@ -189,7 +189,10 @@ FocusScope {
     // keep the copies near the middle when the list has gone round
     Timer {
         interval: 600; running: h.loops && Math.abs(h.copyNow()) > 0
-        onTriggered: { const c = h.copyNow(); scrollAnim.enabled = false; h.targetCopy -= c; h.scroll -= c * h.loopLength; scrollAnim.enabled = true }
+        onTriggered: {
+            if (scrollNum.running) { restart(); return }   // not while it is moving
+            const c = h.copyNow(); scrollAnim.enabled = false; h.targetCopy -= c; h.scroll -= c * h.loopLength; scrollAnim.enabled = true
+        }
     }
 
     Item {
@@ -211,7 +214,8 @@ FocusScope {
                 required property int index
                 readonly property int copy: h.loops ? Math.floor(index / h.n) - 1 : 0
                 readonly property int item: index % h.n
-                readonly property bool sel: item === h.pivot && copy === h.copyNow()
+                // every copy of the chosen pivot looks chosen (only the one at the left is on screen)
+                readonly property bool sel: item === h.pivot
                 text: h.pivots[item] || ""
                 x: h.textX + h.posOf(copy, item) - h.scroll
                 anchors.verticalCenter: parent.verticalCenter

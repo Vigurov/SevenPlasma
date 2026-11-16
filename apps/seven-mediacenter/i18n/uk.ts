@@ -487,5 +487,25 @@
         <source>Videos</source>
         <translation>Відео</translation>
     </message>
+    <message>
+        <source>manage extras</source>
+        <translation>керування додатками</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>ім'я</translation>
+    </message>
+    <message>
+        <source>date added</source>
+        <translation>дата додавання</translation>
+    </message>
+    <message>
+        <source>most used</source>
+        <translation>найчастіше використовувані</translation>
+    </message>
+    <message>
+        <source>Play a game of %1</source>
+        <translation>Грати в «%1»</translation>
+    </message>
 </context>
 </TS>
