@@ -486,6 +486,8 @@ class Editor(QMainWindow):
     def __init__(self, app, pm):
         super().__init__()
         self.app = app
+        # a closed mark-up window goes away with its picture (it stayed in memory: ~7 MB a snip in the daemon)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle(T('Ножиці'))
         self.setWindowIcon(QIcon.fromTheme('seven-snippingtool'))
         self.canvas = Canvas(pm)
@@ -679,6 +681,16 @@ class Main(QMainWindow):
             self.app.take(mode)
 
 
+def release_memory():
+    """give the memory of the closed snips back to the system (the allocator keeps freed blocks otherwise)"""
+    import gc
+    gc.collect()
+    try:
+        ctypes.CDLL(ctypes.util.find_library('c')).malloc_trim(0)
+    except (OSError, AttributeError):
+        pass
+
+
 class App:
     """«Ножиці» stay loaded in the background after the first start (and from the login on, see --daemon):
     the launcher (~/.local/bin/seven-snip) only pokes this socket, so the snip starts at once."""
@@ -732,6 +744,7 @@ class App:
     def done(self):
         """everything closed: stay in the background, ready for the next snip"""
         self.main.hide()
+        QTimer.singleShot(1500, release_memory)
 
     def take(self, mode, after=None, wait=250):
         self.taking = True
