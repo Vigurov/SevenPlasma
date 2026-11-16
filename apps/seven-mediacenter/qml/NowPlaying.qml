@@ -9,7 +9,7 @@ import QtQuick
 FocusScope {
     id: np
     readonly property var song: win.current
-    readonly property var menuItems: ["View Song List", "Visualize", "Play Pictures", "Shuffle", "Repeat"]
+    readonly property var menuItems: ["View Song List", "Visualize", "Play Pictures", "Shuffle", "Repeat", "Buy Music"]
     property int cur: 0
     onCurChanged: win.sound("focus")
     property bool songList: false
@@ -25,34 +25,77 @@ FocusScope {
         }
         if (i === 3) win.shuffle = !win.shuffle
         if (i === 4) win.repeat = !win.repeat
+        if (i === 5) win.open({ kind: "message", title: "Buy Music", text: "This feature is not available on this computer." })
     }
     Keys.onUpPressed: cur = Math.max(0, cur - 1)
     Keys.onDownPressed: cur = Math.min(menuItems.length - 1, cur + 1)
     Keys.onReturnPressed: run(cur)
     Keys.onEnterPressed: run(cur)
 
-    // the cover wall: every album of the library, tinted blue, slowly drifting
-    Rectangle { anchors.fill: parent; color: "#0a2a5a" }
-    Flow {
-        id: wall
-        width: parent.width + 248
-        x: 0
-        SequentialAnimation on x { loops: Animation.Infinite; NumberAnimation { from: 0; to: -124; duration: 30000 } NumberAnimation { from: -124; to: 0; duration: 30000 } }
+    // the mosaic (AlbumArtBackground.xml): 124x124 tiles from x -100 and y 0, album covers among the coloured
+    // squares of Audio.NoCover.1-6, the rows slowly moving up
+    Image { anchors.fill: parent; source: win.res("COMMON.BACKGROUND") }
+    Item {
+        id: mosaic
+        anchors.fill: parent
+        clip: true
+        readonly property var covers: library.albums.map(a => a.cover).filter(c => c)
+        readonly property int cols: Math.ceil((np.width + 100) / 124) + 1
+        readonly property int rows: Math.ceil(np.height / 124) + 1
+        // a fixed pseudo-random pattern, like a shuffled wall
+        function tile(r, c) {
+            let h = (r * 73856093) ^ (c * 19349663) ^ 0x5bd1e995
+            h = (h ^ (h >>> 13)) * 1274126177; h = h ^ (h >>> 16)
+            const v = Math.abs(h) % 100
+            if (covers.length && v < 12) return covers[Math.abs(h >> 7) % covers.length]
+            return win.res("AUDIO.NOCOVER." + (1 + Math.abs(h >> 3) % 6) + ".LARGE")
+        }
+        property real shift: 0
+        NumberAnimation on shift { from: 0; to: 124; duration: 62000; loops: Animation.Infinite }
         Repeater {
-            model: {
-                const covers = library.albums.map(a => a.cover).filter(c => c)
-                const out = []
-                const need = Math.ceil((np.width + 248) / 124) * 7
-                for (let i = 0; covers.length && i < need; ++i) out.push(covers[(i * 7 + Math.floor(i / 11)) % covers.length])
-                return out
+            model: mosaic.rows * mosaic.cols
+            delegate: Image {
+                required property int index
+                readonly property int r: Math.floor(index / mosaic.cols)
+                readonly property int c: index % mosaic.cols
+                readonly property int step: Math.floor(mosaic.shift / 124)
+                x: -100 + c * 124
+                y: r * 124 - (mosaic.shift % 124)
+                width: 124; height: 124
+                source: mosaic.tile(r + step, c)
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize.width: 124
             }
-            delegate: Image { required property string modelData; width: 124; height: 124; source: modelData; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 160 }
         }
     }
-    Rectangle { anchors.fill: parent; color: "#0b3f8c"; opacity: 0.62 }
+
+    // the blue over the middle of the mosaic (behind the menu, the cover and the song) and at its left edge,
+    // measured on Windows 7
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop { position: 110 / 768; color: "transparent" }
+            GradientStop { position: 186 / 768; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.6) }
+            GradientStop { position: 250 / 768; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.8) }
+            GradientStop { position: 560 / 768; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.76) }
+            GradientStop { position: 682 / 768; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.1) }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+    }
+    Rectangle {
+        width: 340; height: parent.height
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.7) }
+            GradientStop { position: 0.25; color: Qt.rgba(10 / 255, 45 / 255, 110 / 255, 0.6) }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+    }
 
     Column {
-        x: 43; y: 216
+        x: 43; y: 198
         spacing: 3
         Repeater {
             model: np.menuItems
@@ -71,7 +114,7 @@ FocusScope {
                 Text {
                     x: 16; anchors.verticalCenter: parent.verticalCenter
                     text: win.tr(mi.modelData) + ((mi.index === 3 && win.shuffle) || (mi.index === 4 && win.repeat) ? "  ✓" : "")
-                    font.family: mi.lit ? win.fontSemibold : win.fontRegular; font.pixelSize: 26
+                    font.family: win.fontSemibold; font.pixelSize: 26
                     color: mi.lit ? win.offWhite : win.lightBlue
                 }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: np.cur = mi.index; onClicked: np.run(mi.index) }
@@ -87,8 +130,8 @@ FocusScope {
     }
     Column {
         visible: !np.songList
-        x: 690; y: 278
-        spacing: 6
+        x: 690; y: 276
+        spacing: 3
         Text { text: np.song ? np.song.title : ""; font.family: win.fontSemibold; font.pixelSize: 28; color: win.offWhite; width: 600; elide: Text.ElideRight }
         Text { text: np.song ? np.song.artist : ""; font.family: win.fontRegular; font.pixelSize: 26; color: win.offWhite }
         Text { text: np.song ? np.song.album : ""; font.family: win.fontRegular; font.pixelSize: 26; color: win.offWhite }

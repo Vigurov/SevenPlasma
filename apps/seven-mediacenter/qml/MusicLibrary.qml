@@ -30,7 +30,7 @@ FocusScope {
         case 1: return groups("artist")
         case 2: return groups("genre")
         case 5: return groups("composer")
-        case 6: return groups("year")
+        case 6: return groups("year").reverse()
         case 7: return groups("albumArtist")
         default: return []
         }
@@ -43,7 +43,7 @@ FocusScope {
     }
     function setPivot(p) { pivot = (p + pivots.length) % pivots.length; win.page.pivot = pivot }
     // a new pivot keeps the focus where it is (on the pivots); otherwise its content takes it
-    onPivotChanged: if (!header.activeFocus) Qt.callLater(() => (pivot === 3 ? songList : gallery).forceActiveFocus())
+    onPivotChanged: if (!header.activeFocus) Qt.callLater(() => [gallery, songList, nameList, playlists].find(t => t.visible).forceActiveFocus())
     Keys.onPressed: e => {
         if (e.key === Qt.Key_PageUp) { setPivot(pivot - 1); e.accepted = true }
         if (e.key === Qt.Key_PageDown) { setPivot(pivot + 1); e.accepted = true }
@@ -52,10 +52,10 @@ FocusScope {
     Keys.onUpPressed: header.enterPivots()
     LibraryHeader {
         id: header
-        targets: [gallery, songList]
+        targets: [gallery, songList, nameList, playlists]
 
         title: lib.filter ? lib.filter.value : win.tr("music library")
-        commands: [{ t: win.tr("play all"), icon: "BROWSE.CMD.PLAY" }, { t: win.tr("search"), icon: "BROWSE.CMD.SEARCH" }]
+        commands: lib.pivot === 4 ? [] : [{ t: win.tr("play all"), icon: "BROWSE.CMD.PLAY" }, { t: win.tr("search"), icon: "BROWSE.CMD.SEARCH" }]
         pivots: lib.pivots.map(p => win.tr(p))
         pivot: lib.pivot
         onPivotChosen: i => lib.setPivot(i)
@@ -70,7 +70,7 @@ FocusScope {
     readonly property int galleryRows: pivot === 0 ? (items.length <= 7 ? 1 : items.length <= 120 ? 3 : 5) : 3
     Gallery {
         id: gallery
-        visible: lib.pivot !== 3 && lib.pivot !== 4 && lib.pivot !== 8
+        visible: lib.pivot === 0 || lib.pivot === 2
         focus: true
         x: 225; y: 244
         width: lib.width - 225
@@ -107,6 +107,78 @@ FocusScope {
     }
     Pager { visible: gallery.visible && lib.items.length > 0; current: gallery.currentIndex + 1; total: lib.items.length; opacity: gallery.opacity }
 
+    // artists, composers, years and album artists are lists of names, like the songs
+    SongList {
+        id: nameList
+        visible: [1, 5, 6, 7].includes(lib.pivot) && lib.items.length > 0
+        anchors.fill: parent
+        showRating: false
+        songs: lib.items.map(it => ({ title: it.text }))
+        onActivated: i => lib.activate(i)
+    }
+    // playlists: Windows 7's auto playlists in two columns under "AUTO PLAYLISTS", "ACTIONS" at the right
+    // (positions measured on Windows 7)
+    FocusScope {
+        id: playlists
+        visible: lib.pivot === 4
+        anchors.fill: parent
+        readonly property var now: Date.now() / 1000
+        readonly property var lists: [
+            { t: "All Music", songs: lib.songs },
+            { t: "Music added in the last month", songs: lib.songs.filter(s => s.mtime > now - 30 * 86400) },
+            { t: "Music auto rated at 5 stars", songs: [] },
+            { t: "Music played in the last month", songs: [] },
+            { t: "Music played the most", songs: [] },
+            { t: "Music rated at 4 or 5 stars", songs: [] }
+        ]
+        property int current: 0
+        onCurrentChanged: win.sound("focus")
+        readonly property bool lit: activeFocus
+        function run(i) {
+            const l = lists[i]
+            if (l.songs.length) { win.playSongs(l.songs, 0); win.open({ kind: "nowplaying" }) }
+            else win.open({ kind: "message", title: l.t, text: "There are no songs in this playlist." })
+        }
+        Keys.onDownPressed: if (current < lists.length - 1) current++
+        Keys.onUpPressed: e => { if (current > 0) current--; else e.accepted = false }
+        Keys.onRightPressed: if (current < 5) current = Math.min(lists.length - 1, current + 5)
+        Keys.onLeftPressed: if (current >= 5) current -= 5
+        Keys.onReturnPressed: run(current)
+        Keys.onEnterPressed: run(current)
+        Image { y: 114; width: parent.width; height: 91; source: win.res("BROWSE.LISTVIEWSTRIPTOP") }
+        Image { y: 580; width: parent.width; height: 91; source: win.res("BROWSE.LISTVIEWSTRIP") }
+        Text { x: 208; y: 246; text: win.tr("AUTO PLAYLISTS"); font.family: win.fontSemibold; font.pixelSize: 23; color: win.cyan }
+        Text { x: 1252; y: 246; text: win.tr("ACTIONS"); font.family: win.fontSemibold; font.pixelSize: 23; color: win.cyan }
+        Text {
+            x: 1258; y: 270
+            text: win.tr("Create Playlist")
+            font.family: win.fontSemibold; font.pixelSize: 32; color: win.lightBlue
+        }
+        Repeater {
+            model: playlists.lists
+            delegate: Text {
+                required property var modelData
+                required property int index
+                readonly property bool focused: index === playlists.current && playlists.lit
+                x: (index < 5 ? 225 : 691) - (focused ? 18 : 0)
+                y: 270 + (index % 5) * 55.5 - (focused ? 3 : 0)
+                // a long name is cut at 420 (LabelSize), not ellipsed
+                width: Math.min(implicitWidth, 420); clip: true
+                text: win.tr(modelData.t)
+                font.family: win.fontSemibold
+                font.pixelSize: focused ? 37 : 32
+                color: focused ? win.offWhite : win.lightBlue
+                MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: { playlists.current = parent.index; playlists.forceActiveFocus() } onClicked: playlists.run(parent.index) }
+            }
+        }
+        Text {
+            visible: playlists.lit
+            x: 225; y: 592
+            text: win.tr(playlists.lists[playlists.current].t)
+            font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite
+        }
+        Pager { current: playlists.current + 1; total: playlists.lists.length; opacity: playlists.lit ? 1 : 0.75 }
+    }
     SongList {
         id: songList
         visible: lib.pivot === 3
@@ -116,7 +188,7 @@ FocusScope {
     }
 
     Text {
-        visible: (lib.pivot === 4 || lib.pivot === 8) || (lib.items.length === 0 && lib.pivot !== 3) || (lib.pivot === 3 && lib.songs.length === 0)
+        visible: lib.pivot === 8 || (lib.items.length === 0 && lib.pivot !== 3 && lib.pivot !== 4) || (lib.pivot === 3 && lib.songs.length === 0)
         x: 225; y: 260
         width: 800
         wrapMode: Text.WordWrap

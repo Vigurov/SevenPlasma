@@ -23,24 +23,38 @@ FocusScope {
     Keys.onReturnPressed: run(rows[cur])
     Keys.onEnterPressed: run(rows[cur])
 
-    Rectangle { anchors.fill: parent; color: "#000000"; opacity: 0.35 }
-    Rectangle {
+    // the library under the panel, as it was
+    Image { anchors.fill: parent; source: win.page.under ? win.page.under.url : "" }
+    // the panel (colours measured on Windows 7): the top part a vertical gradient, the body Details.Body.Pane
+    // (lighter at the left), dark shadows along its sides
+    Rectangle { x: 267; width: 13; height: parent.height
+        gradient: Gradient { orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: "transparent" } GradientStop { position: 1; color: Qt.rgba(0, 0.03, 0.1, 0.85) } } }
+    Rectangle { x: 1087; width: 13; height: parent.height
+        gradient: Gradient { orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Qt.rgba(0, 0.1, 0.2, 0.85) } GradientStop { position: 1; color: "transparent" } } }
+    Item {
         id: panel
-        x: 280; width: 805; height: parent.height
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0d3a74" }
-            GradientStop { position: 0.34; color: "#1a5596" }
-            GradientStop { position: 0.35; color: "#3d7cc0" }
-            GradientStop { position: 1.0; color: "#2865a8" }
+        x: 280; width: 807; height: parent.height
+        Rectangle {
+            width: parent.width; height: 258
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#264d82" }
+                GradientStop { position: 0.37; color: "#3b6fa1" }
+                GradientStop { position: 0.58; color: "#3b6ea0" }
+                GradientStop { position: 0.75; color: "#2a5177" }
+                GradientStop { position: 1.0; color: "#17374f" }
+            }
         }
-        Text { id: albumWord; x: 84; y: 19; text: win.tr("album"); font.family: win.fontLight; font.pixelSize: 65; color: win.offWhite }
-        Text { x: albumWord.x + albumWord.implicitWidth + 26; y: 41; text: win.tr("actions"); font.family: win.fontLight; font.pixelSize: 36; color: win.lightBlue; opacity: 0.6 }
+        Image { y: 258; width: parent.width; height: parent.height - 258; source: win.res("DETAILS.BODY.PANE") }
+        Text { id: albumWord; x: 84; y: 19; text: win.tr("album"); font.family: win.fontLight; font.pixelSize: 63; color: win.offWhite }
+        Text { x: albumWord.x + albumWord.implicitWidth + 44; y: 39; text: win.tr("actions"); font.family: win.fontLight; font.pixelSize: 39; color: win.lightBlue; opacity: 0.6 }
         Column {
             x: 84; y: 118; spacing: -3
             Text { text: d.album.album; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite; width: 560; elide: Text.ElideRight }
             Text { text: d.album.artist; font.family: win.fontRegular; font.pixelSize: 24; color: win.offWhite }
             Text {
-                topPadding: 1
+                topPadding: 11
                 text: (d.album.tracks.length === 1 ? win.tr("1 track") : win.tr("%1 tracks").arg(d.album.tracks.length)) + "  " + win.fmtTime(d.album.duration) + "  " + d.album.year
                 font.family: win.fontRegular; font.pixelSize: 18; color: win.offWhite
             }
@@ -58,7 +72,7 @@ FocusScope {
         ListView {
             id: list
             // measured on Windows 7: the command icons at 59, the songs at 84 (66 focused), the lengths ending at 755
-            x: 50; y: 272; width: 705; height: parent.height - 300
+            x: 40; y: 272; width: 715; height: parent.height - 300
             clip: true
             model: d.rows
             currentIndex: d.cur
@@ -85,7 +99,7 @@ FocusScope {
                 }
                 Text {
                     visible: !row.modelData.cmd
-                    x: row.lit ? 16 : 34; anchors.verticalCenter: parent.verticalCenter
+                    x: row.lit ? 26 : 44; anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - 140; elide: Text.ElideRight
                     text: row.modelData.track ? row.modelData.track.title : ""
                     font.family: row.lit ? win.fontSemibold : win.fontRegular; font.pixelSize: row.lit ? 28 : 24

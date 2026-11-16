@@ -431,5 +431,61 @@
         <source>years</source>
         <translation>роки</translation>
     </message>
+    <message>
+        <source>AUTO PLAYLISTS</source>
+        <translation>АВТОМАТИЧНІ СПИСКИ</translation>
+    </message>
+    <message>
+        <source>ACTIONS</source>
+        <translation>ДІЇ</translation>
+    </message>
+    <message>
+        <source>Create Playlist</source>
+        <translation>Створити список відтворення</translation>
+    </message>
+    <message>
+        <source>All Music</source>
+        <translation>Уся музика</translation>
+    </message>
+    <message>
+        <source>Music added in the last month</source>
+        <translation>Музика, додана за останній місяць</translation>
+    </message>
+    <message>
+        <source>Music auto rated at 5 stars</source>
+        <translation>Музика з автоматичною оцінкою 5 зірок</translation>
+    </message>
+    <message>
+        <source>Music played in the last month</source>
+        <translation>Музика, відтворена за останній місяць</translation>
+    </message>
+    <message>
+        <source>Music played the most</source>
+        <translation>Найчастіше відтворювана музика</translation>
+    </message>
+    <message>
+        <source>Music rated at 4 or 5 stars</source>
+        <translation>Музика з оцінкою 4 або 5 зірок</translation>
+    </message>
+    <message>
+        <source>Buy Music</source>
+        <translation>Придбати музику</translation>
+    </message>
+    <message>
+        <source>No shared media libraries were found.</source>
+        <translation>Спільних бібліотек мультимедіа не знайдено.</translation>
+    </message>
+    <message>
+        <source>There are no songs in this playlist.</source>
+        <translation>У цьому списку відтворення немає пісень.</translation>
+    </message>
+    <message>
+        <source>1 item</source>
+        <translation>1 елемент</translation>
+    </message>
+    <message>
+        <source>Videos</source>
+        <translation>Відео</translation>
+    </message>
 </context>
 </TS>

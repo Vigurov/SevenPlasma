@@ -10,6 +10,7 @@ import QtQuick
 FocusScope {
     id: sl
     property var songs: []
+    property bool showRating: true
     signal activated(int index)
     property int current: 0
     onCurrentChanged: win.sound("focus")
@@ -66,8 +67,9 @@ FocusScope {
         x: 225; y: 592
         spacing: -3
         Text { text: parent.s ? parent.s.title : ""; font.family: win.fontSemibold; font.pixelSize: 26; color: win.offWhite }
-        Text { text: parent.s ? parent.s.artist : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }
+        Text { text: parent.s ? (parent.s.artist || "") : ""; font.family: win.fontRegular; font.pixelSize: 24; color: win.lightBlue }
         Row {
+            visible: sl.showRating
             topPadding: 3; spacing: 8
             Repeater { model: 5; delegate: Image { source: win.res("COMMON.STAREMPTY"); width: 22; height: 21 } }
         }

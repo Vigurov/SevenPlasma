@@ -121,7 +121,15 @@ Window {
         (name === "select" ? sndSelect : name === "mini" ? sndMini : name === "intro" ? sndIntro : sndFocus).play()
     }
 
-    function open(p) { sound("select"); stack = stack.concat([p]) }
+    // an album's details slide over the library, which stays visible around them: a picture of the page is kept
+    function open(p) {
+        sound("select")
+        if (p.kind === "album" && pageLoader.item) {
+            pageLoader.item.grabToImage(r => { p.under = r; win.stack = win.stack.concat([p]) })
+            return
+        }
+        stack = stack.concat([p])
+    }
     function goBack() {
         if (page.kind === "video") { stop() }
         if (stack.length > 1) { sound("select"); stack = stack.slice(0, stack.length - 1) }
