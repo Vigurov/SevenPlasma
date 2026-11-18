@@ -17,7 +17,7 @@ effects, logon screen and UAC are their work. SevenPlasma adds its own changes a
 | | |
 |---|---|
 | **Shell** | AeroThemePlasma with changes: Start menu (with Windows 7 jump lists: a program's tasks and recent files), taskbar, tray, tooltips, desktop, logon and lock screens (including accounts without a password, as in Windows 7) |
-| **Explorer** | Dolphin and KIO with changes: command bar, navigation pane (files can be dropped on its folders and disks), libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails; copying into C:\ and other system folders asks "Destination Folder Access Denied" → Continue, as in Windows 7 |
+| **Explorer** | Dolphin and KIO with changes: command bar, navigation pane (files can be dropped on its folders and disks), libraries, address bar, Open / Save dialogs, Properties, Open with, folder thumbnails; copying into C:\ and other system folders asks "Destination Folder Access Denied" → Continue, as in Windows 7; copying, moving and deleting show the Windows 7 progress window (animated banner, the green bar with its moving glow, More details) |
 | **Control Panel** | Getting Started, sound, volume mixer, display, personalization, network, firewall, Windows Update (with its notification-area icon when updates are waiting), Action Center, user accounts, backup, fonts, indexing, accessibility, performance and the Experience Index, devices and printers… |
 | **Administrative tools** | Computer Management, Event Viewer, Disk Management, Windows Firewall with Advanced Security, Device Manager, Task Manager, Resource Monitor |
 | **Accessories** | Calculator, Notepad, Paint, Snipping Tool, Sticky Notes, Character Map, On-Screen Keyboard, Magnifier, Photo Viewer, Windows Media Player 12, Windows Media Center (music, pictures, videos and the games as extras; TV needs a tuner and is not set up), Windows DVD Maker (real DVD-Video discs with the menu styles of Windows 7, slide shows with music), gadgets, Run |
@@ -187,6 +187,9 @@ The state from before the install is kept in `~/.local/share/sevenplasma-backup`
   UAC password prompt; files and folders made there belong to the administrator (root). Deleting there is not done
   as administrator yet, and declining the password prompt shows "Access denied" with Retry / Cancel (Windows 7 just
   stops).
+- The banner animation of the copy window (the flying sheets) is a Windows 7 vector animation that SevenPlasma
+  cannot draw yet: the window shows the banner's colours without the sheets. The progress bar, its moving glow and the
+  rest of the window are as in Windows 7.
 - Windows DVD Maker makes still menus in the styles of Windows 7 (the moving menus of the original are not drawn);
   burning needs dvdauthor and growisofs (installed with SevenPlasma) and a DVD burner.
 - Every interface picture comes from your Windows 7 image or is drawn by SevenPlasma; the pictures of the

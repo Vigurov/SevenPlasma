@@ -33164,5 +33164,98 @@
 "from": "icon",
 "id": 128,
 "extra": "256@32"
+},
+{
+"dest": "seven-aero/progress/bar.png",
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 648,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-aero/progress/fill.png",
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 656,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-aero/progress/move.png",
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 664,
+"extra": "IMAGE"
+},
+{
+"dest": "seven-aero/progress/expando.png",
+"from": "layers",
+"layers": [
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 693,
+"extra": "IMAGE",
+"crop": [
+0,
+0,
+19,
+21
+],
+"canvas": [
+19,
+126
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 696,
+"extra": "IMAGE",
+"place": [
+0,
+21
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 699,
+"extra": "IMAGE",
+"place": [
+0,
+42
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 702,
+"extra": "IMAGE",
+"place": [
+0,
+63
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 705,
+"extra": "IMAGE",
+"place": [
+0,
+84
+]
+},
+{
+"src": "Windows/Resources/Themes/Aero/aero.msstyles",
+"from": "image-unpremul",
+"id": 708,
+"extra": "IMAGE",
+"place": [
+0,
+105
+]
+}
+]
 }
 ]

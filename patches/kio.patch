@@ -155,7 +155,7 @@ index 295c2c9..6d4d736 100644
      KF6::IconThemes   # KIconLoader
      KF6::IconWidgets   # KIconButton
 diff --git a/src/filewidgets/kdiroperator.cpp b/src/filewidgets/kdiroperator.cpp
-index 8dd0dd3..6d59fa0 100644
+index 8dd0dd3..ee4fe82 100644
 --- a/src/filewidgets/kdiroperator.cpp
 +++ b/src/filewidgets/kdiroperator.cpp
 @@ -50,6 +50,17 @@
@@ -610,7 +610,7 @@ index c7cbed3..4a152c6 100644
          KFileFilter allFilter(i18n("All Files"), {}, {QStringLiteral("application/octet-stream")});
  
 diff --git a/src/filewidgets/kfilewidget.cpp b/src/filewidgets/kfilewidget.cpp
-index 4f2dcf9..238e69d 100644
+index 4f2dcf9..8d5bc3b 100644
 --- a/src/filewidgets/kfilewidget.cpp
 +++ b/src/filewidgets/kfilewidget.cpp
 @@ -13,6 +13,36 @@
@@ -2018,7 +2018,7 @@ index 5125965..bde1c7a 100644
          if (currentUrl.isLocalFile()) {
  #ifdef Q_OS_WIN
 diff --git a/src/filewidgets/kurlnavigatorbutton.cpp b/src/filewidgets/kurlnavigatorbutton.cpp
-index bed4af1..e723646 100644
+index bed4af1..158c38e 100644
 --- a/src/filewidgets/kurlnavigatorbutton.cpp
 +++ b/src/filewidgets/kurlnavigatorbutton.cpp
 @@ -6,6 +6,7 @@
@@ -2107,7 +2107,7 @@ index bed4af1..e723646 100644
      // Draw gradient overlay if text is clipped
      painter.setPen(fgColor);
 diff --git a/src/widgets/deleteortrashjob.cpp b/src/widgets/deleteortrashjob.cpp
-index 2d18330..1565d59 100644
+index 2d18330..dae92e7 100644
 --- a/src/widgets/deleteortrashjob.cpp
 +++ b/src/widgets/deleteortrashjob.cpp
 @@ -7,6 +7,13 @@
@@ -2354,6 +2354,86 @@ index def0c79..039ca04 100644
              case Permissions:
                  return i18nc("@title:column", "Permissions");
              case Owner:
+diff --git a/src/widgets/kdynamicjobtracker.cpp b/src/widgets/kdynamicjobtracker.cpp
+index 0c7bf6f..393a8a0 100644
+--- a/src/widgets/kdynamicjobtracker.cpp
++++ b/src/widgets/kdynamicjobtracker.cpp
+@@ -9,6 +9,7 @@
+ #include "kdynamicjobtracker_p.h"
+ #include "kio_widgets_debug.h"
+ #include "kuiserver_interface.h"
++#include "win7copydialog_p.h"
+ 
+ #include <KInhibitionJobTracker>
+ #include <KJobTrackerInterface>
+@@ -27,6 +28,7 @@ struct AllTrackers {
+     KUiServerV2JobTracker *kuiserverV2Tracker;
+     KWidgetJobTracker *widgetTracker;
+     KInhibitionJobTracker *inhibitionTracker;
++    Win7Copy::Tracker *win7Tracker;
+ };
+ 
+ class KDynamicJobTrackerPrivate
+@@ -41,6 +43,7 @@ public:
+         delete kuiserverV2Tracker;
+         delete widgetTracker;
+         delete inhibitionTracker;
++        delete win7Tracker;
+     }
+ 
+     static bool hasDBusInterface(const QString &introspectionData, const QString &interface)
+@@ -61,6 +64,7 @@ public:
+     KUiServerV2JobTracker *kuiserverV2Tracker = nullptr;
+     KWidgetJobTracker *widgetTracker = nullptr;
+     KInhibitionJobTracker *inhibitionTracker = nullptr;
++    Win7Copy::Tracker *win7Tracker = nullptr;
+     QMap<KJob *, AllTrackers> trackers;
+ 
+     enum JobViewServerSupport {
+@@ -99,6 +103,7 @@ void KDynamicJobTracker::registerJob(KJob *job)
+     trackers.kuiserverV2Tracker = nullptr;
+     trackers.widgetTracker = nullptr;
+     trackers.inhibitionTracker = nullptr;
++    trackers.win7Tracker = nullptr;
+ 
+     auto useWidgetsFallback = [this, canHaveWidgets, &trackers, job] {
+         if (canHaveWidgets) {
+@@ -112,6 +117,23 @@ void KDynamicJobTracker::registerJob(KJob *job)
+         }
+     };
+ 
++    // Windows 7: copying, moving and deleting show the file operation window instead of a notification
++    if (canHaveWidgets && Win7Copy::Tracker::wants(job)) {
++        if (!d->win7Tracker) {
++            d->win7Tracker = new Win7Copy::Tracker();
++        }
++        trackers.win7Tracker = d->win7Tracker;
++        trackers.win7Tracker->registerJob(job);
++        if (!job->property("kio_no_inhibit_suspend").toBool() && QDBusConnection::sessionBus().interface()) {
++            if (!d->inhibitionTracker) {
++                d->inhibitionTracker = new KInhibitionJobTracker();
++            }
++            trackers.inhibitionTracker = d->inhibitionTracker;
++            trackers.inhibitionTracker->registerJob(job);
++        }
++        return;
++    }
++
+     // do not try to use kuiserver on Windows/macOS
+ #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+     useWidgetsFallback();
+@@ -212,6 +234,11 @@ void KDynamicJobTracker::unregisterJob(KJob *job)
+     KUiServerV2JobTracker *kuiserverV2Tracker = trackers.kuiserverV2Tracker;
+     KWidgetJobTracker *widgetTracker = trackers.widgetTracker;
+     KInhibitionJobTracker *inhibitionTracker = trackers.inhibitionTracker;
++    Win7Copy::Tracker *win7Tracker = trackers.win7Tracker;
++
++    if (win7Tracker) {
++        win7Tracker->unregisterJob(job);
++    }
+ 
+     if (kuiserverV2Tracker) {
+         kuiserverV2Tracker->unregisterJob(job);
 diff --git a/src/widgets/kfileitemdelegate.cpp b/src/widgets/kfileitemdelegate.cpp
 index f6c3b47..daf8d1d 100644
 --- a/src/widgets/kfileitemdelegate.cpp
@@ -2369,7 +2449,7 @@ index f6c3b47..daf8d1d 100644
      const QVariant value = index.data(KDirModel::ChildCountRole);
      const int count = value.typeId() == QMetaType::Int ? value.toInt() : KDirModel::ChildCountUnknown;
 diff --git a/src/widgets/kpropertiesdialog.cpp b/src/widgets/kpropertiesdialog.cpp
-index 3333b3e..37453f9 100644
+index 3333b3e..000477c 100644
 --- a/src/widgets/kpropertiesdialog.cpp
 +++ b/src/widgets/kpropertiesdialog.cpp
 @@ -31,6 +31,10 @@
@@ -2434,7 +2514,7 @@ index 3333b3e..37453f9 100644
  {
      if (d->fileSharePageItem) {
 diff --git a/src/widgets/kpropertiesdialog.h b/src/widgets/kpropertiesdialog.h
-index 69459f7..1cd2b39 100644
+index 69459f7..be668db 100644
 --- a/src/widgets/kpropertiesdialog.h
 +++ b/src/widgets/kpropertiesdialog.h
 @@ -301,6 +301,11 @@ public:
@@ -2597,7 +2677,7 @@ index 196f4c5..970cbdc 100644
  
      static inline PasteJob *newJob(const QMimeData *mimeData, const QUrl &destDir, JobFlags flags, bool clipboard)
 diff --git a/src/widgets/widgetsopenwithhandler.cpp b/src/widgets/widgetsopenwithhandler.cpp
-index 8133c2e..6ef326d 100644
+index 8133c2e..555e5da 100644
 --- a/src/widgets/widgetsopenwithhandler.cpp
 +++ b/src/widgets/widgetsopenwithhandler.cpp
 @@ -6,6 +6,8 @@
@@ -2983,7 +3063,7 @@ index 0000000..d213992
 +msgstr "Ім'я"
 diff --git a/src/filewidgets/kfilewin7chrome.cpp b/src/filewidgets/kfilewin7chrome.cpp
 new file mode 100644
-index 0000000..df82e07
+index 0000000..374cafd
 --- /dev/null
 +++ b/src/filewidgets/kfilewin7chrome.cpp
 @@ -0,0 +1,775 @@
@@ -4492,7 +4572,7 @@ index 0000000..1756e61
 +#endif // KFILEWIN7NAVPANE_H
 diff --git a/src/filewidgets/kfilewin7viewmenu.cpp b/src/filewidgets/kfilewin7viewmenu.cpp
 new file mode 100644
-index 0000000..cf6dd0e
+index 0000000..5fd7264
 --- /dev/null
 +++ b/src/filewidgets/kfilewin7viewmenu.cpp
 @@ -0,0 +1,268 @@
@@ -4942,9 +5022,652 @@ index 0000000..a3daa7e
 +}
 +
 +#endif
+diff --git a/src/widgets/win7copydialog_p.h b/src/widgets/win7copydialog_p.h
+new file mode 100644
+index 0000000..d522e01
+--- /dev/null
++++ b/src/widgets/win7copydialog_p.h
+@@ -0,0 +1,637 @@
++/*
++ * The Windows 7 file operation window: "Copying 1 698 items (395 MB)" with the animated banner, the green progress
++ * bar with its moving glow, "More details" and Cancel. Used for copying, moving and deleting (instead of the
++ * Plasma notification); measured on the reference Windows 7 VM (refs/copy): client area 400 px wide, banner 40 px,
++ * text lines every 15 px, bar 15 px high, grey footer 43 px.
++ * Pictures from aero.msstyles (Progress BAR/FILL/MOVEOVERLAY, TaskDialog EXPANDOBUTTON) and the banner animation
++ * (3 s loop) are read from ~/.local/share/seven-aero/progress; without them it falls back to plain drawing.
++ *
++ * SPDX-License-Identifier: LGPL-2.0-or-later
++ */
++
++#ifndef WIN7COPYDIALOG_P_H
++#define WIN7COPYDIALOG_P_H
++
++#include "kio/copyjob.h"
++#include "kio/deletejob.h"
++
++#include <KJobTrackerInterface>
++#include <KLocalizedString>
++
++#include <QApplication>
++#include <QElapsedTimer>
++#include <QGuiApplication>
++#include <QHash>
++#include <QIcon>
++#include <QLocale>
++#include <QMouseEvent>
++#include <QPainter>
++#include <QPointer>
++#include <QPushButton>
++#include <QRegularExpression>
++#include <QScreen>
++#include <QStandardPaths>
++#include <QTimer>
++#include <QUrl>
++#include <QWidget>
++
++#include <cmath>
++
++namespace Win7Copy
++{
++inline QImage picture(const char *name)
++{
++    return QImage(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("seven-aero/progress/%1.png").arg(QLatin1String(name))));
++}
++
++/** a msstyles picture stretched with its sizing margins (left, right, top, bottom) */
++inline void drawNine(QPainter &p, const QRect &r, const QImage &img, int l, int rr, int t, int b)
++{
++    if (img.isNull() || r.isEmpty()) {
++        return;
++    }
++    // (narrower than the margins: the margins shrink, as in uxtheme)
++    if (r.width() < l + rr) {
++        const int w = r.width();
++        rr = rr * w / (l + rr);
++        l = w - rr;
++    }
++    const int W = img.width(), H = img.height();
++    const int xs[4] = {r.left(), r.left() + l, r.right() + 1 - rr, r.right() + 1};
++    const int ys[4] = {r.top(), r.top() + t, r.bottom() + 1 - b, r.bottom() + 1};
++    const int sx[4] = {0, l, W - rr, W};
++    const int sy[4] = {0, t, H - b, H};
++    for (int i = 0; i < 3; ++i) {
++        for (int j = 0; j < 3; ++j) {
++            const QRect d(xs[j], ys[i], xs[j + 1] - xs[j], ys[i + 1] - ys[i]);
++            const QRect s(sx[j], sy[i], sx[j + 1] - sx[j], sy[i + 1] - sy[i]);
++            if (!d.isEmpty() && !s.isEmpty()) {
++                p.drawImage(d, img, s);
++            }
++        }
++    }
++}
++
++/** sizes as Windows 7 writes them: 395 МБ, 3,83 МБ, 27,9 МБ (three digits, cut off, not rounded) */
++inline QString sizeText(qulonglong bytes)
++{
++    const QString units[] = {i18nd("sevenplasma", "bytes"), i18nd("sevenplasma", "KB"), i18nd("sevenplasma", "MB"), i18nd("sevenplasma", "GB"),
++                             i18nd("sevenplasma", "TB")};
++    if (bytes < 1024) {
++        return QStringLiteral("%1 %2").arg(QLocale().toString(bytes), units[0]);
++    }
++    double v = bytes;
++    int u = 0;
++    while (v >= 1000 && u < 4) {
++        v /= 1024;
++        ++u;
++    }
++    const int decimals = v < 10 ? 2 : v < 100 ? 1 : 0;
++    const double f = std::pow(10.0, decimals);
++    v = std::floor(v * f) / f;
++    return QStringLiteral("%1 %2").arg(QLocale().toString(v, 'f', decimals), units[u]);
++}
++
++/** "5 Seconds", "1 Hour and 5 Minutes" (as Windows 7 writes the time left) */
++inline QString duration(qint64 secs)
++{
++    if (secs < 60) {
++        return i18ndp("sevenplasma", "%1 Second", "%1 Seconds", int(qMax<qint64>(secs, 1)));
++    }
++    const int mins = int((secs + 30) / 60);
++    if (mins < 60) {
++        return i18ndp("sevenplasma", "%1 Minute", "%1 Minutes", mins);
++    }
++    const QString hs = i18ndp("sevenplasma", "%1 Hour", "%1 Hours", mins / 60);
++    return mins % 60 ? i18nd("sevenplasma", "%1 and %2", hs, i18ndp("sevenplasma", "%1 Minute", "%1 Minutes", mins % 60)) : hs;
++}
++
++/** a folder as "name (path)", as the dialog shows the source and destination */
++struct Place {
++    QString name, path;
++};
++inline Place place(const QUrl &folder)
++{
++    const QUrl u = folder.adjusted(QUrl::StripTrailingSlash);
++    if (u.scheme() == QLatin1String("trash")) {
++        return {i18nd("sevenplasma", "Recycle Bin"), QString()};
++    }
++    QString path = u.isLocalFile() ? u.toLocalFile() : u.toDisplayString(QUrl::PreferLocalFile);
++    QString name = u.fileName();
++    if (name.isEmpty()) {
++        name = path;
++    }
++    return {name, path};
++}
++
++class Window : public QWidget
++{
++public:
++    enum Kind { Copy, Move, Delete };
++
++    explicit Window(KJob *job)
++        : QWidget(nullptr, Qt::Window)
++        , m_job(job)
++    {
++        setAttribute(Qt::WA_DeleteOnClose);
++        setMouseTracking(true);
++        static const QImage banner = picture("copy-banner");
++        static const QImage bar = picture("bar"), fill = picture("fill"), move = picture("move"), expando = picture("expando");
++        m_banner = banner;
++        m_bar = bar;
++        m_fill = fill;
++        m_move = move;
++        m_expando = expando;
++
++        if (auto *c = qobject_cast<KIO::CopyJob *>(job)) {
++            m_kind = c->operationMode() == KIO::CopyJob::Move ? Move : Copy;
++            if (c->destUrl().scheme() == QLatin1String("trash")) {
++                m_kind = Delete; // (moving to the Recycle Bin is "Deleting" in Windows 7)
++            }
++            const QList<QUrl> src = c->srcUrls();
++            if (!src.isEmpty()) {
++                m_from = place(src.first().adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash));
++            }
++            m_to = place(c->destUrl());
++            m_totalItems = src.size();
++            QObject::connect(c, &KIO::CopyJob::copying, this, [this](KIO::Job *, const QUrl &from, const QUrl &) {
++                setCurrent(from);
++            });
++            QObject::connect(c, &KIO::CopyJob::moving, this, [this](KIO::Job *, const QUrl &from, const QUrl &) {
++                setCurrent(from);
++            });
++        } else if (auto *d = qobject_cast<KIO::DeleteJob *>(job)) {
++            m_kind = Delete;
++            const QList<QUrl> urls = d->urls();
++            if (!urls.isEmpty()) {
++                m_from = place(urls.first().adjusted(QUrl::RemoveFilename | QUrl::StripTrailingSlash));
++            }
++            m_totalItems = urls.size();
++            QObject::connect(d, &KIO::DeleteJob::deleting, this, [this](KIO::Job *, const QUrl &file) {
++                setCurrent(file);
++            });
++        }
++        setWindowIcon(QIcon::fromTheme(m_kind == Delete ? QStringLiteral("edit-delete") : m_kind == Move ? QStringLiteral("edit-cut") : QStringLiteral("edit-copy")));
++
++        m_cancel = new QPushButton(i18nd("sevenplasma", "Cancel"), this);
++        m_cancel->setDefault(true);
++        QObject::connect(m_cancel, &QPushButton::clicked, this, &Window::cancel);
++
++        m_clock.start();
++        m_anim = new QTimer(this);
++        m_anim->setInterval(33);
++        QObject::connect(m_anim, &QTimer::timeout, this, [this] {
++            update(0, 0, width(), 40);
++            update(barRect().adjusted(-2, -2, 2, 2));
++        });
++        m_anim->start();
++        relayout();
++
++        // test hook: WIN7_COPY_DIALOG_GRAB=/dir saves the window every 700 ms (and opens the details after 3 s)
++        const QString grab = qEnvironmentVariable("WIN7_COPY_DIALOG_GRAB");
++        if (!grab.isEmpty()) {
++            auto *t = new QTimer(this);
++            QObject::connect(t, &QTimer::timeout, this, [this, grab] {
++                static int n = 0;
++                if (n == 4) {
++                    m_details = true;
++                    relayout();
++                }
++                grab_(grab + QStringLiteral("/copy%1.png").arg(n++, 2, 10, QLatin1Char('0')));
++            });
++            t->start(700);
++        }
++    }
++
++    void grab_(const QString &file)
++    {
++        grab().save(file);
++    }
++
++    // ---- fed by the tracker ----
++    void setTotal(KJob::Unit unit, qulonglong amount)
++    {
++        if (unit == KJob::Bytes) {
++            m_totalBytes = amount;
++        } else if (unit == KJob::Files) {
++            m_totalFiles = amount;
++        } else if (unit == KJob::Directories) {
++            m_totalDirs = amount;
++        }
++        if (m_totalFiles + m_totalDirs > 0) {
++            m_totalItems = m_totalFiles + m_totalDirs;
++        }
++        refresh();
++    }
++    void setProcessed(KJob::Unit unit, qulonglong amount)
++    {
++        if (unit == KJob::Bytes) {
++            m_doneBytes = amount;
++        } else if (unit == KJob::Files) {
++            m_doneFiles = amount;
++        } else if (unit == KJob::Directories) {
++            m_doneDirs = amount;
++        }
++        refresh();
++    }
++    void setPercent(unsigned long p)
++    {
++        m_percent = int(p);
++        refresh();
++    }
++    void setSpeed(unsigned long bytesPerSecond)
++    {
++        // (smoothed, so the time left does not jump around)
++        m_speed = m_speed <= 0 ? double(bytesPerSecond) : m_speed * 0.8 + double(bytesPerSecond) * 0.2;
++        m_speedKnown = m_clock.elapsed() > 1500;
++        refresh();
++    }
++    void counted()
++    {
++        m_counting = false;
++    }
++
++protected:
++    void paintEvent(QPaintEvent *) override
++    {
++        QPainter p(this);
++        p.fillRect(rect(), Qt::white);
++
++        // banner: the 3 s animation (frames of 400x40), the main instruction over it
++        if (!m_banner.isNull()) {
++            const int frames = m_banner.height() / 40;
++            const int f = int((m_clock.elapsed() % 2904) * frames / 2904);
++            p.drawImage(QRect(0, 0, width(), 40), m_banner, QRect(0, f * 40, 400, 40));
++        } else {
++            QLinearGradient g(0, 0, width(), 0);
++            g.setColorAt(0, QColor(0xdb, 0xe4, 0xf3));
++            g.setColorAt(0.55, QColor(0x9d, 0xc1, 0xe3));
++            g.setColorAt(1, QColor(0x0e, 0x3e, 0x66));
++            p.fillRect(0, 0, width(), 40, g);
++        }
++        QFont big = font();
++        big.setPointSizeF(12);
++        p.setFont(big);
++        p.setPen(Qt::black);
++        p.drawText(23, 26, QFontMetrics(big).elidedText(title(), Qt::ElideRight, 330));
++
++        p.setFont(font());
++        const QFontMetrics fm(font());
++        if (!m_details) {
++            drawSegments(p, 22, 61, fromToLine());
++            p.drawText(22, 76, secondLine());
++        } else {
++            const QStringList labels = {i18nd("sevenplasma", "Name:"), i18nd("sevenplasma", "From:"), i18nd("sevenplasma", "To:"),
++                                        i18nd("sevenplasma", "Time remaining:"), i18nd("sevenplasma", "Items remaining:"), i18nd("sevenplasma", "Speed:")};
++            int y = 61;
++            for (int i = 0; i < labels.size(); ++i) {
++                if (i == 2 && m_kind == Delete) {
++                    continue;
++                }
++                p.drawText(22, y, labels[i]);
++                const int x = valueColumn(fm);
++                switch (i) {
++                case 0:
++                    p.drawText(x, y, fm.elidedText(m_current, Qt::ElideMiddle, 377 - x));
++                    break;
++                case 1:
++                    drawSegments(p, x, y, {{m_from.name, true}, {m_from.path.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(m_from.path), false}});
++                    break;
++                case 2:
++                    drawSegments(p, x, y, {{m_to.name, true}, {m_to.path.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(m_to.path), false}});
++                    break;
++                case 3:
++                    p.drawText(x, y, m_speedKnown ? i18nd("sevenplasma", "About %1", duration(secondsLeft())) : i18nd("sevenplasma", "Calculating..."));
++                    break;
++                case 4:
++                    p.drawText(x, y, QStringLiteral("%1 (%2)").arg(QLocale().toString(qMax<qint64>(0, qint64(m_totalItems) - qint64(m_doneFiles + m_doneDirs))), sizeText(m_totalBytes > m_doneBytes ? m_totalBytes - m_doneBytes : 0)));
++                    break;
++                case 5:
++                    p.drawText(x, y, m_speedKnown ? i18nd("sevenplasma", "%1/second", sizeText(qulonglong(m_speed))) : i18nd("sevenplasma", "Calculating..."));
++                    break;
++                }
++                y += 15;
++            }
++        }
++
++        drawBar(p, barRect());
++
++        // footer: grey with a light line on top, the expando button, Cancel
++        const int fy = barRect().bottom() + 16;
++        p.fillRect(0, fy, width(), height() - fy, QColor(0xf0, 0xf0, 0xf0));
++        p.fillRect(0, fy, width(), 1, QColor(0xdf, 0xdf, 0xdf));
++        const int state = (m_details ? 3 : 0) + (m_expandoDown ? 2 : m_expandoHot ? 1 : 0);
++        if (!m_expando.isNull()) {
++            const int h = m_expando.height() / 6;
++            p.drawImage(23, fy + 8, m_expando, 0, state * h, m_expando.width(), h);
++        }
++        p.drawText(44, fy + 26, expandoText());
++    }
++
++    void mouseMoveEvent(QMouseEvent *e) override
++    {
++        const bool hot = expandoRect().contains(e->position().toPoint());
++        if (hot != m_expandoHot) {
++            m_expandoHot = hot;
++            update(expandoRect());
++        }
++    }
++    void leaveEvent(QEvent *) override
++    {
++        m_expandoHot = false;
++        update(expandoRect());
++    }
++    void mousePressEvent(QMouseEvent *e) override
++    {
++        if (e->button() == Qt::LeftButton && expandoRect().contains(e->position().toPoint())) {
++            m_expandoDown = true;
++            update(expandoRect());
++        }
++    }
++    void mouseReleaseEvent(QMouseEvent *e) override
++    {
++        if (m_expandoDown) {
++            m_expandoDown = false;
++            if (expandoRect().contains(e->position().toPoint())) {
++                m_details = !m_details;
++                relayout();
++            }
++            update();
++        }
++    }
++    void closeEvent(QCloseEvent *e) override
++    {
++        // (closing the window stops the operation, as in Windows 7)
++        if (m_job && !m_finished) {
++            cancel();
++        }
++        QWidget::closeEvent(e);
++    }
++
++public:
++    void finish()
++    {
++        m_finished = true;
++        close();
++    }
++
++private:
++    struct Seg {
++        QString text;
++        bool bold;
++    };
++
++    QString expandoText() const
++    {
++        return m_details ? i18nd("sevenplasma", "Fewer details") : i18nd("sevenplasma", "More details");
++    }
++    QString title() const
++    {
++        // "Copying 1 698 items (395 MB)"
++        const qulonglong n = qMax<qulonglong>(m_totalItems, 1);
++        const QString count = QLocale().toString(n);
++        QString t = m_kind == Delete ? i18ndp("sevenplasma", "Deleting %2 item", "Deleting %2 items", int(qMin<qulonglong>(n, INT_MAX)), count)
++            : m_kind == Move         ? i18ndp("sevenplasma", "Moving %2 item", "Moving %2 items", int(qMin<qulonglong>(n, INT_MAX)), count)
++                                     : i18ndp("sevenplasma", "Copying %2 item", "Copying %2 items", int(qMin<qulonglong>(n, INT_MAX)), count);
++        if (m_totalBytes > 0) {
++            t += QStringLiteral(" (%1)").arg(sizeText(m_totalBytes));
++        }
++        return t;
++    }
++    QList<Seg> fromToLine() const
++    {
++        // "from <b>t</b> (C:\t) to <b>x2</b> (C:\Users\...)": the translated sentence with the two places put in
++        // (the placeholders are given back as themselves: they are filled in as bold / plain pieces below)
++        const QString p1 = QStringLiteral("%1"), p2 = QStringLiteral("%2");
++        const QString tpl = m_kind == Delete ? i18nd("sevenplasma", "from %1", p1) : i18nd("sevenplasma", "from %1 to %2", p1, p2);
++        QList<Seg> s;
++        int from = 0;
++        static const QRegularExpression ph(QStringLiteral("%([12])"));
++        for (auto it = ph.globalMatch(tpl); it.hasNext();) {
++            const QRegularExpressionMatch m = it.next();
++            s << Seg{tpl.mid(from, m.capturedStart() - from), false};
++            const Place &pl = m.captured(1) == QLatin1String("1") ? m_from : m_to;
++            s << Seg{pl.name, true};
++            if (!pl.path.isEmpty()) {
++                s << Seg{QStringLiteral(" (%1)").arg(pl.path), false};
++            }
++            from = m.capturedEnd();
++        }
++        s << Seg{tpl.mid(from), false};
++        return s;
++    }
++    QString secondLine() const
++    {
++        if (m_speedKnown && m_speed > 0) {
++            return i18nd("sevenplasma", "About %1 remaining", duration(secondsLeft()));
++        }
++        if (m_totalItems > 1) {
++            const int n = int(qMin<qulonglong>(m_totalItems, INT_MAX));
++            return i18ndp("sevenplasma", "Discovered %2 item", "Discovered %2 items", n, QLocale().toString(m_totalItems))
++                + (m_totalBytes ? QStringLiteral(" (%1)...").arg(sizeText(m_totalBytes)) : QStringLiteral("..."));
++        }
++        return QString();
++    }
++    qint64 secondsLeft() const
++    {
++        if (m_speed <= 0 || m_totalBytes <= m_doneBytes) {
++            return 1;
++        }
++        return qint64(double(m_totalBytes - m_doneBytes) / m_speed) + 1;
++    }
++    int valueColumn(const QFontMetrics &fm) const
++    {
++        // (Windows 7: 116 px; wider when the translated labels need it)
++        int w = 0;
++        for (const QString &l : {i18nd("sevenplasma", "Time remaining:"), i18nd("sevenplasma", "Items remaining:")}) {
++            w = qMax(w, fm.horizontalAdvance(l));
++        }
++        return qMax(116, w + 22 + 12);
++    }
++    void drawSegments(QPainter &p, int x, int y, const QList<Seg> &segs) const
++    {
++        const int right = 377;
++        QFont normal = font(), bold = font();
++        bold.setBold(true);
++        for (const Seg &s : segs) {
++            if (s.text.isEmpty()) {
++                continue;
++            }
++            p.setFont(s.bold ? bold : normal);
++            const QFontMetrics fm(p.font());
++            const int w = fm.horizontalAdvance(s.text);
++            if (x + w > right) {
++                p.drawText(x, y, fm.elidedText(s.text, Qt::ElideRight, right - x));
++                break;
++            }
++            p.drawText(x, y, s.text);
++            x += w;
++        }
++        p.setFont(normal);
++    }
++
++    QRect barRect() const
++    {
++        // under the last text line: 2 lines (short) or 6 / 5 (details)
++        const int lines = m_details ? (m_kind == Delete ? 5 : 6) : 2;
++        return QRect(22, 53 + (lines - 1) * 15 + 22, 355, 15);
++    }
++    QRect expandoRect() const
++    {
++        const int fy = barRect().bottom() + 16;
++        const QFontMetrics fm(font());
++        return QRect(23, fy + 8, 21 + fm.horizontalAdvance(expandoText()), 21);
++    }
++
++    void drawBar(QPainter &p, const QRect &r) const
++    {
++        if (m_bar.isNull()) {
++            p.setPen(QColor(0xb2, 0xb2, 0xb2));
++            p.setBrush(QColor(0xe6, 0xe6, 0xe6));
++            p.drawRect(r.adjusted(0, 0, -1, -1));
++        } else {
++            drawNine(p, r, m_bar, 9, 9, 7, 6);
++        }
++        const QRect inner = r.adjusted(1, 1, -1, -1);
++        // (deleting has no byte sizes: then by items)
++        const qulonglong doneItems = m_doneFiles + m_doneDirs;
++        const int pc = m_totalBytes ? int(qMin<qulonglong>(100, m_doneBytes * 100 / m_totalBytes))
++            : (m_totalItems > 1 && doneItems) ? int(qMin<qulonglong>(100, doneItems * 100 / m_totalItems))
++                                               : m_percent;
++        const int fw = inner.width() * qBound(0, pc, 100) / 100;
++        if (fw <= 0) {
++            return;
++        }
++        const QRect f(inner.left(), inner.top(), fw, inner.height());
++        if (m_fill.isNull()) {
++            p.fillRect(f, QColor(0x06, 0xd3, 0x2b));
++        } else {
++            drawNine(p, f, m_fill, 25, 25, 7, 6);
++        }
++        // the moving glow: 250 px/s from the left edge across the whole bar, again after a short pause
++        if (!m_move.isNull()) {
++            const qint64 period = qint64((inner.width() + m_move.width()) * 1000 / 250) + 220;
++            const qint64 t = m_clock.elapsed() % period;
++            const int x = inner.left() - m_move.width() + int(t * 250 / 1000);
++            p.save();
++            p.setClipRect(f);
++            p.drawImage(x, inner.center().y() - m_move.height() / 2 + 1, m_move);
++            p.restore();
++        }
++    }
++
++    void setCurrent(const QUrl &u)
++    {
++        m_current = u.fileName();
++        if (m_details) {
++            update();
++        }
++    }
++    void refresh()
++    {
++        const QString t = (m_speedKnown && m_speed > 0) ? i18nd("sevenplasma", "%1 remaining", duration(secondsLeft())) : title();
++        if (windowTitle() != t) {
++            setWindowTitle(t);
++        }
++        update();
++    }
++    void relayout()
++    {
++        const int fy = barRect().bottom() + 16;
++        setFixedSize(400, fy + 43);
++        m_cancel->setGeometry(304, fy + 10, 73, 23);
++    }
++    void cancel()
++    {
++        if (m_job) {
++            m_job->kill(KJob::EmitResult);
++        }
++    }
++
++    QPointer<KJob> m_job;
++    Kind m_kind = Copy;
++    Place m_from, m_to;
++    QString m_current;
++    qulonglong m_totalBytes = 0, m_doneBytes = 0, m_totalFiles = 0, m_doneFiles = 0, m_totalDirs = 0, m_doneDirs = 0, m_totalItems = 0;
++    int m_percent = 0;
++    double m_speed = 0;
++    bool m_speedKnown = false, m_counting = true, m_details = false, m_expandoHot = false, m_expandoDown = false, m_finished = false;
++    QElapsedTimer m_clock;
++    QTimer *m_anim = nullptr;
++    QPushButton *m_cancel = nullptr;
++    QImage m_banner, m_bar, m_fill, m_move, m_expando;
++};
++
++/** the tracker: one window per copy / move / delete job, shown when the job is still running after a second */
++class Tracker : public KJobTrackerInterface
++{
++public:
++    static bool wants(KJob *job)
++    {
++        if (qEnvironmentVariableIsSet("WIN7_NO_COPY_DIALOG")) {
++            return false;
++        }
++        return qobject_cast<KIO::CopyJob *>(job) || qobject_cast<KIO::DeleteJob *>(job);
++    }
++
++    void registerJob(KJob *job) override
++    {
++        auto *w = new Window(job);
++        m_windows.insert(job, w);
++        KJobTrackerInterface::registerJob(job);
++        QTimer::singleShot(1000, w, [w] {
++            // (centred on the screen of the active window, offset when several are open)
++            static int cascade = 0;
++            QScreen *s = QApplication::activeWindow() ? QApplication::activeWindow()->screen() : QGuiApplication::primaryScreen();
++            const QRect a = s ? s->availableGeometry() : QRect(0, 0, 1920, 1080);
++            w->move(a.center() - QPoint(w->width() / 2, w->height() / 2) + QPoint(cascade, cascade) * 24);
++            cascade = (cascade + 1) % 6;
++            w->show();
++        });
++    }
++    void unregisterJob(KJob *job) override
++    {
++        KJobTrackerInterface::unregisterJob(job);
++        if (QPointer<Window> w = m_windows.take(job)) {
++            w->finish();
++        }
++    }
++
++protected:
++    void finished(KJob *job) override
++    {
++        if (QPointer<Window> w = m_windows.take(job)) {
++            w->finish();
++        }
++    }
++    void totalAmount(KJob *job, KJob::Unit unit, qulonglong amount) override
++    {
++        if (Window *w = m_windows.value(job)) {
++            w->setTotal(unit, amount);
++        }
++    }
++    void processedAmount(KJob *job, KJob::Unit unit, qulonglong amount) override
++    {
++        if (Window *w = m_windows.value(job)) {
++            w->setProcessed(unit, amount);
++        }
++    }
++    void percent(KJob *job, unsigned long p) override
++    {
++        if (Window *w = m_windows.value(job)) {
++            w->setPercent(p);
++        }
++    }
++    void speed(KJob *job, unsigned long v) override
++    {
++        if (Window *w = m_windows.value(job)) {
++            w->setSpeed(v);
++        }
++    }
++
++private:
++    QHash<KJob *, QPointer<Window>> m_windows;
++};
++}
++
++#endif
 diff --git a/src/widgets/win7elevate_p.h b/src/widgets/win7elevate_p.h
 new file mode 100644
-index 0000000..be021aa
+index 0000000..6ef852d
 --- /dev/null
 +++ b/src/widgets/win7elevate_p.h
 @@ -0,0 +1,204 @@

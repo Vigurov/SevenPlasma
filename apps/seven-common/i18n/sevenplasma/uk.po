@@ -1250,3 +1250,109 @@ msgstr "Останні"
 
 msgid "Tasks"
 msgstr "Завдання"
+
+# KIO: the Windows 7 file operation window (win7copydialog_p.h)
+msgid "bytes"
+msgstr "байт"
+
+msgid "KB"
+msgstr "КБ"
+
+msgid "MB"
+msgstr "МБ"
+
+msgid "GB"
+msgstr "ГБ"
+
+msgid "TB"
+msgstr "ТБ"
+
+msgid "%1 Second"
+msgid_plural "%1 Seconds"
+msgstr[0] "%1 секунда"
+msgstr[1] "%1 секунди"
+msgstr[2] "%1 секунд"
+
+msgid "%1 Minute"
+msgid_plural "%1 Minutes"
+msgstr[0] "%1 хвилина"
+msgstr[1] "%1 хвилини"
+msgstr[2] "%1 хвилин"
+
+msgid "%1 Hour"
+msgid_plural "%1 Hours"
+msgstr[0] "%1 година"
+msgstr[1] "%1 години"
+msgstr[2] "%1 годин"
+
+msgid "%1 and %2"
+msgstr "%1 і %2"
+
+msgid "Name:"
+msgstr "Ім'я:"
+
+msgid "From:"
+msgstr "Звідки:"
+
+msgid "To:"
+msgstr "Куди:"
+
+msgid "Time remaining:"
+msgstr "Залишилося часу:"
+
+msgid "Items remaining:"
+msgstr "Залишилося елементів:"
+
+msgid "Speed:"
+msgstr "Швидкість:"
+
+msgid "About %1"
+msgstr "Приблизно %1"
+
+msgid "Calculating..."
+msgstr "Обчислення..."
+
+msgid "%1/second"
+msgstr "%1/с"
+
+msgid "Fewer details"
+msgstr "Менше відомостей"
+
+msgid "More details"
+msgstr "Докладніше"
+
+msgid "Copying %2 item"
+msgid_plural "Copying %2 items"
+msgstr[0] "Копіювання %2 елемента"
+msgstr[1] "Копіювання %2 елементів"
+msgstr[2] "Копіювання %2 елементів"
+
+msgid "Moving %2 item"
+msgid_plural "Moving %2 items"
+msgstr[0] "Переміщення %2 елемента"
+msgstr[1] "Переміщення %2 елементів"
+msgstr[2] "Переміщення %2 елементів"
+
+msgid "Deleting %2 item"
+msgid_plural "Deleting %2 items"
+msgstr[0] "Видалення %2 елемента"
+msgstr[1] "Видалення %2 елементів"
+msgstr[2] "Видалення %2 елементів"
+
+msgid "from %1"
+msgstr "з %1"
+
+msgid "from %1 to %2"
+msgstr "з %1 до %2"
+
+msgid "About %1 remaining"
+msgstr "Залишилося приблизно %1"
+
+msgid "Discovered %2 item"
+msgid_plural "Discovered %2 items"
+msgstr[0] "Виявлено %2 елемент"
+msgstr[1] "Виявлено %2 елементи"
+msgstr[2] "Виявлено %2 елементів"
+
+msgid "%1 remaining"
+msgstr "Залишилося %1"
