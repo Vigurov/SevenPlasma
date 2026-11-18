@@ -3171,3 +3171,17 @@ index 0000000..58456ea
 +        }
 +    }
 +}
+diff --git a/plasma/plasmoids/src/desktopcontainment/src/package/contents/config/main.xml b/plasma/plasmoids/src/desktopcontainment/src/package/contents/config/main.xml
+index 0b87a73..e60873e 100644
+--- a/plasma/plasmoids/src/desktopcontainment/src/package/contents/config/main.xml
++++ b/plasma/plasmoids/src/desktopcontainment/src/package/contents/config/main.xml
+@@ -80,7 +80,8 @@
+     </entry>
+     <entry name="selectionMarkers" type="Bool">
+       <label>Whether to show selection markers when hovering Folder View icons.</label>
+-      <default>true</default>
++      <!-- Windows 7: no selection markers -->
++      <default>false</default>
+     </entry>
+     <entry name="renameInline" type="Bool">
+       <label>Whether to initiate inline renaming when clicking on the text of an already-selected item, while using the systemwide double-click mode.</label>
