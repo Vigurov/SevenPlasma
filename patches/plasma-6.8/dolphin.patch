@@ -4357,10 +4357,31 @@ index f385e66..d4686a7 100644
  
  void KItemListHeaderWidget::updatePressedRoleIndex(const QPointF &pos)
 diff --git a/src/kitemviews/private/kitemlistroleeditor.cpp b/src/kitemviews/private/kitemlistroleeditor.cpp
-index cec9bb9..6c32244 100644
+index cec9bb9..cbf5869 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.cpp
 +++ b/src/kitemviews/private/kitemlistroleeditor.cpp
-@@ -139,8 +139,30 @@ void KItemListRoleEditor::keyPressEvent(QKeyEvent *event)
+@@ -8,6 +8,20 @@
+ 
+ #include <KIO/Global>
+ 
++#include <QMimeData>
++
++/** one line: line breaks (and tabs) of a pasted or typed name become spaces */
++static QString win7SingleLine(QString text)
++{
++    for (QChar &c : text) {
++        if (c == QLatin1Char('\n') || c == QLatin1Char('\r') || c == QLatin1Char('\t') || c == QChar::LineSeparator
++            || c == QChar::ParagraphSeparator) {
++            c = QLatin1Char(' ');
++        }
++    }
++    return text;
++}
++
+ KItemListRoleEditor::KItemListRoleEditor(QWidget *parent)
+     : KTextEdit(parent)
+     , m_role()
+@@ -139,8 +153,30 @@ void KItemListRoleEditor::keyPressEvent(QKeyEvent *event)
      KTextEdit::keyPressEvent(event);
  }
  
@@ -4391,8 +4412,29 @@ index cec9bb9..6c32244 100644
      const qreal frameBorder = 2 * frameWidth();
  
      const auto originalSize = size();
+@@ -164,10 +200,19 @@ void KItemListRoleEditor::autoAdjustSize()
+     document()->setTextWidth(newSize.width());
+ }
+ 
++void KItemListRoleEditor::insertFromMimeData(const QMimeData *source)
++{
++    if (source && source->hasText()) {
++        insertPlainText(win7SingleLine(source->text()));
++        return;
++    }
++    QTextEdit::insertFromMimeData(source);
++}
++
+ void KItemListRoleEditor::emitRoleEditingFinished(EditResultDirection direction)
+ {
+     QVariant ret;
+-    ret.setValue(EditResult{KIO::encodeFileName(toPlainText()), direction});
++    ret.setValue(EditResult{KIO::encodeFileName(win7SingleLine(toPlainText())), direction});
+ 
+     if (!m_blockFinishedSignal) {
+         Q_EMIT roleEditingFinished(m_role, ret);
 diff --git a/src/kitemviews/private/kitemlistroleeditor.h b/src/kitemviews/private/kitemlistroleeditor.h
-index 3956380..ab0de1d 100644
+index 3956380..163f8a7 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.h
 +++ b/src/kitemviews/private/kitemlistroleeditor.h
 @@ -45,6 +45,12 @@ public:
@@ -4408,7 +4450,16 @@ index 3956380..ab0de1d 100644
      void setFinishedSignalBlocked(bool blocked);
      bool eventFilter(QObject *watched, QEvent *event) override;
  
-@@ -73,6 +79,7 @@ private:
+@@ -62,6 +68,8 @@ public Q_SLOTS:
+ protected:
+     bool event(QEvent *event) override;
+     void keyPressEvent(QKeyEvent *event) override;
++    // a file name is one line, as in Windows 7: line breaks of pasted text become spaces
++    void insertFromMimeData(const QMimeData *source) override;
+ 
+ private:
+     /**
+@@ -73,6 +81,7 @@ private:
  private:
      QByteArray m_role;
      bool m_blockFinishedSignal;

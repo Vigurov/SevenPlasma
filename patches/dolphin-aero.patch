@@ -748,7 +748,7 @@ index 1854449..d84bb74 100644
          Dolphin::openNewWindow(urls, nullptr, Dolphin::OpenNewWindowFlag::Select);
      };
 diff --git a/src/dolphincontextmenu.cpp b/src/dolphincontextmenu.cpp
-index 796c723..c2e44f2 100644
+index 796c723..813270a 100644
 --- a/src/dolphincontextmenu.cpp
 +++ b/src/dolphincontextmenu.cpp
 @@ -5,6 +5,16 @@
@@ -1204,7 +1204,7 @@ index 796c723..c2e44f2 100644
  
      QAction *propertiesAction = m_mainWindow->actionCollection()->action(QStringLiteral("properties"));
 diff --git a/src/dolphinmainwindow.cpp b/src/dolphinmainwindow.cpp
-index e4d580f..c3b95a4 100644
+index e4d580f..469fc80 100644
 --- a/src/dolphinmainwindow.cpp
 +++ b/src/dolphinmainwindow.cpp
 @@ -7,6 +7,13 @@
@@ -3413,7 +3413,7 @@ index b802b84..d5cb126 100644
  
      DolphinViewActionHandler *m_actionHandler;
 diff --git a/src/dolphinnavigatorswidgetaction.cpp b/src/dolphinnavigatorswidgetaction.cpp
-index f103675..048aa62 100644
+index f103675..5bbeae6 100644
 --- a/src/dolphinnavigatorswidgetaction.cpp
 +++ b/src/dolphinnavigatorswidgetaction.cpp
 @@ -272,7 +272,9 @@ QPushButton *DolphinNavigatorsWidgetAction::newEmptyTrashButton(const DolphinUrl
@@ -3428,7 +3428,7 @@ index f103675..048aa62 100644
      emptyTrashButton->setDisabled(Trash::isEmpty());
      return emptyTrashButton;
 diff --git a/src/dolphinui.rc b/src/dolphinui.rc
-index 4c5788a..c4d0a4a 100644
+index 4c5788a..2d6e674 100644
 --- a/src/dolphinui.rc
 +++ b/src/dolphinui.rc
 @@ -1,6 +1,6 @@
@@ -3486,7 +3486,7 @@ index 9405bb8..274220d 100644
  
  #include "moc_dolphinurlnavigatorscontroller.cpp"
 diff --git a/src/dolphinviewcontainer.cpp b/src/dolphinviewcontainer.cpp
-index 31adb63..9087425 100644
+index 31adb63..8688efb 100644
 --- a/src/dolphinviewcontainer.cpp
 +++ b/src/dolphinviewcontainer.cpp
 @@ -5,6 +5,11 @@
@@ -3765,7 +3765,7 @@ index 9ce164d..85c6637 100644
      FilterBar *m_filterBar;
  
 diff --git a/src/dolphinwindowheader.cpp b/src/dolphinwindowheader.cpp
-index ebc1524..f72d238 100644
+index ebc1524..6dcb580 100644
 --- a/src/dolphinwindowheader.cpp
 +++ b/src/dolphinwindowheader.cpp
 @@ -1,10 +1,16 @@
@@ -4135,7 +4135,7 @@ index ddbb8b6..c59c7c8 100644
      rect.adjust(-frameWidth, -frameWidth, frameWidth, frameWidth);
      rect.translate(pos());
 diff --git a/src/kitemviews/private/kitemlistheaderwidget.cpp b/src/kitemviews/private/kitemlistheaderwidget.cpp
-index f385e66..d4686a7 100644
+index f385e66..167232b 100644
 --- a/src/kitemviews/private/kitemlistheaderwidget.cpp
 +++ b/src/kitemviews/private/kitemlistheaderwidget.cpp
 @@ -10,6 +10,9 @@
@@ -4295,10 +4295,31 @@ index f385e66..d4686a7 100644
  
  void KItemListHeaderWidget::updatePressedRoleIndex(const QPointF &pos)
 diff --git a/src/kitemviews/private/kitemlistroleeditor.cpp b/src/kitemviews/private/kitemlistroleeditor.cpp
-index cec9bb9..6c32244 100644
+index cec9bb9..cbf5869 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.cpp
 +++ b/src/kitemviews/private/kitemlistroleeditor.cpp
-@@ -139,8 +139,30 @@ void KItemListRoleEditor::keyPressEvent(QKeyEvent *event)
+@@ -8,6 +8,20 @@
+ 
+ #include <KIO/Global>
+ 
++#include <QMimeData>
++
++/** one line: line breaks (and tabs) of a pasted or typed name become spaces */
++static QString win7SingleLine(QString text)
++{
++    for (QChar &c : text) {
++        if (c == QLatin1Char('\n') || c == QLatin1Char('\r') || c == QLatin1Char('\t') || c == QChar::LineSeparator
++            || c == QChar::ParagraphSeparator) {
++            c = QLatin1Char(' ');
++        }
++    }
++    return text;
++}
++
+ KItemListRoleEditor::KItemListRoleEditor(QWidget *parent)
+     : KTextEdit(parent)
+     , m_role()
+@@ -139,8 +153,30 @@ void KItemListRoleEditor::keyPressEvent(QKeyEvent *event)
      KTextEdit::keyPressEvent(event);
  }
  
@@ -4329,8 +4350,29 @@ index cec9bb9..6c32244 100644
      const qreal frameBorder = 2 * frameWidth();
  
      const auto originalSize = size();
+@@ -164,10 +200,19 @@ void KItemListRoleEditor::autoAdjustSize()
+     document()->setTextWidth(newSize.width());
+ }
+ 
++void KItemListRoleEditor::insertFromMimeData(const QMimeData *source)
++{
++    if (source && source->hasText()) {
++        insertPlainText(win7SingleLine(source->text()));
++        return;
++    }
++    QTextEdit::insertFromMimeData(source);
++}
++
+ void KItemListRoleEditor::emitRoleEditingFinished(EditResultDirection direction)
+ {
+     QVariant ret;
+-    ret.setValue(EditResult{KIO::encodeFileName(toPlainText()), direction});
++    ret.setValue(EditResult{KIO::encodeFileName(win7SingleLine(toPlainText())), direction});
+ 
+     if (!m_blockFinishedSignal) {
+         Q_EMIT roleEditingFinished(m_role, ret);
 diff --git a/src/kitemviews/private/kitemlistroleeditor.h b/src/kitemviews/private/kitemlistroleeditor.h
-index 3956380..ab0de1d 100644
+index 3956380..163f8a7 100644
 --- a/src/kitemviews/private/kitemlistroleeditor.h
 +++ b/src/kitemviews/private/kitemlistroleeditor.h
 @@ -45,6 +45,12 @@ public:
@@ -4346,7 +4388,16 @@ index 3956380..ab0de1d 100644
      void setFinishedSignalBlocked(bool blocked);
      bool eventFilter(QObject *watched, QEvent *event) override;
  
-@@ -73,6 +79,7 @@ private:
+@@ -62,6 +68,8 @@ public Q_SLOTS:
+ protected:
+     bool event(QEvent *event) override;
+     void keyPressEvent(QKeyEvent *event) override;
++    // a file name is one line, as in Windows 7: line breaks of pasted text become spaces
++    void insertFromMimeData(const QMimeData *source) override;
+ 
+ private:
+     /**
+@@ -73,6 +81,7 @@ private:
  private:
      QByteArray m_role;
      bool m_blockFinishedSignal;
@@ -4820,7 +4871,7 @@ index c5e5358..11dc6fb 100644
      } else if (url.isLocalFile()) {
 diff --git a/src/panels/places/win7navigationpane.cpp b/src/panels/places/win7navigationpane.cpp
 new file mode 100644
-index 0000000..8de8d67
+index 0000000..febc3ea
 --- /dev/null
 +++ b/src/panels/places/win7navigationpane.cpp
 @@ -0,0 +1,853 @@
@@ -5836,7 +5887,7 @@ index 0000000..8c5c87b
 +#endif
 diff --git a/src/win7computerpage.cpp b/src/win7computerpage.cpp
 new file mode 100644
-index 0000000..c6f5c88
+index 0000000..38428ba
 --- /dev/null
 +++ b/src/win7computerpage.cpp
 @@ -0,0 +1,1014 @@
@@ -7436,7 +7487,7 @@ index 0000000..3a9039a
 +#endif
 diff --git a/src/win7viewmodemenu.cpp b/src/win7viewmodemenu.cpp
 new file mode 100644
-index 0000000..d337150
+index 0000000..a8f69ef
 --- /dev/null
 +++ b/src/win7viewmodemenu.cpp
 @@ -0,0 +1,332 @@
