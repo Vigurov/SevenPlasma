@@ -1,5 +1,5 @@
 diff --git a/kdecoration/smodbutton.cpp b/kdecoration/smodbutton.cpp
-index 6e9b49d..4836c8f 100644
+index 6e9b49d..6dfc83a 100644
 --- a/kdecoration/smodbutton.cpp
 +++ b/kdecoration/smodbutton.cpp
 @@ -80,7 +80,7 @@ Button *Button::create(KDecoration3::DecorationButtonType type, KDecoration3::De
@@ -36,6 +36,17 @@ index 6e9b49d..4836c8f 100644
                  b->setEnabled(minimizeable);
                  b->forcePixmapReload();
              });
+@@ -199,6 +199,10 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
+         painter->translate(QPointF(0, c->isMaximized() ? scale : ((decoration()->settings()->smallSpacing() * 2) - 1) * scale));
+ 
+         iconRect.translate(0, ((titlebarHeight - iconSize.height()) / 2) * scale);
++        // Windows 7 draws the small icon (SM_CXSMICON, 16x16) centred in the caption icon area: painting the
++        // whole area made QIcon scale the 32x32 frame down instead of using an app's own 16x16 design
++        const QSizeF small(qMin<qreal>(16 * scale, iconRect.width()), qMin<qreal>(16 * scale, iconRect.height()));
++        iconRect = QRectF(iconRect.center() - QPointF(small.width() / 2, small.height() / 2), small);
+         c->icon().paint(painter, iconRect.toRect());
+     } else if (type() != KDecoration3::DecorationButtonType::Spacer) {
+         const bool isMaximized = c->isMaximized();
 diff --git a/kdecoration/smoddecoration.h b/kdecoration/smoddecoration.h
 index f7bbbac..ab96abe 100644
 --- a/kdecoration/smoddecoration.h

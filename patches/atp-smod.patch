@@ -102,3 +102,18 @@ index 3c027c6..4e17d04 100644
      <entry name="HideCaption" type = "Bool">
         <default>false</default>
      </entry>
+diff --git a/kdecoration/smod/smodbutton.cpp b/kdecoration/smod/smodbutton.cpp
+index e40ace7..6173972 100644
+--- a/kdecoration/smod/smodbutton.cpp
++++ b/kdecoration/smod/smodbutton.cpp
+@@ -84,6 +84,10 @@ namespace Breeze
+             painter->translate(QPointF(hPadding, vPadding));
+ 
+             iconRect.translate(0, (titlebarHeight - m_iconSize.height())/2);
++            // Windows 7 draws the small icon (SM_CXSMICON, 16x16) centred in the caption icon area: painting the
++            // whole area made QIcon scale the 32x32 frame down instead of using an app's own 16x16 design
++            const QSizeF small(qMin<qreal>(16, iconRect.width()), qMin<qreal>(16, iconRect.height()));
++            iconRect = QRectF(iconRect.center() - QPointF(small.width() / 2, small.height() / 2), small);
+             c->icon().paint(painter, iconRect.toRect());
+ 
+             painter->restore();
