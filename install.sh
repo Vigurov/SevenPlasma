@@ -489,14 +489,16 @@ mkdir -p "$HOME/.config/plasma-workspace/shutdown"
 printf '#!/bin/sh\nexec "%s/bin/seven-splash-wallpaper"\n' "$L" > "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
 chmod +x "$HOME/.config/plasma-workspace/shutdown/seven-splash-wallpaper.sh"
 "$L/bin/seven-splash-wallpaper" || true
-for f in "$REPO"/data/systemd/*.service "$REPO"/data/systemd/*.timer; do subst "$f" "$HOME/.config/systemd/user/$(basename "$f")"; done
+for f in "$REPO"/data/systemd/*.service "$REPO"/data/systemd/*.timer; do [ -e "$f" ] || continue; subst "$f" "$HOME/.config/systemd/user/$(basename "$f")"; done
 cp -r "$REPO"/apps/plasmoids/* "$L/share/plasma/plasmoids/"
 cp -r "$REPO/apps/kwin/sevenkeys" "$L/share/kwin/scripts/"
 run systemctl --user daemon-reload
-run systemctl --user enable seven-folder-refresh.service seven-wu-check.timer || true
+run systemctl --user enable seven-folder-refresh.service || true
+# the Windows Update tray check runs inside "seven-control --session" now (was a timer + a process of its own)
+systemctl --user disable --now seven-wu-check.timer 2>/dev/null || true
 # "Open with" of programs that ask through xdg-desktop-portal (Chrome, Telegram, Flatpak...): our Windows 7 dialog
 mkdir -p "$L/share/dbus-1/services" "$HOME/.config/xdg-desktop-portal"
-printf '[D-BUS Service]\nName=org.freedesktop.impl.portal.desktop.win7\nExec=%s/bin/seven-control --portal\n' "$L" \
+printf '[D-BUS Service]\nName=org.freedesktop.impl.portal.desktop.win7\nExec=%s/bin/seven-control --session\n' "$L" \
     > "$L/share/dbus-1/services/org.freedesktop.impl.portal.desktop.win7.service"
 printf '[preferred]\ndefault=kde\norg.freedesktop.impl.portal.Settings=kde;gtk;\norg.freedesktop.impl.portal.Secret=kwallet\norg.freedesktop.impl.portal.AppChooser=seven;kde;\n' \
     > "$HOME/.config/xdg-desktop-portal/kde-portals.conf"

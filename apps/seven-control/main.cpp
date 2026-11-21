@@ -1992,6 +1992,66 @@ private:
 
 int runKRunner(); // sevenrunner.cpp
 
+    // Windows Update's notification-area icon: started now and then by a systemd timer (seven-wu-check.timer);
+    // with updates waiting it stays and shows Windows 7's icon until they are installed or the page is opened,
+    // without any it ends at once (nothing runs for it the rest of the time)
+static bool startUpdateTray(QApplication &app, bool session)
+{
+    {
+        // one icon: a second check (started by hand, or the timer while one still waits) leaves it to the first
+        if (!QDBusConnection::sessionBus().registerService(QStringLiteral("org.sevenplasma.WindowsUpdateCheck"))) {
+            return false;
+        }
+        app.setQuitOnLastWindowClosed(false);
+        auto &engine = Win7Update::Engine::self();
+        auto *sni = new KStatusNotifierItem(QStringLiteral("seven-windows-update"), &app);
+        sni->setCategory(KStatusNotifierItem::SystemServices);
+        sni->setIconByName(QStringLiteral("seven-wu-app"));
+        sni->setTitle(tr7("Windows Update"));
+        sni->setStandardActionsEnabled(false);
+        sni->setStatus(KStatusNotifierItem::Passive);
+        auto open = [session, sni] {
+            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--windows-update")});
+            if (session) sni->setStatus(KStatusNotifierItem::Passive); // the session service stays for the next check
+            else QCoreApplication::quit();
+        };
+        QObject::connect(sni, &KStatusNotifierItem::activateRequested, &app, open);
+        engine.listeners.append([sni, session] {
+            auto &e = Win7Update::Engine::self();
+            if (!e.loaded) {
+                return;
+            }
+            int important = 0;
+            for (const auto &u : std::as_const(e.updates)) {
+                important += u.important ? 1 : 0;
+            }
+            if (e.updates.isEmpty()) {
+                if (session) sni->setStatus(KStatusNotifierItem::Passive);
+                else QCoreApplication::quit();
+                return;
+            }
+            const QString text = important > 0 ? Win7Update::countText(important, true) : Win7Update::countText(int(e.updates.size()), false);
+            sni->setToolTip(QStringLiteral("seven-wu-app"), tr7("Windows Update"), text);
+            if (sni->status() != KStatusNotifierItem::Active) {
+                sni->setStatus(KStatusNotifierItem::Active);
+                // Windows 7's balloon, once for each new set of updates
+                QSettings seen(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + QStringLiteral("/seven-wu-trayrc"), QSettings::IniFormat);
+                if (seen.value(QStringLiteral("count")).toInt() != int(e.updates.size())) {
+                    seen.setValue(QStringLiteral("count"), int(e.updates.size()));
+                    sni->showMessage(tr7("New updates are available"), tr7("Click to install them."), QStringLiteral("seven-wu-app"));
+                }
+            }
+        });
+        // the session service checks two minutes after logon, the standalone check at once
+        QTimer::singleShot(session ? 2 * 60 * 1000 : 0, &app, [] { Win7Update::Engine::self().load(); });
+        auto *again = new QTimer(&app);
+        again->setInterval(30 * 60 * 1000); // new updates, or installed meanwhile (Control Panel, Discover, dnf...)
+        QObject::connect(again, &QTimer::timeout, &app, [] { Win7Update::Engine::self().load(); });
+        again->start();
+        return true;
+    }
+}
+
 int main(int argc, char **argv)
 {
     // Disk Management: a WM_CLASS no desktop file is named after, so KWin keeps the snap-in icon in the title bar
@@ -2438,57 +2498,21 @@ int main(int argc, char **argv)
         w.exec();
         return 0;
     }
-    // Windows Update's notification-area icon: started now and then by a systemd timer (seven-wu-check.timer);
-    // with updates waiting it stays and shows Windows 7's icon until they are installed or the page is opened,
-    // without any it ends at once (nothing runs for it the rest of the time)
     if (app.arguments().contains(QStringLiteral("--wu-check"))) {
-        // one icon: a second check (started by hand, or the timer while one still waits) leaves it to the first
-        if (!QDBusConnection::sessionBus().registerService(QStringLiteral("org.sevenplasma.WindowsUpdateCheck"))) {
+        if (!startUpdateTray(app, false)) return 0;
+        return app.exec();
+    }
+    // one background process for the desktop session instead of three: removable media (AutoPlay, Safely Remove
+    // Hardware, "can perform faster"), the xdg-desktop-portal "Open with" backend and the Windows Update tray icon
+    if (app.arguments().contains(QStringLiteral("--session"))) {
+        if (!QDBusConnection::sessionBus().registerService(QStringLiteral("org.sevenplasma.Session"))) {
             return 0;
         }
+        app.setDesktopFileName(QStringLiteral("seven-control"));
         app.setQuitOnLastWindowClosed(false);
-        auto &engine = Win7Update::Engine::self();
-        auto *sni = new KStatusNotifierItem(QStringLiteral("seven-windows-update"), &app);
-        sni->setCategory(KStatusNotifierItem::SystemServices);
-        sni->setIconByName(QStringLiteral("seven-wu-app"));
-        sni->setTitle(tr7("Windows Update"));
-        sni->setStandardActionsEnabled(false);
-        sni->setStatus(KStatusNotifierItem::Passive);
-        auto open = [] {
-            QProcess::startDetached(QCoreApplication::applicationFilePath(), {QStringLiteral("--windows-update")});
-            QCoreApplication::quit();
-        };
-        QObject::connect(sni, &KStatusNotifierItem::activateRequested, &app, open);
-        engine.listeners.append([sni] {
-            auto &e = Win7Update::Engine::self();
-            if (!e.loaded) {
-                return;
-            }
-            int important = 0;
-            for (const auto &u : std::as_const(e.updates)) {
-                important += u.important ? 1 : 0;
-            }
-            if (e.updates.isEmpty()) {
-                QCoreApplication::quit();
-                return;
-            }
-            const QString text = important > 0 ? Win7Update::countText(important, true) : Win7Update::countText(int(e.updates.size()), false);
-            sni->setToolTip(QStringLiteral("seven-wu-app"), tr7("Windows Update"), text);
-            if (sni->status() != KStatusNotifierItem::Active) {
-                sni->setStatus(KStatusNotifierItem::Active);
-                // Windows 7's balloon, once for each new set of updates
-                QSettings seen(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + QStringLiteral("/seven-wu-trayrc"), QSettings::IniFormat);
-                if (seen.value(QStringLiteral("count")).toInt() != int(e.updates.size())) {
-                    seen.setValue(QStringLiteral("count"), int(e.updates.size()));
-                    sni->showMessage(tr7("New updates are available"), tr7("Click to install them."), QStringLiteral("seven-wu-app"));
-                }
-            }
-        });
-        engine.load();
-        auto *again = new QTimer(&app);
-        again->setInterval(30 * 60 * 1000); // installed meanwhile (Control Panel, Discover, dnf...): the icon goes
-        QObject::connect(again, &QTimer::timeout, &app, [] { Win7Update::Engine::self().load(); });
-        again->start();
+        Win7Autoplay::startWatch(app);
+        Win7Portal::start();
+        startUpdateTray(app, true);
         return app.exec();
     }
     if (app.arguments().contains(QStringLiteral("--wf"))) {

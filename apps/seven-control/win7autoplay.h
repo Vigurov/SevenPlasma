@@ -594,9 +594,8 @@ inline QMap<QString, Media> currentMedia()
     return map;
 }
 
-inline int watch(QApplication &app)
+inline void startWatch(QApplication &app)
 {
-    app.setQuitOnLastWindowClosed(false);
     new Win7SafelyRemove::Tray(&app); // the "Safely Remove Hardware" icon lives in this watcher too
     new Win7SafelyRemove::SpeedWatcher(&app); // "This device can perform faster"
     auto known = std::make_shared<QMap<QString, Media>>(currentMedia());
@@ -611,6 +610,12 @@ inline int watch(QApplication &app)
         *known = now;
     });
     timer->start(2000);
+}
+
+inline int watch(QApplication &app)
+{
+    app.setQuitOnLastWindowClosed(false);
+    startWatch(app);
     return app.exec();
 }
 }

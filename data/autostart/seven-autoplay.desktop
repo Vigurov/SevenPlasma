@@ -1,7 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=AutoPlay (Windows 7)
-Name[uk]=Автозапуск (Windows 7)
-Exec=seven-control --autoplay-watch
+Name=SevenPlasma session service
+Name[uk]=Фонова служба SevenPlasma
+Comment=AutoPlay, Safely Remove Hardware, "Open with" portal and the Windows Update tray icon in one process
+Exec=seven-control --session
 NoDisplay=true
 X-KDE-autostart-phase=2
