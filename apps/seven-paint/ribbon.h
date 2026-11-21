@@ -217,6 +217,7 @@ public:
     {
         prepare();
         move(pos);
+        m_armed = false;
         show();
         QEventLoop loop;
         m_loop = &loop;
@@ -320,9 +321,21 @@ protected:
             update();
         }
     }
+    void mousePressEvent(QMouseEvent *) override
+    {
+        m_armed = true;
+    }
     void mouseReleaseEvent(QMouseEvent *e) override
     {
         const int h = hit(e->position().toPoint());
+        // the release of the click that opened the menu: it stays open (Windows 7), unless the press was
+        // dragged onto an entry, which picks it
+        if (!m_armed) {
+            m_armed = true;
+            if (h < 0) {
+                return;
+            }
+        }
         if (h >= 0 && !entries[h].enabled) {
             return;
         }
@@ -376,6 +389,7 @@ protected:
     }
 
 private:
+    bool m_armed = false;
     QRect m_frame;
     int m_hot = -1, m_chosen = -1;
     QEventLoop *m_loop = nullptr;

@@ -492,8 +492,23 @@ protected:
             }
         }
     }
+    void mousePressEvent(QMouseEvent *) override
+    {
+        m_armed = true;
+    }
     void mouseReleaseEvent(QMouseEvent *e) override
     {
+        bool onCell = false;
+        for (int i = 0; i < m_pics.size(); ++i) {
+            onCell = onCell || cell(i).contains(e->position().toPoint());
+        }
+        // the release of the click that opened the gallery keeps it open, as in Windows 7
+        if (!m_armed) {
+            m_armed = true;
+            if (!onCell) {
+                return;
+            }
+        }
         for (int i = 0; i < m_pics.size(); ++i) {
             if (cell(i).contains(e->position().toPoint())) {
                 close();
@@ -514,6 +529,7 @@ private:
     int m_cols;
     QSize m_cell;
     int m_hot = -1, m_current;
+    bool m_armed = false;
 };
 
 /** a ribbon check box (View tab) */
@@ -731,13 +747,22 @@ protected:
         }
         update();
     }
+    void mousePressEvent(QMouseEvent *) override
+    {
+        m_appArmed = true;
+    }
     void mouseReleaseEvent(QMouseEvent *e) override
     {
         const QPoint pt = e->position().toPoint();
         if (!m_frame.contains(pt) || QRect(0, 0, 56, 22).contains(pt)) {
+            if (!m_appArmed) {   // the release of the click on the Paint button that opened it
+                m_appArmed = true;
+                return;
+            }
             close();
             return;
         }
+        m_appArmed = true;
         for (int i = 0; i < items.size(); ++i) {
             if (itemRect(i).contains(pt) && items[i].enabled) {
                 if (items[i].run) {
@@ -764,6 +789,7 @@ protected:
     }
 
 private:
+    bool m_appArmed = false;
     int m_hot = -1, m_open = -1, m_subHot = -1, m_recentHot = -1;
     int m_left = 217;
     QRect m_frame;
