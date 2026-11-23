@@ -43,6 +43,8 @@ kw kdeglobals "KFileDialog Settings" "View Style" Detail
 kw kdeglobals PreviewSettings Plugins "imagethumbnail,jpegthumbnail,svgthumbnail,fontthumbnail,ffmpegthumbs,opendocumentthumbnail,sevenfolderthumbnail"
 kw Kvantum/kvantum.kvconfig General theme Windows7
 kw kwinrc Effect-overview BorderActivate 9
+kw kwinrc Compositing WindowsBlockCompositing false   # full-screen games (Proton sets _NET_WM_BYPASS_COMPOSITOR) must not switch
+                                                     # compositing off: Start menu / taskbar over them turned black instead of glass
 kw ksmserverrc General loginMode emptySession
 kw kscreenlockerrc Daemon Autolock false
 kw dolphinrc General ShowStatusBar Disabled

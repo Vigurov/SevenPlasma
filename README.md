@@ -101,6 +101,9 @@ uninstalled: KMail and Kontact start Akonadi themselves when you open them, and 
 reminders can be turned back on in Control Panel → Programs → Turn Windows features on or off. The notification
 area loads only the items Windows 7 has a counterpart of.
 
+Full-screen games are not allowed to switch the compositor off (KWin's "Allow applications to block
+compositing"), so the Start menu and the taskbar opened over a game keep their glass instead of turning black.
+
 On a computer without graphics acceleration (software rendering, for example a virtual machine without 3D or a
 missing graphics driver) the first login also picks "Let Windows choose what's best for my computer" in Control
 Panel → System → Advanced system settings → Performance: glass, window animations and Aero Peek are off there, as
